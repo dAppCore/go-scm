@@ -139,8 +139,11 @@ func (h *DispatchHandler) Execute(ctx context.Context, signal *jobrunner.Pipelin
 		verifyModel = h.spinner.GetVerifierModel(agentName)
 	}
 
-	// Build ticket.
-	targetBranch := "new" // TODO: resolve from epic or repo default
+	// Build ticket — resolve target branch from repo default.
+	targetBranch := "main"
+	if repo, err := h.forge.GetRepo(safeOwner, safeRepo); err == nil && repo.DefaultBranch != "" {
+		targetBranch = repo.DefaultBranch
+	}
 	ticketID := fmt.Sprintf("%s-%s-%d-%d", safeOwner, safeRepo, signal.ChildNumber, time.Now().Unix())
 
 	ticket := DispatchTicket{
