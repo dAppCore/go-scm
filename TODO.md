@@ -19,10 +19,12 @@ All Phase 1 tasks completed in commit `9db37c6`.
 
 ## Phase 2: Hardening
 
+All Phase 2 tasks completed in commit `3ba8fbb`.
+
 - [x] **Config resolution audit** — Verified and tested in Phase 1. Both forge/ and gitea/ use identical priority: config file → env vars → flags. Documented in FINDINGS.md.
-- [ ] **Error wrapping** — Ensure all errors use `fmt.Errorf("package.Func: ...: %w", err)` or `log.E()` consistently. Some files may use bare `fmt.Errorf` without wrapping.
-- [ ] **Context propagation** — Verify all Forgejo/Gitea API calls pass `context.Context` for cancellation. Add context to any blocking operations missing it.
-- [ ] **Rate limiting** — collect/ has its own `ratelimit.go`. Verify it handles API rate limit headers from GitHub, Forgejo, Gitea.
+- [x] **Error wrapping** — All 15 bare `fmt.Errorf` calls converted to `"package.Func: context"` pattern across 5 files (journal.go, config.go, security.go, dispatch.go, labels.go). Existing `log.E()`/`core.E()` calls already followed the pattern.
+- [x] **Context propagation** — Verified: Forgejo/Gitea SDK v2 does NOT accept `context.Context` (adding ctx to 66 wrappers = ceremony). Added `SecureSSHCommandContext` and `CheckGitHubRateLimitCtx` for real context propagation in SSH and CLI operations. Updated dispatch handler to pass ctx through. Documented SDK limitation in FINDINGS.md.
+- [x] **Rate limiting** — Reviewed: handles all edge cases (context cancellation, unknown sources, concurrent access, adaptive throttling at 75% GitHub usage). GitHub uses `gh` CLI (handles its own headers). Forgejo/Gitea SDKs don't expose rate limit headers. Added context-aware `CheckGitHubRateLimitCtx`.
 
 ## Phase 3: AgentCI Pipeline
 
