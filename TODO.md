@@ -8,6 +8,8 @@ Dispatched from core/go orchestration. Pick up tasks in order.
 
 forge/, gitea/, and git/ have **zero tests**. This is the top priority.
 
+All Phase 1 tasks completed in commit `9db37c6`.
+
 - [x] **forge/ unit tests** — 91.2% coverage. Tested all SDK wrapper functions via httptest mock server: client creation, repos, issues, PRs, labels, webhooks, orgs, meta, config resolution, SetPRDraft raw HTTP. 8 test files.
 - [x] **gitea/ unit tests** — 89.2% coverage. Tested all SDK wrapper functions via httptest mock server: client creation, repos, issues, PRs, meta, config resolution. 5 test files.
 - [x] **git/ unit tests** — 79.5% coverage. Tested RepoStatus methods, status parsing with real temp git repos, multi-repo parallel status, Push/Pull error paths, ahead/behind with bare remote, context cancellation, GitError, IsNonFastForward. Service DirtyRepos/AheadRepos filtering. 2 test files.
