@@ -1,0 +1,49 @@
+# go-scm
+
+SCM integration, AgentCI dispatch automation, and data collection for the Lethean ecosystem. Provides a Forgejo API client and a Gitea client for the public mirror, multi-repo git operations with parallel status checks, the Clotho Protocol orchestrator for dual-run agent verification, a PR automation pipeline (poll → dispatch → journal) driven by epic issue task lists, and pluggable data collectors for BitcoinTalk, GitHub, market data, and research papers.
+
+**Module**: `forge.lthn.ai/core/go-scm`
+**Licence**: EUPL-1.2
+**Language**: Go 1.25
+
+## Quick Start
+
+```go
+import (
+    "forge.lthn.ai/core/go-scm/forge"
+    "forge.lthn.ai/core/go-scm/git"
+    "forge.lthn.ai/core/go-scm/jobrunner"
+)
+
+// Forgejo client
+client, err := forge.NewFromConfig("", "")
+
+// Multi-repo status
+statuses := git.Status(ctx, git.StatusOptions{Paths: repoPaths})
+
+// AgentCI dispatch loop
+poller := jobrunner.NewPoller(jobrunner.PollerConfig{
+    Sources:      []jobrunner.JobSource{forgejoSrc},
+    Handlers:     []jobrunner.JobHandler{dispatch, tickParent},
+    PollInterval: 60 * time.Second,
+})
+poller.Run(ctx)
+```
+
+## Documentation
+
+- [Architecture](docs/architecture.md) — package overview, AgentCI pipeline, Clotho Protocol, data collection
+- [Development Guide](docs/development.md) — building, testing, standards
+- [Project History](docs/history.md) — completed phases and known limitations
+
+## Build & Test
+
+```bash
+go test ./...
+go test -race ./...
+go build ./...
+```
+
+## Licence
+
+European Union Public Licence 1.2 — see [LICENCE](LICENCE) for details.
