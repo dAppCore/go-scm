@@ -28,10 +28,12 @@ All Phase 2 tasks completed in commit `3ba8fbb`.
 
 ## Phase 3: AgentCI Pipeline
 
+All Phase 3 tasks completed in commit `0fe2978`.
+
 - [x] **Clotho dual-run validation** — All code paths tested in Phase 1: standard mode, dual-run by agent config, dual-run by critical repo name, non-verified strategy, unknown agent. Also tested GetVerifierModel, FindByForgejoUser, and Weave.
-- [ ] **Forgejo signal source tests** — `forgejo/source.go` polls for webhook events. Test signal parsing and filtering.
-- [ ] **Journal replay** — `journal.go` writes JSONL audit trail. Add test for write + read-back + filtering by action/repo/time range.
-- [ ] **Handler integration** — Test full signal → handler → result flow with mock Forgejo client. Verify `tick_parent` correctly updates epic progress.
+- [x] **Forgejo signal source tests** — 20 new tests: signal parsing (empty body, mixed content, large numbers), findLinkedPR edge cases, Poll with combined status failure/error, unassigned child, child fetch failure, multiple epics, mixed labels, Report format. In `source_phase3_test.go`.
+- [x] **Journal replay** — 8 new tests: write+read-back round-trip, filter by action/repo/time range, combined filters, concurrent write safety (20 goroutines), empty journal. In `journal_replay_test.go`.
+- [x] **Handler integration** — 14 new tests: full signal→handler→result flow for all 5 handlers (tick_parent, enable_auto_merge, publish_draft, send_fix_command, completion). Verified tick_parent epic progress tracking, handler priority matching, full pipeline with journal write. In `integration_test.go`.
 
 ## Phase 4: Forge ↔ Gitea Sync
 
