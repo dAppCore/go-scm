@@ -18,7 +18,7 @@ import (
 func TestNewJournal_Bad_EmptyBaseDir(t *testing.T) {
 	_, err := NewJournal("")
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "journal base directory is required")
+	assert.Contains(t, err.Error(), "base directory is required")
 }
 
 func TestNewJournal_Good(t *testing.T) {

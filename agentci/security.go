@@ -1,6 +1,7 @@
 package agentci
 
 import (
+	"context"
 	"fmt"
 	"os/exec"
 	"path/filepath"
@@ -15,10 +16,10 @@ var safeNameRegex = regexp.MustCompile(`^[a-zA-Z0-9\-\_\.]+$`)
 func SanitizePath(input string) (string, error) {
 	base := filepath.Base(input)
 	if !safeNameRegex.MatchString(base) {
-		return "", fmt.Errorf("invalid characters in path element: %s", input)
+		return "", fmt.Errorf("agentci.SanitizePath: invalid characters in path element: %s", input)
 	}
 	if base == "." || base == ".." || base == "/" {
-		return "", fmt.Errorf("invalid path element: %s", base)
+		return "", fmt.Errorf("agentci.SanitizePath: invalid path element: %s", base)
 	}
 	return base, nil
 }
@@ -30,8 +31,15 @@ func EscapeShellArg(arg string) string {
 }
 
 // SecureSSHCommand creates an SSH exec.Cmd with strict host key checking and batch mode.
+// Deprecated: Use SecureSSHCommandContext for context-aware cancellation.
 func SecureSSHCommand(host string, remoteCmd string) *exec.Cmd {
-	return exec.Command("ssh",
+	return SecureSSHCommandContext(context.Background(), host, remoteCmd)
+}
+
+// SecureSSHCommandContext creates an SSH exec.Cmd with context support for cancellation,
+// strict host key checking, and batch mode.
+func SecureSSHCommandContext(ctx context.Context, host string, remoteCmd string) *exec.Cmd {
+	return exec.CommandContext(ctx, "ssh",
 		"-o", "StrictHostKeyChecking=yes",
 		"-o", "BatchMode=yes",
 		"-o", "ConnectTimeout=10",

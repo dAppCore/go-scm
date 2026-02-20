@@ -75,7 +75,7 @@ func (c *Client) GetLabelByName(owner, repo, name string) (*forgejo.Label, error
 		}
 	}
 
-	return nil, fmt.Errorf("label %s not found in %s/%s", name, owner, repo)
+	return nil, fmt.Errorf("forge.GetLabelByName: label %s not found in %s/%s", name, owner, repo)
 }
 
 // EnsureLabel checks if a label exists, and creates it if it doesn't.

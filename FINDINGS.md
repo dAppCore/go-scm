@@ -91,3 +91,55 @@ Both forge/ and gitea/ follow the same priority order:
 4. Default URL when nothing configured (`http://localhost:4000` for forge, `https://gitea.snider.dev` for gitea)
 
 Tests must use `t.Setenv("HOME", t.TempDir())` to isolate from the real config file on the development machine.
+
+---
+
+## 2026-02-20: Phase 2 Hardening (Virgil)
+
+### Error Wrapping Audit
+
+All `fmt.Errorf` calls now follow the `"package.Func: context: %w"` pattern (for wrapped errors) or `"package.Func: message"` pattern (for sentinel/validation errors). Files fixed:
+
+| File | Bare errors | Pattern applied |
+|------|------------|-----------------|
+| `jobrunner/journal.go` | 8 | `journal.NewJournal:`, `journal.sanitizePathComponent:`, `journal.Append:` |
+| `agentci/config.go` | 3 | `agentci.LoadAgents:`, `agentci.RemoveAgent:` |
+| `agentci/security.go` | 2 | `agentci.SanitizePath:` |
+| `jobrunner/handlers/dispatch.go` | 1 | `handlers.Dispatch.Execute:` |
+| `forge/labels.go` | 1 | `forge.GetLabelByName:` |
+
+Existing `log.E()` and `core.E()` calls already followed the pattern — no changes needed for those.
+
+### Context Propagation Audit
+
+**SDK limitation (verified):** The Forgejo SDK v2 (`codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2`) does NOT accept `context.Context` parameters on any API method. All SDK calls are synchronous and blocking. Adding `ctx` to the 66 forge/ and gitea/ wrapper signatures would be ceremony without real propagation — the context would be accepted but never passed to the SDK. The same applies to the Gitea SDK (`code.gitea.io/sdk/gitea`).
+
+**Where context IS propagated:**
+
+1. **git/** — All git operations use `exec.CommandContext(ctx, ...)` via `gitCommand()` and `gitInteractive()`. Context cancellation works correctly for all git operations (Status, Push, Pull, PushMultiple). Verified in existing tests.
+
+2. **collect/** — All HTTP requests use `http.NewRequestWithContext(ctx, ...)` for BitcoinTalk, CoinGecko, IACR, and arXiv collectors. The `RateLimiter.Wait()` method respects context cancellation. The `Excavator.Run()` checks `ctx.Err()` between collectors. Added `CheckGitHubRateLimitCtx(ctx)` for context-aware rate limit checking via `exec.CommandContext`.
+
+3. **agentci/security.go** — Added `SecureSSHCommandContext(ctx, host, cmd)` which uses `exec.CommandContext` for cancellable SSH operations. The original `SecureSSHCommand` is preserved (deprecated) and delegates to the context-aware version.
+
+4. **jobrunner/handlers/dispatch.go** — Updated `secureTransfer()`, `runRemote()`, and `ticketExists()` to pass their existing `ctx` parameter through to `SecureSSHCommandContext()`. Previously these methods accepted context but did not propagate it.
+
+**Recommendation:** When the Forgejo SDK v3 adds context support, a follow-up task should thread `ctx` through all forge/ and gitea/ wrapper signatures.
+
+### Rate Limiting Review
+
+**Current implementation (`collect/ratelimit.go`):**
+
+- Per-source delay tracking with configurable durations per source
+- Default delays: GitHub 500ms, BitcoinTalk 2s, CoinGecko 1.5s, IACR 1s, arXiv 1s
+- Unknown sources default to 500ms
+- `Wait(ctx, source)` blocks until the rate limit allows, respects context cancellation
+- `CheckGitHubRateLimit()` uses `gh api rate_limit` CLI to check GitHub API usage
+- Auto-pauses at 75% usage by increasing GitHub delay to 5s
+
+**Assessment:**
+
+1. The rate limiter handles all current edge cases: context cancellation during wait, unknown sources, concurrent access (mutex-protected), and adaptive throttling.
+2. GitHub rate limiting relies on the `gh` CLI rather than parsing HTTP response headers. This is appropriate because GitHub collection also uses the `gh` CLI (not direct HTTP). The `gh` CLI handles its own authentication and rate limit headers internally.
+3. Forgejo/Gitea API calls go through their respective SDKs, which do not expose rate limit response headers. The SDKs handle HTTP internally. Adding header parsing would require forking or wrapping the SDK HTTP transport — not worth the complexity for the current usage pattern.
+4. The `CheckGitHubRateLimitCtx` variant was added for context-aware cancellation of the `gh api` subprocess.

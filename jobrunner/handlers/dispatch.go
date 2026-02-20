@@ -83,7 +83,7 @@ func (h *DispatchHandler) Execute(ctx context.Context, signal *jobrunner.Pipelin
 
 	agentName, agent, ok := h.spinner.FindByForgejoUser(signal.Assignee)
 	if !ok {
-		return nil, fmt.Errorf("unknown agent: %s", signal.Assignee)
+		return nil, fmt.Errorf("handlers.Dispatch.Execute: unknown agent: %s", signal.Assignee)
 	}
 
 	// Sanitize inputs to prevent path traversal.
@@ -258,7 +258,7 @@ func (h *DispatchHandler) secureTransfer(ctx context.Context, agent agentci.Agen
 	safeRemotePath := agentci.EscapeShellArg(remotePath)
 	remoteCmd := fmt.Sprintf("cat > %s && chmod %o %s", safeRemotePath, mode, safeRemotePath)
 
-	cmd := agentci.SecureSSHCommand(agent.Host, remoteCmd)
+	cmd := agentci.SecureSSHCommandContext(ctx, agent.Host, remoteCmd)
 	cmd.Stdin = bytes.NewReader(data)
 
 	output, err := cmd.CombinedOutput()
@@ -270,7 +270,7 @@ func (h *DispatchHandler) secureTransfer(ctx context.Context, agent agentci.Agen
 
 // runRemote executes a command on the agent via SSH.
 func (h *DispatchHandler) runRemote(ctx context.Context, agent agentci.AgentConfig, cmdStr string) error {
-	cmd := agentci.SecureSSHCommand(agent.Host, cmdStr)
+	cmd := agentci.SecureSSHCommandContext(ctx, agent.Host, cmdStr)
 	return cmd.Run()
 }
 
@@ -285,6 +285,6 @@ func (h *DispatchHandler) ticketExists(ctx context.Context, agent agentci.AgentC
 		"test -f %s/%s || test -f %s/../active/%s || test -f %s/../done/%s",
 		qDir, safeTicket, qDir, safeTicket, qDir, safeTicket,
 	)
-	cmd := agentci.SecureSSHCommand(agent.Host, checkCmd)
+	cmd := agentci.SecureSSHCommandContext(ctx, agent.Host, checkCmd)
 	return cmd.Run() == nil
 }

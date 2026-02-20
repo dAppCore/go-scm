@@ -95,8 +95,16 @@ func (r *RateLimiter) GetDelay(source string) time.Duration {
 // CheckGitHubRateLimit checks GitHub API rate limit status via gh api.
 // Returns used and limit counts. Auto-pauses at 75% usage by increasing
 // the GitHub rate limit delay.
+// Deprecated: Use CheckGitHubRateLimitCtx for context-aware cancellation.
 func (r *RateLimiter) CheckGitHubRateLimit() (used, limit int, err error) {
-	cmd := exec.Command("gh", "api", "rate_limit", "--jq", ".rate | \"\\(.used) \\(.limit)\"")
+	return r.CheckGitHubRateLimitCtx(context.Background())
+}
+
+// CheckGitHubRateLimitCtx checks GitHub API rate limit status via gh api with context support.
+// Returns used and limit counts. Auto-pauses at 75% usage by increasing
+// the GitHub rate limit delay.
+func (r *RateLimiter) CheckGitHubRateLimitCtx(ctx context.Context) (used, limit int, err error) {
+	cmd := exec.CommandContext(ctx, "gh", "api", "rate_limit", "--jq", ".rate | \"\\(.used) \\(.limit)\"")
 	out, err := cmd.Output()
 	if err != nil {
 		return 0, 0, core.E("collect.RateLimiter.CheckGitHubRateLimit", "failed to check rate limit", err)

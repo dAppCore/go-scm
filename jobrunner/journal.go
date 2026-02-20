@@ -52,7 +52,7 @@ type Journal struct {
 // NewJournal creates a new Journal rooted at baseDir.
 func NewJournal(baseDir string) (*Journal, error) {
 	if baseDir == "" {
-		return nil, fmt.Errorf("journal base directory is required")
+		return nil, fmt.Errorf("journal.NewJournal: base directory is required")
 	}
 	return &Journal{baseDir: baseDir}, nil
 }
@@ -63,12 +63,12 @@ func NewJournal(baseDir string) (*Journal, error) {
 func sanitizePathComponent(name string) (string, error) {
 	// Reject empty or whitespace-only values.
 	if name == "" || strings.TrimSpace(name) == "" {
-		return "", fmt.Errorf("invalid path component: %q", name)
+		return "", fmt.Errorf("journal.sanitizePathComponent: invalid path component: %q", name)
 	}
 
 	// Reject inputs containing path separators (directory traversal attempt).
 	if strings.ContainsAny(name, `/\`) {
-		return "", fmt.Errorf("path component contains directory separator: %q", name)
+		return "", fmt.Errorf("journal.sanitizePathComponent: path component contains directory separator: %q", name)
 	}
 
 	// Use filepath.Clean to normalize (e.g., collapse redundant dots).
@@ -76,12 +76,12 @@ func sanitizePathComponent(name string) (string, error) {
 
 	// Reject traversal components.
 	if clean == "." || clean == ".." {
-		return "", fmt.Errorf("invalid path component: %q", name)
+		return "", fmt.Errorf("journal.sanitizePathComponent: invalid path component: %q", name)
 	}
 
 	// Validate against the safe character set.
 	if !validPathComponent.MatchString(clean) {
-		return "", fmt.Errorf("path component contains invalid characters: %q", name)
+		return "", fmt.Errorf("journal.sanitizePathComponent: path component contains invalid characters: %q", name)
 	}
 
 	return clean, nil
@@ -90,10 +90,10 @@ func sanitizePathComponent(name string) (string, error) {
 // Append writes a journal entry for the given signal and result.
 func (j *Journal) Append(signal *PipelineSignal, result *ActionResult) error {
 	if signal == nil {
-		return fmt.Errorf("signal is required")
+		return fmt.Errorf("journal.Append: signal is required")
 	}
 	if result == nil {
-		return fmt.Errorf("result is required")
+		return fmt.Errorf("journal.Append: result is required")
 	}
 
 	entry := JournalEntry{
@@ -121,18 +121,18 @@ func (j *Journal) Append(signal *PipelineSignal, result *ActionResult) error {
 
 	data, err := json.Marshal(entry)
 	if err != nil {
-		return fmt.Errorf("marshal journal entry: %w", err)
+		return fmt.Errorf("journal.Append: marshal entry: %w", err)
 	}
 	data = append(data, '\n')
 
 	// Sanitize path components to prevent path traversal (CVE: issue #46).
 	owner, err := sanitizePathComponent(signal.RepoOwner)
 	if err != nil {
-		return fmt.Errorf("invalid repo owner: %w", err)
+		return fmt.Errorf("journal.Append: invalid repo owner: %w", err)
 	}
 	repo, err := sanitizePathComponent(signal.RepoName)
 	if err != nil {
-		return fmt.Errorf("invalid repo name: %w", err)
+		return fmt.Errorf("journal.Append: invalid repo name: %w", err)
 	}
 
 	date := result.Timestamp.UTC().Format("2006-01-02")
@@ -141,27 +141,27 @@ func (j *Journal) Append(signal *PipelineSignal, result *ActionResult) error {
 	// Resolve to absolute path and verify it stays within baseDir.
 	absBase, err := filepath.Abs(j.baseDir)
 	if err != nil {
-		return fmt.Errorf("resolve base directory: %w", err)
+		return fmt.Errorf("journal.Append: resolve base directory: %w", err)
 	}
 	absDir, err := filepath.Abs(dir)
 	if err != nil {
-		return fmt.Errorf("resolve journal directory: %w", err)
+		return fmt.Errorf("journal.Append: resolve journal directory: %w", err)
 	}
 	if !strings.HasPrefix(absDir, absBase+string(filepath.Separator)) {
-		return fmt.Errorf("journal path %q escapes base directory %q", absDir, absBase)
+		return fmt.Errorf("journal.Append: path %q escapes base directory %q", absDir, absBase)
 	}
 
 	j.mu.Lock()
 	defer j.mu.Unlock()
 
 	if err := os.MkdirAll(dir, 0o755); err != nil {
-		return fmt.Errorf("create journal directory: %w", err)
+		return fmt.Errorf("journal.Append: create directory: %w", err)
 	}
 
 	path := filepath.Join(dir, date+".jsonl")
 	f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 	if err != nil {
-		return fmt.Errorf("open journal file: %w", err)
+		return fmt.Errorf("journal.Append: open file: %w", err)
 	}
 	defer func() { _ = f.Close() }()
 
