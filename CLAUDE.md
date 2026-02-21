@@ -4,9 +4,11 @@ You are a dedicated domain expert for `forge.lthn.ai/core/go-scm`. Virgil orches
 
 ## What This Package Does
 
-SCM integration and data collection for the Lethean ecosystem. Four packages: `forge/` (Forgejo API client), `git/` (multi-repo git ops), `gitea/` (Gitea API client), `collect/` (data collection).
+SCM integration and data collection for the Lethean ecosystem. Three packages: `forge/` (Forgejo API client), `gitea/` (Gitea API client), `collect/` (data collection).
 
 **Extracted to other repos:** `agentci/` + `jobrunner/` → `core/go-agent`, `git/` → `core/go-git`.
+
+**Note:** `forge/` is still used by `core/go-agent` as a dependency. `core/go-forge` is a separate, full API client with a different interface.
 
 ## Commands
 
@@ -30,20 +32,13 @@ Resolved via `replace` in go.mod or preferably via `go.work`:
 ```go
 // forge/client.go
 type Client struct { api *forgejo.Client; url, token string }
-
-// git/git.go
-type RepoStatus struct {
-    Name, Path, Branch string
-    Modified, Untracked, Staged, Ahead, Behind int
-    Error error
-}
 ```
 
 ## Coding Standards
 
 - **UK English**: colour, organisation, centre
 - **Tests**: testify assert/require, table-driven preferred, `_Good`/`_Bad`/`_Ugly` naming
-- **Conventional commits**: `feat(forge):`, `fix(git):`, `test(collect):`
+- **Conventional commits**: `feat(forge):`, `fix(gitea):`, `test(collect):`
 - **Co-Author**: `Co-Authored-By: Virgil <virgil@lethean.io>`
 - **Licence**: EUPL-1.2
 - **Imports**: stdlib → forge.lthn.ai → third-party, each group separated by blank line
