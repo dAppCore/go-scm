@@ -5,7 +5,7 @@ go 1.25.5
 require (
 	code.gitea.io/sdk/gitea v0.23.2
 	codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2 v2.2.0
-	forge.lthn.ai/core/go main
+	forge.lthn.ai/core/go v0.0.1
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/net v0.50.0
 )
