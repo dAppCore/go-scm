@@ -3,7 +3,7 @@ package forge
 import (
 	"fmt"
 
-	"forge.lthn.ai/core/go/pkg/cli"
+	"forge.lthn.ai/core/cli/pkg/cli"
 	fg "forge.lthn.ai/core/go-scm/forge"
 )
 

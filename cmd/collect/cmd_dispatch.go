@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"forge.lthn.ai/core/go/pkg/cli"
+	"forge.lthn.ai/core/cli/pkg/cli"
 	collectpkg "forge.lthn.ai/core/go-scm/collect"
 	"forge.lthn.ai/core/go/pkg/i18n"
 )

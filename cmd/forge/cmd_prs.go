@@ -6,7 +6,7 @@ import (
 
 	forgejo "codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2"
 
-	"forge.lthn.ai/core/go/pkg/cli"
+	"forge.lthn.ai/core/cli/pkg/cli"
 	fg "forge.lthn.ai/core/go-scm/forge"
 )
 

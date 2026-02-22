@@ -3,7 +3,7 @@ package collect
 import (
 	"fmt"
 
-	"forge.lthn.ai/core/go/pkg/cli"
+	"forge.lthn.ai/core/cli/pkg/cli"
 	"forge.lthn.ai/core/go-scm/collect"
 	"forge.lthn.ai/core/go/pkg/i18n"
 	"forge.lthn.ai/core/go/pkg/io"

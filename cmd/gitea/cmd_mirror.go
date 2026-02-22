@@ -5,7 +5,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"forge.lthn.ai/core/go/pkg/cli"
+	"forge.lthn.ai/core/cli/pkg/cli"
 	gt "forge.lthn.ai/core/go-scm/gitea"
 )
 
