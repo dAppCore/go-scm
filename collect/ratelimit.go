@@ -3,6 +3,7 @@ package collect
 import (
 	"context"
 	"fmt"
+	"maps"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -31,9 +32,7 @@ var defaultDelays = map[string]time.Duration{
 // NewRateLimiter creates a limiter with default delays.
 func NewRateLimiter() *RateLimiter {
 	delays := make(map[string]time.Duration, len(defaultDelays))
-	for k, v := range defaultDelays {
-		delays[k] = v
-	}
+	maps.Copy(delays, defaultDelays)
 	return &RateLimiter{
 		delays: delays,
 		last:   make(map[string]time.Time),

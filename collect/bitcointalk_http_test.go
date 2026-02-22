@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"forge.lthn.ai/core/go/pkg/io"
@@ -16,19 +17,20 @@ import (
 // given number of posts. If fewer than postsPerPage the caller can infer that
 // it is the last page.
 func sampleBTCTalkPage(count int) string {
-	page := `<html><body>`
-	for i := 0; i < count; i++ {
-		page += fmt.Sprintf(`
+	var page strings.Builder
+	page.WriteString(`<html><body>`)
+	for i := range count {
+		page.WriteString(fmt.Sprintf(`
 		<div class="post">
 			<div class="poster_info">user%d</div>
 			<div class="headerandpost">
 				<div class="smalltext">January %02d, 2009</div>
 			</div>
 			<div class="inner">Post content number %d.</div>
-		</div>`, i, i+1, i)
+		</div>`, i, i+1, i))
 	}
-	page += `</body></html>`
-	return page
+	page.WriteString(`</body></html>`)
+	return page.String()
 }
 
 func TestBitcoinTalkCollector_Collect_Good_OnePage(t *testing.T) {
