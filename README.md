@@ -1,3 +1,7 @@
+[![Go Reference](https://pkg.go.dev/badge/forge.lthn.ai/core/go-scm.svg)](https://pkg.go.dev/forge.lthn.ai/core/go-scm)
+[![License: EUPL-1.2](https://img.shields.io/badge/License-EUPL--1.2-blue.svg)](LICENSE.md)
+[![Go Version](https://img.shields.io/badge/Go-1.26-00ADD8?style=flat&logo=go)](go.mod)
+
 # go-scm
 
 SCM integration, AgentCI dispatch automation, and data collection for the Lethean ecosystem. Provides a Forgejo API client and a Gitea client for the public mirror, multi-repo git operations with parallel status checks, the Clotho Protocol orchestrator for dual-run agent verification, a PR automation pipeline (poll → dispatch → journal) driven by epic issue task lists, and pluggable data collectors for BitcoinTalk, GitHub, market data, and research papers.
