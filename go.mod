@@ -5,14 +5,14 @@ go 1.26.0
 require (
 	code.gitea.io/sdk/gitea v0.23.2
 	codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2 v2.2.0
-	forge.lthn.ai/core/cli v0.0.3
-	forge.lthn.ai/core/go v0.0.1
+	forge.lthn.ai/core/cli v0.0.4
+	forge.lthn.ai/core/go v0.0.9
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/net v0.50.0
 )
 
 require (
-	forge.lthn.ai/core/go-crypt v0.0.2 // indirect
+	forge.lthn.ai/core/go-crypt v0.0.3 // indirect
 	github.com/42wim/httpsig v1.2.3 // indirect
 	github.com/ProtonMail/go-crypto v1.3.0 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
@@ -53,7 +53,6 @@ require (
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/crypto v0.48.0 // indirect
-	golang.org/x/exp v0.0.0-20260218203240-3dfff04db8fa // indirect
 	golang.org/x/sys v0.41.0 // indirect
 	golang.org/x/term v0.40.0 // indirect
 	golang.org/x/text v0.34.0 // indirect
