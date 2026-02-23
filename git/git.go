@@ -5,8 +5,10 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"iter"
 	"os"
 	"os/exec"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -67,6 +69,18 @@ func Status(ctx context.Context, opts StatusOptions) []RepoStatus {
 
 	wg.Wait()
 	return results
+}
+
+// StatusIter returns an iterator over git status for multiple repositories.
+func StatusIter(ctx context.Context, opts StatusOptions) iter.Seq[RepoStatus] {
+	return func(yield func(RepoStatus) bool) {
+		results := Status(ctx, opts)
+		for _, r := range results {
+			if !yield(r) {
+				return
+			}
+		}
+	}
 }
 
 // getStatus gets the git status for a single repository.
@@ -197,30 +211,35 @@ type PushResult struct {
 // PushMultiple pushes multiple repositories sequentially.
 // Sequential because SSH passphrase prompts need user interaction.
 func PushMultiple(ctx context.Context, paths []string, names map[string]string) []PushResult {
-	results := make([]PushResult, len(paths))
+	return slices.Collect(PushMultipleIter(ctx, paths, names))
+}
 
-	for i, path := range paths {
-		name := names[path]
-		if name == "" {
-			name = path
+// PushMultipleIter returns an iterator that pushes repositories sequentially and yields results.
+func PushMultipleIter(ctx context.Context, paths []string, names map[string]string) iter.Seq[PushResult] {
+	return func(yield func(PushResult) bool) {
+		for _, path := range paths {
+			name := names[path]
+			if name == "" {
+				name = path
+			}
+
+			result := PushResult{
+				Name: name,
+				Path: path,
+			}
+
+			err := Push(ctx, path)
+			if err != nil {
+				result.Error = err
+			} else {
+				result.Success = true
+			}
+
+			if !yield(result) {
+				return
+			}
 		}
-
-		result := PushResult{
-			Name: name,
-			Path: path,
-		}
-
-		err := Push(ctx, path)
-		if err != nil {
-			result.Error = err
-		} else {
-			result.Success = true
-		}
-
-		results[i] = result
 	}
-
-	return results
 }
 
 // gitCommand runs a git command and returns stdout.

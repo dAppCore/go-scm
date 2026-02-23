@@ -26,7 +26,7 @@ func (m *mockCollector) Collect(ctx context.Context, cfg *Config) (*Result, erro
 	}
 
 	result := &Result{Source: m.name, Items: m.items}
-	for i := 0; i < m.items; i++ {
+	for i := range m.items {
 		result.Files = append(result.Files, fmt.Sprintf("/output/%s/%d.md", m.name, i))
 	}
 

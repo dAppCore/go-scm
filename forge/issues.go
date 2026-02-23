@@ -1,6 +1,8 @@
 package forge
 
 import (
+	"iter"
+
 	forgejo "codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2"
 
 	"forge.lthn.ai/core/go/pkg/log"
@@ -121,6 +123,40 @@ func (c *Client) ListPullRequests(owner, repo string, state string) ([]*forgejo.
 	}
 
 	return all, nil
+}
+
+// ListPullRequestsIter returns an iterator over pull requests for the given repository.
+func (c *Client) ListPullRequestsIter(owner, repo string, state string) iter.Seq2[*forgejo.PullRequest, error] {
+	st := forgejo.StateOpen
+	switch state {
+	case "closed":
+		st = forgejo.StateClosed
+	case "all":
+		st = forgejo.StateAll
+	}
+
+	return func(yield func(*forgejo.PullRequest, error) bool) {
+		page := 1
+		for {
+			prs, resp, err := c.api.ListRepoPullRequests(owner, repo, forgejo.ListPullRequestsOptions{
+				ListOptions: forgejo.ListOptions{Page: page, PageSize: 50},
+				State:       st,
+			})
+			if err != nil {
+				yield(nil, log.E("forge.ListPullRequests", "failed to list pull requests", err))
+				return
+			}
+			for _, pr := range prs {
+				if !yield(pr, nil) {
+					return
+				}
+			}
+			if resp == nil || page >= resp.LastPage {
+				break
+			}
+			page++
+		}
+	}
 }
 
 // GetPullRequest returns a single pull request by number.

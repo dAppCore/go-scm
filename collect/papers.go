@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/xml"
 	"fmt"
+	"iter"
 	"net/http"
 	"net/url"
 	"path/filepath"
@@ -289,26 +290,38 @@ func arxivEntryToPaper(entry arxivEntry) paper {
 // extractIACRPapers extracts paper metadata from an IACR search results page.
 func extractIACRPapers(doc *html.Node) []paper {
 	var papers []paper
-	var walk func(*html.Node)
+	for p := range extractIACRPapersIter(doc) {
+		papers = append(papers, p)
+	}
+	return papers
+}
 
-	walk = func(n *html.Node) {
-		if n.Type == html.ElementNode && n.Data == "div" {
-			for _, attr := range n.Attr {
-				if attr.Key == "class" && strings.Contains(attr.Val, "paperentry") {
-					ppr := parseIACREntry(n)
-					if ppr.Title != "" {
-						papers = append(papers, ppr)
+// extractIACRPapersIter returns an iterator over paper metadata extracted from an IACR search results page.
+func extractIACRPapersIter(doc *html.Node) iter.Seq[paper] {
+	return func(yield func(paper) bool) {
+		var walk func(*html.Node) bool
+		walk = func(n *html.Node) bool {
+			if n.Type == html.ElementNode && n.Data == "div" {
+				for _, attr := range n.Attr {
+					if attr.Key == "class" && strings.Contains(attr.Val, "paperentry") {
+						ppr := parseIACREntry(n)
+						if ppr.Title != "" {
+							if !yield(ppr) {
+								return false
+							}
+						}
 					}
 				}
 			}
+			for c := n.FirstChild; c != nil; c = c.NextSibling {
+				if !walk(c) {
+					return false
+				}
+			}
+			return true
 		}
-		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			walk(c)
-		}
+		walk(doc)
 	}
-
-	walk(doc)
-	return papers
 }
 
 // parseIACREntry extracts paper data from an IACR paper entry div.

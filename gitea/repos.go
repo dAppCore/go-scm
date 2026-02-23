@@ -1,6 +1,8 @@
 package gitea
 
 import (
+	"iter"
+
 	"code.gitea.io/sdk/gitea"
 
 	"forge.lthn.ai/core/go/pkg/log"
@@ -30,6 +32,31 @@ func (c *Client) ListOrgRepos(org string) ([]*gitea.Repository, error) {
 	return all, nil
 }
 
+// ListOrgReposIter returns an iterator over repositories for the given organisation.
+func (c *Client) ListOrgReposIter(org string) iter.Seq2[*gitea.Repository, error] {
+	return func(yield func(*gitea.Repository, error) bool) {
+		page := 1
+		for {
+			repos, resp, err := c.api.ListOrgRepos(org, gitea.ListOrgReposOptions{
+				ListOptions: gitea.ListOptions{Page: page, PageSize: 50},
+			})
+			if err != nil {
+				yield(nil, log.E("gitea.ListOrgRepos", "failed to list org repos", err))
+				return
+			}
+			for _, repo := range repos {
+				if !yield(repo, nil) {
+					return
+				}
+			}
+			if resp == nil || page >= resp.LastPage {
+				break
+			}
+			page++
+		}
+	}
+}
+
 // ListUserRepos returns all repositories for the authenticated user.
 func (c *Client) ListUserRepos() ([]*gitea.Repository, error) {
 	var all []*gitea.Repository
@@ -52,6 +79,31 @@ func (c *Client) ListUserRepos() ([]*gitea.Repository, error) {
 	}
 
 	return all, nil
+}
+
+// ListUserReposIter returns an iterator over repositories for the authenticated user.
+func (c *Client) ListUserReposIter() iter.Seq2[*gitea.Repository, error] {
+	return func(yield func(*gitea.Repository, error) bool) {
+		page := 1
+		for {
+			repos, resp, err := c.api.ListMyRepos(gitea.ListReposOptions{
+				ListOptions: gitea.ListOptions{Page: page, PageSize: 50},
+			})
+			if err != nil {
+				yield(nil, log.E("gitea.ListUserRepos", "failed to list user repos", err))
+				return
+			}
+			for _, repo := range repos {
+				if !yield(repo, nil) {
+					return
+				}
+			}
+			if resp == nil || page >= resp.LastPage {
+				break
+			}
+			page++
+		}
+	}
 }
 
 // GetRepo returns a single repository by owner and name.

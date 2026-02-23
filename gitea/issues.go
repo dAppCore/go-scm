@@ -1,6 +1,8 @@
 package gitea
 
 import (
+	"iter"
+
 	"code.gitea.io/sdk/gitea"
 
 	"forge.lthn.ai/core/go/pkg/log"
@@ -96,6 +98,40 @@ func (c *Client) ListPullRequests(owner, repo string, state string) ([]*gitea.Pu
 	}
 
 	return all, nil
+}
+
+// ListPullRequestsIter returns an iterator over pull requests for the given repository.
+func (c *Client) ListPullRequestsIter(owner, repo string, state string) iter.Seq2[*gitea.PullRequest, error] {
+	st := gitea.StateOpen
+	switch state {
+	case "closed":
+		st = gitea.StateClosed
+	case "all":
+		st = gitea.StateAll
+	}
+
+	return func(yield func(*gitea.PullRequest, error) bool) {
+		page := 1
+		for {
+			prs, resp, err := c.api.ListRepoPullRequests(owner, repo, gitea.ListPullRequestsOptions{
+				ListOptions: gitea.ListOptions{Page: page, PageSize: 50},
+				State:       st,
+			})
+			if err != nil {
+				yield(nil, log.E("gitea.ListPullRequests", "failed to list pull requests", err))
+				return
+			}
+			for _, pr := range prs {
+				if !yield(pr, nil) {
+					return
+				}
+			}
+			if resp == nil || page >= resp.LastPage {
+				break
+			}
+			page++
+		}
+	}
 }
 
 // GetPullRequest returns a single pull request by number.

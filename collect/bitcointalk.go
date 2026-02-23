@@ -3,6 +3,7 @@ package collect
 import (
 	"context"
 	"fmt"
+	"iter"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -172,26 +173,38 @@ func (b *BitcoinTalkCollector) fetchPage(ctx context.Context, pageURL string) ([
 // It looks for the common BitcoinTalk post structure using div.post elements.
 func extractPosts(doc *html.Node) []btPost {
 	var posts []btPost
-	var walk func(*html.Node)
+	for p := range extractPostsIter(doc) {
+		posts = append(posts, p)
+	}
+	return posts
+}
 
-	walk = func(n *html.Node) {
-		if n.Type == html.ElementNode && n.Data == "div" {
-			for _, attr := range n.Attr {
-				if attr.Key == "class" && strings.Contains(attr.Val, "post") {
-					post := parsePost(n)
-					if post.Content != "" {
-						posts = append(posts, post)
+// extractPostsIter returns an iterator over post data extracted from a parsed HTML document.
+func extractPostsIter(doc *html.Node) iter.Seq[btPost] {
+	return func(yield func(btPost) bool) {
+		var walk func(*html.Node) bool
+		walk = func(n *html.Node) bool {
+			if n.Type == html.ElementNode && n.Data == "div" {
+				for _, attr := range n.Attr {
+					if attr.Key == "class" && strings.Contains(attr.Val, "post") {
+						post := parsePost(n)
+						if post.Content != "" {
+							if !yield(post) {
+								return false
+							}
+						}
 					}
 				}
 			}
+			for c := n.FirstChild; c != nil; c = c.NextSibling {
+				if !walk(c) {
+					return false
+				}
+			}
+			return true
 		}
-		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			walk(c)
-		}
+		walk(doc)
 	}
-
-	walk(doc)
-	return posts
 }
 
 // parsePost extracts author, date, and content from a post div.

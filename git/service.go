@@ -2,6 +2,8 @@ package git
 
 import (
 	"context"
+	"iter"
+	"slices"
 
 	"forge.lthn.ai/core/go/pkg/framework"
 )
@@ -103,6 +105,11 @@ func (s *Service) handleTask(c *framework.Core, t framework.Task) (any, bool, er
 // Status returns last status result.
 func (s *Service) Status() []RepoStatus { return s.lastStatus }
 
+// StatusIter returns an iterator over last status result.
+func (s *Service) StatusIter() iter.Seq[RepoStatus] {
+	return slices.Values(s.lastStatus)
+}
+
 // DirtyRepos returns repos with uncommitted changes.
 func (s *Service) DirtyRepos() []RepoStatus {
 	var dirty []RepoStatus
@@ -114,6 +121,19 @@ func (s *Service) DirtyRepos() []RepoStatus {
 	return dirty
 }
 
+// DirtyReposIter returns an iterator over repos with uncommitted changes.
+func (s *Service) DirtyReposIter() iter.Seq[RepoStatus] {
+	return func(yield func(RepoStatus) bool) {
+		for _, st := range s.lastStatus {
+			if st.Error == nil && st.IsDirty() {
+				if !yield(st) {
+					return
+				}
+			}
+		}
+	}
+}
+
 // AheadRepos returns repos with unpushed commits.
 func (s *Service) AheadRepos() []RepoStatus {
 	var ahead []RepoStatus
@@ -123,4 +143,17 @@ func (s *Service) AheadRepos() []RepoStatus {
 		}
 	}
 	return ahead
+}
+
+// AheadReposIter returns an iterator over repos with unpushed commits.
+func (s *Service) AheadReposIter() iter.Seq[RepoStatus] {
+	return func(yield func(RepoStatus) bool) {
+		for _, st := range s.lastStatus {
+			if st.Error == nil && st.HasUnpushed() {
+				if !yield(st) {
+					return
+				}
+			}
+		}
+	}
 }

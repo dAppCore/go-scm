@@ -4,8 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"path/filepath"
-	"sort"
+	"slices"
 	"strings"
 
 	core "forge.lthn.ai/core/go/pkg/framework/core"
@@ -301,12 +302,7 @@ func jsonToMarkdown(content string) (string, error) {
 func jsonValueToMarkdown(b *strings.Builder, data any, depth int) {
 	switch v := data.(type) {
 	case map[string]any:
-		keys := make([]string, 0, len(v))
-		for key := range v {
-			keys = append(keys, key)
-		}
-		sort.Strings(keys)
-		for _, key := range keys {
+		for _, key := range slices.Sorted(maps.Keys(v)) {
 			val := v[key]
 			indent := strings.Repeat("  ", depth)
 			switch child := val.(type) {
