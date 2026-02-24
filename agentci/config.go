@@ -2,6 +2,7 @@
 package agentci
 
 import (
+	"errors"
 	"fmt"
 
 	"forge.lthn.ai/core/go/pkg/config"
@@ -125,7 +126,7 @@ func SaveAgent(cfg *config.Config, name string, ac AgentConfig) error {
 func RemoveAgent(cfg *config.Config, name string) error {
 	var agents map[string]AgentConfig
 	if err := cfg.Get("agentci.agents", &agents); err != nil {
-		return fmt.Errorf("no agents configured")
+		return errors.New("no agents configured")
 	}
 	if _, ok := agents[name]; !ok {
 		return fmt.Errorf("agent %q not found", name)

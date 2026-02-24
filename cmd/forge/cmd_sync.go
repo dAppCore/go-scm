@@ -306,7 +306,7 @@ func syncPushUpstream(localPath, defaultBranch string) error {
 	cmd := exec.Command("git", "-C", localPath, "push", "--force", "forge", refspec)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("%s", strings.TrimSpace(string(output)))
+		return fmt.Errorf("%s: %w", strings.TrimSpace(string(output)), err)
 	}
 
 	return nil
@@ -316,7 +316,7 @@ func syncGitFetch(localPath, remote string) error {
 	cmd := exec.Command("git", "-C", localPath, "fetch", remote)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("%s", strings.TrimSpace(string(output)))
+		return fmt.Errorf("%s: %w", strings.TrimSpace(string(output)), err)
 	}
 	return nil
 }

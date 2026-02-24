@@ -2,6 +2,7 @@ package jobrunner
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -52,7 +53,7 @@ type Journal struct {
 // NewJournal creates a new Journal rooted at baseDir.
 func NewJournal(baseDir string) (*Journal, error) {
 	if baseDir == "" {
-		return nil, fmt.Errorf("journal base directory is required")
+		return nil, errors.New("journal base directory is required")
 	}
 	return &Journal{baseDir: baseDir}, nil
 }
@@ -90,10 +91,10 @@ func sanitizePathComponent(name string) (string, error) {
 // Append writes a journal entry for the given signal and result.
 func (j *Journal) Append(signal *PipelineSignal, result *ActionResult) error {
 	if signal == nil {
-		return fmt.Errorf("signal is required")
+		return errors.New("signal is required")
 	}
 	if result == nil {
-		return fmt.Errorf("result is required")
+		return errors.New("result is required")
 	}
 
 	entry := JournalEntry{
