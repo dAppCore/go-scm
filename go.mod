@@ -6,16 +6,17 @@ require (
 	code.gitea.io/sdk/gitea v0.23.2
 	codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2 v2.2.0
 	forge.lthn.ai/core/cli v0.1.0
-	forge.lthn.ai/core/go v0.1.0
 	forge.lthn.ai/core/go-config v0.1.0
 	forge.lthn.ai/core/go-i18n v0.1.0
-	forge.lthn.ai/core/go-io v0.0.1
+	forge.lthn.ai/core/go-io v0.0.3
 	forge.lthn.ai/core/go-log v0.0.1
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/net v0.50.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
+	forge.lthn.ai/core/go v0.1.0 // indirect
 	forge.lthn.ai/core/go-crypt v0.1.0 // indirect
 	forge.lthn.ai/core/go-inference v0.0.2 // indirect
 	github.com/42wim/httpsig v1.2.3 // indirect
@@ -61,5 +62,4 @@ require (
 	golang.org/x/sys v0.41.0 // indirect
 	golang.org/x/term v0.40.0 // indirect
 	golang.org/x/text v0.34.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
