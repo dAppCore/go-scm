@@ -7,6 +7,7 @@ require (
 	codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2 v2.2.0
 	forge.lthn.ai/core/cli v0.1.0
 	forge.lthn.ai/core/go v0.1.0
+	forge.lthn.ai/core/go-config v0.1.0
 	forge.lthn.ai/core/go-i18n v0.1.0
 	forge.lthn.ai/core/go-io v0.0.1
 	forge.lthn.ai/core/go-log v0.0.1

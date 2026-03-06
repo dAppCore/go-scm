@@ -3,7 +3,7 @@ package agentci
 import (
 	"testing"
 
-	"forge.lthn.ai/core/go/pkg/config"
+	"forge.lthn.ai/core/go-config"
 	"forge.lthn.ai/core/go-io"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
