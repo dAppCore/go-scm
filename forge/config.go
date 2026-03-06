@@ -4,7 +4,7 @@ import (
 	"os"
 
 	"forge.lthn.ai/core/go/pkg/config"
-	"forge.lthn.ai/core/go/pkg/log"
+	"forge.lthn.ai/core/go-log"
 )
 
 const (

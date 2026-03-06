@@ -7,12 +7,16 @@ require (
 	codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2 v2.2.0
 	forge.lthn.ai/core/cli v0.1.0
 	forge.lthn.ai/core/go v0.1.0
+	forge.lthn.ai/core/go-i18n v0.1.0
+	forge.lthn.ai/core/go-io v0.0.1
+	forge.lthn.ai/core/go-log v0.0.1
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/net v0.50.0
 )
 
 require (
 	forge.lthn.ai/core/go-crypt v0.1.0 // indirect
+	forge.lthn.ai/core/go-inference v0.0.2 // indirect
 	github.com/42wim/httpsig v1.2.3 // indirect
 	github.com/ProtonMail/go-crypto v1.3.0 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect

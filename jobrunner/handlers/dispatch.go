@@ -11,7 +11,7 @@ import (
 	"forge.lthn.ai/core/go-scm/agentci"
 	"forge.lthn.ai/core/go-scm/forge"
 	"forge.lthn.ai/core/go-scm/jobrunner"
-	"forge.lthn.ai/core/go/pkg/log"
+	"forge.lthn.ai/core/go-log"
 )
 
 const (

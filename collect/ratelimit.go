@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	core "forge.lthn.ai/core/go/pkg/framework/core"
+	core "forge.lthn.ai/core/go-log"
 )
 
 // RateLimiter tracks per-source rate limiting to avoid overwhelming APIs.

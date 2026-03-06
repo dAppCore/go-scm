@@ -11,7 +11,7 @@ package forge
 import (
 	forgejo "codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2"
 
-	"forge.lthn.ai/core/go/pkg/log"
+	"forge.lthn.ai/core/go-log"
 )
 
 // Client wraps the Forgejo SDK client with config-based auth.

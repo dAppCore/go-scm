@@ -5,8 +5,8 @@ import (
 	"sync"
 	"time"
 
-	core "forge.lthn.ai/core/go/pkg/framework/core"
-	"forge.lthn.ai/core/go/pkg/io"
+	core "forge.lthn.ai/core/go-log"
+	"forge.lthn.ai/core/go-io"
 )
 
 // State tracks collection progress for incremental runs.

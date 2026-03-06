@@ -5,7 +5,7 @@ import (
 
 	"code.gitea.io/sdk/gitea"
 
-	"forge.lthn.ai/core/go/pkg/log"
+	"forge.lthn.ai/core/go-log"
 )
 
 // PRMeta holds structural signals from a pull request,

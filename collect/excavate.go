@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	core "forge.lthn.ai/core/go/pkg/framework/core"
+	core "forge.lthn.ai/core/go-log"
 )
 
 // Excavator runs multiple collectors as a coordinated operation.
