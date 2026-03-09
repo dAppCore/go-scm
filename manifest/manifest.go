@@ -6,25 +6,35 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Manifest represents a .core/view.yml application manifest.
+// Manifest represents a .core/manifest.yaml application manifest.
 type Manifest struct {
-	Code    string            `yaml:"code"`
-	Name    string            `yaml:"name"`
-	Version string            `yaml:"version"`
-	Sign    string            `yaml:"sign"`
-	Layout  string            `yaml:"layout"`
-	Slots   map[string]string `yaml:"slots"`
+	Code        string            `yaml:"code" json:"code"`
+	Name        string            `yaml:"name" json:"name"`
+	Description string            `yaml:"description,omitempty" json:"description,omitempty"`
+	Version     string            `yaml:"version" json:"version"`
+	Sign        string            `yaml:"sign,omitempty" json:"sign,omitempty"`
+	Layout      string            `yaml:"layout,omitempty" json:"layout,omitempty"`
+	Slots       map[string]string `yaml:"slots,omitempty" json:"slots,omitempty"`
 
-	Permissions Permissions `yaml:"permissions"`
-	Modules     []string    `yaml:"modules"`
+	Permissions Permissions            `yaml:"permissions,omitempty" json:"permissions,omitempty"`
+	Modules     []string               `yaml:"modules,omitempty" json:"modules,omitempty"`
+	Daemons     map[string]DaemonSpec  `yaml:"daemons,omitempty" json:"daemons,omitempty"`
 }
 
 // Permissions declares the I/O capabilities a module requires.
 type Permissions struct {
-	Read  []string `yaml:"read"`
-	Write []string `yaml:"write"`
-	Net   []string `yaml:"net"`
-	Run   []string `yaml:"run"`
+	Read  []string `yaml:"read" json:"read"`
+	Write []string `yaml:"write" json:"write"`
+	Net   []string `yaml:"net" json:"net"`
+	Run   []string `yaml:"run" json:"run"`
+}
+
+// DaemonSpec describes a long-running process managed by the runtime.
+type DaemonSpec struct {
+	Binary  string   `yaml:"binary,omitempty" json:"binary,omitempty"`
+	Args    []string `yaml:"args,omitempty" json:"args,omitempty"`
+	Health  string   `yaml:"health,omitempty" json:"health,omitempty"`
+	Default bool     `yaml:"default,omitempty" json:"default,omitempty"`
 }
 
 // Parse decodes YAML bytes into a Manifest.
@@ -47,4 +57,29 @@ func (m *Manifest) SlotNames() []string {
 		}
 	}
 	return names
+}
+
+// DefaultDaemon returns the name, spec, and true for the default daemon.
+// A daemon is the default if it has Default:true, or if it is the only daemon
+// in the map. Returns empty values and false if no default can be determined.
+func (m *Manifest) DefaultDaemon() (string, DaemonSpec, bool) {
+	if len(m.Daemons) == 0 {
+		return "", DaemonSpec{}, false
+	}
+
+	// Look for an explicit default.
+	for name, spec := range m.Daemons {
+		if spec.Default {
+			return name, spec, true
+		}
+	}
+
+	// If exactly one daemon exists, treat it as the implicit default.
+	if len(m.Daemons) == 1 {
+		for name, spec := range m.Daemons {
+			return name, spec, true
+		}
+	}
+
+	return "", DaemonSpec{}, false
 }

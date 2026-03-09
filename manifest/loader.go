@@ -9,14 +9,14 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-const manifestPath = ".core/view.yml"
+const manifestPath = ".core/manifest.yaml"
 
 // MarshalYAML serializes a manifest to YAML bytes.
 func MarshalYAML(m *Manifest) ([]byte, error) {
 	return yaml.Marshal(m)
 }
 
-// Load reads and parses a .core/view.yml from the given root directory.
+// Load reads and parses a .core/manifest.yaml from the given root directory.
 func Load(medium io.Medium, root string) (*Manifest, error) {
 	path := filepath.Join(root, manifestPath)
 	data, err := medium.Read(path)

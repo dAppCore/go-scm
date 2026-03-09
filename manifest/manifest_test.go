@@ -63,3 +63,87 @@ func TestManifest_SlotNames_Good(t *testing.T) {
 	assert.Contains(t, names, "main-content")
 	assert.Len(t, names, 2)
 }
+
+func TestParse_Good_WithDaemons(t *testing.T) {
+	raw := `
+code: my-service
+name: My Service
+description: A test service with daemons
+version: 1.0.0
+
+daemons:
+  api:
+    binary: ./bin/api
+    args: ["--port", "8080"]
+    health: /healthz
+    default: true
+  worker:
+    binary: ./bin/worker
+    args: ["--concurrency", "4"]
+    health: /ready
+`
+	m, err := Parse([]byte(raw))
+	require.NoError(t, err)
+	assert.Equal(t, "my-service", m.Code)
+	assert.Equal(t, "My Service", m.Name)
+	assert.Equal(t, "A test service with daemons", m.Description)
+	assert.Equal(t, "1.0.0", m.Version)
+	assert.Len(t, m.Daemons, 2)
+
+	api, ok := m.Daemons["api"]
+	require.True(t, ok)
+	assert.Equal(t, "./bin/api", api.Binary)
+	assert.Equal(t, []string{"--port", "8080"}, api.Args)
+	assert.Equal(t, "/healthz", api.Health)
+	assert.True(t, api.Default)
+
+	worker, ok := m.Daemons["worker"]
+	require.True(t, ok)
+	assert.Equal(t, "./bin/worker", worker.Binary)
+	assert.Equal(t, []string{"--concurrency", "4"}, worker.Args)
+	assert.Equal(t, "/ready", worker.Health)
+	assert.False(t, worker.Default)
+}
+
+func TestManifest_DefaultDaemon_Good(t *testing.T) {
+	m := Manifest{
+		Daemons: map[string]DaemonSpec{
+			"api": {
+				Binary:  "./bin/api",
+				Default: true,
+			},
+			"worker": {
+				Binary: "./bin/worker",
+			},
+		},
+	}
+	name, spec, ok := m.DefaultDaemon()
+	assert.True(t, ok)
+	assert.Equal(t, "api", name)
+	assert.Equal(t, "./bin/api", spec.Binary)
+	assert.True(t, spec.Default)
+}
+
+func TestManifest_DefaultDaemon_Bad_NoDaemons(t *testing.T) {
+	m := Manifest{}
+	name, spec, ok := m.DefaultDaemon()
+	assert.False(t, ok)
+	assert.Empty(t, name)
+	assert.Empty(t, spec.Binary)
+}
+
+func TestManifest_DefaultDaemon_Good_SingleImplicit(t *testing.T) {
+	m := Manifest{
+		Daemons: map[string]DaemonSpec{
+			"server": {
+				Binary: "./bin/server",
+				Args:   []string{"--port", "3000"},
+			},
+		},
+	}
+	name, spec, ok := m.DefaultDaemon()
+	assert.True(t, ok)
+	assert.Equal(t, "server", name)
+	assert.Equal(t, "./bin/server", spec.Binary)
+	assert.False(t, spec.Default)
+}
