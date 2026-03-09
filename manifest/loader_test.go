@@ -11,7 +11,7 @@ import (
 
 func TestLoad_Good(t *testing.T) {
 	fs := io.NewMockMedium()
-	fs.Files[".core/view.yml"] = `
+	fs.Files[".core/manifest.yaml"] = `
 code: test-app
 name: Test App
 version: 1.0.0
@@ -41,7 +41,7 @@ func TestLoadVerified_Good(t *testing.T) {
 
 	raw, _ := MarshalYAML(m)
 	fs := io.NewMockMedium()
-	fs.Files[".core/view.yml"] = string(raw)
+	fs.Files[".core/manifest.yaml"] = string(raw)
 
 	loaded, err := LoadVerified(fs, ".", pub)
 	require.NoError(t, err)
@@ -56,7 +56,7 @@ func TestLoadVerified_Bad_Tampered(t *testing.T) {
 	raw, _ := MarshalYAML(m)
 	tampered := "code: evil\n" + string(raw)[6:]
 	fs := io.NewMockMedium()
-	fs.Files[".core/view.yml"] = tampered
+	fs.Files[".core/manifest.yaml"] = tampered
 
 	_, err := LoadVerified(fs, ".", pub)
 	assert.Error(t, err)
