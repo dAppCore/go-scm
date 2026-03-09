@@ -61,17 +61,28 @@ func (m *Manifest) SlotNames() []string {
 
 // DefaultDaemon returns the name, spec, and true for the default daemon.
 // A daemon is the default if it has Default:true, or if it is the only daemon
-// in the map. Returns empty values and false if no default can be determined.
+// in the map. If multiple daemons have Default:true, returns false (ambiguous).
+// Returns empty values and false if no default can be determined.
 func (m *Manifest) DefaultDaemon() (string, DaemonSpec, bool) {
 	if len(m.Daemons) == 0 {
 		return "", DaemonSpec{}, false
 	}
 
-	// Look for an explicit default.
+	// Look for an explicit default; reject ambiguous multiple defaults.
+	var defaultName string
+	var defaultSpec DaemonSpec
 	for name, spec := range m.Daemons {
 		if spec.Default {
-			return name, spec, true
+			if defaultName != "" {
+				// Multiple defaults — ambiguous.
+				return "", DaemonSpec{}, false
+			}
+			defaultName = name
+			defaultSpec = spec
 		}
+	}
+	if defaultName != "" {
+		return defaultName, defaultSpec, true
 	}
 
 	// If exactly one daemon exists, treat it as the implicit default.

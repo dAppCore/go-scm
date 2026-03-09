@@ -132,6 +132,28 @@ func TestManifest_DefaultDaemon_Bad_NoDaemons(t *testing.T) {
 	assert.Empty(t, spec.Binary)
 }
 
+func TestManifest_DefaultDaemon_Bad_MultipleDefaults(t *testing.T) {
+	m := Manifest{
+		Daemons: map[string]DaemonSpec{
+			"api":    {Binary: "./bin/api", Default: true},
+			"worker": {Binary: "./bin/worker", Default: true},
+		},
+	}
+	_, _, ok := m.DefaultDaemon()
+	assert.False(t, ok)
+}
+
+func TestManifest_DefaultDaemon_Bad_MultipleNoneDefault(t *testing.T) {
+	m := Manifest{
+		Daemons: map[string]DaemonSpec{
+			"api":    {Binary: "./bin/api"},
+			"worker": {Binary: "./bin/worker"},
+		},
+	}
+	_, _, ok := m.DefaultDaemon()
+	assert.False(t, ok)
+}
+
 func TestManifest_DefaultDaemon_Good_SingleImplicit(t *testing.T) {
 	m := Manifest{
 		Daemons: map[string]DaemonSpec{
