@@ -154,6 +154,69 @@ func TestManifest_DefaultDaemon_Bad_MultipleNoneDefault(t *testing.T) {
 	assert.False(t, ok)
 }
 
+func TestParse_Good_WithProviderFields(t *testing.T) {
+	raw := `
+code: cool-widget
+name: Cool Widget Dashboard
+version: 1.0.0
+author: someone
+licence: EUPL-1.2
+
+namespace: /api/v1/cool-widget
+port: 0
+binary: ./cool-widget
+args: ["--verbose"]
+
+element:
+  tag: core-cool-widget
+  source: ./assets/core-cool-widget.js
+
+spec: ./openapi.json
+
+layout: HCF
+slots:
+  H: toolbar
+  C: dashboard
+  F: status
+`
+	m, err := Parse([]byte(raw))
+	require.NoError(t, err)
+	assert.Equal(t, "cool-widget", m.Code)
+	assert.Equal(t, "Cool Widget Dashboard", m.Name)
+	assert.Equal(t, "1.0.0", m.Version)
+	assert.Equal(t, "someone", m.Author)
+	assert.Equal(t, "EUPL-1.2", m.Licence)
+	assert.Equal(t, "/api/v1/cool-widget", m.Namespace)
+	assert.Equal(t, 0, m.Port)
+	assert.Equal(t, "./cool-widget", m.Binary)
+	assert.Equal(t, []string{"--verbose"}, m.Args)
+	assert.Equal(t, "./openapi.json", m.Spec)
+	require.NotNil(t, m.Element)
+	assert.Equal(t, "core-cool-widget", m.Element.Tag)
+	assert.Equal(t, "./assets/core-cool-widget.js", m.Element.Source)
+	assert.True(t, m.IsProvider())
+}
+
+func TestManifest_IsProvider_Good(t *testing.T) {
+	m := Manifest{Namespace: "/api/v1/test", Binary: "./test"}
+	assert.True(t, m.IsProvider())
+}
+
+func TestManifest_IsProvider_Bad_NoNamespace(t *testing.T) {
+	m := Manifest{Binary: "./test"}
+	assert.False(t, m.IsProvider())
+}
+
+func TestManifest_IsProvider_Bad_NoBinary(t *testing.T) {
+	m := Manifest{Namespace: "/api/v1/test"}
+	assert.False(t, m.IsProvider())
+}
+
+func TestManifest_IsProvider_Bad_Empty(t *testing.T) {
+	m := Manifest{}
+	assert.False(t, m.IsProvider())
+}
+
 func TestManifest_DefaultDaemon_Good_SingleImplicit(t *testing.T) {
 	m := Manifest{
 		Daemons: map[string]DaemonSpec{

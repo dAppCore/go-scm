@@ -12,13 +12,38 @@ type Manifest struct {
 	Name        string            `yaml:"name" json:"name"`
 	Description string            `yaml:"description,omitempty" json:"description,omitempty"`
 	Version     string            `yaml:"version" json:"version"`
+	Author      string            `yaml:"author,omitempty" json:"author,omitempty"`
+	Licence     string            `yaml:"licence,omitempty" json:"licence,omitempty"`
 	Sign        string            `yaml:"sign,omitempty" json:"sign,omitempty"`
 	Layout      string            `yaml:"layout,omitempty" json:"layout,omitempty"`
 	Slots       map[string]string `yaml:"slots,omitempty" json:"slots,omitempty"`
 
+	// Provider fields — used by runtime provider loading.
+	Namespace string       `yaml:"namespace,omitempty" json:"namespace,omitempty"` // API route prefix, e.g. /api/v1/cool-widget
+	Port      int          `yaml:"port,omitempty" json:"port,omitempty"`           // Listen port (0 = auto-assign)
+	Binary    string       `yaml:"binary,omitempty" json:"binary,omitempty"`       // Path to provider binary (relative to provider dir)
+	Args      []string     `yaml:"args,omitempty" json:"args,omitempty"`           // Additional CLI args for the binary
+	Element   *ElementSpec `yaml:"element,omitempty" json:"element,omitempty"`     // Custom element for GUI rendering
+	Spec      string       `yaml:"spec,omitempty" json:"spec,omitempty"`           // Path to OpenAPI spec file
+
 	Permissions Permissions            `yaml:"permissions,omitempty" json:"permissions,omitempty"`
 	Modules     []string               `yaml:"modules,omitempty" json:"modules,omitempty"`
 	Daemons     map[string]DaemonSpec  `yaml:"daemons,omitempty" json:"daemons,omitempty"`
+}
+
+// ElementSpec describes a web component for GUI rendering.
+type ElementSpec struct {
+	// Tag is the custom element tag name, e.g. "core-cool-widget".
+	Tag string `yaml:"tag" json:"tag"`
+
+	// Source is the path to the JS bundle (relative to provider dir).
+	Source string `yaml:"source" json:"source"`
+}
+
+// IsProvider returns true if this manifest declares provider fields
+// (namespace and binary), indicating it is a runtime provider.
+func (m *Manifest) IsProvider() bool {
+	return m.Namespace != "" && m.Binary != ""
 }
 
 // Permissions declares the I/O capabilities a module requires.
