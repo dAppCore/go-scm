@@ -5,11 +5,14 @@ go 1.26.0
 require (
 	code.gitea.io/sdk/gitea v0.23.2
 	codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2 v2.2.0
+	forge.lthn.ai/core/api v0.1.0
 	forge.lthn.ai/core/cli v0.1.0
 	forge.lthn.ai/core/config v0.1.0
 	forge.lthn.ai/core/go-i18n v0.1.0
 	forge.lthn.ai/core/go-io v0.0.3
 	forge.lthn.ai/core/go-log v0.0.1
+	forge.lthn.ai/core/go-ws v0.1.0
+	github.com/gin-gonic/gin v1.11.0
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/net v0.50.0
 	gopkg.in/yaml.v3 v3.0.1
