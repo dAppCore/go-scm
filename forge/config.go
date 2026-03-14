@@ -3,7 +3,7 @@ package forge
 import (
 	"os"
 
-	"forge.lthn.ai/core/go-config"
+	"forge.lthn.ai/core/config"
 	"forge.lthn.ai/core/go-log"
 )
 

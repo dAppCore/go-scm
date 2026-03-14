@@ -117,7 +117,7 @@ result, err := excavator.Run(ctx, cfg)
 | `codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2` | Forgejo API SDK |
 | `code.gitea.io/sdk/gitea` | Gitea API SDK |
 | `forge.lthn.ai/core/cli` | CLI framework (Cobra, TUI) |
-| `forge.lthn.ai/core/go-config` | Layered config (`~/.core/config.yaml`) |
+| `forge.lthn.ai/core/config` | Layered config (`~/.core/config.yaml`) |
 | `forge.lthn.ai/core/go-io` | Filesystem abstraction (Medium, Sandbox, Store) |
 | `forge.lthn.ai/core/go-log` | Structured logging and contextual error helper |
 | `forge.lthn.ai/core/go-i18n` | Internationalisation |
@@ -127,7 +127,7 @@ result, err := excavator.Run(ctx, cfg)
 
 ### Indirect
 
-The module transitively pulls in `forge.lthn.ai/core/go` (DI framework) via `go-config`, plus `spf13/viper`, `spf13/cobra`, Charmbracelet TUI libraries, and Go standard library extensions.
+The module transitively pulls in `forge.lthn.ai/core/go` (DI framework) via `config`, plus `spf13/viper`, `spf13/cobra`, Charmbracelet TUI libraries, and Go standard library extensions.
 
 ## Configuration
 

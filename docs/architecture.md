@@ -510,7 +510,7 @@ defaults:
 repos:
   go-scm:
     type: module
-    depends_on: [go-io, go-log, go-config]
+    depends_on: [go-io, go-log, config]
     description: SCM integration
   go-ai:
     type: module

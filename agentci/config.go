@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"forge.lthn.ai/core/go-config"
+	"forge.lthn.ai/core/config"
 )
 
 // AgentConfig represents a single agent machine in the config file.

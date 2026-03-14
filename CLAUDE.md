@@ -48,7 +48,7 @@ Use a Go workspace file (preferred over `replace` directives):
 // ~/Code/go.work — includes all forge.lthn.ai/core/* modules
 ```
 
-Key dependencies: `core/go` (DI framework), `core/go-io` (filesystem abstraction), `core/go-log`, `core/go-config`, `core/go-i18n`, `core/go-crypt`.
+Key dependencies: `core/go` (DI framework), `core/go-io` (filesystem abstraction), `core/go-log`, `core/config`, `core/go-i18n`, `core/go-crypt`.
 
 ## Test Patterns
 

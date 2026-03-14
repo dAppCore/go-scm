@@ -106,7 +106,7 @@ use (
     ./core/go
     ./core/go-io
     ./core/go-log
-    ./core/go-config
+    ./core/config
     ./core/go-scm
     ./core/go-i18n
     ./core/go-crypt
