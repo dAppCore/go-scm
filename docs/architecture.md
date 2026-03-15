@@ -621,7 +621,7 @@ byCategory := index.ByCategory("monitoring")
 mod, found := index.Find("my-module")
 
 // Installation
-installer := marketplace.NewInstaller("/path/to/modules", store)
+installer := marketplace.NewInstaller(medium, "/path/to/modules", store)
 installer.Install(ctx, mod)     // Clone, verify manifest, register
 installer.Update(ctx, "code")   // Pull, re-verify, update metadata
 installer.Remove("code")        // Delete files and store entry

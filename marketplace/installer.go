@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -20,13 +19,15 @@ const storeGroup = "_modules"
 
 // Installer handles module installation from Git repos.
 type Installer struct {
+	medium     io.Medium
 	modulesDir string
 	store      *store.Store
 }
 
 // NewInstaller creates a new module installer.
-func NewInstaller(modulesDir string, st *store.Store) *Installer {
+func NewInstaller(m io.Medium, modulesDir string, st *store.Store) *Installer {
 	return &Installer{
+		medium:     m,
 		modulesDir: modulesDir,
 		store:      st,
 	}
@@ -52,7 +53,7 @@ func (i *Installer) Install(ctx context.Context, mod Module) error {
 	}
 
 	dest := filepath.Join(i.modulesDir, mod.Code)
-	if err := os.MkdirAll(i.modulesDir, 0755); err != nil {
+	if err := i.medium.EnsureDir(i.modulesDir); err != nil {
 		return fmt.Errorf("marketplace: mkdir: %w", err)
 	}
 	if err := gitClone(ctx, mod.Repo, dest); err != nil {
@@ -63,7 +64,7 @@ func (i *Installer) Install(ctx context.Context, mod Module) error {
 	cleanup := true
 	defer func() {
 		if cleanup {
-			os.RemoveAll(dest)
+			_ = i.medium.DeleteAll(dest)
 		}
 	}()
 
@@ -109,7 +110,7 @@ func (i *Installer) Remove(code string) error {
 	}
 
 	dest := filepath.Join(i.modulesDir, code)
-	os.RemoveAll(dest)
+	_ = i.medium.DeleteAll(dest)
 
 	return i.store.Delete(storeGroup, code)
 }
