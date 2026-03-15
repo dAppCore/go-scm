@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"forge.lthn.ai/core/go-io"
 	"forge.lthn.ai/core/go-scm/manifest"
 	"forge.lthn.ai/core/go-io/store"
 	"github.com/stretchr/testify/assert"
@@ -24,7 +25,7 @@ func createTestRepo(t *testing.T, code, version string) string {
 
 	manifestYAML := "code: " + code + "\nname: Test " + code + "\nversion: \"" + version + "\"\n"
 	require.NoError(t, os.WriteFile(
-		filepath.Join(dir, ".core", "view.yml"),
+		filepath.Join(dir, ".core", "manifest.yaml"),
 		[]byte(manifestYAML), 0644,
 	))
 	require.NoError(t, os.WriteFile(
@@ -33,7 +34,7 @@ func createTestRepo(t *testing.T, code, version string) string {
 	))
 
 	runGit(t, dir, "init")
-	runGit(t, dir, "add", ".")
+	runGit(t, dir, "add", "--force", ".")
 	runGit(t, dir, "commit", "-m", "init")
 	return dir
 }
@@ -57,11 +58,11 @@ func createSignedTestRepo(t *testing.T, code, version string) (string, string) {
 
 	data, err := manifest.MarshalYAML(m)
 	require.NoError(t, err)
-	require.NoError(t, os.WriteFile(filepath.Join(dir, ".core", "view.yml"), data, 0644))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, ".core", "manifest.yaml"), data, 0644))
 	require.NoError(t, os.WriteFile(filepath.Join(dir, "main.ts"), []byte("export async function init(core: any) {}\n"), 0644))
 
 	runGit(t, dir, "init")
-	runGit(t, dir, "add", ".")
+	runGit(t, dir, "add", "--force", ".")
 	runGit(t, dir, "commit", "-m", "init")
 
 	return dir, hex.EncodeToString(pub)
@@ -82,7 +83,7 @@ func TestInstall_Good(t *testing.T) {
 	require.NoError(t, err)
 	defer st.Close()
 
-	inst := NewInstaller(modulesDir, st)
+	inst := NewInstaller(io.Local, modulesDir, st)
 	err = inst.Install(context.Background(), Module{
 		Code: "hello-mod",
 		Repo: repo,
@@ -108,7 +109,7 @@ func TestInstall_Good_Signed(t *testing.T) {
 	require.NoError(t, err)
 	defer st.Close()
 
-	inst := NewInstaller(modulesDir, st)
+	inst := NewInstaller(io.Local, modulesDir, st)
 	err = inst.Install(context.Background(), Module{
 		Code:    "signed-mod",
 		Repo:    repo,
@@ -129,7 +130,7 @@ func TestInstall_Bad_AlreadyInstalled(t *testing.T) {
 	require.NoError(t, err)
 	defer st.Close()
 
-	inst := NewInstaller(modulesDir, st)
+	inst := NewInstaller(io.Local, modulesDir, st)
 	mod := Module{Code: "dup-mod", Repo: repo}
 
 	require.NoError(t, inst.Install(context.Background(), mod))
@@ -149,7 +150,7 @@ func TestInstall_Bad_InvalidSignature(t *testing.T) {
 	require.NoError(t, err)
 	defer st.Close()
 
-	inst := NewInstaller(modulesDir, st)
+	inst := NewInstaller(io.Local, modulesDir, st)
 	err = inst.Install(context.Background(), Module{
 		Code:    "bad-sig",
 		Repo:    repo,
@@ -170,7 +171,7 @@ func TestRemove_Good(t *testing.T) {
 	require.NoError(t, err)
 	defer st.Close()
 
-	inst := NewInstaller(modulesDir, st)
+	inst := NewInstaller(io.Local, modulesDir, st)
 	require.NoError(t, inst.Install(context.Background(), Module{Code: "rm-mod", Repo: repo}))
 
 	err = inst.Remove("rm-mod")
@@ -190,7 +191,7 @@ func TestRemove_Bad_NotInstalled(t *testing.T) {
 	require.NoError(t, err)
 	defer st.Close()
 
-	inst := NewInstaller(t.TempDir(), st)
+	inst := NewInstaller(io.Local, t.TempDir(), st)
 	err = inst.Remove("nonexistent")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "not installed")
@@ -203,7 +204,7 @@ func TestInstalled_Good(t *testing.T) {
 	require.NoError(t, err)
 	defer st.Close()
 
-	inst := NewInstaller(modulesDir, st)
+	inst := NewInstaller(io.Local, modulesDir, st)
 
 	repo1 := createTestRepo(t, "mod-a", "1.0")
 	repo2 := createTestRepo(t, "mod-b", "2.0")
@@ -228,7 +229,7 @@ func TestInstalled_Good_Empty(t *testing.T) {
 	require.NoError(t, err)
 	defer st.Close()
 
-	inst := NewInstaller(t.TempDir(), st)
+	inst := NewInstaller(io.Local, t.TempDir(), st)
 	installed, err := inst.Installed()
 	require.NoError(t, err)
 	assert.Empty(t, installed)
@@ -242,12 +243,12 @@ func TestUpdate_Good(t *testing.T) {
 	require.NoError(t, err)
 	defer st.Close()
 
-	inst := NewInstaller(modulesDir, st)
+	inst := NewInstaller(io.Local, modulesDir, st)
 	require.NoError(t, inst.Install(context.Background(), Module{Code: "upd-mod", Repo: repo}))
 
 	// Update the origin repo
 	newManifest := "code: upd-mod\nname: Updated Module\nversion: \"2.0\"\n"
-	require.NoError(t, os.WriteFile(filepath.Join(repo, ".core", "view.yml"), []byte(newManifest), 0644))
+	require.NoError(t, os.WriteFile(filepath.Join(repo, ".core", "manifest.yaml"), []byte(newManifest), 0644))
 	runGit(t, repo, "add", ".")
 	runGit(t, repo, "commit", "-m", "bump version")
 
