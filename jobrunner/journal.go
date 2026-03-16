@@ -9,6 +9,8 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+
+	coreio "forge.lthn.ai/core/go-io"
 )
 
 // validPathComponent matches safe repo owner/name characters (alphanumeric, hyphen, underscore, dot).
@@ -155,7 +157,7 @@ func (j *Journal) Append(signal *PipelineSignal, result *ActionResult) error {
 	j.mu.Lock()
 	defer j.mu.Unlock()
 
-	if err := os.MkdirAll(dir, 0o755); err != nil {
+	if err := coreio.Local.EnsureDir(dir); err != nil {
 		return fmt.Errorf("create journal directory: %w", err)
 	}
 

@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	coreio "forge.lthn.ai/core/go-io"
 	"forge.lthn.ai/core/go-scm/manifest"
 	"gopkg.in/yaml.v3"
 )
@@ -41,13 +42,13 @@ func DiscoverProviders(dir string) ([]DiscoveredProvider, error) {
 		providerDir := filepath.Join(dir, e.Name())
 		manifestPath := filepath.Join(providerDir, ".core", "manifest.yaml")
 
-		data, err := os.ReadFile(manifestPath)
+		raw, err := coreio.Local.Read(manifestPath)
 		if err != nil {
 			log.Printf("marketplace: skipping %s: %v", e.Name(), err)
 			continue
 		}
 
-		m, err := manifest.Parse(data)
+		m, err := manifest.Parse([]byte(raw))
 		if err != nil {
 			log.Printf("marketplace: skipping %s: invalid manifest: %v", e.Name(), err)
 			continue
@@ -84,7 +85,7 @@ type ProviderRegistryFile struct {
 // LoadProviderRegistry reads a registry.yaml file from the given path.
 // Returns an empty registry if the file does not exist.
 func LoadProviderRegistry(path string) (*ProviderRegistryFile, error) {
-	data, err := os.ReadFile(path)
+	raw, err := coreio.Local.Read(path)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return &ProviderRegistryFile{
@@ -96,7 +97,7 @@ func LoadProviderRegistry(path string) (*ProviderRegistryFile, error) {
 	}
 
 	var reg ProviderRegistryFile
-	if err := yaml.Unmarshal(data, &reg); err != nil {
+	if err := yaml.Unmarshal([]byte(raw), &reg); err != nil {
 		return nil, fmt.Errorf("marketplace.LoadProviderRegistry: %w", err)
 	}
 
@@ -109,7 +110,7 @@ func LoadProviderRegistry(path string) (*ProviderRegistryFile, error) {
 
 // SaveProviderRegistry writes the registry to the given path.
 func SaveProviderRegistry(path string, reg *ProviderRegistryFile) error {
-	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+	if err := coreio.Local.EnsureDir(filepath.Dir(path)); err != nil {
 		return fmt.Errorf("marketplace.SaveProviderRegistry: %w", err)
 	}
 
@@ -118,7 +119,7 @@ func SaveProviderRegistry(path string, reg *ProviderRegistryFile) error {
 		return fmt.Errorf("marketplace.SaveProviderRegistry: %w", err)
 	}
 
-	return os.WriteFile(path, data, 0644)
+	return coreio.Local.Write(path, string(data))
 }
 
 // Add adds or updates a provider entry in the registry.

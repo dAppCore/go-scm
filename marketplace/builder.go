@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"sort"
 
+	coreio "forge.lthn.ai/core/go-io"
 	"forge.lthn.ai/core/go-scm/manifest"
 )
 
@@ -113,22 +114,22 @@ func BuildFromManifests(manifests []*manifest.Manifest) *Index {
 
 // WriteIndex serialises an Index to JSON and writes it to the given path.
 func WriteIndex(path string, idx *Index) error {
-	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+	if err := coreio.Local.EnsureDir(filepath.Dir(path)); err != nil {
 		return fmt.Errorf("marketplace.WriteIndex: mkdir: %w", err)
 	}
 	data, err := json.MarshalIndent(idx, "", "  ")
 	if err != nil {
 		return fmt.Errorf("marketplace.WriteIndex: marshal: %w", err)
 	}
-	return os.WriteFile(path, data, 0644)
+	return coreio.Local.Write(path, string(data))
 }
 
 // loadFromDir tries core.json first, then falls back to .core/manifest.yaml.
 func (b *Builder) loadFromDir(dir string) (*manifest.Manifest, error) {
 	// Prefer compiled manifest (core.json).
 	coreJSON := filepath.Join(dir, "core.json")
-	if data, err := os.ReadFile(coreJSON); err == nil {
-		cm, err := manifest.ParseCompiled(data)
+	if raw, err := coreio.Local.Read(coreJSON); err == nil {
+		cm, err := manifest.ParseCompiled([]byte(raw))
 		if err != nil {
 			return nil, fmt.Errorf("parse core.json: %w", err)
 		}
@@ -137,12 +138,12 @@ func (b *Builder) loadFromDir(dir string) (*manifest.Manifest, error) {
 
 	// Fall back to source manifest.
 	manifestYAML := filepath.Join(dir, ".core", "manifest.yaml")
-	data, err := os.ReadFile(manifestYAML)
+	raw, err := coreio.Local.Read(manifestYAML)
 	if err != nil {
 		return nil, nil // No manifest — skip silently.
 	}
 
-	m, err := manifest.Parse(data)
+	m, err := manifest.Parse([]byte(raw))
 	if err != nil {
 		return nil, fmt.Errorf("parse manifest.yaml: %w", err)
 	}
