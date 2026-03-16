@@ -6,13 +6,13 @@ require (
 	code.gitea.io/sdk/gitea v0.23.2
 	codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2 v2.2.0
 	forge.lthn.ai/core/api v0.1.3
-	forge.lthn.ai/core/cli v0.3.1
-	forge.lthn.ai/core/config v0.1.3
+	forge.lthn.ai/core/cli v0.3.5
+	forge.lthn.ai/core/config v0.1.6
 	forge.lthn.ai/core/go v0.3.1
-	forge.lthn.ai/core/go-i18n v0.1.4
-	forge.lthn.ai/core/go-io v0.1.2
+	forge.lthn.ai/core/go-i18n v0.1.5
+	forge.lthn.ai/core/go-io v0.1.5
 	forge.lthn.ai/core/go-log v0.0.4
-	forge.lthn.ai/core/go-ws v0.2.1
+	forge.lthn.ai/core/go-ws v0.2.3
 	github.com/gin-gonic/gin v1.12.0
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/net v0.52.0
@@ -20,13 +20,10 @@ require (
 )
 
 require (
-	forge.lthn.ai/core/go-crypt v0.1.7 // indirect
 	forge.lthn.ai/core/go-inference v0.1.4 // indirect
-	forge.lthn.ai/core/go-process v0.2.3 // indirect
 	github.com/42wim/httpsig v1.2.3 // indirect
 	github.com/99designs/gqlgen v0.17.88 // indirect
 	github.com/KyleBanks/depth v1.2.1 // indirect
-	github.com/ProtonMail/go-crypto v1.4.0 // indirect
 	github.com/agnivade/levenshtein v1.2.1 // indirect
 	github.com/andybalholm/brotli v1.2.0 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
@@ -45,7 +42,6 @@ require (
 	github.com/charmbracelet/x/term v0.2.2 // indirect
 	github.com/clipperhouse/displaywidth v0.11.0 // indirect
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
-	github.com/cloudflare/circl v1.6.3 // indirect
 	github.com/cloudwego/base64x v0.1.6 // indirect
 	github.com/coreos/go-oidc/v3 v3.17.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
@@ -153,5 +149,5 @@ require (
 	modernc.org/libc v1.70.0 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
-	modernc.org/sqlite v1.46.1 // indirect
+	modernc.org/sqlite v1.46.2 // indirect
 )
