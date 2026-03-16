@@ -1,11 +1,12 @@
 package agentci
 
 import (
-	"fmt"
 	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	coreerr "forge.lthn.ai/core/go-log"
 )
 
 var safeNameRegex = regexp.MustCompile(`^[a-zA-Z0-9\-\_\.]+$`)
@@ -15,10 +16,10 @@ var safeNameRegex = regexp.MustCompile(`^[a-zA-Z0-9\-\_\.]+$`)
 func SanitizePath(input string) (string, error) {
 	base := filepath.Base(input)
 	if !safeNameRegex.MatchString(base) {
-		return "", fmt.Errorf("invalid characters in path element: %s", input)
+		return "", coreerr.E("agentci.SanitizePath", "invalid characters in path element: "+input, nil)
 	}
 	if base == "." || base == ".." || base == "/" {
-		return "", fmt.Errorf("invalid path element: %s", base)
+		return "", coreerr.E("agentci.SanitizePath", "invalid path element: "+base, nil)
 	}
 	return base, nil
 }

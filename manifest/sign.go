@@ -3,9 +3,8 @@ package manifest
 import (
 	"crypto/ed25519"
 	"encoding/base64"
-	"errors"
-	"fmt"
 
+	coreerr "forge.lthn.ai/core/go-log"
 	"gopkg.in/yaml.v3"
 )
 
@@ -20,7 +19,7 @@ func signable(m *Manifest) ([]byte, error) {
 func Sign(m *Manifest, priv ed25519.PrivateKey) error {
 	msg, err := signable(m)
 	if err != nil {
-		return fmt.Errorf("manifest.Sign: marshal: %w", err)
+		return coreerr.E("manifest.Sign", "marshal failed", err)
 	}
 	sig := ed25519.Sign(priv, msg)
 	m.Sign = base64.StdEncoding.EncodeToString(sig)
@@ -30,15 +29,15 @@ func Sign(m *Manifest, priv ed25519.PrivateKey) error {
 // Verify checks the ed25519 signature in m.Sign against the public key.
 func Verify(m *Manifest, pub ed25519.PublicKey) (bool, error) {
 	if m.Sign == "" {
-		return false, errors.New("manifest.Verify: no signature present")
+		return false, coreerr.E("manifest.Verify", "no signature present", nil)
 	}
 	sig, err := base64.StdEncoding.DecodeString(m.Sign)
 	if err != nil {
-		return false, fmt.Errorf("manifest.Verify: decode: %w", err)
+		return false, coreerr.E("manifest.Verify", "decode failed", err)
 	}
 	msg, err := signable(m)
 	if err != nil {
-		return false, fmt.Errorf("manifest.Verify: marshal: %w", err)
+		return false, coreerr.E("manifest.Verify", "marshal failed", err)
 	}
 	return ed25519.Verify(pub, msg, sig), nil
 }

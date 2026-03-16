@@ -3,10 +3,10 @@ package manifest
 import (
 	"crypto/ed25519"
 	"encoding/json"
-	"fmt"
 	"path/filepath"
 	"time"
 
+	coreerr "forge.lthn.ai/core/go-log"
 	"forge.lthn.ai/core/go-io"
 )
 
@@ -35,19 +35,19 @@ type CompileOptions struct {
 // options. If opts.SignKey is provided the manifest is signed first.
 func Compile(m *Manifest, opts CompileOptions) (*CompiledManifest, error) {
 	if m == nil {
-		return nil, fmt.Errorf("manifest.Compile: nil manifest")
+		return nil, coreerr.E("manifest.Compile", "nil manifest", nil)
 	}
 	if m.Code == "" {
-		return nil, fmt.Errorf("manifest.Compile: missing code")
+		return nil, coreerr.E("manifest.Compile", "missing code", nil)
 	}
 	if m.Version == "" {
-		return nil, fmt.Errorf("manifest.Compile: missing version")
+		return nil, coreerr.E("manifest.Compile", "missing version", nil)
 	}
 
 	// Sign if a key is supplied.
 	if opts.SignKey != nil {
 		if err := Sign(m, opts.SignKey); err != nil {
-			return nil, fmt.Errorf("manifest.Compile: %w", err)
+			return nil, coreerr.E("manifest.Compile", "sign failed", err)
 		}
 	}
 
@@ -69,7 +69,7 @@ func MarshalJSON(cm *CompiledManifest) ([]byte, error) {
 func ParseCompiled(data []byte) (*CompiledManifest, error) {
 	var cm CompiledManifest
 	if err := json.Unmarshal(data, &cm); err != nil {
-		return nil, fmt.Errorf("manifest.ParseCompiled: %w", err)
+		return nil, coreerr.E("manifest.ParseCompiled", "unmarshal failed", err)
 	}
 	return &cm, nil
 }
@@ -81,7 +81,7 @@ const compiledPath = "core.json"
 func WriteCompiled(medium io.Medium, root string, cm *CompiledManifest) error {
 	data, err := MarshalJSON(cm)
 	if err != nil {
-		return fmt.Errorf("manifest.WriteCompiled: %w", err)
+		return coreerr.E("manifest.WriteCompiled", "marshal failed", err)
 	}
 	path := filepath.Join(root, compiledPath)
 	return medium.Write(path, string(data))
@@ -92,7 +92,7 @@ func LoadCompiled(medium io.Medium, root string) (*CompiledManifest, error) {
 	path := filepath.Join(root, compiledPath)
 	data, err := medium.Read(path)
 	if err != nil {
-		return nil, fmt.Errorf("manifest.LoadCompiled: %w", err)
+		return nil, coreerr.E("manifest.LoadCompiled", "read failed", err)
 	}
 	return ParseCompiled([]byte(data))
 }

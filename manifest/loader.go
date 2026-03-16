@@ -2,9 +2,9 @@ package manifest
 
 import (
 	"crypto/ed25519"
-	"fmt"
 	"path/filepath"
 
+	coreerr "forge.lthn.ai/core/go-log"
 	"forge.lthn.ai/core/go-io"
 	"gopkg.in/yaml.v3"
 )
@@ -21,7 +21,7 @@ func Load(medium io.Medium, root string) (*Manifest, error) {
 	path := filepath.Join(root, manifestPath)
 	data, err := medium.Read(path)
 	if err != nil {
-		return nil, fmt.Errorf("manifest.Load: %w", err)
+		return nil, coreerr.E("manifest.Load", "read failed", err)
 	}
 	return Parse([]byte(data))
 }
@@ -34,10 +34,10 @@ func LoadVerified(medium io.Medium, root string, pub ed25519.PublicKey) (*Manife
 	}
 	ok, err := Verify(m, pub)
 	if err != nil {
-		return nil, fmt.Errorf("manifest.LoadVerified: %w", err)
+		return nil, coreerr.E("manifest.LoadVerified", "verification error", err)
 	}
 	if !ok {
-		return nil, fmt.Errorf("manifest.LoadVerified: signature verification failed for %q", m.Code)
+		return nil, coreerr.E("manifest.LoadVerified", "signature verification failed for "+m.Code, nil)
 	}
 	return m, nil
 }

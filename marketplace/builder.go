@@ -2,12 +2,12 @@ package marketplace
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"sort"
 
+	coreerr "forge.lthn.ai/core/go-log"
 	coreio "forge.lthn.ai/core/go-io"
 	"forge.lthn.ai/core/go-scm/manifest"
 )
@@ -40,7 +40,7 @@ func (b *Builder) BuildFromDirs(dirs ...string) (*Index, error) {
 			if os.IsNotExist(err) {
 				continue
 			}
-			return nil, fmt.Errorf("marketplace.Builder: read %s: %w", dir, err)
+			return nil, coreerr.E("marketplace.Builder.BuildFromDirs", "read "+dir, err)
 		}
 
 		for _, e := range entries {
@@ -115,11 +115,11 @@ func BuildFromManifests(manifests []*manifest.Manifest) *Index {
 // WriteIndex serialises an Index to JSON and writes it to the given path.
 func WriteIndex(path string, idx *Index) error {
 	if err := coreio.Local.EnsureDir(filepath.Dir(path)); err != nil {
-		return fmt.Errorf("marketplace.WriteIndex: mkdir: %w", err)
+		return coreerr.E("marketplace.WriteIndex", "mkdir failed", err)
 	}
 	data, err := json.MarshalIndent(idx, "", "  ")
 	if err != nil {
-		return fmt.Errorf("marketplace.WriteIndex: marshal: %w", err)
+		return coreerr.E("marketplace.WriteIndex", "marshal failed", err)
 	}
 	return coreio.Local.Write(path, string(data))
 }
@@ -131,7 +131,7 @@ func (b *Builder) loadFromDir(dir string) (*manifest.Manifest, error) {
 	if raw, err := coreio.Local.Read(coreJSON); err == nil {
 		cm, err := manifest.ParseCompiled([]byte(raw))
 		if err != nil {
-			return nil, fmt.Errorf("parse core.json: %w", err)
+			return nil, coreerr.E("marketplace.Builder.loadFromDir", "parse core.json", err)
 		}
 		return &cm.Manifest, nil
 	}
@@ -145,7 +145,7 @@ func (b *Builder) loadFromDir(dir string) (*manifest.Manifest, error) {
 
 	m, err := manifest.Parse([]byte(raw))
 	if err != nil {
-		return nil, fmt.Errorf("parse manifest.yaml: %w", err)
+		return nil, coreerr.E("marketplace.Builder.loadFromDir", "parse manifest.yaml", err)
 	}
 	return m, nil
 }

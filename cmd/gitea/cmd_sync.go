@@ -10,6 +10,7 @@ import (
 	"code.gitea.io/sdk/gitea"
 
 	"forge.lthn.ai/core/cli/pkg/cli"
+	coreerr "forge.lthn.ai/core/go-log"
 	gt "forge.lthn.ai/core/go-scm/gitea"
 )
 
@@ -64,7 +65,7 @@ func runSync(args []string) error {
 	if strings.HasPrefix(basePath, "~/") {
 		home, err := os.UserHomeDir()
 		if err != nil {
-			return fmt.Errorf("failed to resolve home directory: %w", err)
+			return coreerr.E("gitea.runSync", "failed to resolve home directory", err)
 		}
 		basePath = filepath.Join(home, basePath[2:])
 	}
@@ -299,7 +300,7 @@ func configureGiteaRemote(localPath, remoteURL string) error {
 		if existing != remoteURL {
 			cmd := exec.Command("git", "-C", localPath, "remote", "set-url", "gitea", remoteURL)
 			if err := cmd.Run(); err != nil {
-				return fmt.Errorf("failed to update remote: %w", err)
+				return coreerr.E("gitea.configureGiteaRemote", "failed to update remote", err)
 			}
 		}
 		return nil
@@ -308,7 +309,7 @@ func configureGiteaRemote(localPath, remoteURL string) error {
 	// Add new remote
 	cmd := exec.Command("git", "-C", localPath, "remote", "add", "gitea", remoteURL)
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to add remote: %w", err)
+		return coreerr.E("gitea.configureGiteaRemote", "failed to add remote", err)
 	}
 
 	return nil
@@ -321,7 +322,7 @@ func pushUpstream(localPath, defaultBranch string) error {
 	cmd := exec.Command("git", "-C", localPath, "push", "--force", "gitea", refspec)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("%s: %w", strings.TrimSpace(string(output)), err)
+		return coreerr.E("gitea.pushUpstream", strings.TrimSpace(string(output)), err)
 	}
 
 	return nil
@@ -332,7 +333,7 @@ func gitFetch(localPath, remote string) error {
 	cmd := exec.Command("git", "-C", localPath, "fetch", remote)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("%s: %w", strings.TrimSpace(string(output)), err)
+		return coreerr.E("gitea.gitFetch", strings.TrimSpace(string(output)), err)
 	}
 	return nil
 }
@@ -344,7 +345,7 @@ func createMainFromUpstream(client *gt.Client, org, repo string) error {
 		OldBranchName: "upstream",
 	})
 	if err != nil {
-		return fmt.Errorf("create branch: %w", err)
+		return coreerr.E("gitea.createMainFromUpstream", "create branch", err)
 	}
 
 	return nil

@@ -1,8 +1,7 @@
 package manifest
 
 import (
-	"fmt"
-
+	coreerr "forge.lthn.ai/core/go-log"
 	"gopkg.in/yaml.v3"
 )
 
@@ -66,7 +65,7 @@ type DaemonSpec struct {
 func Parse(data []byte) (*Manifest, error) {
 	var m Manifest
 	if err := yaml.Unmarshal(data, &m); err != nil {
-		return nil, fmt.Errorf("manifest.Parse: %w", err)
+		return nil, coreerr.E("manifest.Parse", "unmarshal failed", err)
 	}
 	return &m, nil
 }

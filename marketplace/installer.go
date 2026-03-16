@@ -4,12 +4,12 @@ import (
 	"context"
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
 
+	coreerr "forge.lthn.ai/core/go-log"
 	"forge.lthn.ai/core/go-io"
 	"forge.lthn.ai/core/go-scm/manifest"
 	"forge.lthn.ai/core/go-io/store"
@@ -49,15 +49,15 @@ type InstalledModule struct {
 func (i *Installer) Install(ctx context.Context, mod Module) error {
 	// Check if already installed
 	if _, err := i.store.Get(storeGroup, mod.Code); err == nil {
-		return fmt.Errorf("marketplace: module %q already installed", mod.Code)
+		return coreerr.E("marketplace.Installer.Install", "module already installed: "+mod.Code, nil)
 	}
 
 	dest := filepath.Join(i.modulesDir, mod.Code)
 	if err := i.medium.EnsureDir(i.modulesDir); err != nil {
-		return fmt.Errorf("marketplace: mkdir: %w", err)
+		return coreerr.E("marketplace.Installer.Install", "mkdir", err)
 	}
 	if err := gitClone(ctx, mod.Repo, dest); err != nil {
-		return fmt.Errorf("marketplace: clone %s: %w", mod.Repo, err)
+		return coreerr.E("marketplace.Installer.Install", "clone "+mod.Repo, err)
 	}
 
 	// On any error after clone, clean up the directory
@@ -70,7 +70,7 @@ func (i *Installer) Install(ctx context.Context, mod Module) error {
 
 	medium, err := io.NewSandboxed(dest)
 	if err != nil {
-		return fmt.Errorf("marketplace: medium: %w", err)
+		return coreerr.E("marketplace.Installer.Install", "medium", err)
 	}
 
 	m, err := loadManifest(medium, mod.SignKey)
@@ -92,11 +92,11 @@ func (i *Installer) Install(ctx context.Context, mod Module) error {
 
 	data, err := json.Marshal(installed)
 	if err != nil {
-		return fmt.Errorf("marketplace: marshal: %w", err)
+		return coreerr.E("marketplace.Installer.Install", "marshal", err)
 	}
 
 	if err := i.store.Set(storeGroup, mod.Code, string(data)); err != nil {
-		return fmt.Errorf("marketplace: store: %w", err)
+		return coreerr.E("marketplace.Installer.Install", "store", err)
 	}
 
 	cleanup = false
@@ -106,7 +106,7 @@ func (i *Installer) Install(ctx context.Context, mod Module) error {
 // Remove uninstalls a module by deleting its files and store entry.
 func (i *Installer) Remove(code string) error {
 	if _, err := i.store.Get(storeGroup, code); err != nil {
-		return fmt.Errorf("marketplace: module %q not installed", code)
+		return coreerr.E("marketplace.Installer.Remove", "module not installed: "+code, nil)
 	}
 
 	dest := filepath.Join(i.modulesDir, code)
@@ -119,29 +119,29 @@ func (i *Installer) Remove(code string) error {
 func (i *Installer) Update(ctx context.Context, code string) error {
 	raw, err := i.store.Get(storeGroup, code)
 	if err != nil {
-		return fmt.Errorf("marketplace: module %q not installed", code)
+		return coreerr.E("marketplace.Installer.Update", "module not installed: "+code, nil)
 	}
 
 	var installed InstalledModule
 	if err := json.Unmarshal([]byte(raw), &installed); err != nil {
-		return fmt.Errorf("marketplace: unmarshal: %w", err)
+		return coreerr.E("marketplace.Installer.Update", "unmarshal", err)
 	}
 
 	dest := filepath.Join(i.modulesDir, code)
 
 	cmd := exec.CommandContext(ctx, "git", "-C", dest, "pull", "--ff-only")
 	if output, err := cmd.CombinedOutput(); err != nil {
-		return fmt.Errorf("marketplace: pull: %s: %w", strings.TrimSpace(string(output)), err)
+		return coreerr.E("marketplace.Installer.Update", "pull: "+strings.TrimSpace(string(output)), err)
 	}
 
 	// Reload and re-verify manifest with the same key used at install time
 	medium, mErr := io.NewSandboxed(dest)
 	if mErr != nil {
-		return fmt.Errorf("marketplace: medium: %w", mErr)
+		return coreerr.E("marketplace.Installer.Update", "medium", mErr)
 	}
 	m, mErr := loadManifest(medium, installed.SignKey)
 	if mErr != nil {
-		return fmt.Errorf("marketplace: reload manifest: %w", mErr)
+		return coreerr.E("marketplace.Installer.Update", "reload manifest", mErr)
 	}
 
 	// Update stored metadata
@@ -151,7 +151,7 @@ func (i *Installer) Update(ctx context.Context, code string) error {
 
 	data, err := json.Marshal(installed)
 	if err != nil {
-		return fmt.Errorf("marketplace: marshal: %w", err)
+		return coreerr.E("marketplace.Installer.Update", "marshal", err)
 	}
 
 	return i.store.Set(storeGroup, code, string(data))
@@ -161,7 +161,7 @@ func (i *Installer) Update(ctx context.Context, code string) error {
 func (i *Installer) Installed() ([]InstalledModule, error) {
 	all, err := i.store.GetAll(storeGroup)
 	if err != nil {
-		return nil, fmt.Errorf("marketplace: list: %w", err)
+		return nil, coreerr.E("marketplace.Installer.Installed", "list", err)
 	}
 
 	var modules []InstalledModule
@@ -180,7 +180,7 @@ func loadManifest(medium io.Medium, signKey string) (*manifest.Manifest, error) 
 	if signKey != "" {
 		pubBytes, err := hex.DecodeString(signKey)
 		if err != nil {
-			return nil, fmt.Errorf("marketplace: decode sign key: %w", err)
+			return nil, coreerr.E("marketplace.loadManifest", "decode sign key", err)
 		}
 		return manifest.LoadVerified(medium, ".", pubBytes)
 	}
@@ -191,7 +191,7 @@ func loadManifest(medium io.Medium, signKey string) (*manifest.Manifest, error) 
 func gitClone(ctx context.Context, repo, dest string) error {
 	cmd := exec.CommandContext(ctx, "git", "clone", "--depth=1", repo, dest)
 	if output, err := cmd.CombinedOutput(); err != nil {
-		return fmt.Errorf("%s: %w", strings.TrimSpace(string(output)), err)
+		return coreerr.E("marketplace.gitClone", strings.TrimSpace(string(output)), err)
 	}
 	return nil
 }

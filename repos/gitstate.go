@@ -1,10 +1,10 @@
 package repos
 
 import (
-	"fmt"
 	"path/filepath"
 	"time"
 
+	coreerr "forge.lthn.ai/core/go-log"
 	"forge.lthn.ai/core/go-io"
 	"gopkg.in/yaml.v3"
 )
@@ -44,12 +44,12 @@ func LoadGitState(m io.Medium, root string) (*GitState, error) {
 
 	content, err := m.Read(path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read git state: %w", err)
+		return nil, coreerr.E("repos.LoadGitState", "failed to read git state", err)
 	}
 
 	var gs GitState
 	if err := yaml.Unmarshal([]byte(content), &gs); err != nil {
-		return nil, fmt.Errorf("failed to parse git state: %w", err)
+		return nil, coreerr.E("repos.LoadGitState", "failed to parse git state", err)
 	}
 
 	if gs.Repos == nil {
@@ -66,17 +66,17 @@ func LoadGitState(m io.Medium, root string) (*GitState, error) {
 func SaveGitState(m io.Medium, root string, gs *GitState) error {
 	coreDir := filepath.Join(root, ".core")
 	if err := m.EnsureDir(coreDir); err != nil {
-		return fmt.Errorf("failed to create .core directory: %w", err)
+		return coreerr.E("repos.SaveGitState", "failed to create .core directory", err)
 	}
 
 	data, err := yaml.Marshal(gs)
 	if err != nil {
-		return fmt.Errorf("failed to marshal git state: %w", err)
+		return coreerr.E("repos.SaveGitState", "failed to marshal git state", err)
 	}
 
 	path := filepath.Join(coreDir, "git.yaml")
 	if err := m.Write(path, string(data)); err != nil {
-		return fmt.Errorf("failed to write git state: %w", err)
+		return coreerr.E("repos.SaveGitState", "failed to write git state", err)
 	}
 
 	return nil

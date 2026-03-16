@@ -2,8 +2,9 @@ package marketplace
 
 import (
 	"encoding/json"
-	"fmt"
 	"strings"
+
+	coreerr "forge.lthn.ai/core/go-log"
 )
 
 // Module is a marketplace entry pointing to a module's Git repo.
@@ -26,7 +27,7 @@ type Index struct {
 func ParseIndex(data []byte) (*Index, error) {
 	var idx Index
 	if err := json.Unmarshal(data, &idx); err != nil {
-		return nil, fmt.Errorf("marketplace.ParseIndex: %w", err)
+		return nil, coreerr.E("marketplace.ParseIndex", "unmarshal failed", err)
 	}
 	return &idx, nil
 }

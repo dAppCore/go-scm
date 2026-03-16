@@ -1,11 +1,11 @@
 package marketplace
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 
+	coreerr "forge.lthn.ai/core/go-log"
 	coreio "forge.lthn.ai/core/go-io"
 	"forge.lthn.ai/core/go-scm/manifest"
 	"gopkg.in/yaml.v3"
@@ -30,7 +30,7 @@ func DiscoverProviders(dir string) ([]DiscoveredProvider, error) {
 		if os.IsNotExist(err) {
 			return nil, nil // No providers directory — not an error.
 		}
-		return nil, fmt.Errorf("marketplace.DiscoverProviders: %w", err)
+		return nil, coreerr.E("marketplace.DiscoverProviders", "read directory", err)
 	}
 
 	var providers []DiscoveredProvider
@@ -93,12 +93,12 @@ func LoadProviderRegistry(path string) (*ProviderRegistryFile, error) {
 				Providers: make(map[string]ProviderRegistryEntry),
 			}, nil
 		}
-		return nil, fmt.Errorf("marketplace.LoadProviderRegistry: %w", err)
+		return nil, coreerr.E("marketplace.LoadProviderRegistry", "read failed", err)
 	}
 
 	var reg ProviderRegistryFile
 	if err := yaml.Unmarshal([]byte(raw), &reg); err != nil {
-		return nil, fmt.Errorf("marketplace.LoadProviderRegistry: %w", err)
+		return nil, coreerr.E("marketplace.LoadProviderRegistry", "parse failed", err)
 	}
 
 	if reg.Providers == nil {
@@ -111,12 +111,12 @@ func LoadProviderRegistry(path string) (*ProviderRegistryFile, error) {
 // SaveProviderRegistry writes the registry to the given path.
 func SaveProviderRegistry(path string, reg *ProviderRegistryFile) error {
 	if err := coreio.Local.EnsureDir(filepath.Dir(path)); err != nil {
-		return fmt.Errorf("marketplace.SaveProviderRegistry: %w", err)
+		return coreerr.E("marketplace.SaveProviderRegistry", "ensure directory", err)
 	}
 
 	data, err := yaml.Marshal(reg)
 	if err != nil {
-		return fmt.Errorf("marketplace.SaveProviderRegistry: %w", err)
+		return coreerr.E("marketplace.SaveProviderRegistry", "marshal failed", err)
 	}
 
 	return coreio.Local.Write(path, string(data))

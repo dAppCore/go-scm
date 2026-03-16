@@ -1,10 +1,10 @@
 package repos
 
 import (
-	"fmt"
 	"path/filepath"
 	"time"
 
+	coreerr "forge.lthn.ai/core/go-log"
 	"forge.lthn.ai/core/go-io"
 	"gopkg.in/yaml.v3"
 )
@@ -63,12 +63,12 @@ func LoadWorkConfig(m io.Medium, root string) (*WorkConfig, error) {
 
 	content, err := m.Read(path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read work config: %w", err)
+		return nil, coreerr.E("repos.LoadWorkConfig", "failed to read work config", err)
 	}
 
 	wc := DefaultWorkConfig()
 	if err := yaml.Unmarshal([]byte(content), wc); err != nil {
-		return nil, fmt.Errorf("failed to parse work config: %w", err)
+		return nil, coreerr.E("repos.LoadWorkConfig", "failed to parse work config", err)
 	}
 
 	return wc, nil
@@ -78,17 +78,17 @@ func LoadWorkConfig(m io.Medium, root string) (*WorkConfig, error) {
 func SaveWorkConfig(m io.Medium, root string, wc *WorkConfig) error {
 	coreDir := filepath.Join(root, ".core")
 	if err := m.EnsureDir(coreDir); err != nil {
-		return fmt.Errorf("failed to create .core directory: %w", err)
+		return coreerr.E("repos.SaveWorkConfig", "failed to create .core directory", err)
 	}
 
 	data, err := yaml.Marshal(wc)
 	if err != nil {
-		return fmt.Errorf("failed to marshal work config: %w", err)
+		return coreerr.E("repos.SaveWorkConfig", "failed to marshal work config", err)
 	}
 
 	path := filepath.Join(coreDir, "work.yaml")
 	if err := m.Write(path, string(data)); err != nil {
-		return fmt.Errorf("failed to write work config: %w", err)
+		return coreerr.E("repos.SaveWorkConfig", "failed to write work config", err)
 	}
 
 	return nil

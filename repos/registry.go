@@ -4,12 +4,11 @@
 package repos
 
 import (
-	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
+	coreerr "forge.lthn.ai/core/go-log"
 	"forge.lthn.ai/core/go-io"
 	"gopkg.in/yaml.v3"
 )
@@ -67,13 +66,13 @@ type Repo struct {
 func LoadRegistry(m io.Medium, path string) (*Registry, error) {
 	content, err := m.Read(path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read registry file: %w", err)
+		return nil, coreerr.E("repos.LoadRegistry", "failed to read registry file", err)
 	}
 	data := []byte(content)
 
 	var reg Registry
 	if err := yaml.Unmarshal(data, &reg); err != nil {
-		return nil, fmt.Errorf("failed to parse registry file: %w", err)
+		return nil, coreerr.E("repos.LoadRegistry", "failed to parse registry file", err)
 	}
 
 	reg.medium = m
@@ -147,7 +146,7 @@ func FindRegistry(m io.Medium) (string, error) {
 		}
 	}
 
-	return "", errors.New("repos.yaml not found")
+	return "", coreerr.E("repos.FindRegistry", "repos.yaml not found", nil)
 }
 
 // ScanDirectory creates a Registry by scanning a directory for git repos.
@@ -156,7 +155,7 @@ func FindRegistry(m io.Medium) (string, error) {
 func ScanDirectory(m io.Medium, dir string) (*Registry, error) {
 	entries, err := m.List(dir)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read directory: %w", err)
+		return nil, coreerr.E("repos.ScanDirectory", "failed to read directory", err)
 	}
 
 	reg := &Registry{
@@ -282,12 +281,12 @@ func (r *Registry) TopologicalOrder() ([]*Repo, error) {
 			return nil
 		}
 		if visiting[name] {
-			return fmt.Errorf("circular dependency detected: %s", name)
+			return coreerr.E("repos.Registry.TopologicalOrder", "circular dependency detected: "+name, nil)
 		}
 
 		repo, ok := r.Repos[name]
 		if !ok {
-			return fmt.Errorf("unknown repo: %s", name)
+			return coreerr.E("repos.Registry.TopologicalOrder", "unknown repo: "+name, nil)
 		}
 
 		visiting[name] = true

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 
+	coreerr "forge.lthn.ai/core/go-log"
 	"forge.lthn.ai/core/go-io"
 	"gopkg.in/yaml.v3"
 )
@@ -74,12 +75,12 @@ func LoadKBConfig(m io.Medium, root string) (*KBConfig, error) {
 
 	content, err := m.Read(path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read kb config: %w", err)
+		return nil, coreerr.E("repos.LoadKBConfig", "failed to read kb config", err)
 	}
 
 	kb := DefaultKBConfig()
 	if err := yaml.Unmarshal([]byte(content), kb); err != nil {
-		return nil, fmt.Errorf("failed to parse kb config: %w", err)
+		return nil, coreerr.E("repos.LoadKBConfig", "failed to parse kb config", err)
 	}
 
 	return kb, nil
@@ -89,17 +90,17 @@ func LoadKBConfig(m io.Medium, root string) (*KBConfig, error) {
 func SaveKBConfig(m io.Medium, root string, kb *KBConfig) error {
 	coreDir := filepath.Join(root, ".core")
 	if err := m.EnsureDir(coreDir); err != nil {
-		return fmt.Errorf("failed to create .core directory: %w", err)
+		return coreerr.E("repos.SaveKBConfig", "failed to create .core directory", err)
 	}
 
 	data, err := yaml.Marshal(kb)
 	if err != nil {
-		return fmt.Errorf("failed to marshal kb config: %w", err)
+		return coreerr.E("repos.SaveKBConfig", "failed to marshal kb config", err)
 	}
 
 	path := filepath.Join(coreDir, "kb.yaml")
 	if err := m.Write(path, string(data)); err != nil {
-		return fmt.Errorf("failed to write kb config: %w", err)
+		return coreerr.E("repos.SaveKBConfig", "failed to write kb config", err)
 	}
 
 	return nil

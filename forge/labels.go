@@ -1,7 +1,6 @@
 package forge
 
 import (
-	"fmt"
 	"strings"
 
 	forgejo "codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2"
@@ -75,7 +74,7 @@ func (c *Client) GetLabelByName(owner, repo, name string) (*forgejo.Label, error
 		}
 	}
 
-	return nil, fmt.Errorf("forge.GetLabelByName: label %s not found in %s/%s", name, owner, repo)
+	return nil, log.E("forge.GetLabelByName", "label "+name+" not found in "+owner+"/"+repo, nil)
 }
 
 // EnsureLabel checks if a label exists, and creates it if it doesn't.

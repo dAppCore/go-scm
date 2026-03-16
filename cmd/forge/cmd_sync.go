@@ -10,6 +10,7 @@ import (
 	forgejo "codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2"
 
 	"forge.lthn.ai/core/cli/pkg/cli"
+	coreerr "forge.lthn.ai/core/go-log"
 	fg "forge.lthn.ai/core/go-scm/forge"
 )
 
@@ -64,7 +65,7 @@ func runSync(args []string) error {
 	if strings.HasPrefix(basePath, "~/") {
 		home, err := os.UserHomeDir()
 		if err != nil {
-			return fmt.Errorf("failed to resolve home directory: %w", err)
+			return coreerr.E("forge.runSync", "failed to resolve home directory", err)
 		}
 		basePath = filepath.Join(home, basePath[2:])
 	}
@@ -287,7 +288,7 @@ func syncConfigureForgeRemote(localPath, remoteURL string) error {
 		if existing != remoteURL {
 			cmd := exec.Command("git", "-C", localPath, "remote", "set-url", "forge", remoteURL)
 			if err := cmd.Run(); err != nil {
-				return fmt.Errorf("failed to update remote: %w", err)
+				return coreerr.E("forge.syncConfigureForgeRemote", "failed to update remote", err)
 			}
 		}
 		return nil
@@ -295,7 +296,7 @@ func syncConfigureForgeRemote(localPath, remoteURL string) error {
 
 	cmd := exec.Command("git", "-C", localPath, "remote", "add", "forge", remoteURL)
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to add remote: %w", err)
+		return coreerr.E("forge.syncConfigureForgeRemote", "failed to add remote", err)
 	}
 
 	return nil
@@ -306,7 +307,7 @@ func syncPushUpstream(localPath, defaultBranch string) error {
 	cmd := exec.Command("git", "-C", localPath, "push", "--force", "forge", refspec)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("%s: %w", strings.TrimSpace(string(output)), err)
+		return coreerr.E("forge.syncPushUpstream", strings.TrimSpace(string(output)), err)
 	}
 
 	return nil
@@ -316,7 +317,7 @@ func syncGitFetch(localPath, remote string) error {
 	cmd := exec.Command("git", "-C", localPath, "fetch", remote)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("%s: %w", strings.TrimSpace(string(output)), err)
+		return coreerr.E("forge.syncGitFetch", strings.TrimSpace(string(output)), err)
 	}
 	return nil
 }
@@ -327,7 +328,7 @@ func syncCreateMainFromUpstream(client *fg.Client, org, repo string) error {
 		OldBranchName: "upstream",
 	})
 	if err != nil {
-		return fmt.Errorf("create branch: %w", err)
+		return coreerr.E("forge.syncCreateMainFromUpstream", "create branch", err)
 	}
 
 	return nil

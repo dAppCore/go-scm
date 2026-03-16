@@ -2,10 +2,10 @@
 package agentci
 
 import (
-	"errors"
 	"fmt"
 
 	"forge.lthn.ai/core/config"
+	coreerr "forge.lthn.ai/core/go-log"
 )
 
 // AgentConfig represents a single agent machine in the config file.
@@ -43,7 +43,7 @@ func LoadAgents(cfg *config.Config) (map[string]AgentConfig, error) {
 			continue
 		}
 		if ac.Host == "" {
-			return nil, fmt.Errorf("agent %q: host is required", name)
+			return nil, coreerr.E("agentci.LoadAgents", "agent "+name+": host is required", nil)
 		}
 		if ac.QueueDir == "" {
 			ac.QueueDir = "/home/claude/ai-work/queue"
@@ -126,10 +126,10 @@ func SaveAgent(cfg *config.Config, name string, ac AgentConfig) error {
 func RemoveAgent(cfg *config.Config, name string) error {
 	var agents map[string]AgentConfig
 	if err := cfg.Get("agentci.agents", &agents); err != nil {
-		return errors.New("no agents configured")
+		return coreerr.E("agentci.RemoveAgent", "no agents configured", nil)
 	}
 	if _, ok := agents[name]; !ok {
-		return fmt.Errorf("agent %q not found", name)
+		return coreerr.E("agentci.RemoveAgent", "agent not found: "+name, nil)
 	}
 	delete(agents, name)
 	return cfg.Set("agentci.agents", agents)
