@@ -9,10 +9,11 @@ package scm
 
 import (
 	"forge.lthn.ai/core/cli/pkg/cli"
+	"forge.lthn.ai/core/go-scm/locales"
 )
 
 func init() {
-	cli.RegisterCommands(AddScmCommands)
+	cli.RegisterCommands(AddScmCommands, locales.FS)
 }
 
 // Style aliases from shared package.

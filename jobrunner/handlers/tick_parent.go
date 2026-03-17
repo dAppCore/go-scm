@@ -8,7 +8,7 @@ import (
 
 	forgejosdk "codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2"
 
-	coreerr "forge.lthn.ai/core/go-log"
+	coreerr "forge.lthn.ai/core/go-log" // aliased coreerr: go-log exports E() for structured error creation
 	"forge.lthn.ai/core/go-scm/forge"
 	"forge.lthn.ai/core/go-scm/jobrunner"
 )

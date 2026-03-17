@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 
 	"forge.lthn.ai/core/cli/pkg/cli"
+	coreio "forge.lthn.ai/core/go-io"
 	"forge.lthn.ai/core/go-scm/marketplace"
 )
 
@@ -48,7 +49,7 @@ func runIndex(dirs []string, output, baseURL, org string) error {
 	}
 
 	absOutput, _ := filepath.Abs(output)
-	if err := marketplace.WriteIndex(absOutput, idx); err != nil {
+	if err := marketplace.WriteIndex(coreio.Local, absOutput, idx); err != nil {
 		return err
 	}
 

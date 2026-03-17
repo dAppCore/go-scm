@@ -106,7 +106,7 @@ func FindRegistry(m io.Medium) (string, error) {
 	// Check current directory and parents
 	dir, err := os.Getwd()
 	if err != nil {
-		return "", err
+		return "", coreerr.E("repos.FindRegistry", "failed to get working directory", err)
 	}
 
 	for {
@@ -131,7 +131,7 @@ func FindRegistry(m io.Medium) (string, error) {
 	// Check home directory common locations
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return "", err
+		return "", coreerr.E("repos.FindRegistry", "failed to get home directory", err)
 	}
 
 	commonPaths := []string{

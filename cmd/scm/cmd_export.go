@@ -45,7 +45,7 @@ func runExport(dir string) error {
 			BuiltBy: "core scm export",
 		})
 		if err != nil {
-			return err
+			return cli.WrapVerb(err, "compile", "manifest")
 		}
 	}
 

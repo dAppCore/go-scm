@@ -109,10 +109,14 @@ func (h *DispatchHandler) Execute(ctx context.Context, signal *jobrunner.Pipelin
 			if l.Name == LabelInProgress || l.Name == LabelAgentComplete {
 				coreerr.Info("issue already processed, skipping", "issue", signal.ChildNumber, "label", l.Name)
 				return &jobrunner.ActionResult{
-					Action:    "dispatch",
-					Success:   true,
-					Timestamp: time.Now(),
-					Duration:  time.Since(start),
+					Action:      "dispatch",
+					RepoOwner:   safeOwner,
+					RepoName:    safeRepo,
+					EpicNumber:  signal.EpicNumber,
+					ChildNumber: signal.ChildNumber,
+					Success:     true,
+					Timestamp:   time.Now(),
+					Duration:    time.Since(start),
 				}, nil
 			}
 		}

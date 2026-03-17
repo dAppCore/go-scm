@@ -3,6 +3,7 @@ package scm
 import (
 	"crypto/ed25519"
 	"encoding/hex"
+	"fmt"
 	"os/exec"
 	"strings"
 
@@ -55,6 +56,12 @@ func runCompile(dir, signKeyHex, builtBy string) error {
 		keyBytes, err := hex.DecodeString(signKeyHex)
 		if err != nil {
 			return cli.WrapVerb(err, "decode", "sign key")
+		}
+		if len(keyBytes) != ed25519.PrivateKeySize {
+			return cli.WrapVerb(
+				fmt.Errorf("expected %d bytes, got %d", ed25519.PrivateKeySize, len(keyBytes)),
+				"validate", "sign key length",
+			)
 		}
 		opts.SignKey = ed25519.PrivateKey(keyBytes)
 	}

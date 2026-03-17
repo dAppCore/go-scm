@@ -110,7 +110,9 @@ func (i *Installer) Remove(code string) error {
 	}
 
 	dest := filepath.Join(i.modulesDir, code)
-	_ = i.medium.DeleteAll(dest)
+	if err := i.medium.DeleteAll(dest); err != nil {
+		return coreerr.E("marketplace.Installer.Remove", "delete "+code, err)
+	}
 
 	return i.store.Delete(storeGroup, code)
 }

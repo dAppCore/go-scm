@@ -1,12 +1,16 @@
 package forge
 
 import (
+	"errors"
 	"strings"
 
 	forgejo "codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2"
 
 	"forge.lthn.ai/core/go-log"
 )
+
+// ErrLabelNotFound is returned when a label cannot be found by name.
+var ErrLabelNotFound = errors.New("label not found")
 
 // ListOrgLabels returns all labels for repos in the given organisation.
 // Note: The Forgejo SDK does not have a dedicated org-level labels endpoint.
@@ -74,14 +78,19 @@ func (c *Client) GetLabelByName(owner, repo, name string) (*forgejo.Label, error
 		}
 	}
 
-	return nil, log.E("forge.GetLabelByName", "label "+name+" not found in "+owner+"/"+repo, nil)
+	return nil, log.E("forge.GetLabelByName", "label "+name+" not found in "+owner+"/"+repo, ErrLabelNotFound)
 }
 
 // EnsureLabel checks if a label exists, and creates it if it doesn't.
+// Only creates a new label when the error is ErrLabelNotFound; other
+// errors (e.g. network failures) are returned immediately.
 func (c *Client) EnsureLabel(owner, repo, name, color string) (*forgejo.Label, error) {
 	label, err := c.GetLabelByName(owner, repo, name)
 	if err == nil {
 		return label, nil
+	}
+	if !errors.Is(err, ErrLabelNotFound) {
+		return nil, err
 	}
 
 	return c.CreateRepoLabel(owner, repo, forgejo.CreateLabelOption{

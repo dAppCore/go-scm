@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	coreio "forge.lthn.ai/core/go-io"
 	"forge.lthn.ai/core/go-scm/manifest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -206,7 +207,7 @@ func TestWriteIndex_Good(t *testing.T) {
 		},
 	}
 
-	err := WriteIndex(path, idx)
+	err := WriteIndex(coreio.Local, path, idx)
 	require.NoError(t, err)
 
 	data, err := os.ReadFile(path)
@@ -231,7 +232,7 @@ func TestWriteIndex_Good_RoundTrip(t *testing.T) {
 	idx, err := b.BuildFromDirs(root)
 	require.NoError(t, err)
 
-	require.NoError(t, WriteIndex(path, idx))
+	require.NoError(t, WriteIndex(coreio.Local, path, idx))
 
 	data, err := os.ReadFile(path)
 	require.NoError(t, err)

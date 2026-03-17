@@ -25,6 +25,18 @@ type Builder struct {
 
 	// Org is the default organisation used when constructing Repo URLs.
 	Org string
+
+	// Medium is the filesystem abstraction used for reading and writing.
+	// Falls back to coreio.Local if nil.
+	Medium coreio.Medium
+}
+
+// medium returns the builder's Medium or falls back to coreio.Local.
+func (b *Builder) medium() coreio.Medium {
+	if b.Medium != nil {
+		return b.Medium
+	}
+	return coreio.Local
 }
 
 // BuildFromDirs scans each directory for subdirectories containing either
@@ -34,8 +46,9 @@ func (b *Builder) BuildFromDirs(dirs ...string) (*Index, error) {
 	var modules []Module
 	seen := make(map[string]bool)
 
+	m := b.medium()
 	for _, dir := range dirs {
-		entries, err := os.ReadDir(dir)
+		entries, err := m.List(dir)
 		if err != nil {
 			if os.IsNotExist(err) {
 				continue
@@ -113,22 +126,24 @@ func BuildFromManifests(manifests []*manifest.Manifest) *Index {
 }
 
 // WriteIndex serialises an Index to JSON and writes it to the given path.
-func WriteIndex(path string, idx *Index) error {
-	if err := coreio.Local.EnsureDir(filepath.Dir(path)); err != nil {
+func WriteIndex(m coreio.Medium, path string, idx *Index) error {
+	if err := m.EnsureDir(filepath.Dir(path)); err != nil {
 		return coreerr.E("marketplace.WriteIndex", "mkdir failed", err)
 	}
 	data, err := json.MarshalIndent(idx, "", "  ")
 	if err != nil {
 		return coreerr.E("marketplace.WriteIndex", "marshal failed", err)
 	}
-	return coreio.Local.Write(path, string(data))
+	return m.Write(path, string(data))
 }
 
 // loadFromDir tries core.json first, then falls back to .core/manifest.yaml.
 func (b *Builder) loadFromDir(dir string) (*manifest.Manifest, error) {
+	m := b.medium()
+
 	// Prefer compiled manifest (core.json).
 	coreJSON := filepath.Join(dir, "core.json")
-	if raw, err := coreio.Local.Read(coreJSON); err == nil {
+	if raw, err := m.Read(coreJSON); err == nil {
 		cm, err := manifest.ParseCompiled([]byte(raw))
 		if err != nil {
 			return nil, coreerr.E("marketplace.Builder.loadFromDir", "parse core.json", err)
@@ -138,16 +153,16 @@ func (b *Builder) loadFromDir(dir string) (*manifest.Manifest, error) {
 
 	// Fall back to source manifest.
 	manifestYAML := filepath.Join(dir, ".core", "manifest.yaml")
-	raw, err := coreio.Local.Read(manifestYAML)
+	raw, err := m.Read(manifestYAML)
 	if err != nil {
 		return nil, nil // No manifest — skip silently.
 	}
 
-	m, err := manifest.Parse([]byte(raw))
+	mf, err := manifest.Parse([]byte(raw))
 	if err != nil {
 		return nil, coreerr.E("marketplace.Builder.loadFromDir", "parse manifest.yaml", err)
 	}
-	return m, nil
+	return mf, nil
 }
 
 // repoURL constructs a module repository URL from the builder config.
