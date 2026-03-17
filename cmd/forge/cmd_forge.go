@@ -14,13 +14,11 @@ package forge
 
 import (
 	"forge.lthn.ai/core/cli/pkg/cli"
-	"forge.lthn.ai/core/go-i18n"
 	"forge.lthn.ai/core/go-scm/locales"
 )
 
 func init() {
-	i18n.LoadFS(locales.FS, ".")
-	cli.RegisterCommands(AddForgeCommands)
+	cli.RegisterCommands(AddForgeCommands, locales.FS)
 }
 
 // Style aliases from shared package.
