@@ -66,7 +66,7 @@ Each subsystem has different test infrastructure — see `docs/development.md` f
 - **UK English**: colour, organisation, centre, licence (noun), authorise, behaviour
 - **Tests**: testify assert/require, table-driven preferred, `_Good`/`_Bad`/`_Ugly` suffix naming
 - **Imports**: stdlib → `forge.lthn.ai/...` → third-party, each group separated by blank line
-- **Errors**: `"package.Func: context: %w"` or `log.E("package.Func", "context", err)` — no bare `fmt.Errorf`
+- **Errors**: `coreerr.E("package.Func", "context", err)` via `coreerr "forge.lthn.ai/core/go-log"` — no bare `fmt.Errorf` or `errors.New`
 - **Conventional commits**: `feat(forge):`, `fix(gitea):`, `test(collect):`, `docs(agentci):`, `refactor(collect):`, `chore:`
 - **Co-Author trailer**: `Co-Authored-By: Virgil <virgil@lethean.io>`
 - **Licence**: EUPL-1.2
