@@ -6,13 +6,13 @@ require (
 	code.gitea.io/sdk/gitea v0.23.2
 	codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2 v2.2.0
 	forge.lthn.ai/core/api v0.1.5
-	forge.lthn.ai/core/cli v0.3.6
-	forge.lthn.ai/core/config v0.1.7
-	forge.lthn.ai/core/go v0.3.2
-	forge.lthn.ai/core/go-i18n v0.1.6
-	forge.lthn.ai/core/go-io v0.1.6
+	forge.lthn.ai/core/cli v0.3.7
+	forge.lthn.ai/core/config v0.1.8
+	forge.lthn.ai/core/go v0.3.3
+	forge.lthn.ai/core/go-i18n v0.1.7
+	forge.lthn.ai/core/go-io v0.1.7
 	forge.lthn.ai/core/go-log v0.0.4
-	forge.lthn.ai/core/go-ws v0.2.4
+	forge.lthn.ai/core/go-ws v0.2.5
 	github.com/gin-gonic/gin v1.12.0
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/net v0.52.0
