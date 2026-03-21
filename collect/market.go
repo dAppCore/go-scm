@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	core "forge.lthn.ai/core/go-log"
+	core "dappco.re/go/core/log"
 )
 
 // coinGeckoBaseURL is the base URL for the CoinGecko API.

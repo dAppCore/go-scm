@@ -7,7 +7,7 @@ import (
 	forgejo "codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2"
 
 	"forge.lthn.ai/core/cli/pkg/cli"
-	fg "forge.lthn.ai/core/go-scm/forge"
+	fg "dappco.re/go/core/scm/forge"
 )
 
 // PRs command flags.

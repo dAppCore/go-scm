@@ -8,7 +8,7 @@ import (
 	"context"
 	"path/filepath"
 
-	"forge.lthn.ai/core/go-io"
+	"dappco.re/go/core/io"
 )
 
 // Collector is the interface all collection sources implement.

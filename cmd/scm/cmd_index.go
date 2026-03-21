@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 
 	"forge.lthn.ai/core/cli/pkg/cli"
-	"forge.lthn.ai/core/go-scm/marketplace"
+	"dappco.re/go/core/scm/marketplace"
 )
 
 func addIndexCommand(parent *cli.Command) {

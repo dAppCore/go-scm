@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"forge.lthn.ai/core/go-scm/jobrunner"
+	"dappco.re/go/core/scm/jobrunner"
 )
 
 // RunMode determines the execution strategy for a dispatched task.

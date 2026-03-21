@@ -10,8 +10,8 @@ import (
 	"code.gitea.io/sdk/gitea"
 
 	"forge.lthn.ai/core/cli/pkg/cli"
-	coreerr "forge.lthn.ai/core/go-log"
-	gt "forge.lthn.ai/core/go-scm/gitea"
+	coreerr "dappco.re/go/core/log"
+	gt "dappco.re/go/core/scm/gitea"
 )
 
 // Sync command flags.

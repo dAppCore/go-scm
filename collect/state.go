@@ -5,8 +5,8 @@ import (
 	"sync"
 	"time"
 
-	core "forge.lthn.ai/core/go-log"
-	"forge.lthn.ai/core/go-io"
+	core "dappco.re/go/core/log"
+	"dappco.re/go/core/io"
 )
 
 // State tracks collection progress for incremental runs.

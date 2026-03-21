@@ -21,7 +21,7 @@ description: How to build, test, and contribute to go-scm.
 
 ```
 go-scm/
-+-- go.mod              Module definition (forge.lthn.ai/core/go-scm)
++-- go.mod              Module definition (dappco.re/go/core/scm)
 +-- forge/              Forgejo API client + tests
 +-- gitea/              Gitea API client + tests
 +-- git/                Multi-repo git operations + tests

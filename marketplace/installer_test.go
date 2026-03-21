@@ -9,9 +9,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"forge.lthn.ai/core/go-io"
-	"forge.lthn.ai/core/go-scm/manifest"
-	"forge.lthn.ai/core/go-io/store"
+	"dappco.re/go/core/io"
+	"dappco.re/go/core/scm/manifest"
+	"dappco.re/go/core/io/store"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

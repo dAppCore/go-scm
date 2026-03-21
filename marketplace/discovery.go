@@ -5,9 +5,9 @@ import (
 	"os"
 	"path/filepath"
 
-	coreerr "forge.lthn.ai/core/go-log"
-	coreio "forge.lthn.ai/core/go-io"
-	"forge.lthn.ai/core/go-scm/manifest"
+	coreerr "dappco.re/go/core/log"
+	coreio "dappco.re/go/core/io"
+	"dappco.re/go/core/scm/manifest"
 	"gopkg.in/yaml.v3"
 )
 

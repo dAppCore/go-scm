@@ -3,8 +3,8 @@ package plugin
 import (
 	"path/filepath"
 
-	coreerr "forge.lthn.ai/core/go-log"
-	"forge.lthn.ai/core/go-io"
+	coreerr "dappco.re/go/core/log"
+	"dappco.re/go/core/io"
 )
 
 // Loader loads plugins from the filesystem.

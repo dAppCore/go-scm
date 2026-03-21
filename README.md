@@ -1,4 +1,4 @@
-[![Go Reference](https://pkg.go.dev/badge/forge.lthn.ai/core/go-scm.svg)](https://pkg.go.dev/forge.lthn.ai/core/go-scm)
+[![Go Reference](https://pkg.go.dev/badge/dappco.re/go/core/scm.svg)](https://pkg.go.dev/dappco.re/go/core/scm)
 [![License: EUPL-1.2](https://img.shields.io/badge/License-EUPL--1.2-blue.svg)](LICENSE.md)
 [![Go Version](https://img.shields.io/badge/Go-1.26-00ADD8?style=flat&logo=go)](go.mod)
 
@@ -6,7 +6,7 @@
 
 SCM integration, AgentCI dispatch automation, and data collection for the Lethean ecosystem. Provides a Forgejo API client and a Gitea client for the public mirror, multi-repo git operations with parallel status checks, the Clotho Protocol orchestrator for dual-run agent verification, a PR automation pipeline (poll → dispatch → journal) driven by epic issue task lists, and pluggable data collectors for BitcoinTalk, GitHub, market data, and research papers.
 
-**Module**: `forge.lthn.ai/core/go-scm`
+**Module**: `dappco.re/go/core/scm`
 **Licence**: EUPL-1.2
 **Language**: Go 1.25
 
@@ -14,9 +14,9 @@ SCM integration, AgentCI dispatch automation, and data collection for the Lethea
 
 ```go
 import (
-    "forge.lthn.ai/core/go-scm/forge"
-    "forge.lthn.ai/core/go-scm/git"
-    "forge.lthn.ai/core/go-scm/jobrunner"
+    "dappco.re/go/core/scm/forge"
+    "dappco.re/go/core/scm/git"
+    "dappco.re/go/core/scm/jobrunner"
 )
 
 // Forgejo client

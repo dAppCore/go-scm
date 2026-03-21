@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	coreerr "forge.lthn.ai/core/go-log"
-	"forge.lthn.ai/core/go-scm/forge"
-	"forge.lthn.ai/core/go-scm/jobrunner"
+	coreerr "dappco.re/go/core/log"
+	"dappco.re/go/core/scm/forge"
+	"dappco.re/go/core/scm/jobrunner"
 )
 
 const (

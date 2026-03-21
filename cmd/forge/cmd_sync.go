@@ -10,8 +10,8 @@ import (
 	forgejo "codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2"
 
 	"forge.lthn.ai/core/cli/pkg/cli"
-	coreerr "forge.lthn.ai/core/go-log"
-	fg "forge.lthn.ai/core/go-scm/forge"
+	coreerr "dappco.re/go/core/log"
+	fg "dappco.re/go/core/scm/forge"
 )
 
 // Sync command flags.

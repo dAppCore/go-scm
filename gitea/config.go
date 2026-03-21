@@ -4,7 +4,7 @@ import (
 	"os"
 
 	"forge.lthn.ai/core/config"
-	"forge.lthn.ai/core/go-log"
+	"dappco.re/go/core/log"
 )
 
 const (

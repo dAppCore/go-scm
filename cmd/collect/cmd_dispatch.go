@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"forge.lthn.ai/core/cli/pkg/cli"
-	collectpkg "forge.lthn.ai/core/go-scm/collect"
-	"forge.lthn.ai/core/go-i18n"
+	collectpkg "dappco.re/go/core/scm/collect"
+	"dappco.re/go/core/i18n"
 )
 
 // addDispatchCommand adds the 'dispatch' subcommand to the collect parent.

@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"forge.lthn.ai/core/config"
-	coreerr "forge.lthn.ai/core/go-log"
+	coreerr "dappco.re/go/core/log"
 )
 
 // AgentConfig represents a single agent machine in the config file.

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"forge.lthn.ai/core/go-scm/forge"
-	"forge.lthn.ai/core/go-scm/jobrunner"
+	"dappco.re/go/core/scm/forge"
+	"dappco.re/go/core/scm/jobrunner"
 )
 
 // PublishDraftHandler marks a draft PR as ready for review once its checks pass.

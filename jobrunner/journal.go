@@ -8,8 +8,8 @@ import (
 	"strings"
 	"sync"
 
-	coreerr "forge.lthn.ai/core/go-log"
-	coreio "forge.lthn.ai/core/go-io"
+	coreerr "dappco.re/go/core/log"
+	coreio "dappco.re/go/core/io"
 )
 
 // validPathComponent matches safe repo owner/name characters (alphanumeric, hyphen, underscore, dot).

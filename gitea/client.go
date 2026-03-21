@@ -11,7 +11,7 @@ package gitea
 import (
 	"code.gitea.io/sdk/gitea"
 
-	"forge.lthn.ai/core/go-log"
+	"dappco.re/go/core/log"
 )
 
 // Client wraps the Gitea SDK client with config-based auth.

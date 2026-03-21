@@ -11,8 +11,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"forge.lthn.ai/core/go-scm/forge"
-	"forge.lthn.ai/core/go-scm/jobrunner"
+	"dappco.re/go/core/scm/forge"
+	"dappco.re/go/core/scm/jobrunner"
 )
 
 // withVersion wraps an HTTP handler to serve the Forgejo /api/v1/version

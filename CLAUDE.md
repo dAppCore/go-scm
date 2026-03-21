@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Is
 
-SCM integration and data collection library for the Lethean ecosystem (`forge.lthn.ai/core/go-scm`). Provides Forgejo/Gitea API clients, an AgentCI pipeline for automated PR lifecycle, pluggable data collectors, and workspace management (repos registry, manifests with ed25519 signing, marketplace, plugin system).
+SCM integration and data collection library for the Lethean ecosystem (`dappco.re/go/core/scm`). Provides Forgejo/Gitea API clients, an AgentCI pipeline for automated PR lifecycle, pluggable data collectors, and workspace management (repos registry, manifests with ed25519 signing, marketplace, plugin system).
 
 Virgil orchestrates tasks via Forgejo issues. Pick up tasks in issue order, mark complete, commit and push.
 
@@ -65,14 +65,14 @@ Each subsystem has different test infrastructure — see `docs/development.md` f
 
 - **UK English**: colour, organisation, centre, licence (noun), authorise, behaviour
 - **Tests**: testify assert/require, table-driven preferred, `_Good`/`_Bad`/`_Ugly` suffix naming
-- **Imports**: stdlib → `forge.lthn.ai/...` → third-party, each group separated by blank line
-- **Errors**: `coreerr.E("package.Func", "context", err)` via `coreerr "forge.lthn.ai/core/go-log"` — no bare `fmt.Errorf` or `errors.New`
+- **Imports**: stdlib → `dappco.re/...` → third-party, each group separated by blank line
+- **Errors**: `coreerr.E("package.Func", "context", err)` via `coreerr "dappco.re/go/core/log"` — no bare `fmt.Errorf` or `errors.New`
 - **Conventional commits**: `feat(forge):`, `fix(gitea):`, `test(collect):`, `docs(agentci):`, `refactor(collect):`, `chore:`
 - **Co-Author trailer**: `Co-Authored-By: Virgil <virgil@lethean.io>`
 - **Licence**: EUPL-1.2
 
 ## Forge
 
-- **Repo**: `forge.lthn.ai/core/go-scm`
+- **Repo**: `dappco.re/go/core/scm`
 - **Push via SSH**: `git push origin main` (remote: `ssh://git@forge.lthn.ai:2223/core/go-scm.git`)
 - **CI**: Forgejo Actions — runs tests with race detector and coverage on push to main/dev and PRs to main

@@ -7,8 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"forge.lthn.ai/core/go-scm/agentci"
-	"forge.lthn.ai/core/go-scm/jobrunner"
+	"dappco.re/go/core/scm/agentci"
+	"dappco.re/go/core/scm/jobrunner"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

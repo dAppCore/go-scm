@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	core "forge.lthn.ai/core/go-log"
+	core "dappco.re/go/core/log"
 )
 
 // RateLimiter tracks per-source rate limiting to avoid overwhelming APIs.

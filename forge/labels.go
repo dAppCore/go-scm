@@ -5,7 +5,7 @@ import (
 
 	forgejo "codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2"
 
-	"forge.lthn.ai/core/go-log"
+	"dappco.re/go/core/log"
 )
 
 // ListOrgLabels returns all labels for repos in the given organisation.

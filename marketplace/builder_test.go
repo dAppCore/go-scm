@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"forge.lthn.ai/core/go-scm/manifest"
+	"dappco.re/go/core/scm/manifest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

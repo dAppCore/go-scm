@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"forge.lthn.ai/core/go-io"
+	"dappco.re/go/core/io"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

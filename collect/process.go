@@ -9,7 +9,7 @@ import (
 	"slices"
 	"strings"
 
-	core "forge.lthn.ai/core/go-log"
+	core "dappco.re/go/core/log"
 	"golang.org/x/net/html"
 )
 

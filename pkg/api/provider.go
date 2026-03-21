@@ -11,13 +11,13 @@ import (
 	"encoding/hex"
 	"net/http"
 
-	"forge.lthn.ai/core/api"
-	"forge.lthn.ai/core/api/pkg/provider"
-	"forge.lthn.ai/core/go-io"
-	"forge.lthn.ai/core/go-scm/manifest"
-	"forge.lthn.ai/core/go-scm/marketplace"
-	"forge.lthn.ai/core/go-scm/repos"
-	"forge.lthn.ai/core/go-ws"
+	"dappco.re/go/core/api"
+	"dappco.re/go/core/api/pkg/provider"
+	"dappco.re/go/core/io"
+	"dappco.re/go/core/scm/manifest"
+	"dappco.re/go/core/scm/marketplace"
+	"dappco.re/go/core/scm/repos"
+	"dappco.re/go/core/ws"
 	"github.com/gin-gonic/gin"
 )
 

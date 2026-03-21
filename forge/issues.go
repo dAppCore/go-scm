@@ -5,7 +5,7 @@ import (
 
 	forgejo "codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2"
 
-	"forge.lthn.ai/core/go-log"
+	"dappco.re/go/core/log"
 )
 
 // ListIssuesOpts configures issue listing.

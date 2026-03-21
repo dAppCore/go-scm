@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	coreerr "forge.lthn.ai/core/go-log"
-	"forge.lthn.ai/core/go-io"
+	coreerr "dappco.re/go/core/log"
+	"dappco.re/go/core/io"
 )
 
 // Installer handles plugin installation from GitHub.

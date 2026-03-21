@@ -8,9 +8,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	goapi "forge.lthn.ai/core/api"
-	"forge.lthn.ai/core/go-scm/marketplace"
-	scmapi "forge.lthn.ai/core/go-scm/pkg/api"
+	goapi "dappco.re/go/core/api"
+	"dappco.re/go/core/scm/marketplace"
+	scmapi "dappco.re/go/core/scm/pkg/api"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

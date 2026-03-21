@@ -7,7 +7,7 @@ description: SCM integration, AgentCI automation, and data collection for the Le
 
 `go-scm` provides source control management integration for the Lethean ecosystem. It wraps the Forgejo and Gitea APIs behind ergonomic Go clients, runs an automated PR pipeline for AI agent workflows, collects data from external sources, and manages multi-repo workspaces via a declarative registry.
 
-**Module path:** `forge.lthn.ai/core/go-scm`
+**Module path:** `dappco.re/go/core/scm`
 **Go version:** 1.26
 **Licence:** EUPL-1.2
 
@@ -16,7 +16,7 @@ description: SCM integration, AgentCI automation, and data collection for the Le
 ### Forgejo API Client
 
 ```go
-import "forge.lthn.ai/core/go-scm/forge"
+import "dappco.re/go/core/scm/forge"
 
 // Create a client from config file / env / flags
 client, err := forge.NewFromConfig("", "")
@@ -35,7 +35,7 @@ for repo, err := range client.ListOrgReposIter("core") {
 ### Multi-Repo Git Status
 
 ```go
-import "forge.lthn.ai/core/go-scm/git"
+import "dappco.re/go/core/scm/git"
 
 statuses := git.Status(ctx, git.StatusOptions{
     Paths: []string{"/home/dev/core/go-scm", "/home/dev/core/go-ai"},
@@ -53,9 +53,9 @@ for _, s := range statuses {
 
 ```go
 import (
-    "forge.lthn.ai/core/go-scm/jobrunner"
-    "forge.lthn.ai/core/go-scm/jobrunner/forgejo"
-    "forge.lthn.ai/core/go-scm/jobrunner/handlers"
+    "dappco.re/go/core/scm/jobrunner"
+    "dappco.re/go/core/scm/jobrunner/forgejo"
+    "dappco.re/go/core/scm/jobrunner/handlers"
 )
 
 source := forgejo.New(forgejo.Config{Repos: []string{"core/go-scm"}}, forgeClient)
@@ -74,7 +74,7 @@ poller.Run(ctx)
 ### Data Collection
 
 ```go
-import "forge.lthn.ai/core/go-scm/collect"
+import "dappco.re/go/core/scm/collect"
 
 cfg := collect.NewConfig("/tmp/collected")
 excavator := &collect.Excavator{
@@ -118,9 +118,9 @@ result, err := excavator.Run(ctx, cfg)
 | `code.gitea.io/sdk/gitea` | Gitea API SDK |
 | `forge.lthn.ai/core/cli` | CLI framework (Cobra, TUI) |
 | `forge.lthn.ai/core/config` | Layered config (`~/.core/config.yaml`) |
-| `forge.lthn.ai/core/go-io` | Filesystem abstraction (Medium, Sandbox, Store) |
-| `forge.lthn.ai/core/go-log` | Structured logging and contextual error helper |
-| `forge.lthn.ai/core/go-i18n` | Internationalisation |
+| `dappco.re/go/core/io` | Filesystem abstraction (Medium, Sandbox, Store) |
+| `dappco.re/go/core/log` | Structured logging and contextual error helper |
+| `dappco.re/go/core/i18n` | Internationalisation |
 | `github.com/stretchr/testify` | Test assertions |
 | `golang.org/x/net` | HTML parsing for collectors |
 | `gopkg.in/yaml.v3` | YAML parsing for manifests and registries |

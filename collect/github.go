@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	core "forge.lthn.ai/core/go-log"
+	core "dappco.re/go/core/log"
 )
 
 // ghIssue represents a GitHub issue or pull request as returned by the gh CLI.

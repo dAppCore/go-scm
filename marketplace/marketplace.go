@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"strings"
 
-	coreerr "forge.lthn.ai/core/go-log"
+	coreerr "dappco.re/go/core/log"
 )
 
 // Module is a marketplace entry pointing to a module's Git repo.

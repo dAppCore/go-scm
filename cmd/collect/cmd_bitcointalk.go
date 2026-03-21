@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"forge.lthn.ai/core/cli/pkg/cli"
-	"forge.lthn.ai/core/go-scm/collect"
-	"forge.lthn.ai/core/go-i18n"
+	"dappco.re/go/core/scm/collect"
+	"dappco.re/go/core/i18n"
 )
 
 // BitcoinTalk command flags

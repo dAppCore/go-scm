@@ -5,7 +5,7 @@ import (
 
 	"code.gitea.io/sdk/gitea"
 
-	"forge.lthn.ai/core/go-log"
+	"dappco.re/go/core/log"
 )
 
 // ListIssuesOpts configures issue listing.

@@ -9,10 +9,10 @@ import (
 	"strings"
 	"time"
 
-	coreerr "forge.lthn.ai/core/go-log"
-	"forge.lthn.ai/core/go-io"
-	"forge.lthn.ai/core/go-scm/manifest"
-	"forge.lthn.ai/core/go-io/store"
+	coreerr "dappco.re/go/core/log"
+	"dappco.re/go/core/io"
+	"dappco.re/go/core/scm/manifest"
+	"dappco.re/go/core/io/store"
 )
 
 const storeGroup = "_modules"

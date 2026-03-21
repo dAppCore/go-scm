@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	"forge.lthn.ai/core/cli/pkg/cli"
-	"forge.lthn.ai/core/go-scm/collect"
-	"forge.lthn.ai/core/go-i18n"
-	"forge.lthn.ai/core/go-io"
+	"dappco.re/go/core/scm/collect"
+	"dappco.re/go/core/i18n"
+	"dappco.re/go/core/io"
 )
 
 func init() {

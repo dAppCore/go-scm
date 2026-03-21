@@ -39,7 +39,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	io "forge.lthn.ai/core/go-io"
+	io "dappco.re/go/core/io"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -127,7 +127,7 @@ import (
 	"path/filepath"
 	"time"
 
-	io "forge.lthn.ai/core/go-io"
+	io "dappco.re/go/core/io"
 )
 
 // CompiledManifest is the core.json distribution format.
@@ -217,7 +217,7 @@ package marketplace
 import (
 	"testing"
 
-	io "forge.lthn.ai/core/go-io"
+	io "dappco.re/go/core/io"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -318,8 +318,8 @@ import (
 	"fmt"
 	"sort"
 
-	io "forge.lthn.ai/core/go-io"
-	"forge.lthn.ai/core/go-scm/manifest"
+	io "dappco.re/go/core/io"
+	"dappco.re/go/core/scm/manifest"
 )
 
 // IndexOptions controls how the index is built.

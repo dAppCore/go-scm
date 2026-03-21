@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"forge.lthn.ai/core/cli/pkg/cli"
-	"forge.lthn.ai/core/go-io"
-	"forge.lthn.ai/core/go-scm/manifest"
+	"dappco.re/go/core/io"
+	"dappco.re/go/core/scm/manifest"
 )
 
 func addCompileCommand(parent *cli.Command) {
