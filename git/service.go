@@ -5,7 +5,7 @@ import (
 	"iter"
 	"slices"
 
-	"forge.lthn.ai/core/go/pkg/core"
+	"dappco.re/go/core"
 )
 
 // Queries for git service
@@ -69,37 +69,35 @@ func (s *Service) OnStartup(ctx context.Context) error {
 	return nil
 }
 
-func (s *Service) handleQuery(c *core.Core, q core.Query) (any, bool, error) {
+func (s *Service) handleQuery(c *core.Core, q core.Query) core.Result {
 	switch m := q.(type) {
 	case QueryStatus:
 		statuses := Status(context.Background(), StatusOptions(m))
 		s.lastStatus = statuses
-		return statuses, true, nil
+		return core.Result{Value: statuses, OK: true}
 
 	case QueryDirtyRepos:
-		return s.DirtyRepos(), true, nil
+		return core.Result{Value: s.DirtyRepos(), OK: true}
 
 	case QueryAheadRepos:
-		return s.AheadRepos(), true, nil
+		return core.Result{Value: s.AheadRepos(), OK: true}
 	}
-	return nil, false, nil
+	return core.Result{}
 }
 
-func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
+func (s *Service) handleTask(c *core.Core, t core.Task) core.Result {
 	switch m := t.(type) {
 	case TaskPush:
-		err := Push(context.Background(), m.Path)
-		return nil, true, err
+		return core.Result{}.Result(nil, Push(context.Background(), m.Path))
 
 	case TaskPull:
-		err := Pull(context.Background(), m.Path)
-		return nil, true, err
+		return core.Result{}.Result(nil, Pull(context.Background(), m.Path))
 
 	case TaskPushMultiple:
 		results := PushMultiple(context.Background(), m.Paths, m.Names)
-		return results, true, nil
+		return core.Result{Value: results, OK: true}
 	}
-	return nil, false, nil
+	return core.Result{}
 }
 
 // Status returns last status result.

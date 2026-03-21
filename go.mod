@@ -5,10 +5,10 @@ go 1.26.0
 require (
 	code.gitea.io/sdk/gitea v0.23.2
 	codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2 v2.2.0
+	dappco.re/go/core v0.4.7
 	forge.lthn.ai/core/api v0.1.5
 	forge.lthn.ai/core/cli v0.3.7
 	forge.lthn.ai/core/config v0.1.8
-	forge.lthn.ai/core/go v0.3.3
 	forge.lthn.ai/core/go-i18n v0.1.7
 	forge.lthn.ai/core/go-io v0.1.7
 	forge.lthn.ai/core/go-log v0.0.4
@@ -20,6 +20,7 @@ require (
 )
 
 require (
+	forge.lthn.ai/core/go v0.3.3 // indirect
 	forge.lthn.ai/core/go-inference v0.1.6 // indirect
 	github.com/42wim/httpsig v1.2.3 // indirect
 	github.com/99designs/gqlgen v0.17.88 // indirect
