@@ -5,12 +5,12 @@ go 1.26.0
 require (
 	code.gitea.io/sdk/gitea v0.23.2
 	codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2 v2.2.0
-	dappco.re/go/core v0.4.7
-	dappco.re/go/core/api v0.1.5
-	dappco.re/go/core/i18n v0.1.7
-	dappco.re/go/core/io v0.1.7
-	dappco.re/go/core/log v0.0.4
-	dappco.re/go/core/ws v0.2.5
+	dappco.re/go/core v0.5.0
+	dappco.re/go/core/api v0.2.0
+	dappco.re/go/core/i18n v0.2.0
+	dappco.re/go/core/io v0.2.0
+	dappco.re/go/core/log v0.1.0
+	dappco.re/go/core/ws v0.3.0
 	forge.lthn.ai/core/cli v0.3.7
 	forge.lthn.ai/core/config v0.1.8
 	github.com/gin-gonic/gin v1.12.0
@@ -20,10 +20,10 @@ require (
 )
 
 require (
-	forge.lthn.ai/core/go v0.3.2 // indirect
+	forge.lthn.ai/core/go v0.3.3 // indirect
 	forge.lthn.ai/core/go-i18n v0.1.7 // indirect
 	forge.lthn.ai/core/go-inference v0.1.7 // indirect
-	forge.lthn.ai/core/go-io v0.1.5 // indirect
+	forge.lthn.ai/core/go-io v0.1.7 // indirect
 	forge.lthn.ai/core/go-log v0.0.4 // indirect
 	github.com/42wim/httpsig v1.2.3 // indirect
 	github.com/99designs/gqlgen v0.17.88 // indirect
@@ -154,16 +154,4 @@ require (
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
 	modernc.org/sqlite v1.47.0 // indirect
-)
-
-replace (
-	dappco.re/go/core => ../go
-	dappco.re/go/core/api => ../api
-	dappco.re/go/core/i18n => ../go-i18n
-	dappco.re/go/core/io => ../go-io
-	dappco.re/go/core/log => ../go-log
-	dappco.re/go/core/ws => ../go-ws
-	forge.lthn.ai/core/cli => ../cli
-	forge.lthn.ai/core/config => ../config
-	forge.lthn.ai/core/go-inference => ../go-inference
 )
