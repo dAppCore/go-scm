@@ -3,13 +3,15 @@ package plugin
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
 
-	coreerr "dappco.re/go/core/log"
 	"dappco.re/go/core/io"
+	coreerr "dappco.re/go/core/log"
+	"dappco.re/go/core/scm/agentci"
 )
 
 // Installer handles plugin installation from GitHub.
@@ -40,7 +42,10 @@ func (i *Installer) Install(ctx context.Context, source string) error {
 	}
 
 	// Clone the repository
-	pluginDir := filepath.Join(i.registry.basePath, repo)
+	_, pluginDir, err := i.resolvePluginPath(repo)
+	if err != nil {
+		return coreerr.E("plugin.Installer.Install", "invalid plugin path", err)
+	}
 	if err := i.medium.EnsureDir(pluginDir); err != nil {
 		return coreerr.E("plugin.Installer.Install", "failed to create plugin directory", err)
 	}
@@ -90,14 +95,15 @@ func (i *Installer) Install(ctx context.Context, source string) error {
 
 // Update updates a plugin to the latest version.
 func (i *Installer) Update(ctx context.Context, name string) error {
-	cfg, ok := i.registry.Get(name)
-	if !ok {
-		return coreerr.E("plugin.Installer.Update", "plugin not found: "+name, nil)
+	safeName, pluginDir, err := i.resolvePluginPath(name)
+	if err != nil {
+		return coreerr.E("plugin.Installer.Update", "invalid plugin name", err)
 	}
 
-	// Parse the source to get org/repo
-	source := strings.TrimPrefix(cfg.Source, "github:")
-	pluginDir := filepath.Join(i.registry.basePath, name)
+	cfg, ok := i.registry.Get(safeName)
+	if !ok {
+		return coreerr.E("plugin.Installer.Update", "plugin not found: "+safeName, nil)
+	}
 
 	// Pull latest changes
 	cmd := exec.CommandContext(ctx, "git", "-C", pluginDir, "pull", "--ff-only")
@@ -118,18 +124,21 @@ func (i *Installer) Update(ctx context.Context, name string) error {
 		return coreerr.E("plugin.Installer.Update", "failed to save registry", err)
 	}
 
-	_ = source // used for context
 	return nil
 }
 
 // Remove uninstalls a plugin by removing its files and registry entry.
 func (i *Installer) Remove(name string) error {
-	if _, ok := i.registry.Get(name); !ok {
-		return coreerr.E("plugin.Installer.Remove", "plugin not found: "+name, nil)
+	safeName, pluginDir, err := i.resolvePluginPath(name)
+	if err != nil {
+		return coreerr.E("plugin.Installer.Remove", "invalid plugin name", err)
+	}
+
+	if _, ok := i.registry.Get(safeName); !ok {
+		return coreerr.E("plugin.Installer.Remove", "plugin not found: "+safeName, nil)
 	}
 
 	// Delete plugin directory
-	pluginDir := filepath.Join(i.registry.basePath, name)
 	if i.medium.Exists(pluginDir) {
 		if err := i.medium.DeleteAll(pluginDir); err != nil {
 			return coreerr.E("plugin.Installer.Remove", "failed to delete plugin files", err)
@@ -137,7 +146,7 @@ func (i *Installer) Remove(name string) error {
 	}
 
 	// Remove from registry
-	if err := i.registry.Remove(name); err != nil {
+	if err := i.registry.Remove(safeName); err != nil {
 		return coreerr.E("plugin.Installer.Remove", "failed to unregister plugin", err)
 	}
 
@@ -170,6 +179,10 @@ func (i *Installer) cloneRepo(ctx context.Context, org, repo, version, dest stri
 //   - "org/repo" -> org="org", repo="repo", version=""
 //   - "org/repo@v1.0" -> org="org", repo="repo", version="v1.0"
 func ParseSource(source string) (org, repo, version string, err error) {
+	source, err = url.PathUnescape(source)
+	if err != nil {
+		return "", "", "", coreerr.E("plugin.ParseSource", "invalid source path", err)
+	}
 	if source == "" {
 		return "", "", "", coreerr.E("plugin.ParseSource", "source is empty", nil)
 	}
@@ -191,5 +204,22 @@ func ParseSource(source string) (org, repo, version string, err error) {
 		return "", "", "", coreerr.E("plugin.ParseSource", "source must be in format org/repo[@version]", nil)
 	}
 
-	return parts[0], parts[1], version, nil
+	org, err = agentci.ValidatePathElement(parts[0])
+	if err != nil {
+		return "", "", "", coreerr.E("plugin.ParseSource", "invalid org", err)
+	}
+	repo, err = agentci.ValidatePathElement(parts[1])
+	if err != nil {
+		return "", "", "", coreerr.E("plugin.ParseSource", "invalid repo", err)
+	}
+
+	return org, repo, version, nil
+}
+
+func (i *Installer) resolvePluginPath(name string) (string, string, error) {
+	safeName, path, err := agentci.ResolvePathWithinRoot(i.registry.basePath, name)
+	if err != nil {
+		return "", "", coreerr.E("plugin.Installer.resolvePluginPath", "resolve plugin path", err)
+	}
+	return safeName, path, nil
 }

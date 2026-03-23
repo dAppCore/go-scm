@@ -44,6 +44,17 @@ func TestInstall_Bad_AlreadyInstalled(t *testing.T) {
 	assert.Contains(t, err.Error(), "already installed")
 }
 
+func TestInstall_Bad_PathTraversalSource(t *testing.T) {
+	m := io.NewMockMedium()
+	reg := NewRegistry(m, "/plugins")
+	inst := NewInstaller(m, reg)
+
+	err := inst.Install(context.Background(), "../repo")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid source")
+	assert.False(t, m.Exists("/repo"))
+}
+
 // ── Remove ─────────────────────────────────────────────────────────
 
 func TestRemove_Good(t *testing.T) {
@@ -89,6 +100,19 @@ func TestRemove_Bad_NotFound(t *testing.T) {
 	err := inst.Remove("nonexistent")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "plugin not found")
+}
+
+func TestRemove_Bad_PathTraversalName(t *testing.T) {
+	m := io.NewMockMedium()
+	reg := NewRegistry(m, "/plugins")
+	_ = reg.Add(&PluginConfig{Name: "safe", Version: "1.0.0"})
+	_ = m.EnsureDir("/escape")
+
+	inst := NewInstaller(m, reg)
+	err := inst.Remove("../escape")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid plugin name")
+	assert.True(t, m.Exists("/escape"))
 }
 
 // ── Update error paths ─────────────────────────────────────────────
@@ -163,4 +187,26 @@ func TestParseSource_Bad_EmptyVersion(t *testing.T) {
 	_, _, _, err := ParseSource("org/repo@")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "version is empty")
+}
+
+func TestParseSource_Bad_PathTraversal(t *testing.T) {
+	_, _, _, err := ParseSource("org/../repo")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "org/repo")
+}
+
+func TestParseSource_Bad_PathTraversalEncoded(t *testing.T) {
+	_, _, _, err := ParseSource("org%2f..%2frepo")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "org/repo")
+}
+
+func TestInstall_Bad_EncodedPathTraversal(t *testing.T) {
+	m := io.NewMockMedium()
+	reg := NewRegistry(m, "/plugins")
+	inst := NewInstaller(m, reg)
+
+	err := inst.Install(context.Background(), "org%2f..%2frepo")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid source")
 }

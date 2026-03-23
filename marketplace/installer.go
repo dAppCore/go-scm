@@ -9,10 +9,11 @@ import (
 	"strings"
 	"time"
 
-	coreerr "dappco.re/go/core/log"
 	"dappco.re/go/core/io"
-	"dappco.re/go/core/scm/manifest"
 	"dappco.re/go/core/io/store"
+	coreerr "dappco.re/go/core/log"
+	"dappco.re/go/core/scm/agentci"
+	"dappco.re/go/core/scm/manifest"
 )
 
 const storeGroup = "_modules"
@@ -47,12 +48,16 @@ type InstalledModule struct {
 
 // Install clones a module repo, verifies its manifest signature, and registers it.
 func (i *Installer) Install(ctx context.Context, mod Module) error {
-	// Check if already installed
-	if _, err := i.store.Get(storeGroup, mod.Code); err == nil {
-		return coreerr.E("marketplace.Installer.Install", "module already installed: "+mod.Code, nil)
+	safeCode, dest, err := i.resolveModulePath(mod.Code)
+	if err != nil {
+		return coreerr.E("marketplace.Installer.Install", "invalid module code", err)
 	}
 
-	dest := filepath.Join(i.modulesDir, mod.Code)
+	// Check if already installed
+	if _, err := i.store.Get(storeGroup, safeCode); err == nil {
+		return coreerr.E("marketplace.Installer.Install", "module already installed: "+safeCode, nil)
+	}
+
 	if err := i.medium.EnsureDir(i.modulesDir); err != nil {
 		return coreerr.E("marketplace.Installer.Install", "mkdir", err)
 	}
@@ -80,7 +85,7 @@ func (i *Installer) Install(ctx context.Context, mod Module) error {
 
 	entryPoint := filepath.Join(dest, "main.ts")
 	installed := InstalledModule{
-		Code:        mod.Code,
+		Code:        safeCode,
 		Name:        m.Name,
 		Version:     m.Version,
 		Repo:        mod.Repo,
@@ -95,7 +100,7 @@ func (i *Installer) Install(ctx context.Context, mod Module) error {
 		return coreerr.E("marketplace.Installer.Install", "marshal", err)
 	}
 
-	if err := i.store.Set(storeGroup, mod.Code, string(data)); err != nil {
+	if err := i.store.Set(storeGroup, safeCode, string(data)); err != nil {
 		return coreerr.E("marketplace.Installer.Install", "store", err)
 	}
 
@@ -105,29 +110,38 @@ func (i *Installer) Install(ctx context.Context, mod Module) error {
 
 // Remove uninstalls a module by deleting its files and store entry.
 func (i *Installer) Remove(code string) error {
-	if _, err := i.store.Get(storeGroup, code); err != nil {
-		return coreerr.E("marketplace.Installer.Remove", "module not installed: "+code, nil)
+	safeCode, dest, err := i.resolveModulePath(code)
+	if err != nil {
+		return coreerr.E("marketplace.Installer.Remove", "invalid module code", err)
 	}
 
-	dest := filepath.Join(i.modulesDir, code)
-	_ = i.medium.DeleteAll(dest)
+	if _, err := i.store.Get(storeGroup, safeCode); err != nil {
+		return coreerr.E("marketplace.Installer.Remove", "module not installed: "+safeCode, nil)
+	}
 
-	return i.store.Delete(storeGroup, code)
+	if err := i.medium.DeleteAll(dest); err != nil {
+		return coreerr.E("marketplace.Installer.Remove", "delete module files", err)
+	}
+
+	return i.store.Delete(storeGroup, safeCode)
 }
 
 // Update pulls latest changes and re-verifies the manifest.
 func (i *Installer) Update(ctx context.Context, code string) error {
-	raw, err := i.store.Get(storeGroup, code)
+	safeCode, dest, err := i.resolveModulePath(code)
 	if err != nil {
-		return coreerr.E("marketplace.Installer.Update", "module not installed: "+code, nil)
+		return coreerr.E("marketplace.Installer.Update", "invalid module code", err)
+	}
+
+	raw, err := i.store.Get(storeGroup, safeCode)
+	if err != nil {
+		return coreerr.E("marketplace.Installer.Update", "module not installed: "+safeCode, nil)
 	}
 
 	var installed InstalledModule
 	if err := json.Unmarshal([]byte(raw), &installed); err != nil {
 		return coreerr.E("marketplace.Installer.Update", "unmarshal", err)
 	}
-
-	dest := filepath.Join(i.modulesDir, code)
 
 	cmd := exec.CommandContext(ctx, "git", "-C", dest, "pull", "--ff-only")
 	if output, err := cmd.CombinedOutput(); err != nil {
@@ -145,6 +159,7 @@ func (i *Installer) Update(ctx context.Context, code string) error {
 	}
 
 	// Update stored metadata
+	installed.Code = safeCode
 	installed.Name = m.Name
 	installed.Version = m.Version
 	installed.Permissions = m.Permissions
@@ -154,7 +169,7 @@ func (i *Installer) Update(ctx context.Context, code string) error {
 		return coreerr.E("marketplace.Installer.Update", "marshal", err)
 	}
 
-	return i.store.Set(storeGroup, code, string(data))
+	return i.store.Set(storeGroup, safeCode, string(data))
 }
 
 // Installed returns all installed module metadata.
@@ -194,4 +209,12 @@ func gitClone(ctx context.Context, repo, dest string) error {
 		return coreerr.E("marketplace.gitClone", strings.TrimSpace(string(output)), err)
 	}
 	return nil
+}
+
+func (i *Installer) resolveModulePath(code string) (string, string, error) {
+	safeCode, dest, err := agentci.ResolvePathWithinRoot(i.modulesDir, code)
+	if err != nil {
+		return "", "", coreerr.E("marketplace.Installer.resolveModulePath", "resolve module path", err)
+	}
+	return safeCode, dest, nil
 }

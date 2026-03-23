@@ -2,16 +2,18 @@ package forge
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 
-	forgejo "codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2"
-
-	"forge.lthn.ai/core/cli/pkg/cli"
 	coreerr "dappco.re/go/core/log"
+	"dappco.re/go/core/scm/agentci"
 	fg "dappco.re/go/core/scm/forge"
+
+	forgejo "codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2"
+	"forge.lthn.ai/core/cli/pkg/cli"
 )
 
 // Sync command flags.
@@ -95,11 +97,14 @@ func buildSyncRepoList(client *fg.Client, args []string, basePath string) ([]syn
 
 	if len(args) > 0 {
 		for _, arg := range args {
-			name := arg
-			if parts := strings.SplitN(arg, "/", 2); len(parts) == 2 {
-				name = parts[1]
+			name, err := syncRepoNameFromArg(arg)
+			if err != nil {
+				return nil, coreerr.E("forge.buildSyncRepoList", "invalid repo argument", err)
 			}
-			localPath := filepath.Join(basePath, name)
+			_, localPath, err := agentci.ResolvePathWithinRoot(basePath, name)
+			if err != nil {
+				return nil, coreerr.E("forge.buildSyncRepoList", "resolve local path", err)
+			}
 			branch := syncDetectDefaultBranch(localPath)
 			repos = append(repos, syncRepoEntry{
 				name:          name,
@@ -113,10 +118,17 @@ func buildSyncRepoList(client *fg.Client, args []string, basePath string) ([]syn
 			return nil, err
 		}
 		for _, r := range orgRepos {
-			localPath := filepath.Join(basePath, r.Name)
+			name, err := agentci.ValidatePathElement(r.Name)
+			if err != nil {
+				return nil, coreerr.E("forge.buildSyncRepoList", "invalid repo name from org list", err)
+			}
+			_, localPath, err := agentci.ResolvePathWithinRoot(basePath, name)
+			if err != nil {
+				return nil, coreerr.E("forge.buildSyncRepoList", "resolve local path", err)
+			}
 			branch := syncDetectDefaultBranch(localPath)
 			repos = append(repos, syncRepoEntry{
-				name:          r.Name,
+				name:          name,
 				localPath:     localPath,
 				defaultBranch: branch,
 			})
@@ -332,4 +344,28 @@ func syncCreateMainFromUpstream(client *fg.Client, org, repo string) error {
 	}
 
 	return nil
+}
+
+func syncRepoNameFromArg(arg string) (string, error) {
+	decoded, err := url.PathUnescape(arg)
+	if err != nil {
+		return "", coreerr.E("forge.syncRepoNameFromArg", "decode repo argument", err)
+	}
+
+	parts := strings.Split(decoded, "/")
+	switch len(parts) {
+	case 1:
+		return agentci.ValidatePathElement(parts[0])
+	case 2:
+		if _, err := agentci.ValidatePathElement(parts[0]); err != nil {
+			return "", coreerr.E("forge.syncRepoNameFromArg", "invalid repo owner", err)
+		}
+		name, err := agentci.ValidatePathElement(parts[1])
+		if err != nil {
+			return "", coreerr.E("forge.syncRepoNameFromArg", "invalid repo name", err)
+		}
+		return name, nil
+	default:
+		return "", coreerr.E("forge.syncRepoNameFromArg", "repo argument must be repo or owner/repo", nil)
+	}
 }

@@ -10,8 +10,8 @@ import (
 	"testing"
 
 	"dappco.re/go/core/io"
-	"dappco.re/go/core/scm/manifest"
 	"dappco.re/go/core/io/store"
+	"dappco.re/go/core/scm/manifest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -163,6 +163,29 @@ func TestInstall_Bad_InvalidSignature(t *testing.T) {
 	assert.True(t, os.IsNotExist(statErr), "directory should be cleaned up on failure")
 }
 
+func TestInstall_Bad_PathTraversalCode(t *testing.T) {
+	repo := createTestRepo(t, "safe-mod", "1.0")
+	modulesDir := filepath.Join(t.TempDir(), "modules")
+
+	st, err := store.New(":memory:")
+	require.NoError(t, err)
+	defer st.Close()
+
+	inst := NewInstaller(io.Local, modulesDir, st)
+	err = inst.Install(context.Background(), Module{
+		Code: "../escape",
+		Repo: repo,
+	})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid module code")
+
+	_, err = st.Get("_modules", "escape")
+	assert.Error(t, err)
+
+	_, err = os.Stat(filepath.Join(filepath.Dir(modulesDir), "escape"))
+	assert.True(t, os.IsNotExist(err))
+}
+
 func TestRemove_Good(t *testing.T) {
 	repo := createTestRepo(t, "rm-mod", "1.0")
 	modulesDir := filepath.Join(t.TempDir(), "modules")
@@ -195,6 +218,26 @@ func TestRemove_Bad_NotInstalled(t *testing.T) {
 	err = inst.Remove("nonexistent")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "not installed")
+}
+
+func TestRemove_Bad_PathTraversalCode(t *testing.T) {
+	baseDir := t.TempDir()
+	modulesDir := filepath.Join(baseDir, "modules")
+	escapeDir := filepath.Join(baseDir, "escape")
+	require.NoError(t, os.MkdirAll(escapeDir, 0755))
+
+	st, err := store.New(":memory:")
+	require.NoError(t, err)
+	defer st.Close()
+
+	inst := NewInstaller(io.Local, modulesDir, st)
+	err = inst.Remove("../escape")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid module code")
+
+	info, statErr := os.Stat(escapeDir)
+	require.NoError(t, statErr)
+	assert.True(t, info.IsDir())
 }
 
 func TestInstalled_Good(t *testing.T) {
@@ -261,4 +304,17 @@ func TestUpdate_Good(t *testing.T) {
 	require.Len(t, installed, 1)
 	assert.Equal(t, "2.0", installed[0].Version)
 	assert.Equal(t, "Updated Module", installed[0].Name)
+}
+
+func TestUpdate_Bad_PathTraversalCode(t *testing.T) {
+	modulesDir := filepath.Join(t.TempDir(), "modules")
+
+	st, err := store.New(":memory:")
+	require.NoError(t, err)
+	defer st.Close()
+
+	inst := NewInstaller(io.Local, modulesDir, st)
+	err = inst.Update(context.Background(), "../escape")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid module code")
 }

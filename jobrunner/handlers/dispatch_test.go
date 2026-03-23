@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"strconv"
 	"testing"
 
 	"dappco.re/go/core/scm/agentci"
@@ -12,6 +15,18 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func writeFakeSSHCommand(t *testing.T, outputPath string) string {
+	t.Helper()
+	dir := t.TempDir()
+	script := filepath.Join(dir, "ssh")
+	scriptContent := "#!/bin/sh\n" +
+		"OUT=" + strconv.Quote(outputPath) + "\n" +
+		"printf '%s\n' \"$@\" >> \"$OUT\"\n" +
+		"cat >> \"${OUT}.stdin\"\n"
+	require.NoError(t, os.WriteFile(script, []byte(scriptContent), 0o755))
+	return dir
+}
 
 // newTestSpinner creates a Spinner with the given agents for testing.
 func newTestSpinner(agents map[string]agentci.AgentConfig) *agentci.Spinner {
@@ -127,6 +142,29 @@ func TestDispatch_Execute_Bad_UnknownAgent(t *testing.T) {
 	assert.Contains(t, err.Error(), "unknown agent")
 }
 
+func TestDispatch_Execute_Bad_InvalidQueueDir(t *testing.T) {
+	spinner := newTestSpinner(map[string]agentci.AgentConfig{
+		"darbs-claude": {
+			Host:     "localhost",
+			QueueDir: "/tmp/queue; touch /tmp/pwned",
+			Active:   true,
+		},
+	})
+	h := NewDispatchHandler(nil, "", "", spinner)
+
+	sig := &jobrunner.PipelineSignal{
+		NeedsCoding: true,
+		Assignee:    "darbs-claude",
+		RepoOwner:   "host-uk",
+		RepoName:    "core",
+		ChildNumber: 1,
+	}
+
+	_, err := h.Execute(context.Background(), sig)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid agent queue dir")
+}
+
 func TestDispatch_TicketJSON_Good(t *testing.T) {
 	ticket := DispatchTicket{
 		ID:           "host-uk-core-5-1234567890",
@@ -212,6 +250,53 @@ func TestDispatch_TicketJSON_Good_OmitsEmptyModelRunner(t *testing.T) {
 	_, hasRunner := decoded["runner"]
 	assert.False(t, hasModel, "model should be omitted when empty")
 	assert.False(t, hasRunner, "runner should be omitted when empty")
+}
+
+func TestDispatch_runRemote_Good_EscapesPath(t *testing.T) {
+	outputPath := filepath.Join(t.TempDir(), "ssh-output.txt")
+	toolPath := writeFakeSSHCommand(t, outputPath)
+	t.Setenv("PATH", toolPath+":"+os.Getenv("PATH"))
+
+	h := NewDispatchHandler(nil, "", "", newTestSpinner(nil))
+	dangerousPath := "/tmp/queue with spaces; touch /tmp/pwned"
+	err := h.runRemote(
+		context.Background(),
+		agentci.AgentConfig{Host: "localhost"},
+		"rm",
+		"-f",
+		dangerousPath,
+	)
+	require.NoError(t, err)
+
+	output, err := os.ReadFile(outputPath)
+	require.NoError(t, err)
+	assert.Contains(t, string(output), "rm '-f' '"+dangerousPath+"'\n")
+}
+
+func TestDispatch_secureTransfer_Good_EscapesPath(t *testing.T) {
+	outputPath := filepath.Join(t.TempDir(), "ssh-output.txt")
+	toolPath := writeFakeSSHCommand(t, outputPath)
+	t.Setenv("PATH", toolPath+":"+os.Getenv("PATH"))
+
+	h := NewDispatchHandler(nil, "", "", newTestSpinner(nil))
+	dangerousPath := "/tmp/queue with spaces; touch /tmp/pwned"
+	err := h.secureTransfer(
+		context.Background(),
+		agentci.AgentConfig{Host: "localhost"},
+		dangerousPath,
+		[]byte("hello"),
+		0644,
+	)
+	require.NoError(t, err)
+
+	output, err := os.ReadFile(outputPath)
+	require.NoError(t, err)
+	assert.Contains(t, string(output), "cat > '"+dangerousPath+"' && chmod 644 '"+dangerousPath+"'")
+
+	inputPath := outputPath + ".stdin"
+	input, err := os.ReadFile(inputPath)
+	require.NoError(t, err)
+	assert.Equal(t, "hello", string(input))
 }
 
 func TestDispatch_TicketJSON_Good_ModelRunnerVariants(t *testing.T) {
