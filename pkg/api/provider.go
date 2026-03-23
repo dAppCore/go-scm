@@ -10,10 +10,12 @@ import (
 	"crypto/ed25519"
 	"encoding/hex"
 	"net/http"
+	"net/url"
 
 	"dappco.re/go/core/api"
 	"dappco.re/go/core/api/pkg/provider"
 	"dappco.re/go/core/io"
+	"dappco.re/go/core/scm/agentci"
 	"dappco.re/go/core/scm/manifest"
 	"dappco.re/go/core/scm/marketplace"
 	"dappco.re/go/core/scm/repos"
@@ -228,7 +230,10 @@ func (p *ScmProvider) getMarketplaceItem(c *gin.Context) {
 		return
 	}
 
-	code := c.Param("code")
+	code, ok := marketplaceCodeParam(c)
+	if !ok {
+		return
+	}
 	mod, ok := p.index.Find(code)
 	if !ok {
 		c.JSON(http.StatusNotFound, api.Fail("not_found", "provider not found in marketplace"))
@@ -243,7 +248,10 @@ func (p *ScmProvider) installItem(c *gin.Context) {
 		return
 	}
 
-	code := c.Param("code")
+	code, ok := marketplaceCodeParam(c)
+	if !ok {
+		return
+	}
 	mod, ok := p.index.Find(code)
 	if !ok {
 		c.JSON(http.StatusNotFound, api.Fail("not_found", "provider not found in marketplace"))
@@ -269,7 +277,10 @@ func (p *ScmProvider) removeItem(c *gin.Context) {
 		return
 	}
 
-	code := c.Param("code")
+	code, ok := marketplaceCodeParam(c)
+	if !ok {
+		return
+	}
 	if err := p.installer.Remove(code); err != nil {
 		c.JSON(http.StatusInternalServerError, api.Fail("remove_failed", err.Error()))
 		return
@@ -393,7 +404,10 @@ func (p *ScmProvider) updateInstalled(c *gin.Context) {
 		return
 	}
 
-	code := c.Param("code")
+	code, ok := marketplaceCodeParam(c)
+	if !ok {
+		return
+	}
 	if err := p.installer.Update(context.Background(), code); err != nil {
 		c.JSON(http.StatusInternalServerError, api.Fail("update_failed", err.Error()))
 		return
@@ -447,4 +461,22 @@ func (p *ScmProvider) emitEvent(channel string, data any) {
 		Type: ws.TypeEvent,
 		Data: data,
 	})
+}
+
+func marketplaceCodeParam(c *gin.Context) (string, bool) {
+	code, err := normaliseMarketplaceCode(c.Param("code"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, api.Fail("invalid_code", "invalid marketplace code"))
+		return "", false
+	}
+	return code, true
+}
+
+func normaliseMarketplaceCode(raw string) (string, error) {
+	decoded, err := url.PathUnescape(raw)
+	if err != nil {
+		return "", err
+	}
+
+	return agentci.ValidatePathElement(decoded)
 }

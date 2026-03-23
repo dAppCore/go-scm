@@ -2,16 +2,18 @@ package gitea
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 
-	"code.gitea.io/sdk/gitea"
-
-	"forge.lthn.ai/core/cli/pkg/cli"
 	coreerr "dappco.re/go/core/log"
+	"dappco.re/go/core/scm/agentci"
 	gt "dappco.re/go/core/scm/gitea"
+
+	"code.gitea.io/sdk/gitea"
+	"forge.lthn.ai/core/cli/pkg/cli"
 )
 
 // Sync command flags.
@@ -96,12 +98,14 @@ func buildRepoList(client *gt.Client, args []string, basePath string) ([]repoEnt
 	if len(args) > 0 {
 		// Specific repos from args
 		for _, arg := range args {
-			name := arg
-			// Strip owner/ prefix if given
-			if parts := strings.SplitN(arg, "/", 2); len(parts) == 2 {
-				name = parts[1]
+			name, err := repoNameFromArg(arg)
+			if err != nil {
+				return nil, coreerr.E("gitea.buildRepoList", "invalid repo argument", err)
 			}
-			localPath := filepath.Join(basePath, name)
+			_, localPath, err := agentci.ResolvePathWithinRoot(basePath, name)
+			if err != nil {
+				return nil, coreerr.E("gitea.buildRepoList", "resolve local path", err)
+			}
 			branch := detectDefaultBranch(localPath)
 			repos = append(repos, repoEntry{
 				name:          name,
@@ -116,10 +120,17 @@ func buildRepoList(client *gt.Client, args []string, basePath string) ([]repoEnt
 			return nil, err
 		}
 		for _, r := range orgRepos {
-			localPath := filepath.Join(basePath, r.Name)
+			name, err := agentci.ValidatePathElement(r.Name)
+			if err != nil {
+				return nil, coreerr.E("gitea.buildRepoList", "invalid repo name from org list", err)
+			}
+			_, localPath, err := agentci.ResolvePathWithinRoot(basePath, name)
+			if err != nil {
+				return nil, coreerr.E("gitea.buildRepoList", "resolve local path", err)
+			}
 			branch := detectDefaultBranch(localPath)
 			repos = append(repos, repoEntry{
-				name:          r.Name,
+				name:          name,
 				localPath:     localPath,
 				defaultBranch: branch,
 			})
@@ -352,3 +363,27 @@ func createMainFromUpstream(client *gt.Client, org, repo string) error {
 }
 
 func strPtr(s string) *string { return &s }
+
+func repoNameFromArg(arg string) (string, error) {
+	decoded, err := url.PathUnescape(arg)
+	if err != nil {
+		return "", coreerr.E("gitea.repoNameFromArg", "decode repo argument", err)
+	}
+
+	parts := strings.Split(decoded, "/")
+	switch len(parts) {
+	case 1:
+		return agentci.ValidatePathElement(parts[0])
+	case 2:
+		if _, err := agentci.ValidatePathElement(parts[0]); err != nil {
+			return "", coreerr.E("gitea.repoNameFromArg", "invalid repo owner", err)
+		}
+		name, err := agentci.ValidatePathElement(parts[1])
+		if err != nil {
+			return "", coreerr.E("gitea.repoNameFromArg", "invalid repo name", err)
+		}
+		return name, nil
+	default:
+		return "", coreerr.E("gitea.repoNameFromArg", "repo argument must be repo or owner/repo", nil)
+	}
+}

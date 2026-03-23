@@ -5,10 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-
-	forgejo "codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2"
+	"net/url"
+	"strconv"
 
 	"dappco.re/go/core/log"
+	"dappco.re/go/core/scm/agentci"
+
+	forgejo "codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2"
 )
 
 // MergePullRequest merges a pull request with the given method ("squash", "rebase", "merge").
@@ -38,14 +41,27 @@ func (c *Client) MergePullRequest(owner, repo string, index int64, method string
 // The Forgejo SDK v2.2.0 doesn't expose the draft field on EditPullRequestOption,
 // so we use a raw HTTP PATCH request.
 func (c *Client) SetPRDraft(owner, repo string, index int64, draft bool) error {
+	safeOwner, err := agentci.ValidatePathElement(owner)
+	if err != nil {
+		return log.E("forge.SetPRDraft", "invalid owner", err)
+	}
+	safeRepo, err := agentci.ValidatePathElement(repo)
+	if err != nil {
+		return log.E("forge.SetPRDraft", "invalid repo", err)
+	}
+
 	payload := map[string]bool{"draft": draft}
 	body, err := json.Marshal(payload)
 	if err != nil {
 		return log.E("forge.SetPRDraft", "marshal payload", err)
 	}
 
-	url := fmt.Sprintf("%s/api/v1/repos/%s/%s/pulls/%d", c.url, owner, repo, index)
-	req, err := http.NewRequest(http.MethodPatch, url, bytes.NewReader(body))
+	path, err := url.JoinPath(c.url, "api", "v1", "repos", safeOwner, safeRepo, "pulls", strconv.FormatInt(index, 10))
+	if err != nil {
+		return log.E("forge.SetPRDraft", "failed to build request path", err)
+	}
+
+	req, err := http.NewRequest(http.MethodPatch, path, bytes.NewReader(body))
 	if err != nil {
 		return log.E("forge.SetPRDraft", "create request", err)
 	}

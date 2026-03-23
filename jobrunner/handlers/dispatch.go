@@ -5,7 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"path/filepath"
+	"path"
+	"strings"
 	"time"
 
 	coreerr "dappco.re/go/core/log"
@@ -84,6 +85,10 @@ func (h *DispatchHandler) Execute(ctx context.Context, signal *jobrunner.Pipelin
 	agentName, agent, ok := h.spinner.FindByForgejoUser(signal.Assignee)
 	if !ok {
 		return nil, coreerr.E("dispatch.Execute", "unknown agent: "+signal.Assignee, nil)
+	}
+	queueDir, err := agentci.ValidateRemoteDir(agent.QueueDir)
+	if err != nil {
+		return nil, coreerr.E("dispatch.Execute", "invalid agent queue dir", err)
 	}
 
 	// Sanitize inputs to prevent path traversal.
@@ -184,7 +189,10 @@ func (h *DispatchHandler) Execute(ctx context.Context, signal *jobrunner.Pipelin
 	}
 
 	// Transfer ticket JSON.
-	remoteTicketPath := filepath.Join(agent.QueueDir, ticketName)
+	remoteTicketPath, err := agentci.JoinRemotePath(queueDir, ticketName)
+	if err != nil {
+		return nil, coreerr.E("dispatch.Execute", "ticket path", err)
+	}
 	if err := h.secureTransfer(ctx, agent, remoteTicketPath, ticketJSON, 0644); err != nil {
 		h.failDispatch(signal, fmt.Sprintf("Ticket transfer failed: %v", err))
 		return &jobrunner.ActionResult{
@@ -202,10 +210,13 @@ func (h *DispatchHandler) Execute(ctx context.Context, signal *jobrunner.Pipelin
 
 	// Transfer token via separate .env file with 0600 permissions.
 	envContent := fmt.Sprintf("FORGE_TOKEN=%s\n", h.token)
-	remoteEnvPath := filepath.Join(agent.QueueDir, fmt.Sprintf(".env.%s", ticketID))
+	remoteEnvPath, err := agentci.JoinRemotePath(queueDir, fmt.Sprintf(".env.%s", ticketID))
+	if err != nil {
+		return nil, coreerr.E("dispatch.Execute", "env path", err)
+	}
 	if err := h.secureTransfer(ctx, agent, remoteEnvPath, []byte(envContent), 0600); err != nil {
 		// Clean up the ticket if env transfer fails.
-		_ = h.runRemote(ctx, agent, fmt.Sprintf("rm -f %s", agentci.EscapeShellArg(remoteTicketPath)))
+		_ = h.runRemote(ctx, agent, "rm", "-f", remoteTicketPath)
 		h.failDispatch(signal, fmt.Sprintf("Token transfer failed: %v", err))
 		return &jobrunner.ActionResult{
 			Action:      "dispatch",
@@ -255,8 +266,8 @@ func (h *DispatchHandler) failDispatch(signal *jobrunner.PipelineSignal, reason 
 
 // secureTransfer writes data to a remote path via SSH stdin, preventing command injection.
 func (h *DispatchHandler) secureTransfer(ctx context.Context, agent agentci.AgentConfig, remotePath string, data []byte, mode int) error {
-	safeRemotePath := agentci.EscapeShellArg(remotePath)
-	remoteCmd := fmt.Sprintf("cat > %s && chmod %o %s", safeRemotePath, mode, safeRemotePath)
+	safePath := agentci.EscapeShellArg(remotePath)
+	remoteCmd := fmt.Sprintf("cat > %s && chmod %o %s", safePath, mode, safePath)
 
 	cmd := agentci.SecureSSHCommand(agent.Host, remoteCmd)
 	cmd.Stdin = bytes.NewReader(data)
@@ -269,21 +280,55 @@ func (h *DispatchHandler) secureTransfer(ctx context.Context, agent agentci.Agen
 }
 
 // runRemote executes a command on the agent via SSH.
-func (h *DispatchHandler) runRemote(ctx context.Context, agent agentci.AgentConfig, cmdStr string) error {
-	cmd := agentci.SecureSSHCommand(agent.Host, cmdStr)
+func (h *DispatchHandler) runRemote(ctx context.Context, agent agentci.AgentConfig, command string, args ...string) error {
+	remoteCmd := command
+	if len(args) > 0 {
+		escaped := make([]string, 0, 1+len(args))
+		escaped = append(escaped, command)
+		for _, arg := range args {
+			escaped = append(escaped, agentci.EscapeShellArg(arg))
+		}
+		remoteCmd = strings.Join(escaped, " ")
+	}
+
+	cmd := agentci.SecureSSHCommand(agent.Host, remoteCmd)
 	return cmd.Run()
 }
 
 // ticketExists checks if a ticket file already exists in queue, active, or done.
 func (h *DispatchHandler) ticketExists(ctx context.Context, agent agentci.AgentConfig, ticketName string) bool {
-	safeTicket, err := agentci.SanitizePath(ticketName)
+	queueDir, err := agentci.ValidateRemoteDir(agent.QueueDir)
 	if err != nil {
 		return false
 	}
-	qDir := agent.QueueDir
+	safeTicket, err := agentci.ValidatePathElement(ticketName)
+	if err != nil {
+		return false
+	}
+
+	queuePath, err := agentci.JoinRemotePath(queueDir, safeTicket)
+	if err != nil {
+		return false
+	}
+	parentDir := queueDir
+	if queueDir != "/" && queueDir != "~" {
+		parentDir = path.Dir(queueDir)
+	}
+	activePath, err := agentci.JoinRemotePath(parentDir, "active", safeTicket)
+	if err != nil {
+		return false
+	}
+	donePath, err := agentci.JoinRemotePath(parentDir, "done", safeTicket)
+	if err != nil {
+		return false
+	}
+
+	queuePath = agentci.EscapeShellArg(queuePath)
+	activePath = agentci.EscapeShellArg(activePath)
+	donePath = agentci.EscapeShellArg(donePath)
 	checkCmd := fmt.Sprintf(
-		"test -f %s/%s || test -f %s/../active/%s || test -f %s/../done/%s",
-		qDir, safeTicket, qDir, safeTicket, qDir, safeTicket,
+		"test -f %s || test -f %s || test -f %s",
+		queuePath, activePath, donePath,
 	)
 	cmd := agentci.SecureSSHCommand(agent.Host, checkCmd)
 	return cmd.Run() == nil
