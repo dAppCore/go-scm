@@ -1,8 +1,10 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
 package handlers
 
 import (
 	"context"
-	"fmt"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
 	"time"
 
 	"dappco.re/go/core/scm/forge"
@@ -11,11 +13,13 @@ import (
 
 // SendFixCommandHandler posts a comment on a PR asking for conflict or
 // review fixes.
+//
 type SendFixCommandHandler struct {
 	forge *forge.Client
 }
 
 // NewSendFixCommandHandler creates a handler that posts fix commands.
+//
 func NewSendFixCommandHandler(f *forge.Client) *SendFixCommandHandler {
 	return &SendFixCommandHandler{forge: f}
 }

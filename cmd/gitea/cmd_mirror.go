@@ -1,12 +1,14 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
 package gitea
 
 import (
-	"fmt"
-	"os/exec"
-	"strings"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
+	strings "dappco.re/go/core/scm/internal/ax/stringsx"
+	exec "golang.org/x/sys/execabs"
 
-	"forge.lthn.ai/core/cli/pkg/cli"
 	gt "dappco.re/go/core/scm/gitea"
+	"forge.lthn.ai/core/cli/pkg/cli"
 )
 
 // Mirror command flags.

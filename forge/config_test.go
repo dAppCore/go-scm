@@ -68,7 +68,7 @@ func TestResolveConfig_Good_URLDefaultsWhenEmpty(t *testing.T) {
 	assert.Equal(t, "some-token", token)
 }
 
-func TestConstants(t *testing.T) {
+func TestConstants_Good(t *testing.T) {
 	assert.Equal(t, "forge.url", ConfigKeyURL)
 	assert.Equal(t, "forge.token", ConfigKeyToken)
 	assert.Equal(t, "http://localhost:4000", DefaultURL)

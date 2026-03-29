@@ -1,14 +1,17 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
 // Package agentci provides configuration, security, and orchestration for AgentCI dispatch targets.
 package agentci
 
 import (
-	"fmt"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
 
-	"forge.lthn.ai/core/config"
 	coreerr "dappco.re/go/core/log"
+	"forge.lthn.ai/core/config"
 )
 
 // AgentConfig represents a single agent machine in the config file.
+//
 type AgentConfig struct {
 	Host          string   `yaml:"host" mapstructure:"host"`
 	QueueDir      string   `yaml:"queue_dir" mapstructure:"queue_dir"`
@@ -23,6 +26,7 @@ type AgentConfig struct {
 }
 
 // ClothoConfig controls the orchestration strategy.
+//
 type ClothoConfig struct {
 	Strategy            string  `yaml:"strategy" mapstructure:"strategy"`                         // direct, clotho-verified
 	ValidationThreshold float64 `yaml:"validation_threshold" mapstructure:"validation_threshold"` // divergence limit (0.0-1.0)
@@ -31,6 +35,7 @@ type ClothoConfig struct {
 
 // LoadAgents reads agent targets from config and returns a map of AgentConfig.
 // Returns an empty map (not an error) if no agents are configured.
+//
 func LoadAgents(cfg *config.Config) (map[string]AgentConfig, error) {
 	var agents map[string]AgentConfig
 	if err := cfg.Get("agentci.agents", &agents); err != nil {
@@ -61,6 +66,7 @@ func LoadAgents(cfg *config.Config) (map[string]AgentConfig, error) {
 }
 
 // LoadActiveAgents returns only active agents.
+//
 func LoadActiveAgents(cfg *config.Config) (map[string]AgentConfig, error) {
 	all, err := LoadAgents(cfg)
 	if err != nil {
@@ -77,6 +83,7 @@ func LoadActiveAgents(cfg *config.Config) (map[string]AgentConfig, error) {
 
 // LoadClothoConfig loads the Clotho orchestrator settings.
 // Returns sensible defaults if no config is present.
+//
 func LoadClothoConfig(cfg *config.Config) (ClothoConfig, error) {
 	var cc ClothoConfig
 	if err := cfg.Get("agentci.clotho", &cc); err != nil {
@@ -95,6 +102,7 @@ func LoadClothoConfig(cfg *config.Config) (ClothoConfig, error) {
 }
 
 // SaveAgent writes an agent config entry to the config file.
+//
 func SaveAgent(cfg *config.Config, name string, ac AgentConfig) error {
 	key := fmt.Sprintf("agentci.agents.%s", name)
 	data := map[string]any{
@@ -123,6 +131,7 @@ func SaveAgent(cfg *config.Config, name string, ac AgentConfig) error {
 }
 
 // RemoveAgent removes an agent from the config file.
+//
 func RemoveAgent(cfg *config.Config, name string) error {
 	var agents map[string]AgentConfig
 	if err := cfg.Get("agentci.agents", &agents); err != nil {
@@ -136,6 +145,7 @@ func RemoveAgent(cfg *config.Config, name string) error {
 }
 
 // ListAgents returns all configured agents (active and inactive).
+//
 func ListAgents(cfg *config.Config) (map[string]AgentConfig, error) {
 	var agents map[string]AgentConfig
 	if err := cfg.Get("agentci.agents", &agents); err != nil {

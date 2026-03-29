@@ -10,10 +10,12 @@ import (
 	"crypto/ed25519"
 	"encoding/hex"
 	"net/http"
+	"net/url"
 
 	"dappco.re/go/core/api"
 	"dappco.re/go/core/api/pkg/provider"
 	"dappco.re/go/core/io"
+	"dappco.re/go/core/scm/agentci"
 	"dappco.re/go/core/scm/manifest"
 	"dappco.re/go/core/scm/marketplace"
 	"dappco.re/go/core/scm/repos"
@@ -24,6 +26,7 @@ import (
 // ScmProvider wraps go-scm marketplace, manifest, and registry operations
 // as a service provider. It implements Provider, Streamable, Describable,
 // and Renderable.
+//
 type ScmProvider struct {
 	index     *marketplace.Index
 	installer *marketplace.Installer
@@ -43,6 +46,7 @@ var (
 // NewProvider creates an SCM provider backed by the given marketplace index,
 // installer, and registry. The WS hub is used to emit real-time events.
 // Pass nil for any dependency that is not available.
+//
 func NewProvider(idx *marketplace.Index, inst *marketplace.Installer, reg *repos.Registry, hub *ws.Hub) *ScmProvider {
 	return &ScmProvider{
 		index:     idx,
@@ -228,7 +232,10 @@ func (p *ScmProvider) getMarketplaceItem(c *gin.Context) {
 		return
 	}
 
-	code := c.Param("code")
+	code, ok := marketplaceCodeParam(c)
+	if !ok {
+		return
+	}
 	mod, ok := p.index.Find(code)
 	if !ok {
 		c.JSON(http.StatusNotFound, api.Fail("not_found", "provider not found in marketplace"))
@@ -243,7 +250,10 @@ func (p *ScmProvider) installItem(c *gin.Context) {
 		return
 	}
 
-	code := c.Param("code")
+	code, ok := marketplaceCodeParam(c)
+	if !ok {
+		return
+	}
 	mod, ok := p.index.Find(code)
 	if !ok {
 		c.JSON(http.StatusNotFound, api.Fail("not_found", "provider not found in marketplace"))
@@ -269,7 +279,10 @@ func (p *ScmProvider) removeItem(c *gin.Context) {
 		return
 	}
 
-	code := c.Param("code")
+	code, ok := marketplaceCodeParam(c)
+	if !ok {
+		return
+	}
 	if err := p.installer.Remove(code); err != nil {
 		c.JSON(http.StatusInternalServerError, api.Fail("remove_failed", err.Error()))
 		return
@@ -393,7 +406,10 @@ func (p *ScmProvider) updateInstalled(c *gin.Context) {
 		return
 	}
 
-	code := c.Param("code")
+	code, ok := marketplaceCodeParam(c)
+	if !ok {
+		return
+	}
 	if err := p.installer.Update(context.Background(), code); err != nil {
 		c.JSON(http.StatusInternalServerError, api.Fail("update_failed", err.Error()))
 		return
@@ -447,4 +463,22 @@ func (p *ScmProvider) emitEvent(channel string, data any) {
 		Type: ws.TypeEvent,
 		Data: data,
 	})
+}
+
+func marketplaceCodeParam(c *gin.Context) (string, bool) {
+	code, err := normaliseMarketplaceCode(c.Param("code"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, api.Fail("invalid_code", "invalid marketplace code"))
+		return "", false
+	}
+	return code, true
+}
+
+func normaliseMarketplaceCode(raw string) (string, error) {
+	decoded, err := url.PathUnescape(raw)
+	if err != nil {
+		return "", err
+	}
+
+	return agentci.ValidatePathElement(decoded)
 }

@@ -3,7 +3,7 @@
 package api_test
 
 import (
-	"encoding/json"
+	json "dappco.re/go/core/scm/internal/ax/jsonx"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -162,6 +162,18 @@ func TestScmProvider_GetMarketplaceItem_Bad(t *testing.T) {
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusNotFound, w.Code)
+}
+
+func TestScmProvider_GetMarketplaceItem_Bad_PathTraversal(t *testing.T) {
+	idx := &marketplace.Index{Version: 1}
+	p := scmapi.NewProvider(idx, nil, nil, nil)
+
+	r := setupRouter(p)
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/api/v1/scm/marketplace/%2e%2e", nil)
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
 // -- Installed Endpoints ------------------------------------------------------

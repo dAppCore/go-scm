@@ -2,7 +2,7 @@ package collect
 
 import (
 	"context"
-	"encoding/json"
+	json "dappco.re/go/core/scm/internal/ax/jsonx"
 	"net/http"
 	"net/http/httptest"
 	"testing"

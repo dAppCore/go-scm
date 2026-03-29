@@ -1,19 +1,23 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
 package plugin
 
 import (
-	"path/filepath"
+	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
 
-	coreerr "dappco.re/go/core/log"
 	"dappco.re/go/core/io"
+	coreerr "dappco.re/go/core/log"
 )
 
 // Loader loads plugins from the filesystem.
+//
 type Loader struct {
 	medium  io.Medium
 	baseDir string
 }
 
 // NewLoader creates a new plugin loader.
+//
 func NewLoader(m io.Medium, baseDir string) *Loader {
 	return &Loader{
 		medium:  m,

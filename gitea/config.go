@@ -1,19 +1,24 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
 package gitea
 
 import (
-	"os"
+	os "dappco.re/go/core/scm/internal/ax/osx"
 
-	"forge.lthn.ai/core/config"
 	"dappco.re/go/core/log"
+	"forge.lthn.ai/core/config"
 )
 
 const (
 	// ConfigKeyURL is the config key for the Gitea instance URL.
+	//
 	ConfigKeyURL = "gitea.url"
 	// ConfigKeyToken is the config key for the Gitea API token.
+	//
 	ConfigKeyToken = "gitea.token"
 
 	// DefaultURL is the default Gitea instance URL.
+	//
 	DefaultURL = "https://gitea.snider.dev"
 )
 
@@ -22,6 +27,8 @@ const (
 //  1. ~/.core/config.yaml keys: gitea.token, gitea.url
 //  2. GITEA_TOKEN + GITEA_URL environment variables (override config file)
 //  3. Provided flag overrides (highest priority; pass empty to skip)
+//
+//
 func NewFromConfig(flagURL, flagToken string) (*Client, error) {
 	url, token, err := ResolveConfig(flagURL, flagToken)
 	if err != nil {
@@ -37,6 +44,7 @@ func NewFromConfig(flagURL, flagToken string) (*Client, error) {
 
 // ResolveConfig resolves the Gitea URL and token from all config sources.
 // Flag values take highest priority, then env vars, then config file.
+//
 func ResolveConfig(flagURL, flagToken string) (url, token string, err error) {
 	// Start with config file values
 	cfg, cfgErr := config.New()
@@ -70,6 +78,7 @@ func ResolveConfig(flagURL, flagToken string) (url, token string, err error) {
 }
 
 // SaveConfig persists the Gitea URL and/or token to the config file.
+//
 func SaveConfig(url, token string) error {
 	cfg, err := config.New()
 	if err != nil {

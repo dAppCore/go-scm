@@ -2,7 +2,8 @@ package collect
 
 import (
 	"context"
-	"fmt"
+	core "dappco.re/go/core"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
 	"testing"
 
 	"dappco.re/go/core/io"
@@ -126,7 +127,7 @@ func TestExcavator_Run_Good_WithErrors(t *testing.T) {
 	cfg.Limiter = nil
 
 	c1 := &mockCollector{name: "good", items: 5}
-	c2 := &mockCollector{name: "bad", err: fmt.Errorf("network error")}
+	c2 := &mockCollector{name: "bad", err: core.E("collect.mockCollector.Collect", "network error", nil)}
 	c3 := &mockCollector{name: "also-good", items: 3}
 
 	e := &Excavator{

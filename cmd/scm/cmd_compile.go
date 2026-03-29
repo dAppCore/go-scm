@@ -1,14 +1,16 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
 package scm
 
 import (
 	"crypto/ed25519"
+	strings "dappco.re/go/core/scm/internal/ax/stringsx"
 	"encoding/hex"
-	"os/exec"
-	"strings"
+	exec "golang.org/x/sys/execabs"
 
-	"forge.lthn.ai/core/cli/pkg/cli"
 	"dappco.re/go/core/io"
 	"dappco.re/go/core/scm/manifest"
+	"forge.lthn.ai/core/cli/pkg/cli"
 )
 
 func addCompileCommand(parent *cli.Command) {

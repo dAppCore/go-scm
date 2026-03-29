@@ -1,3 +1,5 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
 // Package scm provides CLI commands for manifest compilation and marketplace
 // index generation.
 //
@@ -25,6 +27,7 @@ var (
 )
 
 // AddScmCommands registers the 'scm' command and all subcommands.
+//
 func AddScmCommands(root *cli.Command) {
 	scmCmd := &cli.Command{
 		Use:   "scm",

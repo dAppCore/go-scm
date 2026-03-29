@@ -1,0 +1,55 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
+package filepathx
+
+import (
+	"path"
+	"syscall"
+)
+
+// Separator mirrors filepath.Separator for Unix-style Core paths.
+//
+const Separator = '/'
+
+// Abs mirrors filepath.Abs for the paths used in this repo.
+//
+func Abs(p string) (string, error) {
+	if path.IsAbs(p) {
+		return path.Clean(p), nil
+	}
+	cwd, err := syscall.Getwd()
+	if err != nil {
+		return "", err
+	}
+	return path.Clean(path.Join(cwd, p)), nil
+}
+
+// Base mirrors filepath.Base.
+//
+func Base(p string) string {
+	return path.Base(p)
+}
+
+// Clean mirrors filepath.Clean.
+//
+func Clean(p string) string {
+	return path.Clean(p)
+}
+
+// Dir mirrors filepath.Dir.
+//
+func Dir(p string) string {
+	return path.Dir(p)
+}
+
+// Ext mirrors filepath.Ext.
+//
+func Ext(p string) string {
+	return path.Ext(p)
+}
+
+// Join mirrors filepath.Join.
+//
+func Join(elem ...string) string {
+	return path.Join(elem...)
+}

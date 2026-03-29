@@ -1,22 +1,27 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
 package marketplace
 
 import (
-	"encoding/json"
-	"log"
-	"os"
-	"path/filepath"
+	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
+	json "dappco.re/go/core/scm/internal/ax/jsonx"
+	os "dappco.re/go/core/scm/internal/ax/osx"
 	"sort"
 
-	coreerr "dappco.re/go/core/log"
+	core "dappco.re/go/core"
+
 	coreio "dappco.re/go/core/io"
+	coreerr "dappco.re/go/core/log"
 	"dappco.re/go/core/scm/manifest"
 )
 
 // IndexVersion is the current marketplace index format version.
+//
 const IndexVersion = 1
 
 // Builder constructs a marketplace Index by crawling directories for
 // core.json (compiled manifests) or .core/manifest.yaml files.
+//
 type Builder struct {
 	// BaseURL is the prefix for constructing repository URLs, e.g.
 	// "https://forge.lthn.ai". When set, module Repo is derived as
@@ -50,7 +55,7 @@ func (b *Builder) BuildFromDirs(dirs ...string) (*Index, error) {
 
 			m, err := b.loadFromDir(filepath.Join(dir, e.Name()))
 			if err != nil {
-				log.Printf("marketplace: skipping %s: %v", e.Name(), err)
+				core.Warn(core.Sprintf("marketplace: skipping %s: %v", e.Name(), err))
 				continue
 			}
 			if m == nil {
@@ -83,6 +88,7 @@ func (b *Builder) BuildFromDirs(dirs ...string) (*Index, error) {
 // BuildFromManifests constructs an Index from pre-loaded manifests.
 // This is useful when manifests have already been collected (e.g. from
 // a Forge API crawl).
+//
 func BuildFromManifests(manifests []*manifest.Manifest) *Index {
 	var modules []Module
 	seen := make(map[string]bool)
@@ -113,6 +119,7 @@ func BuildFromManifests(manifests []*manifest.Manifest) *Index {
 }
 
 // WriteIndex serialises an Index to JSON and writes it to the given path.
+//
 func WriteIndex(path string, idx *Index) error {
 	if err := coreio.Local.EnsureDir(filepath.Dir(path)); err != nil {
 		return coreerr.E("marketplace.WriteIndex", "mkdir failed", err)

@@ -1,3 +1,5 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
 package jobrunner
 
 import (
@@ -9,6 +11,7 @@ import (
 )
 
 // PollerConfig configures a Poller.
+//
 type PollerConfig struct {
 	Sources      []JobSource
 	Handlers     []JobHandler
@@ -18,6 +21,7 @@ type PollerConfig struct {
 }
 
 // Poller discovers signals from sources and dispatches them to handlers.
+//
 type Poller struct {
 	mu       sync.RWMutex
 	sources  []JobSource
@@ -29,6 +33,7 @@ type Poller struct {
 }
 
 // NewPoller creates a Poller from the given config.
+//
 func NewPoller(cfg PollerConfig) *Poller {
 	interval := cfg.PollInterval
 	if interval <= 0 {

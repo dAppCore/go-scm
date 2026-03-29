@@ -1,13 +1,16 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
 package marketplace
 
 import (
-	"encoding/json"
-	"strings"
+	json "dappco.re/go/core/scm/internal/ax/jsonx"
+	strings "dappco.re/go/core/scm/internal/ax/stringsx"
 
 	coreerr "dappco.re/go/core/log"
 )
 
 // Module is a marketplace entry pointing to a module's Git repo.
+//
 type Module struct {
 	Code     string `json:"code"`
 	Name     string `json:"name"`
@@ -17,6 +20,7 @@ type Module struct {
 }
 
 // Index is the root marketplace catalog.
+//
 type Index struct {
 	Version    int      `json:"version"`
 	Modules    []Module `json:"modules"`
@@ -24,6 +28,7 @@ type Index struct {
 }
 
 // ParseIndex decodes a marketplace index.json.
+//
 func ParseIndex(data []byte) (*Index, error) {
 	var idx Index
 	if err := json.Unmarshal(data, &idx); err != nil {

@@ -1,3 +1,5 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
 

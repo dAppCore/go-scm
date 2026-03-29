@@ -1,3 +1,5 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
 package manifest
 
 import (
@@ -6,6 +8,7 @@ import (
 )
 
 // Manifest represents a .core/manifest.yaml application manifest.
+//
 type Manifest struct {
 	Code        string            `yaml:"code" json:"code"`
 	Name        string            `yaml:"name" json:"name"`
@@ -25,12 +28,13 @@ type Manifest struct {
 	Element   *ElementSpec `yaml:"element,omitempty" json:"element,omitempty"`     // Custom element for GUI rendering
 	Spec      string       `yaml:"spec,omitempty" json:"spec,omitempty"`           // Path to OpenAPI spec file
 
-	Permissions Permissions            `yaml:"permissions,omitempty" json:"permissions,omitempty"`
-	Modules     []string               `yaml:"modules,omitempty" json:"modules,omitempty"`
-	Daemons     map[string]DaemonSpec  `yaml:"daemons,omitempty" json:"daemons,omitempty"`
+	Permissions Permissions           `yaml:"permissions,omitempty" json:"permissions,omitempty"`
+	Modules     []string              `yaml:"modules,omitempty" json:"modules,omitempty"`
+	Daemons     map[string]DaemonSpec `yaml:"daemons,omitempty" json:"daemons,omitempty"`
 }
 
 // ElementSpec describes a web component for GUI rendering.
+//
 type ElementSpec struct {
 	// Tag is the custom element tag name, e.g. "core-cool-widget".
 	Tag string `yaml:"tag" json:"tag"`
@@ -46,6 +50,7 @@ func (m *Manifest) IsProvider() bool {
 }
 
 // Permissions declares the I/O capabilities a module requires.
+//
 type Permissions struct {
 	Read  []string `yaml:"read" json:"read"`
 	Write []string `yaml:"write" json:"write"`
@@ -54,6 +59,7 @@ type Permissions struct {
 }
 
 // DaemonSpec describes a long-running process managed by the runtime.
+//
 type DaemonSpec struct {
 	Binary  string   `yaml:"binary,omitempty" json:"binary,omitempty"`
 	Args    []string `yaml:"args,omitempty" json:"args,omitempty"`
@@ -62,6 +68,8 @@ type DaemonSpec struct {
 }
 
 // Parse decodes YAML bytes into a Manifest.
+//
+//	m, err := manifest.Parse(yamlBytes)
 func Parse(data []byte) (*Manifest, error) {
 	var m Manifest
 	if err := yaml.Unmarshal(data, &m); err != nil {

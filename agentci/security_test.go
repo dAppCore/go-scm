@@ -20,7 +20,6 @@ func TestSanitizePath_Good(t *testing.T) {
 		{"with.dot", "with.dot"},
 		{"CamelCase", "CamelCase"},
 		{"123", "123"},
-		{"path/to/file.txt", "file.txt"},
 	}
 
 	for _, tt := range tests {
@@ -44,8 +43,11 @@ func TestSanitizePath_Bad(t *testing.T) {
 		{"pipe", "file|name"},
 		{"ampersand", "file&name"},
 		{"dollar", "file$name"},
+		{"slash", "path/to/file.txt"},
+		{"backslash", `path\to\file.txt`},
 		{"parent traversal base", ".."},
 		{"root", "/"},
+		{"empty", ""},
 	}
 
 	for _, tt := range tests {

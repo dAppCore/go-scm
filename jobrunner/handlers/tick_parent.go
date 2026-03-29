@@ -1,9 +1,11 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
 package handlers
 
 import (
 	"context"
-	"fmt"
-	"strings"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
+	strings "dappco.re/go/core/scm/internal/ax/stringsx"
 	"time"
 
 	forgejosdk "codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2"
@@ -15,11 +17,13 @@ import (
 
 // TickParentHandler ticks a child checkbox in the parent epic issue body
 // after the child's PR has been merged.
+//
 type TickParentHandler struct {
 	forge *forge.Client
 }
 
 // NewTickParentHandler creates a handler that ticks parent epic checkboxes.
+//
 func NewTickParentHandler(f *forge.Client) *TickParentHandler {
 	return &TickParentHandler{forge: f}
 }

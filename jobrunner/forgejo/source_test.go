@@ -2,10 +2,10 @@ package forgejo
 
 import (
 	"context"
-	"encoding/json"
+	json "dappco.re/go/core/scm/internal/ax/jsonx"
+	strings "dappco.re/go/core/scm/internal/ax/stringsx"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -35,7 +35,7 @@ func newTestClient(t *testing.T, url string) *forge.Client {
 	return client
 }
 
-func TestForgejoSource_Name(t *testing.T) {
+func TestForgejoSource_Good_Name(t *testing.T) {
 	s := New(Config{}, nil)
 	assert.Equal(t, "forgejo", s.Name())
 }
@@ -106,7 +106,7 @@ func TestForgejoSource_Poll_Good(t *testing.T) {
 	assert.Equal(t, "abc123", sig.LastCommitSHA)
 }
 
-func TestForgejoSource_Poll_NoEpics(t *testing.T) {
+func TestForgejoSource_Poll_Good_NoEpics(t *testing.T) {
 	srv := httptest.NewServer(withVersion(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode([]any{})
@@ -152,18 +152,18 @@ func TestForgejoSource_Report_Good(t *testing.T) {
 	assert.Contains(t, capturedBody, "succeeded")
 }
 
-func TestParseEpicChildren(t *testing.T) {
+func TestParseEpicChildren_Good(t *testing.T) {
 	body := "## Tasks\n- [x] #1\n- [ ] #7\n- [ ] #8\n- [x] #3\n"
 	unchecked, checked := parseEpicChildren(body)
 	assert.Equal(t, []int{7, 8}, unchecked)
 	assert.Equal(t, []int{1, 3}, checked)
 }
 
-func TestFindLinkedPR(t *testing.T) {
+func TestFindLinkedPR_Good(t *testing.T) {
 	assert.Nil(t, findLinkedPR(nil, 7))
 }
 
-func TestSplitRepo(t *testing.T) {
+func TestSplitRepo_Good(t *testing.T) {
 	owner, repo, err := splitRepo("host-uk/core")
 	require.NoError(t, err)
 	assert.Equal(t, "host-uk", owner)

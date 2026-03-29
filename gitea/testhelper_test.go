@@ -1,10 +1,10 @@
 package gitea
 
 import (
-	"encoding/json"
+	json "dappco.re/go/core/scm/internal/ax/jsonx"
+	strings "dappco.re/go/core/scm/internal/ax/stringsx"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 )
 
@@ -130,7 +130,7 @@ func newGiteaMux() *http.ServeMux {
 		w.WriteHeader(http.StatusCreated)
 		jsonResponse(w, map[string]any{
 			"id": 40, "name": "mirrored-repo", "full_name": "test-org/mirrored-repo",
-			"owner": map[string]any{"login": "test-org"},
+			"owner":  map[string]any{"login": "test-org"},
 			"mirror": true,
 		})
 	})

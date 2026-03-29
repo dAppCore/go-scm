@@ -1,14 +1,16 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
 package collect
 
 import (
 	"context"
+	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
+	strings "dappco.re/go/core/scm/internal/ax/stringsx"
 	"encoding/xml"
-	"fmt"
 	"iter"
 	"net/http"
 	"net/url"
-	"path/filepath"
-	"strings"
 
 	core "dappco.re/go/core/log"
 	"golang.org/x/net/html"
@@ -16,12 +18,16 @@ import (
 
 // Paper source identifiers.
 const (
-	PaperSourceIACR  = "iacr"
+	//
+	PaperSourceIACR = "iacr"
+	//
 	PaperSourceArXiv = "arxiv"
-	PaperSourceAll   = "all"
+	//
+	PaperSourceAll = "all"
 )
 
 // PapersCollector collects papers from IACR and arXiv.
+//
 type PapersCollector struct {
 	// Source is one of PaperSourceIACR, PaperSourceArXiv, or PaperSourceAll.
 	Source string
@@ -403,6 +409,7 @@ func formatPaperMarkdown(ppr paper) string {
 }
 
 // FormatPaperMarkdown is exported for testing.
+//
 func FormatPaperMarkdown(title string, authors []string, date, paperURL, source, abstract string) string {
 	return formatPaperMarkdown(paper{
 		Title:    title,

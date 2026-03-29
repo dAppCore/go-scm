@@ -1,8 +1,8 @@
 package marketplace
 
 import (
-	"os"
-	"path/filepath"
+	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
+	os "dappco.re/go/core/scm/internal/ax/osx"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

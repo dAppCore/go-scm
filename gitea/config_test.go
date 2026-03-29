@@ -66,7 +66,7 @@ func TestResolveConfig_Good_URLDefaultsWhenEmpty(t *testing.T) {
 	assert.Equal(t, "some-token", token)
 }
 
-func TestConstants(t *testing.T) {
+func TestConstants_Good(t *testing.T) {
 	assert.Equal(t, "gitea.url", ConfigKeyURL)
 	assert.Equal(t, "gitea.token", ConfigKeyToken)
 	assert.Equal(t, "https://gitea.snider.dev", DefaultURL)

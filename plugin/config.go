@@ -1,6 +1,9 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
 package plugin
 
 // PluginConfig holds configuration for a single installed plugin.
+//
 type PluginConfig struct {
 	Name        string `json:"name" yaml:"name"`
 	Version     string `json:"version" yaml:"version"`

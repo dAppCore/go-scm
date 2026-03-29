@@ -1,27 +1,32 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
 package forgejo
 
 import (
 	"context"
-	"fmt"
-	"strings"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
+	strings "dappco.re/go/core/scm/internal/ax/stringsx"
 
+	"dappco.re/go/core/log"
 	"dappco.re/go/core/scm/forge"
 	"dappco.re/go/core/scm/jobrunner"
-	"dappco.re/go/core/log"
 )
 
 // Config configures a ForgejoSource.
+//
 type Config struct {
 	Repos []string // "owner/repo" format
 }
 
 // ForgejoSource polls a Forgejo instance for pipeline signals from epic issues.
+//
 type ForgejoSource struct {
 	repos []string
 	forge *forge.Client
 }
 
 // New creates a ForgejoSource using the given forge client.
+//
 func New(cfg Config, client *forge.Client) *ForgejoSource {
 	return &ForgejoSource{
 		repos: cfg.Repos,

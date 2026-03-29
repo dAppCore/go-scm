@@ -1,8 +1,10 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
 package handlers
 
 import (
 	"context"
-	"fmt"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
 	"time"
 
 	"dappco.re/go/core/scm/forge"
@@ -10,11 +12,13 @@ import (
 )
 
 // PublishDraftHandler marks a draft PR as ready for review once its checks pass.
+//
 type PublishDraftHandler struct {
 	forge *forge.Client
 }
 
 // NewPublishDraftHandler creates a handler that publishes draft PRs.
+//
 func NewPublishDraftHandler(f *forge.Client) *PublishDraftHandler {
 	return &PublishDraftHandler{forge: f}
 }

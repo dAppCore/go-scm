@@ -1,3 +1,5 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
 package gitea
 
 import (
@@ -9,6 +11,7 @@ import (
 )
 
 // ListIssuesOpts configures issue listing.
+//
 type ListIssuesOpts struct {
 	State string // "open", "closed", "all"
 	Page  int

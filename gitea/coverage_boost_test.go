@@ -1,7 +1,7 @@
 package gitea
 
 import (
-	"encoding/json"
+	json "dappco.re/go/core/scm/internal/ax/jsonx"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -146,12 +146,12 @@ func newPRMetaWithManyCommentsServer(t *testing.T) *httptest.Server {
 	mux.HandleFunc("/api/v1/repos/test-org/test-repo/pulls/1", func(w http.ResponseWriter, r *http.Request) {
 		jsonResponse(w, map[string]any{
 			"id": 1, "number": 1, "title": "Many Comments PR", "state": "open",
-			"merged": false,
-			"head":   map[string]any{"ref": "feature", "label": "feature"},
-			"base":   map[string]any{"ref": "main", "label": "main"},
-			"user":   map[string]any{"login": "author"},
-			"labels": []map[string]any{},
-			"assignees": []map[string]any{},
+			"merged":     false,
+			"head":       map[string]any{"ref": "feature", "label": "feature"},
+			"base":       map[string]any{"ref": "main", "label": "main"},
+			"user":       map[string]any{"login": "author"},
+			"labels":     []map[string]any{},
+			"assignees":  []map[string]any{},
 			"created_at": "2026-01-15T10:00:00Z",
 			"updated_at": "2026-01-16T12:00:00Z",
 		})

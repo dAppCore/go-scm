@@ -1,11 +1,13 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
 package scm
 
 import (
-	"fmt"
-	"path/filepath"
+	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
 
-	"forge.lthn.ai/core/cli/pkg/cli"
 	"dappco.re/go/core/scm/marketplace"
+	"forge.lthn.ai/core/cli/pkg/cli"
 )
 
 func addIndexCommand(parent *cli.Command) {

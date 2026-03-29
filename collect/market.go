@@ -1,12 +1,14 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
 package collect
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
+	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
+	json "dappco.re/go/core/scm/internal/ax/jsonx"
+	strings "dappco.re/go/core/scm/internal/ax/stringsx"
 	"net/http"
-	"path/filepath"
-	"strings"
 	"time"
 
 	core "dappco.re/go/core/log"
@@ -17,6 +19,7 @@ import (
 var coinGeckoBaseURL = "https://api.coingecko.com/api/v3"
 
 // MarketCollector collects market data from CoinGecko.
+//
 type MarketCollector struct {
 	// CoinID is the CoinGecko coin identifier (e.g. "bitcoin", "ethereum").
 	CoinID string
@@ -272,6 +275,7 @@ func formatMarketSummary(data *coinData) string {
 }
 
 // FormatMarketSummary is exported for testing.
+//
 func FormatMarketSummary(data *coinData) string {
 	return formatMarketSummary(data)
 }

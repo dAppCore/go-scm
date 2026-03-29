@@ -1,8 +1,10 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
 package collect
 
 import (
 	"context"
-	"fmt"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
 	"time"
 
 	core "dappco.re/go/core/log"
@@ -11,6 +13,7 @@ import (
 // Excavator runs multiple collectors as a coordinated operation.
 // It provides sequential execution with rate limit respect, state tracking
 // for resume support, and aggregated results.
+//
 type Excavator struct {
 	// Collectors is the list of collectors to run.
 	Collectors []Collector

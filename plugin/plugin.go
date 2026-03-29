@@ -1,3 +1,5 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
 // Package plugin provides a plugin system for the core CLI.
 //
 // Plugins extend the CLI with additional commands and functionality.
@@ -14,6 +16,7 @@ package plugin
 import "context"
 
 // Plugin is the interface that all plugins must implement.
+//
 type Plugin interface {
 	// Name returns the plugin's unique identifier.
 	Name() string
@@ -33,6 +36,7 @@ type Plugin interface {
 
 // BasePlugin provides a default implementation of Plugin.
 // Embed this in concrete plugin types to inherit default behaviour.
+//
 type BasePlugin struct {
 	PluginName    string
 	PluginVersion string

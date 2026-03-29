@@ -3,7 +3,7 @@
 package api_test
 
 import (
-	"encoding/json"
+	json "dappco.re/go/core/scm/internal/ax/jsonx"
 	"net/http"
 	"net/http/httptest"
 	"testing"

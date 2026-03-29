@@ -1,11 +1,13 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
 package scm
 
 import (
-	"fmt"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
 
-	"forge.lthn.ai/core/cli/pkg/cli"
 	"dappco.re/go/core/io"
 	"dappco.re/go/core/scm/manifest"
+	"forge.lthn.ai/core/cli/pkg/cli"
 )
 
 func addExportCommand(parent *cli.Command) {

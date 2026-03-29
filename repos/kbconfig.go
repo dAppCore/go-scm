@@ -1,16 +1,19 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
 package repos
 
 import (
-	"fmt"
-	"path/filepath"
+	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
 
-	coreerr "dappco.re/go/core/log"
 	"dappco.re/go/core/io"
+	coreerr "dappco.re/go/core/log"
 	"gopkg.in/yaml.v3"
 )
 
 // KBConfig holds knowledge base configuration for a workspace.
 // Stored at .core/kb.yaml and checked into git.
+//
 type KBConfig struct {
 	Version int        `yaml:"version"`
 	Wiki    WikiConfig `yaml:"wiki"`
@@ -18,6 +21,7 @@ type KBConfig struct {
 }
 
 // WikiConfig controls local wiki mirror behaviour.
+//
 type WikiConfig struct {
 	// Enabled toggles wiki cloning on sync.
 	Enabled bool `yaml:"enabled"`
@@ -29,6 +33,7 @@ type WikiConfig struct {
 }
 
 // KBSearch configures vector search against the OpenBrain Qdrant collection.
+//
 type KBSearch struct {
 	// QdrantHost is the Qdrant server (gRPC).
 	QdrantHost string `yaml:"qdrant_host"`
@@ -45,6 +50,7 @@ type KBSearch struct {
 }
 
 // DefaultKBConfig returns sensible defaults for knowledge base config.
+//
 func DefaultKBConfig() *KBConfig {
 	return &KBConfig{
 		Version: 1,
@@ -66,6 +72,7 @@ func DefaultKBConfig() *KBConfig {
 
 // LoadKBConfig reads .core/kb.yaml from the given workspace root directory.
 // Returns defaults if the file does not exist.
+//
 func LoadKBConfig(m io.Medium, root string) (*KBConfig, error) {
 	path := filepath.Join(root, ".core", "kb.yaml")
 
@@ -87,6 +94,7 @@ func LoadKBConfig(m io.Medium, root string) (*KBConfig, error) {
 }
 
 // SaveKBConfig writes .core/kb.yaml to the given workspace root directory.
+//
 func SaveKBConfig(m io.Medium, root string, kb *KBConfig) error {
 	coreDir := filepath.Join(root, ".core")
 	if err := m.EnsureDir(coreDir); err != nil {

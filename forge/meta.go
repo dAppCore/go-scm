@@ -1,3 +1,5 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
 package forge
 
 import (
@@ -10,6 +12,7 @@ import (
 
 // PRMeta holds structural signals from a pull request,
 // used by the pipeline MetaReader for AI-driven workflows.
+//
 type PRMeta struct {
 	Number       int64
 	Title        string
@@ -26,6 +29,7 @@ type PRMeta struct {
 }
 
 // Comment represents a comment with metadata.
+//
 type Comment struct {
 	ID        int64
 	Author    string

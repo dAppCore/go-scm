@@ -163,7 +163,7 @@ func TestClient_GetPullRequest_Bad_ServerError(t *testing.T) {
 
 // --- ListIssuesOpts defaulting ---
 
-func TestListIssuesOpts_Defaults(t *testing.T) {
+func TestListIssuesOpts_Good_Defaults(t *testing.T) {
 	tests := []struct {
 		name          string
 		opts          ListIssuesOpts

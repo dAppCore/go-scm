@@ -1,19 +1,22 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
 package collect
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
+	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
+	json "dappco.re/go/core/scm/internal/ax/jsonx"
+	strings "dappco.re/go/core/scm/internal/ax/stringsx"
 	"maps"
-	"path/filepath"
 	"slices"
-	"strings"
 
 	core "dappco.re/go/core/log"
 	"golang.org/x/net/html"
 )
 
 // Processor converts collected data to clean markdown.
+//
 type Processor struct {
 	// Source identifies the data source directory to process.
 	Source string
@@ -331,11 +334,13 @@ func jsonValueToMarkdown(b *strings.Builder, data any, depth int) {
 }
 
 // HTMLToMarkdown is exported for testing.
+//
 func HTMLToMarkdown(content string) (string, error) {
 	return htmlToMarkdown(content)
 }
 
 // JSONToMarkdown is exported for testing.
+//
 func JSONToMarkdown(content string) (string, error) {
 	return jsonToMarkdown(content)
 }

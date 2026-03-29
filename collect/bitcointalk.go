@@ -1,12 +1,14 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
 package collect
 
 import (
 	"context"
-	"fmt"
+	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
+	strings "dappco.re/go/core/scm/internal/ax/stringsx"
 	"iter"
 	"net/http"
-	"path/filepath"
-	"strings"
 	"time"
 
 	core "dappco.re/go/core/log"
@@ -20,6 +22,7 @@ var httpClient = &http.Client{
 }
 
 // BitcoinTalkCollector collects forum posts from BitcoinTalk.
+//
 type BitcoinTalkCollector struct {
 	// TopicID is the numeric topic identifier.
 	TopicID string
@@ -281,6 +284,7 @@ func formatPostMarkdown(num int, post btPost) string {
 
 // ParsePostsFromHTML parses BitcoinTalk posts from raw HTML content.
 // This is exported for testing purposes.
+//
 func ParsePostsFromHTML(htmlContent string) ([]btPost, error) {
 	doc, err := html.Parse(strings.NewReader(htmlContent))
 	if err != nil {
@@ -290,14 +294,17 @@ func ParsePostsFromHTML(htmlContent string) ([]btPost, error) {
 }
 
 // FormatPostMarkdown is exported for testing purposes.
+//
 func FormatPostMarkdown(num int, author, date, content string) string {
 	return formatPostMarkdown(num, btPost{Author: author, Date: date, Content: content})
 }
 
 // FetchPageFunc is an injectable function type for fetching pages, used in testing.
+//
 type FetchPageFunc func(ctx context.Context, url string) ([]btPost, error)
 
 // BitcoinTalkCollectorWithFetcher wraps BitcoinTalkCollector with a custom fetcher for testing.
+//
 type BitcoinTalkCollectorWithFetcher struct {
 	BitcoinTalkCollector
 	Fetcher FetchPageFunc
@@ -305,6 +312,7 @@ type BitcoinTalkCollectorWithFetcher struct {
 
 // SetHTTPClient replaces the package-level HTTP client.
 // Use this in tests to inject a custom transport or timeout.
+//
 func SetHTTPClient(c *http.Client) {
 	httpClient = c
 }

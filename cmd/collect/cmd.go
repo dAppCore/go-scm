@@ -1,12 +1,14 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
 package collect
 
 import (
-	"fmt"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
 
-	"forge.lthn.ai/core/cli/pkg/cli"
-	"dappco.re/go/core/scm/collect"
 	"dappco.re/go/core/i18n"
 	"dappco.re/go/core/io"
+	"dappco.re/go/core/scm/collect"
+	"forge.lthn.ai/core/cli/pkg/cli"
 )
 
 func init() {
@@ -28,6 +30,7 @@ var (
 )
 
 // AddCollectCommands registers the 'collect' command and all subcommands.
+//
 func AddCollectCommands(root *cli.Command) {
 	collectCmd := &cli.Command{
 		Use:   "collect",

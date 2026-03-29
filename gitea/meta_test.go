@@ -74,7 +74,7 @@ func TestClient_GetIssueBody_Bad_ServerError(t *testing.T) {
 
 // --- PRMeta struct tests ---
 
-func TestPRMeta_Fields(t *testing.T) {
+func TestPRMeta_Good_Fields(t *testing.T) {
 	meta := &PRMeta{
 		Number:       42,
 		Title:        "Test PR",
@@ -100,7 +100,7 @@ func TestPRMeta_Fields(t *testing.T) {
 	assert.Equal(t, 5, meta.CommentCount)
 }
 
-func TestComment_Fields(t *testing.T) {
+func TestComment_Good_Fields(t *testing.T) {
 	comment := Comment{
 		ID:     123,
 		Author: "reviewer",
@@ -112,6 +112,6 @@ func TestComment_Fields(t *testing.T) {
 	assert.Equal(t, "LGTM", comment.Body)
 }
 
-func TestCommentPageSize(t *testing.T) {
+func TestCommentPageSize_Good(t *testing.T) {
 	assert.Equal(t, 50, commentPageSize, "comment page size should be 50")
 }

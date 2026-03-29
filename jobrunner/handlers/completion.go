@@ -1,8 +1,10 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
 package handlers
 
 import (
 	"context"
-	"fmt"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
 	"time"
 
 	coreerr "dappco.re/go/core/log"
@@ -11,15 +13,18 @@ import (
 )
 
 const (
+	//
 	ColorAgentComplete = "#0e8a16" // Green
 )
 
 // CompletionHandler manages issue state when an agent finishes work.
+//
 type CompletionHandler struct {
 	forge *forge.Client
 }
 
 // NewCompletionHandler creates a handler for agent completion events.
+//
 func NewCompletionHandler(client *forge.Client) *CompletionHandler {
 	return &CompletionHandler{
 		forge: client,

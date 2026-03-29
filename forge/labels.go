@@ -1,7 +1,9 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
 package forge
 
 import (
-	"strings"
+	strings "dappco.re/go/core/scm/internal/ax/stringsx"
 
 	forgejo "codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2"
 

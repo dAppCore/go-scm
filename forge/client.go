@@ -1,3 +1,5 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
 // Package forge provides a thin wrapper around the Forgejo Go SDK
 // for managing repositories, issues, and pull requests on a Forgejo instance.
 //
@@ -15,6 +17,7 @@ import (
 )
 
 // Client wraps the Forgejo SDK client with config-based auth.
+//
 type Client struct {
 	api   *forgejo.Client
 	url   string
@@ -22,6 +25,7 @@ type Client struct {
 }
 
 // New creates a new Forgejo API client for the given URL and token.
+//
 func New(url, token string) (*Client, error) {
 	api, err := forgejo.NewClient(url, forgejo.SetToken(token))
 	if err != nil {

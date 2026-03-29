@@ -1,17 +1,20 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
 package marketplace
 
 import (
-	"log"
-	"os"
-	"path/filepath"
+	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
+	os "dappco.re/go/core/scm/internal/ax/osx"
 
-	coreerr "dappco.re/go/core/log"
+	core "dappco.re/go/core"
 	coreio "dappco.re/go/core/io"
+	coreerr "dappco.re/go/core/log"
 	"dappco.re/go/core/scm/manifest"
 	"gopkg.in/yaml.v3"
 )
 
 // DiscoveredProvider represents a runtime provider found on disk.
+//
 type DiscoveredProvider struct {
 	// Dir is the absolute path to the provider directory.
 	Dir string
@@ -24,6 +27,7 @@ type DiscoveredProvider struct {
 // Each subdirectory is checked for a .core/manifest.yaml file. Directories
 // without a valid manifest are skipped with a log warning.
 // Only manifests with provider fields (namespace + binary) are returned.
+//
 func DiscoverProviders(dir string) ([]DiscoveredProvider, error) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
@@ -44,18 +48,18 @@ func DiscoverProviders(dir string) ([]DiscoveredProvider, error) {
 
 		raw, err := coreio.Local.Read(manifestPath)
 		if err != nil {
-			log.Printf("marketplace: skipping %s: %v", e.Name(), err)
+			core.Warn(core.Sprintf("marketplace: skipping %s: %v", e.Name(), err))
 			continue
 		}
 
 		m, err := manifest.Parse([]byte(raw))
 		if err != nil {
-			log.Printf("marketplace: skipping %s: invalid manifest: %v", e.Name(), err)
+			core.Warn(core.Sprintf("marketplace: skipping %s: invalid manifest: %v", e.Name(), err))
 			continue
 		}
 
 		if !m.IsProvider() {
-			log.Printf("marketplace: skipping %s: not a provider (missing namespace or binary)", e.Name())
+			core.Warn(core.Sprintf("marketplace: skipping %s: not a provider (missing namespace or binary)", e.Name()))
 			continue
 		}
 
@@ -69,6 +73,7 @@ func DiscoverProviders(dir string) ([]DiscoveredProvider, error) {
 }
 
 // ProviderRegistryEntry records metadata about an installed provider.
+//
 type ProviderRegistryEntry struct {
 	Installed string `yaml:"installed" json:"installed"`
 	Version   string `yaml:"version" json:"version"`
@@ -77,6 +82,7 @@ type ProviderRegistryEntry struct {
 }
 
 // ProviderRegistryFile represents the registry.yaml file tracking installed providers.
+//
 type ProviderRegistryFile struct {
 	Version   int                              `yaml:"version" json:"version"`
 	Providers map[string]ProviderRegistryEntry `yaml:"providers" json:"providers"`
@@ -84,6 +90,7 @@ type ProviderRegistryFile struct {
 
 // LoadProviderRegistry reads a registry.yaml file from the given path.
 // Returns an empty registry if the file does not exist.
+//
 func LoadProviderRegistry(path string) (*ProviderRegistryFile, error) {
 	raw, err := coreio.Local.Read(path)
 	if err != nil {
@@ -109,6 +116,7 @@ func LoadProviderRegistry(path string) (*ProviderRegistryFile, error) {
 }
 
 // SaveProviderRegistry writes the registry to the given path.
+//
 func SaveProviderRegistry(path string, reg *ProviderRegistryFile) error {
 	if err := coreio.Local.EnsureDir(filepath.Dir(path)); err != nil {
 		return coreerr.E("marketplace.SaveProviderRegistry", "ensure directory", err)

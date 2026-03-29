@@ -1,8 +1,10 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
 package forge
 
 import (
+	strings "dappco.re/go/core/scm/internal/ax/stringsx"
 	"path"
-	"strings"
 
 	"forge.lthn.ai/core/cli/pkg/cli"
 )

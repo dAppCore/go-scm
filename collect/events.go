@@ -1,3 +1,5 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
 package collect
 
 import (
@@ -8,22 +10,28 @@ import (
 // Event types used by the collection subsystem.
 const (
 	// EventStart is emitted when a collector begins its run.
+	//
 	EventStart = "start"
 
 	// EventProgress is emitted to report incremental progress.
+	//
 	EventProgress = "progress"
 
 	// EventItem is emitted when a single item is collected.
+	//
 	EventItem = "item"
 
 	// EventError is emitted when an error occurs during collection.
+	//
 	EventError = "error"
 
 	// EventComplete is emitted when a collector finishes its run.
+	//
 	EventComplete = "complete"
 )
 
 // Event represents a collection event.
+//
 type Event struct {
 	// Type is one of the Event* constants.
 	Type string `json:"type"`
@@ -42,16 +50,19 @@ type Event struct {
 }
 
 // EventHandler handles collection events.
+//
 type EventHandler func(Event)
 
 // Dispatcher manages event dispatch. Handlers are registered per event type
 // and are called synchronously when an event is emitted.
+//
 type Dispatcher struct {
 	mu       sync.RWMutex
 	handlers map[string][]EventHandler
 }
 
 // NewDispatcher creates a new event dispatcher.
+//
 func NewDispatcher() *Dispatcher {
 	return &Dispatcher{
 		handlers: make(map[string][]EventHandler),

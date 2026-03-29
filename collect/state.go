@@ -1,17 +1,20 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
 package collect
 
 import (
-	"encoding/json"
+	json "dappco.re/go/core/scm/internal/ax/jsonx"
 	"sync"
 	"time"
 
-	core "dappco.re/go/core/log"
 	"dappco.re/go/core/io"
+	core "dappco.re/go/core/log"
 )
 
 // State tracks collection progress for incremental runs.
 // It persists entries to disk so that subsequent runs can resume
 // where they left off.
+//
 type State struct {
 	mu      sync.Mutex
 	medium  io.Medium
@@ -20,6 +23,7 @@ type State struct {
 }
 
 // StateEntry tracks state for one source.
+//
 type StateEntry struct {
 	// Source identifies the collector.
 	Source string `json:"source"`
@@ -39,6 +43,7 @@ type StateEntry struct {
 
 // NewState creates a state tracker that persists to the given path
 // using the provided storage medium.
+//
 func NewState(m io.Medium, path string) *State {
 	return &State{
 		medium:  m,

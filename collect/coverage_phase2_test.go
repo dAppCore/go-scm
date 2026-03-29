@@ -2,13 +2,14 @@ package collect
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
+	core "dappco.re/go/core"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
+	json "dappco.re/go/core/scm/internal/ax/jsonx"
+	strings "dappco.re/go/core/scm/internal/ax/stringsx"
 	goio "io"
 	"io/fs"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 	"time"
 
@@ -16,6 +17,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func testErr(msg string) error {
+	return core.E("collect.test", msg, nil)
+}
+
+func testErrf(format string, args ...any) error {
+	return core.E("collect.test", fmt.Sprintf(format, args...), nil)
+}
 
 // errorMedium wraps MockMedium and injects errors on specific operations.
 type errorMedium struct {
@@ -50,16 +59,18 @@ func (e *errorMedium) Read(path string) (string, error) {
 	}
 	return e.MockMedium.Read(path)
 }
-func (e *errorMedium) FileGet(path string) (string, error)             { return e.MockMedium.FileGet(path) }
-func (e *errorMedium) FileSet(path, content string) error              { return e.MockMedium.FileSet(path, content) }
-func (e *errorMedium) Delete(path string) error                        { return e.MockMedium.Delete(path) }
-func (e *errorMedium) DeleteAll(path string) error                     { return e.MockMedium.DeleteAll(path) }
-func (e *errorMedium) Rename(old, new string) error                    { return e.MockMedium.Rename(old, new) }
-func (e *errorMedium) Stat(path string) (fs.FileInfo, error)           { return e.MockMedium.Stat(path) }
-func (e *errorMedium) Open(path string) (fs.File, error)               { return e.MockMedium.Open(path) }
-func (e *errorMedium) Create(path string) (goio.WriteCloser, error)    { return e.MockMedium.Create(path) }
-func (e *errorMedium) Append(path string) (goio.WriteCloser, error)    { return e.MockMedium.Append(path) }
-func (e *errorMedium) ReadStream(path string) (goio.ReadCloser, error) { return e.MockMedium.ReadStream(path) }
+func (e *errorMedium) FileGet(path string) (string, error)          { return e.MockMedium.FileGet(path) }
+func (e *errorMedium) FileSet(path, content string) error           { return e.MockMedium.FileSet(path, content) }
+func (e *errorMedium) Delete(path string) error                     { return e.MockMedium.Delete(path) }
+func (e *errorMedium) DeleteAll(path string) error                  { return e.MockMedium.DeleteAll(path) }
+func (e *errorMedium) Rename(old, new string) error                 { return e.MockMedium.Rename(old, new) }
+func (e *errorMedium) Stat(path string) (fs.FileInfo, error)        { return e.MockMedium.Stat(path) }
+func (e *errorMedium) Open(path string) (fs.File, error)            { return e.MockMedium.Open(path) }
+func (e *errorMedium) Create(path string) (goio.WriteCloser, error) { return e.MockMedium.Create(path) }
+func (e *errorMedium) Append(path string) (goio.WriteCloser, error) { return e.MockMedium.Append(path) }
+func (e *errorMedium) ReadStream(path string) (goio.ReadCloser, error) {
+	return e.MockMedium.ReadStream(path)
+}
 func (e *errorMedium) WriteStream(path string) (goio.WriteCloser, error) {
 	return e.MockMedium.WriteStream(path)
 }
@@ -74,7 +85,7 @@ type errorLimiterWaiter struct{}
 // --- Processor: list error ---
 
 func TestProcessor_Process_Bad_ListError(t *testing.T) {
-	em := &errorMedium{MockMedium: io.NewMockMedium(), listErr: fmt.Errorf("list denied")}
+	em := &errorMedium{MockMedium: io.NewMockMedium(), listErr: testErr("list denied")}
 	cfg := &Config{Output: em, OutputDir: "/output", Dispatcher: NewDispatcher()}
 
 	p := &Processor{Source: "test", Dir: "/input"}
@@ -86,7 +97,7 @@ func TestProcessor_Process_Bad_ListError(t *testing.T) {
 // --- Processor: ensureDir error ---
 
 func TestProcessor_Process_Bad_EnsureDirError(t *testing.T) {
-	em := &errorMedium{MockMedium: io.NewMockMedium(), ensureDirErr: fmt.Errorf("mkdir denied")}
+	em := &errorMedium{MockMedium: io.NewMockMedium(), ensureDirErr: testErr("mkdir denied")}
 	// Need to ensure List returns entries
 	em.MockMedium.Dirs["/input"] = true
 	em.MockMedium.Files["/input/test.html"] = "<h1>Test</h1>"
@@ -121,7 +132,7 @@ func TestProcessor_Process_Bad_ContextCancelledDuringLoop(t *testing.T) {
 // --- Processor: read error during file processing ---
 
 func TestProcessor_Process_Bad_ReadError(t *testing.T) {
-	em := &errorMedium{MockMedium: io.NewMockMedium(), readErr: fmt.Errorf("read denied")}
+	em := &errorMedium{MockMedium: io.NewMockMedium(), readErr: testErr("read denied")}
 	em.MockMedium.Dirs["/input"] = true
 	em.MockMedium.Files["/input/test.html"] = "<h1>Test</h1>"
 
@@ -154,7 +165,7 @@ func TestProcessor_Process_Bad_InvalidJSONFile(t *testing.T) {
 // --- Processor: write error during output ---
 
 func TestProcessor_Process_Bad_WriteError(t *testing.T) {
-	em := &errorMedium{MockMedium: io.NewMockMedium(), writeErr: fmt.Errorf("disk full")}
+	em := &errorMedium{MockMedium: io.NewMockMedium(), writeErr: testErr("disk full")}
 	em.MockMedium.Dirs["/input"] = true
 	em.MockMedium.Files["/input/page.html"] = "<h1>Title</h1>"
 
@@ -255,13 +266,13 @@ func TestPapersCollector_CollectIACR_Bad_WriteError(t *testing.T) {
 	httpClient = &http.Client{Transport: transport}
 	defer func() { httpClient = old }()
 
-	em := &errorMedium{MockMedium: io.NewMockMedium(), writeErr: fmt.Errorf("disk full")}
+	em := &errorMedium{MockMedium: io.NewMockMedium(), writeErr: testErr("disk full")}
 	cfg := &Config{Output: em, OutputDir: "/output", Dispatcher: NewDispatcher()}
 	cfg.Limiter = nil
 
 	p := &PapersCollector{Source: PaperSourceIACR, Query: "test"}
 	result, err := p.Collect(context.Background(), cfg)
-	require.NoError(t, err) // Write errors increment Errors, not returned
+	require.NoError(t, err)           // Write errors increment Errors, not returned
 	assert.Equal(t, 2, result.Errors) // 2 papers both fail to write
 }
 
@@ -279,7 +290,7 @@ func TestPapersCollector_CollectIACR_Bad_EnsureDirError(t *testing.T) {
 	httpClient = &http.Client{Transport: transport}
 	defer func() { httpClient = old }()
 
-	em := &errorMedium{MockMedium: io.NewMockMedium(), ensureDirErr: fmt.Errorf("mkdir denied")}
+	em := &errorMedium{MockMedium: io.NewMockMedium(), ensureDirErr: testErr("mkdir denied")}
 	cfg := &Config{Output: em, OutputDir: "/output", Dispatcher: NewDispatcher()}
 	cfg.Limiter = nil
 
@@ -303,7 +314,7 @@ func TestPapersCollector_CollectArXiv_Bad_WriteError(t *testing.T) {
 	httpClient = &http.Client{Transport: transport}
 	defer func() { httpClient = old }()
 
-	em := &errorMedium{MockMedium: io.NewMockMedium(), writeErr: fmt.Errorf("disk full")}
+	em := &errorMedium{MockMedium: io.NewMockMedium(), writeErr: testErr("disk full")}
 	cfg := &Config{Output: em, OutputDir: "/output", Dispatcher: NewDispatcher()}
 	cfg.Limiter = nil
 
@@ -327,7 +338,7 @@ func TestPapersCollector_CollectArXiv_Bad_EnsureDirError(t *testing.T) {
 	httpClient = &http.Client{Transport: transport}
 	defer func() { httpClient = old }()
 
-	em := &errorMedium{MockMedium: io.NewMockMedium(), ensureDirErr: fmt.Errorf("mkdir denied")}
+	em := &errorMedium{MockMedium: io.NewMockMedium(), ensureDirErr: testErr("mkdir denied")}
 	cfg := &Config{Output: em, OutputDir: "/output", Dispatcher: NewDispatcher()}
 	cfg.Limiter = nil
 
@@ -453,7 +464,7 @@ func TestMarketCollector_Collect_Bad_WriteError(t *testing.T) {
 	coinGeckoBaseURL = server.URL
 	defer func() { coinGeckoBaseURL = oldURL }()
 
-	em := &errorMedium{MockMedium: io.NewMockMedium(), writeErr: fmt.Errorf("disk full")}
+	em := &errorMedium{MockMedium: io.NewMockMedium(), writeErr: testErr("disk full")}
 	cfg := &Config{Output: em, OutputDir: "/output", Dispatcher: NewDispatcher()}
 	cfg.Limiter = nil
 
@@ -477,7 +488,7 @@ func TestMarketCollector_Collect_Bad_EnsureDirError(t *testing.T) {
 	coinGeckoBaseURL = server.URL
 	defer func() { coinGeckoBaseURL = oldURL }()
 
-	em := &errorMedium{MockMedium: io.NewMockMedium(), ensureDirErr: fmt.Errorf("mkdir denied")}
+	em := &errorMedium{MockMedium: io.NewMockMedium(), ensureDirErr: testErr("mkdir denied")}
 	cfg := &Config{Output: em, OutputDir: "/output", Dispatcher: NewDispatcher()}
 	cfg.Limiter = nil
 
@@ -552,7 +563,7 @@ func TestMarketCollector_Collect_Good_HistoricalCustomDate(t *testing.T) {
 // --- BitcoinTalk: EnsureDir error ---
 
 func TestBitcoinTalkCollector_Collect_Bad_EnsureDirError(t *testing.T) {
-	em := &errorMedium{MockMedium: io.NewMockMedium(), ensureDirErr: fmt.Errorf("mkdir denied")}
+	em := &errorMedium{MockMedium: io.NewMockMedium(), ensureDirErr: testErr("mkdir denied")}
 	cfg := &Config{Output: em, OutputDir: "/output", Dispatcher: NewDispatcher()}
 	cfg.Limiter = nil
 
@@ -592,13 +603,13 @@ func TestBitcoinTalkCollector_Collect_Bad_WriteErrorOnPosts(t *testing.T) {
 	httpClient = &http.Client{Transport: transport}
 	defer func() { httpClient = old }()
 
-	em := &errorMedium{MockMedium: io.NewMockMedium(), writeErr: fmt.Errorf("disk full")}
+	em := &errorMedium{MockMedium: io.NewMockMedium(), writeErr: testErr("disk full")}
 	cfg := &Config{Output: em, OutputDir: "/output", Dispatcher: NewDispatcher()}
 	cfg.Limiter = nil
 
 	b := &BitcoinTalkCollector{TopicID: "12345"}
 	result, err := b.Collect(context.Background(), cfg)
-	require.NoError(t, err) // write errors are counted
+	require.NoError(t, err)           // write errors are counted
 	assert.Equal(t, 3, result.Errors) // 3 posts all fail to write
 	assert.Equal(t, 0, result.Items)
 }
@@ -968,34 +979,44 @@ func TestBitcoinTalkCollector_Collect_Bad_LimiterBlocks(t *testing.T) {
 // writeCountMedium fails after N successful writes.
 type writeCountMedium struct {
 	*io.MockMedium
-	writeCount   int
-	failAfterN   int
+	writeCount int
+	failAfterN int
 }
 
 func (w *writeCountMedium) Write(path, content string) error {
 	w.writeCount++
 	if w.writeCount > w.failAfterN {
-		return fmt.Errorf("write %d: disk full", w.writeCount)
+		return testErrf("write %d: disk full", w.writeCount)
 	}
 	return w.MockMedium.Write(path, content)
 }
-func (w *writeCountMedium) EnsureDir(path string) error              { return w.MockMedium.EnsureDir(path) }
-func (w *writeCountMedium) Read(path string) (string, error)         { return w.MockMedium.Read(path) }
-func (w *writeCountMedium) List(path string) ([]fs.DirEntry, error)  { return w.MockMedium.List(path) }
-func (w *writeCountMedium) IsFile(path string) bool                  { return w.MockMedium.IsFile(path) }
-func (w *writeCountMedium) FileGet(path string) (string, error)      { return w.MockMedium.FileGet(path) }
-func (w *writeCountMedium) FileSet(path, content string) error       { return w.MockMedium.FileSet(path, content) }
-func (w *writeCountMedium) Delete(path string) error                 { return w.MockMedium.Delete(path) }
-func (w *writeCountMedium) DeleteAll(path string) error              { return w.MockMedium.DeleteAll(path) }
-func (w *writeCountMedium) Rename(old, new string) error             { return w.MockMedium.Rename(old, new) }
-func (w *writeCountMedium) Stat(path string) (fs.FileInfo, error)    { return w.MockMedium.Stat(path) }
-func (w *writeCountMedium) Open(path string) (fs.File, error)        { return w.MockMedium.Open(path) }
-func (w *writeCountMedium) Create(path string) (goio.WriteCloser, error) { return w.MockMedium.Create(path) }
-func (w *writeCountMedium) Append(path string) (goio.WriteCloser, error) { return w.MockMedium.Append(path) }
-func (w *writeCountMedium) ReadStream(path string) (goio.ReadCloser, error) { return w.MockMedium.ReadStream(path) }
-func (w *writeCountMedium) WriteStream(path string) (goio.WriteCloser, error) { return w.MockMedium.WriteStream(path) }
-func (w *writeCountMedium) Exists(path string) bool                  { return w.MockMedium.Exists(path) }
-func (w *writeCountMedium) IsDir(path string) bool                   { return w.MockMedium.IsDir(path) }
+func (w *writeCountMedium) EnsureDir(path string) error             { return w.MockMedium.EnsureDir(path) }
+func (w *writeCountMedium) Read(path string) (string, error)        { return w.MockMedium.Read(path) }
+func (w *writeCountMedium) List(path string) ([]fs.DirEntry, error) { return w.MockMedium.List(path) }
+func (w *writeCountMedium) IsFile(path string) bool                 { return w.MockMedium.IsFile(path) }
+func (w *writeCountMedium) FileGet(path string) (string, error)     { return w.MockMedium.FileGet(path) }
+func (w *writeCountMedium) FileSet(path, content string) error {
+	return w.MockMedium.FileSet(path, content)
+}
+func (w *writeCountMedium) Delete(path string) error              { return w.MockMedium.Delete(path) }
+func (w *writeCountMedium) DeleteAll(path string) error           { return w.MockMedium.DeleteAll(path) }
+func (w *writeCountMedium) Rename(old, new string) error          { return w.MockMedium.Rename(old, new) }
+func (w *writeCountMedium) Stat(path string) (fs.FileInfo, error) { return w.MockMedium.Stat(path) }
+func (w *writeCountMedium) Open(path string) (fs.File, error)     { return w.MockMedium.Open(path) }
+func (w *writeCountMedium) Create(path string) (goio.WriteCloser, error) {
+	return w.MockMedium.Create(path)
+}
+func (w *writeCountMedium) Append(path string) (goio.WriteCloser, error) {
+	return w.MockMedium.Append(path)
+}
+func (w *writeCountMedium) ReadStream(path string) (goio.ReadCloser, error) {
+	return w.MockMedium.ReadStream(path)
+}
+func (w *writeCountMedium) WriteStream(path string) (goio.WriteCloser, error) {
+	return w.MockMedium.WriteStream(path)
+}
+func (w *writeCountMedium) Exists(path string) bool { return w.MockMedium.Exists(path) }
+func (w *writeCountMedium) IsDir(path string) bool  { return w.MockMedium.IsDir(path) }
 
 // Test that the summary.md write error in collectCurrent is handled.
 func TestMarketCollector_Collect_Bad_SummaryWriteError(t *testing.T) {
@@ -1075,7 +1096,7 @@ func TestMarketCollector_Collect_Bad_HistoricalWriteError(t *testing.T) {
 // --- State: Save write error ---
 
 func TestState_Save_Bad_WriteError(t *testing.T) {
-	em := &errorMedium{MockMedium: io.NewMockMedium(), writeErr: fmt.Errorf("disk full")}
+	em := &errorMedium{MockMedium: io.NewMockMedium(), writeErr: testErr("disk full")}
 	s := NewState(em, "/state.json")
 	s.Set("test", &StateEntry{Source: "test", Items: 1})
 
@@ -1134,7 +1155,7 @@ func TestBitcoinTalkCollector_Collect_Good_ZeroPostsPage(t *testing.T) {
 // --- Excavator: state save error after collection ---
 
 func TestExcavator_Run_Bad_StateSaveError(t *testing.T) {
-	em := &errorMedium{MockMedium: io.NewMockMedium(), writeErr: fmt.Errorf("state write failed")}
+	em := &errorMedium{MockMedium: io.NewMockMedium(), writeErr: testErr("state write failed")}
 	cfg := &Config{
 		Output:     io.NewMockMedium(), // Use regular medium for output
 		OutputDir:  "/output",
@@ -1158,7 +1179,7 @@ func TestExcavator_Run_Bad_StateSaveError(t *testing.T) {
 // --- State: Load with read error ---
 
 func TestState_Load_Bad_ReadError(t *testing.T) {
-	em := &errorMedium{MockMedium: io.NewMockMedium(), readErr: fmt.Errorf("read denied")}
+	em := &errorMedium{MockMedium: io.NewMockMedium(), readErr: testErr("read denied")}
 	em.MockMedium.Files["/state.json"] = "{}" // File exists but read will fail
 
 	s := NewState(em, "/state.json")

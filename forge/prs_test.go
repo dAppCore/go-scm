@@ -1,7 +1,10 @@
 package forge
 
 import (
-	"strings"
+	json "dappco.re/go/core/scm/internal/ax/jsonx"
+	strings "dappco.re/go/core/scm/internal/ax/stringsx"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -97,4 +100,50 @@ func TestClient_DismissReview_Bad_ServerError(t *testing.T) {
 	err := client.DismissReview("test-org", "org-repo", 1, 1, "outdated")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to dismiss review")
+}
+
+func TestClient_SetPRDraft_Good_Request(t *testing.T) {
+	var method, path string
+	var payload map[string]any
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/v1/version", func(w http.ResponseWriter, r *http.Request) {
+		jsonResponse(w, map[string]string{"version": "1.21.0"})
+	})
+	mux.HandleFunc("/api/v1/repos/test-org/org-repo/pulls/3", func(w http.ResponseWriter, r *http.Request) {
+		method = r.Method
+		path = r.URL.Path
+		require.NoError(t, json.NewDecoder(r.Body).Decode(&payload))
+		jsonResponse(w, map[string]any{"number": 3})
+	})
+
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+
+	client, err := New(srv.URL, "test-token")
+	require.NoError(t, err)
+
+	err = client.SetPRDraft("test-org", "org-repo", 3, false)
+	assert.NoError(t, err)
+	assert.Equal(t, http.MethodPatch, method)
+	assert.Equal(t, "/api/v1/repos/test-org/org-repo/pulls/3", path)
+	assert.Equal(t, false, payload["draft"])
+}
+
+func TestClient_SetPRDraft_Bad_PathTraversalOwner(t *testing.T) {
+	client, srv := newTestClient(t)
+	defer srv.Close()
+
+	err := client.SetPRDraft("../owner", "org-repo", 3, true)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid owner")
+}
+
+func TestClient_SetPRDraft_Bad_PathTraversalRepo(t *testing.T) {
+	client, srv := newTestClient(t)
+	defer srv.Close()
+
+	err := client.SetPRDraft("test-org", "..", 3, true)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid repo")
 }

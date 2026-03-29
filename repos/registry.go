@@ -1,19 +1,22 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
 // Package repos provides functionality for managing multi-repo workspaces.
 // It reads a repos.yaml registry file that defines repositories, their types,
 // dependencies, and metadata.
 package repos
 
 import (
-	"os"
-	"path/filepath"
-	"strings"
+	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
+	os "dappco.re/go/core/scm/internal/ax/osx"
+	strings "dappco.re/go/core/scm/internal/ax/stringsx"
 
-	coreerr "dappco.re/go/core/log"
 	"dappco.re/go/core/io"
+	coreerr "dappco.re/go/core/log"
 	"gopkg.in/yaml.v3"
 )
 
 // Registry represents a collection of repositories defined in repos.yaml.
+//
 type Registry struct {
 	Version  int              `yaml:"version"`
 	Org      string           `yaml:"org"`
@@ -24,6 +27,7 @@ type Registry struct {
 }
 
 // RegistryDefaults contains default values applied to all repos.
+//
 type RegistryDefaults struct {
 	CI      string `yaml:"ci"`
 	License string `yaml:"license"`
@@ -31,21 +35,27 @@ type RegistryDefaults struct {
 }
 
 // RepoType indicates the role of a repository in the ecosystem.
+//
 type RepoType string
 
 // Repository type constants for ecosystem classification.
 const (
 	// RepoTypeFoundation indicates core foundation packages.
+	//
 	RepoTypeFoundation RepoType = "foundation"
 	// RepoTypeModule indicates reusable module packages.
+	//
 	RepoTypeModule RepoType = "module"
 	// RepoTypeProduct indicates end-user product applications.
+	//
 	RepoTypeProduct RepoType = "product"
 	// RepoTypeTemplate indicates starter templates.
+	//
 	RepoTypeTemplate RepoType = "template"
 )
 
 // Repo represents a single repository in the registry.
+//
 type Repo struct {
 	Name        string   `yaml:"-"` // Set from map key
 	Type        string   `yaml:"type"`
@@ -63,6 +73,8 @@ type Repo struct {
 
 // LoadRegistry reads and parses a repos.yaml file from the given medium.
 // The path should be a valid path for the provided medium.
+//
+//	reg, err := repos.LoadRegistry(io.Local, ".core/repos.yaml")
 func LoadRegistry(m io.Medium, path string) (*Registry, error) {
 	content, err := m.Read(path)
 	if err != nil {
@@ -102,6 +114,8 @@ func LoadRegistry(m io.Medium, path string) (*Registry, error) {
 // FindRegistry searches for repos.yaml in common locations.
 // It checks: current directory, parent directories, and home directory.
 // This function is primarily intended for use with io.Local or other local-like filesystems.
+//
+//	path, err := repos.FindRegistry(io.Local)
 func FindRegistry(m io.Medium) (string, error) {
 	// Check current directory and parents
 	dir, err := os.Getwd()
@@ -152,6 +166,8 @@ func FindRegistry(m io.Medium) (string, error) {
 // ScanDirectory creates a Registry by scanning a directory for git repos.
 // This is used as a fallback when no repos.yaml is found.
 // The dir should be a valid path for the provided medium.
+//
+//	reg, err := repos.ScanDirectory(io.Local, "/home/user/Code/core")
 func ScanDirectory(m io.Medium, dir string) (*Registry, error) {
 	entries, err := m.List(dir)
 	if err != nil {
@@ -241,6 +257,8 @@ func detectOrg(m io.Medium, repoPath string) string {
 }
 
 // List returns all repos in the registry.
+//
+//	repos := reg.List()
 func (r *Registry) List() []*Repo {
 	repos := make([]*Repo, 0, len(r.Repos))
 	for _, repo := range r.Repos {
@@ -251,12 +269,16 @@ func (r *Registry) List() []*Repo {
 }
 
 // Get returns a repo by name.
+//
+//	repo, ok := reg.Get("go-io")
 func (r *Registry) Get(name string) (*Repo, bool) {
 	repo, ok := r.Repos[name]
 	return repo, ok
 }
 
 // ByType returns repos filtered by type.
+//
+//	goRepos := reg.ByType("go")
 func (r *Registry) ByType(t string) []*Repo {
 	var repos []*Repo
 	for _, repo := range r.Repos {
@@ -269,6 +291,8 @@ func (r *Registry) ByType(t string) []*Repo {
 
 // TopologicalOrder returns repos sorted by dependency order.
 // Foundation repos come first, then modules, then products.
+//
+//	ordered, err := reg.TopologicalOrder()
 func (r *Registry) TopologicalOrder() ([]*Repo, error) {
 	// Build dependency graph
 	visited := make(map[string]bool)

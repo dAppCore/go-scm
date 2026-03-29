@@ -1,13 +1,15 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
 package forge
 
 import (
-	"fmt"
-	"strings"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
+	strings "dappco.re/go/core/scm/internal/ax/stringsx"
 
 	forgejo "codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2"
 
-	"forge.lthn.ai/core/cli/pkg/cli"
 	fg "dappco.re/go/core/scm/forge"
+	"forge.lthn.ai/core/cli/pkg/cli"
 )
 
 // PRs command flags.

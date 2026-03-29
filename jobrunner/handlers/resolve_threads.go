@@ -1,8 +1,10 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
 package handlers
 
 import (
 	"context"
-	"fmt"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
 	"time"
 
 	forgejosdk "codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2"
@@ -15,11 +17,13 @@ import (
 // DismissReviewsHandler dismisses stale "request changes" reviews on a PR.
 // This replaces the GitHub-only ResolveThreadsHandler because Forgejo does
 // not have a thread resolution API.
+//
 type DismissReviewsHandler struct {
 	forge *forge.Client
 }
 
 // NewDismissReviewsHandler creates a handler that dismisses stale reviews.
+//
 func NewDismissReviewsHandler(f *forge.Client) *DismissReviewsHandler {
 	return &DismissReviewsHandler{forge: f}
 }

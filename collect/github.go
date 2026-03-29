@@ -1,12 +1,14 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
 package collect
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"os/exec"
-	"path/filepath"
-	"strings"
+	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
+	json "dappco.re/go/core/scm/internal/ax/jsonx"
+	strings "dappco.re/go/core/scm/internal/ax/stringsx"
+	exec "golang.org/x/sys/execabs"
 	"time"
 
 	core "dappco.re/go/core/log"
@@ -38,6 +40,7 @@ type ghRepo struct {
 }
 
 // GitHubCollector collects issues and PRs from GitHub repositories.
+//
 type GitHubCollector struct {
 	// Org is the GitHub organisation.
 	Org string

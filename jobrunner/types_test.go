@@ -1,7 +1,7 @@
 package jobrunner
 
 import (
-	"encoding/json"
+	json "dappco.re/go/core/scm/internal/ax/jsonx"
 	"testing"
 	"time"
 

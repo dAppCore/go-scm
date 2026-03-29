@@ -2,10 +2,10 @@ package collect
 
 import (
 	"context"
-	"fmt"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
+	strings "dappco.re/go/core/scm/internal/ax/stringsx"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"dappco.re/go/core/io"

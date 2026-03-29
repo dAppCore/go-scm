@@ -1,3 +1,5 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
 // Package gitea provides a thin wrapper around the Gitea Go SDK
 // for managing repositories, issues, and pull requests on a Gitea instance.
 //
@@ -15,12 +17,14 @@ import (
 )
 
 // Client wraps the Gitea SDK client with config-based auth.
+//
 type Client struct {
 	api *gitea.Client
 	url string
 }
 
 // New creates a new Gitea API client for the given URL and token.
+//
 func New(url, token string) (*Client, error) {
 	api, err := gitea.NewClient(url, gitea.SetToken(token))
 	if err != nil {

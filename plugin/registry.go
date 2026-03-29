@@ -1,19 +1,22 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
 package plugin
 
 import (
 	"cmp"
-	"encoding/json"
-	"path/filepath"
+	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
+	json "dappco.re/go/core/scm/internal/ax/jsonx"
 	"slices"
 
-	coreerr "dappco.re/go/core/log"
 	"dappco.re/go/core/io"
+	coreerr "dappco.re/go/core/log"
 )
 
 const registryFilename = "registry.json"
 
 // Registry manages installed plugins.
 // Plugin metadata is stored in a registry.json file under the base path.
+//
 type Registry struct {
 	medium   io.Medium
 	basePath string // e.g., ~/.core/plugins/
@@ -21,6 +24,7 @@ type Registry struct {
 }
 
 // NewRegistry creates a new plugin registry.
+//
 func NewRegistry(m io.Medium, basePath string) *Registry {
 	return &Registry{
 		medium:   m,

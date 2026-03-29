@@ -1,11 +1,13 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
 package collect
 
 import (
 	"context"
 
-	"forge.lthn.ai/core/cli/pkg/cli"
-	"dappco.re/go/core/scm/collect"
 	"dappco.re/go/core/i18n"
+	"dappco.re/go/core/scm/collect"
+	"forge.lthn.ai/core/cli/pkg/cli"
 )
 
 // addProcessCommand adds the 'process' subcommand to the collect parent.

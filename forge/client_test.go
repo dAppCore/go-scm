@@ -1,8 +1,8 @@
 package forge
 
 import (
-	"encoding/json"
-	"fmt"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
+	json "dappco.re/go/core/scm/internal/ax/jsonx"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -132,7 +132,7 @@ func TestClient_SetPRDraft_Bad_ConnectionRefused(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestClient_SetPRDraft_URLConstruction(t *testing.T) {
+func TestClient_SetPRDraft_Good_URLConstruction(t *testing.T) {
 	// Verify the URL is constructed correctly by checking the request path.
 	var capturedPath string
 	mux := http.NewServeMux()
@@ -156,7 +156,7 @@ func TestClient_SetPRDraft_URLConstruction(t *testing.T) {
 	assert.Equal(t, "/api/v1/repos/my-org/my-repo/pulls/42", capturedPath)
 }
 
-func TestClient_SetPRDraft_AuthHeader(t *testing.T) {
+func TestClient_SetPRDraft_Good_AuthHeader(t *testing.T) {
 	// Verify the authorisation header is set correctly.
 	var capturedAuth string
 	mux := http.NewServeMux()
@@ -182,7 +182,7 @@ func TestClient_SetPRDraft_AuthHeader(t *testing.T) {
 
 // --- PRMeta and Comment struct tests ---
 
-func TestPRMeta_Fields(t *testing.T) {
+func TestPRMeta_Good_Fields(t *testing.T) {
 	meta := &PRMeta{
 		Number:       42,
 		Title:        "Test PR",
@@ -208,7 +208,7 @@ func TestPRMeta_Fields(t *testing.T) {
 	assert.Equal(t, 5, meta.CommentCount)
 }
 
-func TestComment_Fields(t *testing.T) {
+func TestComment_Good_Fields(t *testing.T) {
 	comment := Comment{
 		ID:     123,
 		Author: "reviewer",
@@ -222,7 +222,7 @@ func TestComment_Fields(t *testing.T) {
 
 // --- MergePullRequest merge style mapping ---
 
-func TestMergePullRequest_StyleMapping(t *testing.T) {
+func TestMergePullRequest_Good_StyleMapping(t *testing.T) {
 	// We can't easily test the SDK call, but we can verify the method
 	// errors when the server returns failure. This exercises the style mapping code.
 	tests := []struct {
@@ -260,7 +260,7 @@ func TestMergePullRequest_StyleMapping(t *testing.T) {
 
 // --- ListIssuesOpts defaulting ---
 
-func TestListIssuesOpts_Defaults(t *testing.T) {
+func TestListIssuesOpts_Good_Defaults(t *testing.T) {
 	tests := []struct {
 		name          string
 		opts          ListIssuesOpts
@@ -432,13 +432,13 @@ func TestClient_CreatePullRequest_Bad_ServerError(t *testing.T) {
 
 // --- commentPageSize constant test ---
 
-func TestCommentPageSize(t *testing.T) {
+func TestCommentPageSize_Good(t *testing.T) {
 	assert.Equal(t, 50, commentPageSize, "comment page size should be 50")
 }
 
 // --- ListPullRequests state mapping ---
 
-func TestListPullRequests_StateMapping(t *testing.T) {
+func TestListPullRequests_Good_StateMapping(t *testing.T) {
 	// Verify state mapping via error path (server returns error).
 	tests := []struct {
 		name  string

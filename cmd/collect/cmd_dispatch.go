@@ -1,12 +1,14 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
 package collect
 
 import (
-	"fmt"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
 	"time"
 
-	"forge.lthn.ai/core/cli/pkg/cli"
-	collectpkg "dappco.re/go/core/scm/collect"
 	"dappco.re/go/core/i18n"
+	collectpkg "dappco.re/go/core/scm/collect"
+	"forge.lthn.ai/core/cli/pkg/cli"
 )
 
 // addDispatchCommand adds the 'dispatch' subcommand to the collect parent.

@@ -1,12 +1,14 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
 package collect
 
 import (
 	"context"
-	"fmt"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
+	strings "dappco.re/go/core/scm/internal/ax/stringsx"
+	exec "golang.org/x/sys/execabs"
 	"maps"
-	"os/exec"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -14,6 +16,7 @@ import (
 )
 
 // RateLimiter tracks per-source rate limiting to avoid overwhelming APIs.
+//
 type RateLimiter struct {
 	mu     sync.Mutex
 	delays map[string]time.Duration
@@ -30,6 +33,7 @@ var defaultDelays = map[string]time.Duration{
 }
 
 // NewRateLimiter creates a limiter with default delays.
+//
 func NewRateLimiter() *RateLimiter {
 	delays := make(map[string]time.Duration, len(defaultDelays))
 	maps.Copy(delays, defaultDelays)

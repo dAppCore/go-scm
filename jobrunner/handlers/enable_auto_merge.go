@@ -1,8 +1,10 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
 package handlers
 
 import (
 	"context"
-	"fmt"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
 	"time"
 
 	"dappco.re/go/core/scm/forge"
@@ -10,11 +12,13 @@ import (
 )
 
 // EnableAutoMergeHandler merges a PR that is ready using squash strategy.
+//
 type EnableAutoMergeHandler struct {
 	forge *forge.Client
 }
 
 // NewEnableAutoMergeHandler creates a handler that merges ready PRs.
+//
 func NewEnableAutoMergeHandler(f *forge.Client) *EnableAutoMergeHandler {
 	return &EnableAutoMergeHandler{forge: f}
 }

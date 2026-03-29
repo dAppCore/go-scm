@@ -3,7 +3,7 @@ package manifest
 import (
 	"crypto/ed25519"
 	"crypto/rand"
-	"encoding/json"
+	json "dappco.re/go/core/scm/internal/ax/jsonx"
 	"testing"
 
 	"dappco.re/go/core/io"

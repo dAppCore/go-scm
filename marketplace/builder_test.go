@@ -1,9 +1,9 @@
 package marketplace
 
 import (
-	"encoding/json"
-	"os"
-	"path/filepath"
+	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
+	json "dappco.re/go/core/scm/internal/ax/jsonx"
+	os "dappco.re/go/core/scm/internal/ax/osx"
 	"testing"
 
 	"dappco.re/go/core/scm/manifest"

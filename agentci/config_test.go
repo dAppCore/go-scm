@@ -3,8 +3,8 @@ package agentci
 import (
 	"testing"
 
-	"forge.lthn.ai/core/config"
 	"dappco.re/go/core/io"
+	"forge.lthn.ai/core/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -299,7 +299,7 @@ func TestListAgents_Good_Empty(t *testing.T) {
 	assert.Empty(t, agents)
 }
 
-func TestRoundTrip_SaveThenLoad(t *testing.T) {
+func TestRoundTrip_Good_SaveThenLoad(t *testing.T) {
 	cfg := newTestConfig(t, "")
 
 	err := SaveAgent(cfg, "alpha", AgentConfig{

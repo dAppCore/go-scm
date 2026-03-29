@@ -1,24 +1,28 @@
+// SPDX-Licence-Identifier: EUPL-1.2
+
 package repos
 
 import (
-	"path/filepath"
+	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
 	"time"
 
-	coreerr "dappco.re/go/core/log"
 	"dappco.re/go/core/io"
+	coreerr "dappco.re/go/core/log"
 	"gopkg.in/yaml.v3"
 )
 
 // WorkConfig holds sync policy for a workspace.
 // Stored at .core/work.yaml and checked into git (shared across the team).
+//
 type WorkConfig struct {
-	Version  int              `yaml:"version"`
-	Sync     SyncConfig       `yaml:"sync"`
-	Agents   AgentPolicy      `yaml:"agents"`
-	Triggers []string         `yaml:"triggers,omitempty"`
+	Version  int         `yaml:"version"`
+	Sync     SyncConfig  `yaml:"sync"`
+	Agents   AgentPolicy `yaml:"agents"`
+	Triggers []string    `yaml:"triggers,omitempty"`
 }
 
 // SyncConfig controls how and when repos are synced.
+//
 type SyncConfig struct {
 	Interval     time.Duration `yaml:"interval"`
 	AutoPull     bool          `yaml:"auto_pull"`
@@ -27,13 +31,15 @@ type SyncConfig struct {
 }
 
 // AgentPolicy controls multi-agent clash prevention.
+//
 type AgentPolicy struct {
-	Heartbeat      time.Duration `yaml:"heartbeat"`
-	StaleAfter     time.Duration `yaml:"stale_after"`
-	WarnOnOverlap  bool          `yaml:"warn_on_overlap"`
+	Heartbeat     time.Duration `yaml:"heartbeat"`
+	StaleAfter    time.Duration `yaml:"stale_after"`
+	WarnOnOverlap bool          `yaml:"warn_on_overlap"`
 }
 
 // DefaultWorkConfig returns sensible defaults for workspace sync.
+//
 func DefaultWorkConfig() *WorkConfig {
 	return &WorkConfig{
 		Version: 1,
@@ -54,6 +60,7 @@ func DefaultWorkConfig() *WorkConfig {
 
 // LoadWorkConfig reads .core/work.yaml from the given workspace root directory.
 // Returns defaults if the file does not exist.
+//
 func LoadWorkConfig(m io.Medium, root string) (*WorkConfig, error) {
 	path := filepath.Join(root, ".core", "work.yaml")
 
@@ -75,6 +82,7 @@ func LoadWorkConfig(m io.Medium, root string) (*WorkConfig, error) {
 }
 
 // SaveWorkConfig writes .core/work.yaml to the given workspace root directory.
+//
 func SaveWorkConfig(m io.Medium, root string, wc *WorkConfig) error {
 	coreDir := filepath.Join(root, ".core")
 	if err := m.EnsureDir(coreDir); err != nil {
