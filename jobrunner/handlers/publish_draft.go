@@ -22,11 +22,13 @@ func NewPublishDraftHandler(f *forge.Client) *PublishDraftHandler {
 }
 
 // Name returns the handler identifier.
+// Usage: Name(...)
 func (h *PublishDraftHandler) Name() string {
 	return "publish_draft"
 }
 
 // Match returns true when the PR is a draft, open, and all checks have passed.
+// Usage: Match(...)
 func (h *PublishDraftHandler) Match(signal *jobrunner.PipelineSignal) bool {
 	return signal.IsDraft &&
 		signal.PRState == "OPEN" &&
@@ -34,6 +36,7 @@ func (h *PublishDraftHandler) Match(signal *jobrunner.PipelineSignal) bool {
 }
 
 // Execute marks the PR as no longer a draft.
+// Usage: Execute(...)
 func (h *PublishDraftHandler) Execute(ctx context.Context, signal *jobrunner.PipelineSignal) (*jobrunner.ActionResult, error) {
 	start := time.Now()
 

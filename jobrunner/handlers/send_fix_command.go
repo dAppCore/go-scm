@@ -23,12 +23,14 @@ func NewSendFixCommandHandler(f *forge.Client) *SendFixCommandHandler {
 }
 
 // Name returns the handler identifier.
+// Usage: Name(...)
 func (h *SendFixCommandHandler) Name() string {
 	return "send_fix_command"
 }
 
 // Match returns true when the PR is open and either has merge conflicts or
 // has unresolved threads with failing checks.
+// Usage: Match(...)
 func (h *SendFixCommandHandler) Match(signal *jobrunner.PipelineSignal) bool {
 	if signal.PRState != "OPEN" {
 		return false
@@ -43,6 +45,7 @@ func (h *SendFixCommandHandler) Match(signal *jobrunner.PipelineSignal) bool {
 }
 
 // Execute posts a comment on the PR asking for a fix.
+// Usage: Execute(...)
 func (h *SendFixCommandHandler) Execute(ctx context.Context, signal *jobrunner.PipelineSignal) (*jobrunner.ActionResult, error) {
 	start := time.Now()
 

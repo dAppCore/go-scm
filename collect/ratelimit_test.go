@@ -29,7 +29,7 @@ func TestRateLimiter_Wait_Good(t *testing.T) {
 	assert.GreaterOrEqual(t, time.Since(start), 40*time.Millisecond) // allow small timing variance
 }
 
-func TestRateLimiter_Wait_Bad_ContextCancelled(t *testing.T) {
+func TestRateLimiter_Wait_Bad_ContextCancelled_Good(t *testing.T) {
 	rl := NewRateLimiter()
 	rl.SetDelay("test", 5*time.Second)
 
@@ -53,7 +53,7 @@ func TestRateLimiter_SetDelay_Good(t *testing.T) {
 	assert.Equal(t, 3*time.Second, rl.GetDelay("custom"))
 }
 
-func TestRateLimiter_GetDelay_Good_Defaults(t *testing.T) {
+func TestRateLimiter_GetDelay_Good_Defaults_Good(t *testing.T) {
 	rl := NewRateLimiter()
 
 	assert.Equal(t, 500*time.Millisecond, rl.GetDelay("github"))
@@ -62,13 +62,13 @@ func TestRateLimiter_GetDelay_Good_Defaults(t *testing.T) {
 	assert.Equal(t, 1*time.Second, rl.GetDelay("iacr"))
 }
 
-func TestRateLimiter_GetDelay_Good_UnknownSource(t *testing.T) {
+func TestRateLimiter_GetDelay_Good_UnknownSource_Good(t *testing.T) {
 	rl := NewRateLimiter()
 	// Unknown sources should get the default 500ms delay
 	assert.Equal(t, 500*time.Millisecond, rl.GetDelay("unknown"))
 }
 
-func TestRateLimiter_Wait_Good_UnknownSource(t *testing.T) {
+func TestRateLimiter_Wait_Good_UnknownSource_Good(t *testing.T) {
 	rl := NewRateLimiter()
 	ctx := context.Background()
 

@@ -30,16 +30,19 @@ func NewCompletionHandler(client *forge.Client) *CompletionHandler {
 }
 
 // Name returns the handler identifier.
+// Usage: Name(...)
 func (h *CompletionHandler) Name() string {
 	return "completion"
 }
 
 // Match returns true if the signal indicates an agent has finished a task.
+// Usage: Match(...)
 func (h *CompletionHandler) Match(signal *jobrunner.PipelineSignal) bool {
 	return signal.Type == "agent_completion"
 }
 
 // Execute updates the issue labels based on the completion status.
+// Usage: Execute(...)
 func (h *CompletionHandler) Execute(ctx context.Context, signal *jobrunner.PipelineSignal) (*jobrunner.ActionResult, error) {
 	start := time.Now()
 

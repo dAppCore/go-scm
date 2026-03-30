@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestMarketCollector_Collect_Good_HistoricalWithFromDate(t *testing.T) {
+func TestMarketCollector_Collect_Good_HistoricalWithFromDate_Good(t *testing.T) {
 	callCount := 0
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		callCount++
@@ -58,7 +58,7 @@ func TestMarketCollector_Collect_Good_HistoricalWithFromDate(t *testing.T) {
 	assert.Equal(t, 3, result.Items)
 }
 
-func TestMarketCollector_Collect_Good_HistoricalInvalidDate(t *testing.T) {
+func TestMarketCollector_Collect_Good_HistoricalInvalidDate_Good(t *testing.T) {
 	callCount := 0
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		callCount++
@@ -100,7 +100,7 @@ func TestMarketCollector_Collect_Good_HistoricalInvalidDate(t *testing.T) {
 	assert.Equal(t, 3, result.Items)
 }
 
-func TestMarketCollector_Collect_Bad_HistoricalServerError(t *testing.T) {
+func TestMarketCollector_Collect_Bad_HistoricalServerError_Good(t *testing.T) {
 	callCount := 0
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		callCount++
@@ -139,7 +139,7 @@ func TestMarketCollector_Collect_Bad_HistoricalServerError(t *testing.T) {
 	assert.Equal(t, 1, result.Errors) // historical failed
 }
 
-func TestMarketCollector_Collect_Good_EmitsEvents(t *testing.T) {
+func TestMarketCollector_Collect_Good_EmitsEvents_Good(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		data := coinData{
@@ -174,7 +174,7 @@ func TestMarketCollector_Collect_Good_EmitsEvents(t *testing.T) {
 	assert.Equal(t, 1, completes)
 }
 
-func TestMarketCollector_Collect_Good_CancelledContext(t *testing.T) {
+func TestMarketCollector_Collect_Good_CancelledContext_Good(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
@@ -199,7 +199,7 @@ func TestMarketCollector_Collect_Good_CancelledContext(t *testing.T) {
 	assert.Equal(t, 1, result.Errors)
 }
 
-func TestFormatMarketSummary_Good_AllFields(t *testing.T) {
+func TestFormatMarketSummary_Good_AllFields_Good(t *testing.T) {
 	data := &coinData{
 		Name:   "Lethean",
 		Symbol: "lthn",
@@ -231,7 +231,7 @@ func TestFormatMarketSummary_Good_AllFields(t *testing.T) {
 	assert.Contains(t, summary, "Last updated")
 }
 
-func TestFormatMarketSummary_Good_Minimal(t *testing.T) {
+func TestFormatMarketSummary_Good_Minimal_Good(t *testing.T) {
 	data := &coinData{
 		Name:   "Unknown",
 		Symbol: "ukn",

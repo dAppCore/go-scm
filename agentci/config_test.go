@@ -45,7 +45,7 @@ agentci:
 	assert.Equal(t, "claude", agent.Runner)
 }
 
-func TestLoadAgents_Good_MultipleAgents(t *testing.T) {
+func TestLoadAgents_Good_MultipleAgents_Good(t *testing.T) {
 	cfg := newTestConfig(t, `
 agentci:
   agents:
@@ -66,7 +66,7 @@ agentci:
 	assert.Contains(t, agents, "local-codex")
 }
 
-func TestLoadAgents_Good_SkipsInactive(t *testing.T) {
+func TestLoadAgents_Good_SkipsInactive_Good(t *testing.T) {
 	cfg := newTestConfig(t, `
 agentci:
   agents:
@@ -101,7 +101,7 @@ agentci:
 	assert.Contains(t, active, "active-agent")
 }
 
-func TestLoadAgents_Good_Defaults(t *testing.T) {
+func TestLoadAgents_Good_Defaults_Good(t *testing.T) {
 	cfg := newTestConfig(t, `
 agentci:
   agents:
@@ -119,14 +119,14 @@ agentci:
 	assert.Equal(t, "claude", agent.Runner)
 }
 
-func TestLoadAgents_Good_NoConfig(t *testing.T) {
+func TestLoadAgents_Good_NoConfig_Good(t *testing.T) {
 	cfg := newTestConfig(t, "")
 	agents, err := LoadAgents(cfg)
 	require.NoError(t, err)
 	assert.Empty(t, agents)
 }
 
-func TestLoadAgents_Bad_MissingHost(t *testing.T) {
+func TestLoadAgents_Bad_MissingHost_Good(t *testing.T) {
 	cfg := newTestConfig(t, `
 agentci:
   agents:
@@ -139,7 +139,7 @@ agentci:
 	assert.Contains(t, err.Error(), "host is required")
 }
 
-func TestLoadAgents_Good_WithDualRun(t *testing.T) {
+func TestLoadAgents_Good_WithDualRun_Good(t *testing.T) {
 	cfg := newTestConfig(t, `
 agentci:
   agents:
@@ -176,7 +176,7 @@ agentci:
 	assert.Equal(t, "/etc/core/keys/clotho.pub", cc.SigningKeyPath)
 }
 
-func TestLoadClothoConfig_Good_Defaults(t *testing.T) {
+func TestLoadClothoConfig_Good_Defaults_Good(t *testing.T) {
 	cfg := newTestConfig(t, "")
 	cc, err := LoadClothoConfig(cfg)
 	require.NoError(t, err)
@@ -204,7 +204,7 @@ func TestSaveAgent_Good(t *testing.T) {
 	assert.Equal(t, "haiku", agents["new-agent"].Model)
 }
 
-func TestSaveAgent_Good_WithDualRun(t *testing.T) {
+func TestSaveAgent_Good_WithDualRun_Good(t *testing.T) {
 	cfg := newTestConfig(t, "")
 
 	err := SaveAgent(cfg, "verified-agent", AgentConfig{
@@ -222,7 +222,7 @@ func TestSaveAgent_Good_WithDualRun(t *testing.T) {
 	assert.True(t, agents["verified-agent"].DualRun)
 }
 
-func TestSaveAgent_Good_OmitsEmptyOptionals(t *testing.T) {
+func TestSaveAgent_Good_OmitsEmptyOptionals_Good(t *testing.T) {
 	cfg := newTestConfig(t, "")
 
 	err := SaveAgent(cfg, "minimal", AgentConfig{
@@ -256,7 +256,7 @@ agentci:
 	assert.Contains(t, agents, "to-keep")
 }
 
-func TestRemoveAgent_Bad_NotFound(t *testing.T) {
+func TestRemoveAgent_Bad_NotFound_Good(t *testing.T) {
 	cfg := newTestConfig(t, `
 agentci:
   agents:
@@ -269,7 +269,7 @@ agentci:
 	assert.Contains(t, err.Error(), "not found")
 }
 
-func TestRemoveAgent_Bad_NoAgents(t *testing.T) {
+func TestRemoveAgent_Bad_NoAgents_Good(t *testing.T) {
 	cfg := newTestConfig(t, "")
 	err := RemoveAgent(cfg, "anything")
 	assert.Error(t, err)
@@ -294,14 +294,14 @@ agentci:
 	assert.False(t, agents["agent-b"].Active)
 }
 
-func TestListAgents_Good_Empty(t *testing.T) {
+func TestListAgents_Good_Empty_Good(t *testing.T) {
 	cfg := newTestConfig(t, "")
 	agents, err := ListAgents(cfg)
 	require.NoError(t, err)
 	assert.Empty(t, agents)
 }
 
-func TestRoundTrip_Good_SaveThenLoad(t *testing.T) {
+func TestRoundTrip_Good_SaveThenLoad_Good(t *testing.T) {
 	cfg := newTestConfig(t, "")
 
 	err := SaveAgent(cfg, "alpha", AgentConfig{

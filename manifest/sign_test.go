@@ -31,7 +31,7 @@ func TestSignAndVerify_Good(t *testing.T) {
 	assert.True(t, ok)
 }
 
-func TestVerify_Bad_Tampered(t *testing.T) {
+func TestVerify_Bad_Tampered_Good(t *testing.T) {
 	pub, priv, _ := ed25519.GenerateKey(nil)
 	m := &Manifest{Code: "test-app", Version: "1.0.0"}
 	_ = Sign(m, priv)
@@ -43,7 +43,7 @@ func TestVerify_Bad_Tampered(t *testing.T) {
 	assert.False(t, ok)
 }
 
-func TestVerify_Bad_Unsigned(t *testing.T) {
+func TestVerify_Bad_Unsigned_Good(t *testing.T) {
 	pub, _, _ := ed25519.GenerateKey(nil)
 	m := &Manifest{Code: "test-app"}
 

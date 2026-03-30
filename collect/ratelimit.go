@@ -43,6 +43,7 @@ func NewRateLimiter() *RateLimiter {
 
 // Wait blocks until the rate limit allows the next request for the given source.
 // It respects context cancellation.
+// Usage: Wait(...)
 func (r *RateLimiter) Wait(ctx context.Context, source string) error {
 	r.mu.Lock()
 	delay, ok := r.delays[source]
@@ -77,6 +78,7 @@ func (r *RateLimiter) Wait(ctx context.Context, source string) error {
 }
 
 // SetDelay sets the delay for a source.
+// Usage: SetDelay(...)
 func (r *RateLimiter) SetDelay(source string, d time.Duration) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -84,6 +86,7 @@ func (r *RateLimiter) SetDelay(source string, d time.Duration) {
 }
 
 // GetDelay returns the delay configured for a source.
+// Usage: GetDelay(...)
 func (r *RateLimiter) GetDelay(source string) time.Duration {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -97,6 +100,7 @@ func (r *RateLimiter) GetDelay(source string) time.Duration {
 // Returns used and limit counts. Auto-pauses at 75% usage by increasing
 // the GitHub rate limit delay.
 // Deprecated: Use CheckGitHubRateLimitCtx for context-aware cancellation.
+// Usage: CheckGitHubRateLimit(...)
 func (r *RateLimiter) CheckGitHubRateLimit() (used, limit int, err error) {
 	return r.CheckGitHubRateLimitCtx(context.Background())
 }
@@ -104,6 +108,7 @@ func (r *RateLimiter) CheckGitHubRateLimit() (used, limit int, err error) {
 // CheckGitHubRateLimitCtx checks GitHub API rate limit status via gh api with context support.
 // Returns used and limit counts. Auto-pauses at 75% usage by increasing
 // the GitHub rate limit delay.
+// Usage: CheckGitHubRateLimitCtx(...)
 func (r *RateLimiter) CheckGitHubRateLimitCtx(ctx context.Context) (used, limit int, err error) {
 	cmd := exec.CommandContext(ctx, "gh", "api", "rate_limit", "--jq", ".rate | \"\\(.used) \\(.limit)\"")
 	out, err := cmd.Output()

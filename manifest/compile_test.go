@@ -37,7 +37,7 @@ func TestCompile_Good(t *testing.T) {
 	assert.NotEmpty(t, cm.BuiltAt)
 }
 
-func TestCompile_Good_WithSigning(t *testing.T) {
+func TestCompile_Good_WithSigning_Good(t *testing.T) {
 	pub, priv, err := ed25519.GenerateKey(rand.Reader)
 	require.NoError(t, err)
 
@@ -60,20 +60,20 @@ func TestCompile_Good_WithSigning(t *testing.T) {
 	assert.True(t, ok)
 }
 
-func TestCompile_Bad_NilManifest(t *testing.T) {
+func TestCompile_Bad_NilManifest_Good(t *testing.T) {
 	_, err := Compile(nil, CompileOptions{})
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "nil manifest")
 }
 
-func TestCompile_Bad_MissingCode(t *testing.T) {
+func TestCompile_Bad_MissingCode_Good(t *testing.T) {
 	m := &Manifest{Version: "1.0.0"}
 	_, err := Compile(m, CompileOptions{})
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "missing code")
 }
 
-func TestCompile_Bad_MissingVersion(t *testing.T) {
+func TestCompile_Bad_MissingVersion_Good(t *testing.T) {
 	m := &Manifest{Code: "test"}
 	_, err := Compile(m, CompileOptions{})
 	assert.Error(t, err)
@@ -162,13 +162,13 @@ func TestLoadCompiled_Good(t *testing.T) {
 	assert.Equal(t, "ddd444", cm.Commit)
 }
 
-func TestLoadCompiled_Bad_NotFound(t *testing.T) {
+func TestLoadCompiled_Bad_NotFound_Good(t *testing.T) {
 	medium := io.NewMockMedium()
 	_, err := LoadCompiled(medium, "/missing")
 	assert.Error(t, err)
 }
 
-func TestCompile_Good_MinimalOptions(t *testing.T) {
+func TestCompile_Good_MinimalOptions_Good(t *testing.T) {
 	m := &Manifest{
 		Code:    "minimal",
 		Name:    "Minimal",

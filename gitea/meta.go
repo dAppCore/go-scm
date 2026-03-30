@@ -40,6 +40,7 @@ const commentPageSize = 50
 
 // GetPRMeta returns structural signals for a pull request.
 // This is the Gitea side of the dual MetaReader described in the pipeline design.
+// Usage: GetPRMeta(...)
 func (c *Client) GetPRMeta(owner, repo string, pr int64) (*PRMeta, error) {
 	pull, _, err := c.api.GetPullRequest(owner, repo, pr)
 	if err != nil {
@@ -98,6 +99,7 @@ func (c *Client) GetPRMeta(owner, repo string, pr int64) (*PRMeta, error) {
 
 // GetCommentBodies returns all comment bodies for a pull request.
 // This reads full content, which is safe on the home lab Gitea instance.
+// Usage: GetCommentBodies(...)
 func (c *Client) GetCommentBodies(owner, repo string, pr int64) ([]Comment, error) {
 	var comments []Comment
 	page := 1
@@ -138,6 +140,7 @@ func (c *Client) GetCommentBodies(owner, repo string, pr int64) ([]Comment, erro
 
 // GetIssueBody returns the body text of an issue.
 // This reads full content, which is safe on the home lab Gitea instance.
+// Usage: GetIssueBody(...)
 func (c *Client) GetIssueBody(owner, repo string, issue int64) (string, error) {
 	iss, _, err := c.api.GetIssue(owner, repo, issue)
 	if err != nil {

@@ -35,7 +35,7 @@ func sampleBTCTalkPage(count int) string {
 	return page.String()
 }
 
-func TestBitcoinTalkCollector_Collect_Good_OnePage(t *testing.T) {
+func TestBitcoinTalkCollector_Collect_Good_OnePage_Good(t *testing.T) {
 	// Serve a single page with 5 posts (< 20, so collection stops after one page).
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
@@ -75,7 +75,7 @@ func TestBitcoinTalkCollector_Collect_Good_OnePage(t *testing.T) {
 	}
 }
 
-func TestBitcoinTalkCollector_Collect_Good_PageLimit(t *testing.T) {
+func TestBitcoinTalkCollector_Collect_Good_PageLimit_Good(t *testing.T) {
 	pageCount := 0
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		pageCount++
@@ -103,7 +103,7 @@ func TestBitcoinTalkCollector_Collect_Good_PageLimit(t *testing.T) {
 	assert.Equal(t, 2, pageCount)
 }
 
-func TestBitcoinTalkCollector_Collect_Good_CancelledContext(t *testing.T) {
+func TestBitcoinTalkCollector_Collect_Good_CancelledContext_Good(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
 		_, _ = w.Write([]byte(sampleBTCTalkPage(5)))
@@ -127,7 +127,7 @@ func TestBitcoinTalkCollector_Collect_Good_CancelledContext(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestBitcoinTalkCollector_Collect_Bad_ServerError(t *testing.T) {
+func TestBitcoinTalkCollector_Collect_Bad_ServerError_Good(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 	}))
@@ -151,7 +151,7 @@ func TestBitcoinTalkCollector_Collect_Bad_ServerError(t *testing.T) {
 	assert.Equal(t, 1, result.Errors)
 }
 
-func TestBitcoinTalkCollector_Collect_Good_EmitsEvents(t *testing.T) {
+func TestBitcoinTalkCollector_Collect_Good_EmitsEvents_Good(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
 		_, _ = w.Write([]byte(sampleBTCTalkPage(2)))
@@ -209,7 +209,7 @@ func TestFetchPage_Good(t *testing.T) {
 	assert.Len(t, posts, 3)
 }
 
-func TestFetchPage_Bad_StatusCode(t *testing.T) {
+func TestFetchPage_Bad_StatusCode_Good(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusForbidden)
 	}))
@@ -224,7 +224,7 @@ func TestFetchPage_Bad_StatusCode(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestFetchPage_Bad_InvalidHTML(t *testing.T) {
+func TestFetchPage_Bad_InvalidHTML_Good(t *testing.T) {
 	// html.Parse is very forgiving, so serve an empty page.
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")

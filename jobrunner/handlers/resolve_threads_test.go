@@ -25,7 +25,7 @@ func TestDismissReviews_Match_Good(t *testing.T) {
 	assert.True(t, h.Match(sig))
 }
 
-func TestDismissReviews_Match_Bad_AllResolved(t *testing.T) {
+func TestDismissReviews_Match_Bad_AllResolved_Good(t *testing.T) {
 	h := NewDismissReviewsHandler(nil)
 	sig := &jobrunner.PipelineSignal{
 		PRState:         "OPEN",

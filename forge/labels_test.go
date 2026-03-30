@@ -26,7 +26,7 @@ func TestClient_ListRepoLabels_Good(t *testing.T) {
 	assert.Equal(t, "feature", labels[1].Name)
 }
 
-func TestClient_ListRepoLabels_Bad_ServerError(t *testing.T) {
+func TestClient_ListRepoLabels_Bad_ServerError_Good(t *testing.T) {
 	client, srv := newErrorServer(t)
 	defer srv.Close()
 
@@ -44,7 +44,7 @@ func TestClient_CreateRepoLabel_Good(t *testing.T) {
 	assert.NotNil(t, label)
 }
 
-func TestClient_CreateRepoLabel_Bad_ServerError(t *testing.T) {
+func TestClient_CreateRepoLabel_Bad_ServerError_Good(t *testing.T) {
 	client, srv := newErrorServer(t)
 	defer srv.Close()
 
@@ -62,7 +62,7 @@ func TestClient_GetLabelByName_Good(t *testing.T) {
 	assert.Equal(t, "bug", label.Name)
 }
 
-func TestClient_GetLabelByName_Good_CaseInsensitive(t *testing.T) {
+func TestClient_GetLabelByName_Good_CaseInsensitive_Good(t *testing.T) {
 	client, srv := newTestClient(t)
 	defer srv.Close()
 
@@ -71,7 +71,7 @@ func TestClient_GetLabelByName_Good_CaseInsensitive(t *testing.T) {
 	assert.Equal(t, "bug", label.Name)
 }
 
-func TestClient_GetLabelByName_Bad_NotFound(t *testing.T) {
+func TestClient_GetLabelByName_Bad_NotFound_Good(t *testing.T) {
 	client, srv := newTestClient(t)
 	defer srv.Close()
 
@@ -80,7 +80,7 @@ func TestClient_GetLabelByName_Bad_NotFound(t *testing.T) {
 	assert.Contains(t, err.Error(), "label nonexistent not found")
 }
 
-func TestClient_EnsureLabel_Good_Exists(t *testing.T) {
+func TestClient_EnsureLabel_Good_Exists_Good(t *testing.T) {
 	client, srv := newTestClient(t)
 	defer srv.Close()
 
@@ -90,7 +90,7 @@ func TestClient_EnsureLabel_Good_Exists(t *testing.T) {
 	assert.Equal(t, "bug", label.Name)
 }
 
-func TestClient_EnsureLabel_Good_Creates(t *testing.T) {
+func TestClient_EnsureLabel_Good_Creates_Good(t *testing.T) {
 	client, srv := newTestClient(t)
 	defer srv.Close()
 
@@ -110,7 +110,7 @@ func TestClient_ListOrgLabels_Good(t *testing.T) {
 	assert.NotEmpty(t, labels)
 }
 
-func TestClient_ListOrgLabels_Bad_ServerError(t *testing.T) {
+func TestClient_ListOrgLabels_Bad_ServerError_Good(t *testing.T) {
 	client, srv := newErrorServer(t)
 	defer srv.Close()
 
@@ -126,7 +126,7 @@ func TestClient_AddIssueLabels_Good(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestClient_AddIssueLabels_Bad_ServerError(t *testing.T) {
+func TestClient_AddIssueLabels_Bad_ServerError_Good(t *testing.T) {
 	client, srv := newErrorServer(t)
 	defer srv.Close()
 
@@ -143,7 +143,7 @@ func TestClient_RemoveIssueLabel_Good(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestClient_RemoveIssueLabel_Bad_ServerError(t *testing.T) {
+func TestClient_RemoveIssueLabel_Bad_ServerError_Good(t *testing.T) {
 	client, srv := newErrorServer(t)
 	defer srv.Close()
 

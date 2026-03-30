@@ -115,7 +115,7 @@ func TestJournal_Append_Good(t *testing.T) {
 	assert.Equal(t, 2, lines, "expected two JSONL lines after two appends")
 }
 
-func TestJournal_Append_Bad_PathTraversal(t *testing.T) {
+func TestJournal_Append_Bad_PathTraversal_Good(t *testing.T) {
 	dir := t.TempDir()
 
 	j, err := NewJournal(dir)
@@ -197,7 +197,7 @@ func TestJournal_Append_Bad_PathTraversal(t *testing.T) {
 	}
 }
 
-func TestJournal_Append_Good_ValidNames(t *testing.T) {
+func TestJournal_Append_Good_ValidNames_Good(t *testing.T) {
 	dir := t.TempDir()
 
 	j, err := NewJournal(dir)
@@ -232,7 +232,7 @@ func TestJournal_Append_Good_ValidNames(t *testing.T) {
 	}
 }
 
-func TestJournal_Append_Bad_NilSignal(t *testing.T) {
+func TestJournal_Append_Bad_NilSignal_Good(t *testing.T) {
 	dir := t.TempDir()
 
 	j, err := NewJournal(dir)
@@ -248,7 +248,7 @@ func TestJournal_Append_Bad_NilSignal(t *testing.T) {
 	assert.Contains(t, err.Error(), "signal is required")
 }
 
-func TestJournal_Append_Bad_NilResult(t *testing.T) {
+func TestJournal_Append_Bad_NilResult_Good(t *testing.T) {
 	dir := t.TempDir()
 
 	j, err := NewJournal(dir)

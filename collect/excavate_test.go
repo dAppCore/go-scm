@@ -66,7 +66,7 @@ func TestExcavator_Run_Good(t *testing.T) {
 	assert.Len(t, result.Files, 8)
 }
 
-func TestExcavator_Run_Good_Empty(t *testing.T) {
+func TestExcavator_Run_Good_Empty_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	cfg := NewConfigWithMedium(m, "/output")
 
@@ -77,7 +77,7 @@ func TestExcavator_Run_Good_Empty(t *testing.T) {
 	assert.Equal(t, 0, result.Items)
 }
 
-func TestExcavator_Run_Good_DryRun(t *testing.T) {
+func TestExcavator_Run_Good_DryRun_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	cfg := NewConfigWithMedium(m, "/output")
 	cfg.DryRun = true
@@ -98,7 +98,7 @@ func TestExcavator_Run_Good_DryRun(t *testing.T) {
 	assert.Equal(t, 0, result.Items)
 }
 
-func TestExcavator_Run_Good_ScanOnly(t *testing.T) {
+func TestExcavator_Run_Good_ScanOnly_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	cfg := NewConfigWithMedium(m, "/output")
 
@@ -123,7 +123,7 @@ func TestExcavator_Run_Good_ScanOnly(t *testing.T) {
 	assert.Contains(t, progressMessages[0], "source-a")
 }
 
-func TestExcavator_Run_Good_WithErrors(t *testing.T) {
+func TestExcavator_Run_Good_WithErrors_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	cfg := NewConfigWithMedium(m, "/output")
 	cfg.Limiter = nil
@@ -146,7 +146,7 @@ func TestExcavator_Run_Good_WithErrors(t *testing.T) {
 	assert.True(t, c3.called)
 }
 
-func TestExcavator_Run_Good_CancelledContext(t *testing.T) {
+func TestExcavator_Run_Good_CancelledContext_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	cfg := NewConfigWithMedium(m, "/output")
 
@@ -163,7 +163,7 @@ func TestExcavator_Run_Good_CancelledContext(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestExcavator_Run_Good_SavesState(t *testing.T) {
+func TestExcavator_Run_Good_SavesState_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	cfg := NewConfigWithMedium(m, "/output")
 	cfg.Limiter = nil
@@ -184,7 +184,7 @@ func TestExcavator_Run_Good_SavesState(t *testing.T) {
 	assert.Equal(t, "source-a", entry.Source)
 }
 
-func TestExcavator_Run_Good_Events(t *testing.T) {
+func TestExcavator_Run_Good_Events_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	cfg := NewConfigWithMedium(m, "/output")
 	cfg.Limiter = nil

@@ -34,15 +34,19 @@ func New(url, token string) (*Client, error) {
 }
 
 // API exposes the underlying SDK client for direct access.
+// Usage: API(...)
 func (c *Client) API() *forgejo.Client { return c.api }
 
 // URL returns the Forgejo instance URL.
+// Usage: URL(...)
 func (c *Client) URL() string { return c.url }
 
 // Token returns the Forgejo API token.
+// Usage: Token(...)
 func (c *Client) Token() string { return c.token }
 
 // GetCurrentUser returns the authenticated user's information.
+// Usage: GetCurrentUser(...)
 func (c *Client) GetCurrentUser() (*forgejo.User, error) {
 	user, _, err := c.api.GetMyUserInfo()
 	if err != nil {
@@ -52,6 +56,7 @@ func (c *Client) GetCurrentUser() (*forgejo.User, error) {
 }
 
 // ForkRepo forks a repository. If org is non-empty, forks into that organisation.
+// Usage: ForkRepo(...)
 func (c *Client) ForkRepo(owner, repo string, org string) (*forgejo.Repository, error) {
 	opts := forgejo.CreateForkOption{}
 	if org != "" {
@@ -66,6 +71,7 @@ func (c *Client) ForkRepo(owner, repo string, org string) (*forgejo.Repository, 
 }
 
 // CreatePullRequest creates a pull request on the given repository.
+// Usage: CreatePullRequest(...)
 func (c *Client) CreatePullRequest(owner, repo string, opts forgejo.CreatePullRequestOption) (*forgejo.PullRequest, error) {
 	pr, _, err := c.api.CreatePullRequest(owner, repo, opts)
 	if err != nil {

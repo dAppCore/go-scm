@@ -111,7 +111,7 @@ func TestPapersCollector_CollectArXiv_Good(t *testing.T) {
 	assert.Contains(t, content, "Alice")
 }
 
-func TestPapersCollector_CollectArXiv_Good_WithCategory(t *testing.T) {
+func TestPapersCollector_CollectArXiv_Good_WithCategory_Good(t *testing.T) {
 	var capturedQuery string
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		capturedQuery = r.URL.RawQuery
@@ -167,7 +167,7 @@ func TestPapersCollector_CollectAll_Good(t *testing.T) {
 	assert.Equal(t, 4, result.Items) // 2 IACR + 2 arXiv
 }
 
-func TestPapersCollector_CollectIACR_Bad_ServerError(t *testing.T) {
+func TestPapersCollector_CollectIACR_Bad_ServerError_Good(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 	}))
@@ -187,7 +187,7 @@ func TestPapersCollector_CollectIACR_Bad_ServerError(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestPapersCollector_CollectArXiv_Bad_ServerError(t *testing.T) {
+func TestPapersCollector_CollectArXiv_Bad_ServerError_Good(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusServiceUnavailable)
 	}))
@@ -207,7 +207,7 @@ func TestPapersCollector_CollectArXiv_Bad_ServerError(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestPapersCollector_CollectArXiv_Bad_InvalidXML(t *testing.T) {
+func TestPapersCollector_CollectArXiv_Bad_InvalidXML_Good(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/xml")
 		_, _ = w.Write([]byte(`not xml at all`))
@@ -228,7 +228,7 @@ func TestPapersCollector_CollectArXiv_Bad_InvalidXML(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestPapersCollector_CollectAll_Bad_BothFail(t *testing.T) {
+func TestPapersCollector_CollectAll_Bad_BothFail_Good(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 	}))
@@ -248,7 +248,7 @@ func TestPapersCollector_CollectAll_Bad_BothFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestPapersCollector_CollectAll_Good_OneFails(t *testing.T) {
+func TestPapersCollector_CollectAll_Good_OneFails_Good(t *testing.T) {
 	callCount := 0
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		callCount++
@@ -297,7 +297,7 @@ func TestExtractIACRPapers_Good(t *testing.T) {
 	assert.Equal(t, "Lattice Cryptography", papers[1].Title)
 }
 
-func TestExtractIACRPapers_Good_Empty(t *testing.T) {
+func TestExtractIACRPapers_Good_Empty_Good(t *testing.T) {
 	doc, err := html.Parse(strings.NewReader(`<html><body></body></html>`))
 	require.NoError(t, err)
 
@@ -305,7 +305,7 @@ func TestExtractIACRPapers_Good_Empty(t *testing.T) {
 	assert.Empty(t, papers)
 }
 
-func TestExtractIACRPapers_Good_NoTitle(t *testing.T) {
+func TestExtractIACRPapers_Good_NoTitle_Good(t *testing.T) {
 	doc, err := html.Parse(strings.NewReader(`<html><body><div class="paperentry"></div></body></html>`))
 	require.NoError(t, err)
 

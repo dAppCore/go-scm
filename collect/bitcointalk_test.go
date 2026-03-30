@@ -15,12 +15,12 @@ func TestBitcoinTalkCollector_Name_Good(t *testing.T) {
 	assert.Equal(t, "bitcointalk:12345", b.Name())
 }
 
-func TestBitcoinTalkCollector_Name_Good_URL(t *testing.T) {
+func TestBitcoinTalkCollector_Name_Good_URL_Good(t *testing.T) {
 	b := &BitcoinTalkCollector{URL: "https://bitcointalk.org/index.php?topic=12345.0"}
 	assert.Equal(t, "bitcointalk:url", b.Name())
 }
 
-func TestBitcoinTalkCollector_Collect_Bad_NoTopicID(t *testing.T) {
+func TestBitcoinTalkCollector_Collect_Bad_NoTopicID_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	cfg := NewConfigWithMedium(m, "/output")
 
@@ -29,7 +29,7 @@ func TestBitcoinTalkCollector_Collect_Bad_NoTopicID(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestBitcoinTalkCollector_Collect_Good_DryRun(t *testing.T) {
+func TestBitcoinTalkCollector_Collect_Good_DryRun_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	cfg := NewConfigWithMedium(m, "/output")
 	cfg.DryRun = true
@@ -72,7 +72,7 @@ func TestParsePostsFromHTML_Good(t *testing.T) {
 	assert.Contains(t, posts[1].Content, "Running bitcoin!")
 }
 
-func TestParsePostsFromHTML_Good_Empty(t *testing.T) {
+func TestParsePostsFromHTML_Good_Empty_Good(t *testing.T) {
 	posts, err := ParsePostsFromHTML("<html><body></body></html>")
 	assert.NoError(t, err)
 	assert.Empty(t, posts)
@@ -86,7 +86,7 @@ func TestFormatPostMarkdown_Good(t *testing.T) {
 	assert.Contains(t, md, "Hello, world!")
 }
 
-func TestFormatPostMarkdown_Good_NoDate(t *testing.T) {
+func TestFormatPostMarkdown_Good_NoDate_Good(t *testing.T) {
 	md := FormatPostMarkdown(5, "user", "", "Content here")
 
 	assert.Contains(t, md, "# Post 5 by user")

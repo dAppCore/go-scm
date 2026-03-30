@@ -25,7 +25,7 @@ func TestClient_CreateRepoWebhook_Good(t *testing.T) {
 	assert.NotNil(t, hook)
 }
 
-func TestClient_CreateRepoWebhook_Bad_ServerError(t *testing.T) {
+func TestClient_CreateRepoWebhook_Bad_ServerError_Good(t *testing.T) {
 	client, srv := newErrorServer(t)
 	defer srv.Close()
 
@@ -45,7 +45,7 @@ func TestClient_ListRepoWebhooks_Good(t *testing.T) {
 	require.Len(t, hooks, 1)
 }
 
-func TestClient_ListRepoWebhooks_Bad_ServerError(t *testing.T) {
+func TestClient_ListRepoWebhooks_Bad_ServerError_Good(t *testing.T) {
 	client, srv := newErrorServer(t)
 	defer srv.Close()
 

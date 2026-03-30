@@ -25,7 +25,7 @@ func TestTickParent_Match_Good(t *testing.T) {
 	assert.True(t, h.Match(sig))
 }
 
-func TestTickParent_Match_Bad_Open(t *testing.T) {
+func TestTickParent_Match_Bad_Open_Good(t *testing.T) {
 	h := NewTickParentHandler(nil)
 	sig := &jobrunner.PipelineSignal{
 		PRState: "OPEN",

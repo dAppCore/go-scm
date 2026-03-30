@@ -103,7 +103,7 @@ func TestInstall_Good(t *testing.T) {
 	assert.Contains(t, raw, `"version":"1.0"`)
 }
 
-func TestInstall_Good_Signed(t *testing.T) {
+func TestInstall_Good_Signed_Good(t *testing.T) {
 	repo, signKey := createSignedTestRepo(t, "signed-mod", "2.0")
 	modulesDir := filepath.Join(t.TempDir(), "modules")
 
@@ -124,7 +124,7 @@ func TestInstall_Good_Signed(t *testing.T) {
 	assert.Contains(t, raw, `"version":"2.0"`)
 }
 
-func TestInstall_Bad_AlreadyInstalled(t *testing.T) {
+func TestInstall_Bad_AlreadyInstalled_Good(t *testing.T) {
 	repo := createTestRepo(t, "dup-mod", "1.0")
 	modulesDir := filepath.Join(t.TempDir(), "modules")
 
@@ -141,7 +141,7 @@ func TestInstall_Bad_AlreadyInstalled(t *testing.T) {
 	assert.Contains(t, err.Error(), "already installed")
 }
 
-func TestInstall_Bad_InvalidSignature(t *testing.T) {
+func TestInstall_Bad_InvalidSignature_Good(t *testing.T) {
 	// Sign with key A, verify with key B
 	repo, _ := createSignedTestRepo(t, "bad-sig", "1.0")
 	_, wrongKey := createSignedTestRepo(t, "dummy", "1.0") // different key
@@ -165,7 +165,7 @@ func TestInstall_Bad_InvalidSignature(t *testing.T) {
 	assert.True(t, os.IsNotExist(statErr), "directory should be cleaned up on failure")
 }
 
-func TestInstall_Bad_PathTraversalCode(t *testing.T) {
+func TestInstall_Bad_PathTraversalCode_Good(t *testing.T) {
 	repo := createTestRepo(t, "safe-mod", "1.0")
 	modulesDir := filepath.Join(t.TempDir(), "modules")
 
@@ -211,7 +211,7 @@ func TestRemove_Good(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestRemove_Bad_NotInstalled(t *testing.T) {
+func TestRemove_Bad_NotInstalled_Good(t *testing.T) {
 	st, err := store.New(":memory:")
 	require.NoError(t, err)
 	defer st.Close()
@@ -222,7 +222,7 @@ func TestRemove_Bad_NotInstalled(t *testing.T) {
 	assert.Contains(t, err.Error(), "not installed")
 }
 
-func TestRemove_Bad_PathTraversalCode(t *testing.T) {
+func TestRemove_Bad_PathTraversalCode_Good(t *testing.T) {
 	baseDir := t.TempDir()
 	modulesDir := filepath.Join(baseDir, "modules")
 	escapeDir := filepath.Join(baseDir, "escape")
@@ -269,7 +269,7 @@ func TestInstalled_Good(t *testing.T) {
 	assert.True(t, codes["mod-b"])
 }
 
-func TestInstalled_Good_Empty(t *testing.T) {
+func TestInstalled_Good_Empty_Good(t *testing.T) {
 	st, err := store.New(":memory:")
 	require.NoError(t, err)
 	defer st.Close()
@@ -308,7 +308,7 @@ func TestUpdate_Good(t *testing.T) {
 	assert.Equal(t, "Updated Module", installed[0].Name)
 }
 
-func TestUpdate_Bad_PathTraversalCode(t *testing.T) {
+func TestUpdate_Bad_PathTraversalCode_Good(t *testing.T) {
 	modulesDir := filepath.Join(t.TempDir(), "modules")
 
 	st, err := store.New(":memory:")

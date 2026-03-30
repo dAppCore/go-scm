@@ -15,7 +15,7 @@ func TestProcessor_Name_Good(t *testing.T) {
 	assert.Equal(t, "process:github", p.Name())
 }
 
-func TestProcessor_Process_Bad_NoDir(t *testing.T) {
+func TestProcessor_Process_Bad_NoDir_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	cfg := NewConfigWithMedium(m, "/output")
 
@@ -24,7 +24,7 @@ func TestProcessor_Process_Bad_NoDir(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestProcessor_Process_Good_DryRun(t *testing.T) {
+func TestProcessor_Process_Good_DryRun_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	cfg := NewConfigWithMedium(m, "/output")
 	cfg.DryRun = true
@@ -36,7 +36,7 @@ func TestProcessor_Process_Good_DryRun(t *testing.T) {
 	assert.Equal(t, 0, result.Items)
 }
 
-func TestProcessor_Process_Good_HTMLFiles(t *testing.T) {
+func TestProcessor_Process_Good_HTMLFiles_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	m.Dirs["/input"] = true
 	m.Files["/input/page.html"] = `<html><body><h1>Hello</h1><p>World</p></body></html>`
@@ -57,7 +57,7 @@ func TestProcessor_Process_Good_HTMLFiles(t *testing.T) {
 	assert.Contains(t, content, "World")
 }
 
-func TestProcessor_Process_Good_JSONFiles(t *testing.T) {
+func TestProcessor_Process_Good_JSONFiles_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	m.Dirs["/input"] = true
 	m.Files["/input/data.json"] = `{"name": "Bitcoin", "price": 42000}`
@@ -77,7 +77,7 @@ func TestProcessor_Process_Good_JSONFiles(t *testing.T) {
 	assert.Contains(t, content, "Bitcoin")
 }
 
-func TestProcessor_Process_Good_MarkdownPassthrough(t *testing.T) {
+func TestProcessor_Process_Good_MarkdownPassthrough_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	m.Dirs["/input"] = true
 	m.Files["/input/readme.md"] = "# Already Markdown\n\nThis is already formatted."
@@ -96,7 +96,7 @@ func TestProcessor_Process_Good_MarkdownPassthrough(t *testing.T) {
 	assert.Contains(t, content, "# Already Markdown")
 }
 
-func TestProcessor_Process_Good_SkipUnknownTypes(t *testing.T) {
+func TestProcessor_Process_Good_SkipUnknownTypes_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	m.Dirs["/input"] = true
 	m.Files["/input/image.png"] = "binary data"
@@ -172,7 +172,7 @@ func TestHTMLToMarkdown_Good(t *testing.T) {
 	}
 }
 
-func TestHTMLToMarkdown_Good_StripsScripts(t *testing.T) {
+func TestHTMLToMarkdown_Good_StripsScripts_Good(t *testing.T) {
 	input := `<html><head><script>alert('xss')</script></head><body><p>Clean</p></body></html>`
 	result, err := HTMLToMarkdown(input)
 	assert.NoError(t, err)
@@ -190,14 +190,14 @@ func TestJSONToMarkdown_Good(t *testing.T) {
 	assert.Contains(t, result, "42")
 }
 
-func TestJSONToMarkdown_Good_Array(t *testing.T) {
+func TestJSONToMarkdown_Good_Array_Good(t *testing.T) {
 	input := `[{"id": 1}, {"id": 2}]`
 	result, err := JSONToMarkdown(input)
 	assert.NoError(t, err)
 	assert.Contains(t, result, "# Data")
 }
 
-func TestJSONToMarkdown_Bad_InvalidJSON(t *testing.T) {
+func TestJSONToMarkdown_Bad_InvalidJSON_Good(t *testing.T) {
 	_, err := JSONToMarkdown("not json")
 	assert.Error(t, err)
 }

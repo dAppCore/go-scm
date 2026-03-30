@@ -25,7 +25,7 @@ func TestClient_GetPRMeta_Good(t *testing.T) {
 	assert.False(t, meta.IsMerged)
 }
 
-func TestClient_GetPRMeta_Bad_ServerError(t *testing.T) {
+func TestClient_GetPRMeta_Bad_ServerError_Good(t *testing.T) {
 	client, srv := newErrorServer(t)
 	defer srv.Close()
 
@@ -47,7 +47,7 @@ func TestClient_GetCommentBodies_Good(t *testing.T) {
 	assert.Equal(t, "user2", comments[1].Author)
 }
 
-func TestClient_GetCommentBodies_Bad_ServerError(t *testing.T) {
+func TestClient_GetCommentBodies_Bad_ServerError_Good(t *testing.T) {
 	client, srv := newErrorServer(t)
 	defer srv.Close()
 
@@ -65,7 +65,7 @@ func TestClient_GetIssueBody_Good(t *testing.T) {
 	assert.Equal(t, "First issue body", body)
 }
 
-func TestClient_GetIssueBody_Bad_ServerError(t *testing.T) {
+func TestClient_GetIssueBody_Bad_ServerError_Good(t *testing.T) {
 	client, srv := newErrorServer(t)
 	defer srv.Close()
 

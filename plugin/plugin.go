@@ -41,16 +41,21 @@ type BasePlugin struct {
 }
 
 // Name returns the plugin name.
+// Usage: Name(...)
 func (p *BasePlugin) Name() string { return p.PluginName }
 
 // Version returns the plugin version.
+// Usage: Version(...)
 func (p *BasePlugin) Version() string { return p.PluginVersion }
 
 // Init is a no-op default implementation.
+// Usage: Init(...)
 func (p *BasePlugin) Init(_ context.Context) error { return nil }
 
 // Start is a no-op default implementation.
+// Usage: Start(...)
 func (p *BasePlugin) Start(_ context.Context) error { return nil }
 
 // Stop is a no-op default implementation.
+// Usage: Stop(...)
 func (p *BasePlugin) Stop(_ context.Context) error { return nil }

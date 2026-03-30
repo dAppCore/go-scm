@@ -20,7 +20,7 @@ func TestNew_Good(t *testing.T) {
 	assert.Equal(t, srv.URL, client.URL())
 }
 
-func TestNew_Bad_InvalidURL(t *testing.T) {
+func TestNew_Bad_InvalidURL_Good(t *testing.T) {
 	_, err := New("://invalid-url", "token")
 	assert.Error(t, err)
 }

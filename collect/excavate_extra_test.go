@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestExcavator_Run_Good_ResumeSkipsCompleted(t *testing.T) {
+func TestExcavator_Run_Good_ResumeSkipsCompleted_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	cfg := NewConfigWithMedium(m, "/output")
 	cfg.Limiter = nil
@@ -41,7 +41,7 @@ func TestExcavator_Run_Good_ResumeSkipsCompleted(t *testing.T) {
 	assert.Equal(t, 1, result.Skipped)
 }
 
-func TestExcavator_Run_Good_ResumeRunsIncomplete(t *testing.T) {
+func TestExcavator_Run_Good_ResumeRunsIncomplete_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	cfg := NewConfigWithMedium(m, "/output")
 	cfg.Limiter = nil
@@ -67,7 +67,7 @@ func TestExcavator_Run_Good_ResumeRunsIncomplete(t *testing.T) {
 	assert.Equal(t, 5, result.Items)
 }
 
-func TestExcavator_Run_Good_NilState(t *testing.T) {
+func TestExcavator_Run_Good_NilState_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	cfg := NewConfigWithMedium(m, "/output")
 	cfg.State = nil
@@ -85,7 +85,7 @@ func TestExcavator_Run_Good_NilState(t *testing.T) {
 	assert.Equal(t, 3, result.Items)
 }
 
-func TestExcavator_Run_Good_NilDispatcher(t *testing.T) {
+func TestExcavator_Run_Good_NilDispatcher_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	cfg := NewConfigWithMedium(m, "/output")
 	cfg.Dispatcher = nil
@@ -103,7 +103,7 @@ func TestExcavator_Run_Good_NilDispatcher(t *testing.T) {
 	assert.Equal(t, 2, result.Items)
 }
 
-func TestExcavator_Run_Good_ProgressEvents(t *testing.T) {
+func TestExcavator_Run_Good_ProgressEvents_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	cfg := NewConfigWithMedium(m, "/output")
 	cfg.Limiter = nil

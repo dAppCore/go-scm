@@ -164,7 +164,7 @@ func TestScmProvider_GetMarketplaceItem_Bad(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, w.Code)
 }
 
-func TestScmProvider_GetMarketplaceItem_Bad_PathTraversal(t *testing.T) {
+func TestScmProvider_GetMarketplaceItem_Bad_PathTraversal_Good(t *testing.T) {
 	idx := &marketplace.Index{Version: 1}
 	p := scmapi.NewProvider(idx, nil, nil, nil)
 

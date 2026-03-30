@@ -25,6 +25,7 @@ func NewLoader(m io.Medium, baseDir string) *Loader {
 
 // Discover finds all plugin directories under baseDir and returns their manifests.
 // Directories without a valid plugin.json are silently skipped.
+// Usage: Discover(...)
 func (l *Loader) Discover() ([]*Manifest, error) {
 	entries, err := l.medium.List(l.baseDir)
 	if err != nil {
@@ -50,6 +51,7 @@ func (l *Loader) Discover() ([]*Manifest, error) {
 }
 
 // LoadPlugin loads a single plugin's manifest by name.
+// Usage: LoadPlugin(...)
 func (l *Loader) LoadPlugin(name string) (*Manifest, error) {
 	manifestPath := filepath.Join(l.baseDir, name, "plugin.json")
 	manifest, err := LoadManifest(l.medium, manifestPath)

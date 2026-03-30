@@ -43,6 +43,7 @@ type ElementSpec struct {
 
 // IsProvider returns true if this manifest declares provider fields
 // (namespace and binary), indicating it is a runtime provider.
+// Usage: IsProvider(...)
 func (m *Manifest) IsProvider() bool {
 	return m.Namespace != "" && m.Binary != ""
 }

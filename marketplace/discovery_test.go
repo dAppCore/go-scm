@@ -58,7 +58,7 @@ binary: ./data-viz
 	assert.True(t, codes["data-viz"])
 }
 
-func TestDiscoverProviders_Good_SkipNonProvider(t *testing.T) {
+func TestDiscoverProviders_Good_SkipNonProvider_Good(t *testing.T) {
 	dir := t.TempDir()
 
 	// This has a valid manifest but no namespace/binary — not a provider.
@@ -83,7 +83,7 @@ binary: ./real-provider
 	assert.Equal(t, "real-provider", providers[0].Manifest.Code)
 }
 
-func TestDiscoverProviders_Good_SkipNoManifest(t *testing.T) {
+func TestDiscoverProviders_Good_SkipNoManifest_Good(t *testing.T) {
 	dir := t.TempDir()
 
 	// Directory with no manifest.
@@ -104,7 +104,7 @@ binary: ./good-provider
 	assert.Equal(t, "good-provider", providers[0].Manifest.Code)
 }
 
-func TestDiscoverProviders_Good_SkipInvalidManifest(t *testing.T) {
+func TestDiscoverProviders_Good_SkipInvalidManifest_Good(t *testing.T) {
 	dir := t.TempDir()
 
 	// Directory with invalid YAML.
@@ -121,7 +121,7 @@ func TestDiscoverProviders_Good_SkipInvalidManifest(t *testing.T) {
 	assert.Empty(t, providers)
 }
 
-func TestDiscoverProviders_Good_EmptyDir(t *testing.T) {
+func TestDiscoverProviders_Good_EmptyDir_Good(t *testing.T) {
 	dir := t.TempDir()
 
 	providers, err := DiscoverProviders(dir)
@@ -129,13 +129,13 @@ func TestDiscoverProviders_Good_EmptyDir(t *testing.T) {
 	assert.Empty(t, providers)
 }
 
-func TestDiscoverProviders_Good_NonexistentDir(t *testing.T) {
+func TestDiscoverProviders_Good_NonexistentDir_Good(t *testing.T) {
 	providers, err := DiscoverProviders("/tmp/nonexistent-discovery-test-dir")
 	require.NoError(t, err)
 	assert.Nil(t, providers)
 }
 
-func TestDiscoverProviders_Good_SkipFiles(t *testing.T) {
+func TestDiscoverProviders_Good_SkipFiles_Good(t *testing.T) {
 	dir := t.TempDir()
 
 	// Create a regular file (not a directory).
@@ -146,7 +146,7 @@ func TestDiscoverProviders_Good_SkipFiles(t *testing.T) {
 	assert.Empty(t, providers)
 }
 
-func TestDiscoverProviders_Good_ProviderDir(t *testing.T) {
+func TestDiscoverProviders_Good_ProviderDir_Good(t *testing.T) {
 	dir := t.TempDir()
 
 	createProviderDir(t, dir, "test-prov", `
@@ -194,7 +194,7 @@ func TestProviderRegistry_LoadSave_Good(t *testing.T) {
 	assert.True(t, entry.AutoStart)
 }
 
-func TestProviderRegistry_Load_Good_NonexistentFile(t *testing.T) {
+func TestProviderRegistry_Load_Good_NonexistentFile_Good(t *testing.T) {
 	reg, err := LoadProviderRegistry("/tmp/nonexistent-registry-test.yaml")
 	require.NoError(t, err)
 	assert.Equal(t, 1, reg.Version)
@@ -233,7 +233,7 @@ func TestProviderRegistry_Remove_Good(t *testing.T) {
 	assert.False(t, ok)
 }
 
-func TestProviderRegistry_Get_Bad_NotFound(t *testing.T) {
+func TestProviderRegistry_Get_Bad_NotFound_Good(t *testing.T) {
 	reg := &ProviderRegistryFile{
 		Version:   1,
 		Providers: map[string]ProviderRegistryEntry{},

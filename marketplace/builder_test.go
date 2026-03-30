@@ -38,7 +38,7 @@ func writeCoreJSON(t *testing.T, dir, code, name, version string) {
 	require.NoError(t, os.WriteFile(filepath.Join(dir, "core.json"), data, 0644))
 }
 
-func TestBuildFromDirs_Good_ManifestYAML(t *testing.T) {
+func TestBuildFromDirs_Good_ManifestYAML_Good(t *testing.T) {
 	root := t.TempDir()
 	modDir := filepath.Join(root, "my-widget")
 	require.NoError(t, os.MkdirAll(modDir, 0755))
@@ -55,7 +55,7 @@ func TestBuildFromDirs_Good_ManifestYAML(t *testing.T) {
 	assert.Equal(t, IndexVersion, idx.Version)
 }
 
-func TestBuildFromDirs_Good_CoreJSON(t *testing.T) {
+func TestBuildFromDirs_Good_CoreJSON_Good(t *testing.T) {
 	root := t.TempDir()
 	modDir := filepath.Join(root, "compiled-mod")
 	require.NoError(t, os.MkdirAll(modDir, 0755))
@@ -70,7 +70,7 @@ func TestBuildFromDirs_Good_CoreJSON(t *testing.T) {
 	assert.Equal(t, "Compiled Module", idx.Modules[0].Name)
 }
 
-func TestBuildFromDirs_Good_PrefersCompiledOverSource(t *testing.T) {
+func TestBuildFromDirs_Good_PrefersCompiledOverSource_Good(t *testing.T) {
 	root := t.TempDir()
 	modDir := filepath.Join(root, "dual-mod")
 	require.NoError(t, os.MkdirAll(modDir, 0755))
@@ -86,7 +86,7 @@ func TestBuildFromDirs_Good_PrefersCompiledOverSource(t *testing.T) {
 	assert.Equal(t, "compiled-code", idx.Modules[0].Code)
 }
 
-func TestBuildFromDirs_Good_SkipsNoManifest(t *testing.T) {
+func TestBuildFromDirs_Good_SkipsNoManifest_Good(t *testing.T) {
 	root := t.TempDir()
 	// Directory with no manifest.
 	require.NoError(t, os.MkdirAll(filepath.Join(root, "no-manifest"), 0755))
@@ -101,7 +101,7 @@ func TestBuildFromDirs_Good_SkipsNoManifest(t *testing.T) {
 	assert.Len(t, idx.Modules, 1)
 }
 
-func TestBuildFromDirs_Good_Deduplicates(t *testing.T) {
+func TestBuildFromDirs_Good_Deduplicates_Good(t *testing.T) {
 	dir1 := t.TempDir()
 	dir2 := t.TempDir()
 
@@ -120,7 +120,7 @@ func TestBuildFromDirs_Good_Deduplicates(t *testing.T) {
 	assert.Equal(t, "shared", idx.Modules[0].Code)
 }
 
-func TestBuildFromDirs_Good_SortsByCode(t *testing.T) {
+func TestBuildFromDirs_Good_SortsByCode_Good(t *testing.T) {
 	root := t.TempDir()
 	for _, name := range []string{"charlie", "alpha", "bravo"} {
 		d := filepath.Join(root, name)
@@ -137,7 +137,7 @@ func TestBuildFromDirs_Good_SortsByCode(t *testing.T) {
 	assert.Equal(t, "charlie", idx.Modules[2].Code)
 }
 
-func TestBuildFromDirs_Good_EmptyDir(t *testing.T) {
+func TestBuildFromDirs_Good_EmptyDir_Good(t *testing.T) {
 	root := t.TempDir()
 	b := &Builder{}
 	idx, err := b.BuildFromDirs(root)
@@ -146,14 +146,14 @@ func TestBuildFromDirs_Good_EmptyDir(t *testing.T) {
 	assert.Equal(t, IndexVersion, idx.Version)
 }
 
-func TestBuildFromDirs_Good_NonexistentDir(t *testing.T) {
+func TestBuildFromDirs_Good_NonexistentDir_Good(t *testing.T) {
 	b := &Builder{}
 	idx, err := b.BuildFromDirs("/nonexistent/path")
 	require.NoError(t, err)
 	assert.Empty(t, idx.Modules)
 }
 
-func TestBuildFromDirs_Good_NoRepoURLWithoutConfig(t *testing.T) {
+func TestBuildFromDirs_Good_NoRepoURLWithoutConfig_Good(t *testing.T) {
 	root := t.TempDir()
 	modDir := filepath.Join(root, "mod")
 	require.NoError(t, os.MkdirAll(modDir, 0755))
@@ -177,7 +177,7 @@ func TestBuildFromManifests_Good(t *testing.T) {
 	assert.Equal(t, IndexVersion, idx.Version)
 }
 
-func TestBuildFromManifests_Good_SkipsNil(t *testing.T) {
+func TestBuildFromManifests_Good_SkipsNil_Good(t *testing.T) {
 	manifests := []*manifest.Manifest{
 		nil,
 		{Code: "valid", Name: "Valid"},
@@ -188,7 +188,7 @@ func TestBuildFromManifests_Good_SkipsNil(t *testing.T) {
 	assert.Equal(t, "valid", idx.Modules[0].Code)
 }
 
-func TestBuildFromManifests_Good_Deduplicates(t *testing.T) {
+func TestBuildFromManifests_Good_Deduplicates_Good(t *testing.T) {
 	manifests := []*manifest.Manifest{
 		{Code: "dup", Name: "First"},
 		{Code: "dup", Name: "Second"},
@@ -220,7 +220,7 @@ func TestWriteIndex_Good(t *testing.T) {
 	assert.Equal(t, "test-mod", parsed.Modules[0].Code)
 }
 
-func TestWriteIndex_Good_RoundTrip(t *testing.T) {
+func TestWriteIndex_Good_RoundTrip_Good(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "index.json")
 

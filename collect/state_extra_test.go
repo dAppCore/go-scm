@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestState_Get_Good_ReturnsCopy(t *testing.T) {
+func TestState_Get_Good_ReturnsCopy_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	s := NewState(m, "/state.json")
 
@@ -26,7 +26,7 @@ func TestState_Get_Good_ReturnsCopy(t *testing.T) {
 	assert.Equal(t, 5, again.Items, "internal state should not be mutated")
 }
 
-func TestState_Save_Good_WritesJSON(t *testing.T) {
+func TestState_Save_Good_WritesJSON_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	s := NewState(m, "/data/state.json")
 
@@ -42,7 +42,7 @@ func TestState_Save_Good_WritesJSON(t *testing.T) {
 	assert.Contains(t, content, `"abc"`)
 }
 
-func TestState_Load_Good_NullJSON(t *testing.T) {
+func TestState_Load_Good_NullJSON_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	m.Files["/state.json"] = "null"
 
@@ -55,7 +55,7 @@ func TestState_Load_Good_NullJSON(t *testing.T) {
 	assert.False(t, ok)
 }
 
-func TestState_SaveLoad_Good_WithCursor(t *testing.T) {
+func TestState_SaveLoad_Good_WithCursor_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	s := NewState(m, "/state.json")
 

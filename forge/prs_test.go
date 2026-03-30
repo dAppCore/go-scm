@@ -21,7 +21,7 @@ func TestClient_MergePullRequest_Good(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestClient_MergePullRequest_Good_Squash(t *testing.T) {
+func TestClient_MergePullRequest_Good_Squash_Good(t *testing.T) {
 	client, srv := newTestClient(t)
 	defer srv.Close()
 
@@ -29,7 +29,7 @@ func TestClient_MergePullRequest_Good_Squash(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestClient_MergePullRequest_Good_Rebase(t *testing.T) {
+func TestClient_MergePullRequest_Good_Rebase_Good(t *testing.T) {
 	client, srv := newTestClient(t)
 	defer srv.Close()
 
@@ -37,7 +37,7 @@ func TestClient_MergePullRequest_Good_Rebase(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestClient_MergePullRequest_Bad_ServerError(t *testing.T) {
+func TestClient_MergePullRequest_Bad_ServerError_Good(t *testing.T) {
 	client, srv := newErrorServer(t)
 	defer srv.Close()
 
@@ -60,7 +60,7 @@ func TestClient_ListPRReviews_Good(t *testing.T) {
 	require.Len(t, reviews, 1)
 }
 
-func TestClient_ListPRReviews_Bad_ServerError(t *testing.T) {
+func TestClient_ListPRReviews_Bad_ServerError_Good(t *testing.T) {
 	client, srv := newErrorServer(t)
 	defer srv.Close()
 
@@ -78,7 +78,7 @@ func TestClient_GetCombinedStatus_Good(t *testing.T) {
 	assert.NotNil(t, status)
 }
 
-func TestClient_GetCombinedStatus_Bad_ServerError(t *testing.T) {
+func TestClient_GetCombinedStatus_Bad_ServerError_Good(t *testing.T) {
 	client, srv := newErrorServer(t)
 	defer srv.Close()
 
@@ -95,7 +95,7 @@ func TestClient_DismissReview_Good(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestClient_DismissReview_Bad_ServerError(t *testing.T) {
+func TestClient_DismissReview_Bad_ServerError_Good(t *testing.T) {
 	client, srv := newErrorServer(t)
 	defer srv.Close()
 
@@ -104,7 +104,7 @@ func TestClient_DismissReview_Bad_ServerError(t *testing.T) {
 	assert.Contains(t, err.Error(), "failed to dismiss review")
 }
 
-func TestClient_SetPRDraft_Good_Request(t *testing.T) {
+func TestClient_SetPRDraft_Good_Request_Good(t *testing.T) {
 	var method, path string
 	var payload map[string]any
 
@@ -132,7 +132,7 @@ func TestClient_SetPRDraft_Good_Request(t *testing.T) {
 	assert.Equal(t, false, payload["draft"])
 }
 
-func TestClient_SetPRDraft_Bad_PathTraversalOwner(t *testing.T) {
+func TestClient_SetPRDraft_Bad_PathTraversalOwner_Good(t *testing.T) {
 	client, srv := newTestClient(t)
 	defer srv.Close()
 
@@ -141,7 +141,7 @@ func TestClient_SetPRDraft_Bad_PathTraversalOwner(t *testing.T) {
 	assert.Contains(t, err.Error(), "invalid owner")
 }
 
-func TestClient_SetPRDraft_Bad_PathTraversalRepo(t *testing.T) {
+func TestClient_SetPRDraft_Bad_PathTraversalRepo_Good(t *testing.T) {
 	client, srv := newTestClient(t)
 	defer srv.Close()
 

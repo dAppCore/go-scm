@@ -33,7 +33,9 @@ func New(url, token string) (*Client, error) {
 }
 
 // API exposes the underlying SDK client for direct access.
+// Usage: API(...)
 func (c *Client) API() *gitea.Client { return c.api }
 
 // URL returns the Gitea instance URL.
+// Usage: URL(...)
 func (c *Client) URL() string { return c.url }

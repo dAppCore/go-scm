@@ -27,7 +27,7 @@ func TestPipelineSignal_HasUnresolvedThreads_Good(t *testing.T) {
 	assert.True(t, sig.HasUnresolvedThreads())
 }
 
-func TestPipelineSignal_HasUnresolvedThreads_Bad_AllResolved(t *testing.T) {
+func TestPipelineSignal_HasUnresolvedThreads_Bad_AllResolved_Good(t *testing.T) {
 	sig := &PipelineSignal{
 		ThreadsTotal:    4,
 		ThreadsResolved: 4,

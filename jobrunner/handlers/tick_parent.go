@@ -27,17 +27,20 @@ func NewTickParentHandler(f *forge.Client) *TickParentHandler {
 }
 
 // Name returns the handler identifier.
+// Usage: Name(...)
 func (h *TickParentHandler) Name() string {
 	return "tick_parent"
 }
 
 // Match returns true when the child PR has been merged.
+// Usage: Match(...)
 func (h *TickParentHandler) Match(signal *jobrunner.PipelineSignal) bool {
 	return signal.PRState == "MERGED"
 }
 
 // Execute fetches the epic body, replaces the unchecked checkbox for the
 // child issue with a checked one, updates the epic, and closes the child issue.
+// Usage: Execute(...)
 func (h *TickParentHandler) Execute(ctx context.Context, signal *jobrunner.PipelineSignal) (*jobrunner.ActionResult, error) {
 	start := time.Now()
 

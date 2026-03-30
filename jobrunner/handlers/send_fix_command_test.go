@@ -15,7 +15,7 @@ import (
 	"dappco.re/go/core/scm/jobrunner"
 )
 
-func TestSendFixCommand_Match_Good_Conflicting(t *testing.T) {
+func TestSendFixCommand_Match_Good_Conflicting_Good(t *testing.T) {
 	h := NewSendFixCommandHandler(nil)
 	sig := &jobrunner.PipelineSignal{
 		PRState:   "OPEN",
@@ -24,7 +24,7 @@ func TestSendFixCommand_Match_Good_Conflicting(t *testing.T) {
 	assert.True(t, h.Match(sig))
 }
 
-func TestSendFixCommand_Match_Good_UnresolvedThreads(t *testing.T) {
+func TestSendFixCommand_Match_Good_UnresolvedThreads_Good(t *testing.T) {
 	h := NewSendFixCommandHandler(nil)
 	sig := &jobrunner.PipelineSignal{
 		PRState:         "OPEN",
@@ -36,7 +36,7 @@ func TestSendFixCommand_Match_Good_UnresolvedThreads(t *testing.T) {
 	assert.True(t, h.Match(sig))
 }
 
-func TestSendFixCommand_Match_Bad_Clean(t *testing.T) {
+func TestSendFixCommand_Match_Bad_Clean_Good(t *testing.T) {
 	h := NewSendFixCommandHandler(nil)
 	sig := &jobrunner.PipelineSignal{
 		PRState:         "OPEN",
@@ -48,7 +48,7 @@ func TestSendFixCommand_Match_Bad_Clean(t *testing.T) {
 	assert.False(t, h.Match(sig))
 }
 
-func TestSendFixCommand_Execute_Good_Conflict(t *testing.T) {
+func TestSendFixCommand_Execute_Good_Conflict_Good(t *testing.T) {
 	var capturedMethod string
 	var capturedPath string
 	var capturedBody string

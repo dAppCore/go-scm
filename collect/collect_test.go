@@ -56,13 +56,13 @@ func TestMergeResults_Good(t *testing.T) {
 	assert.Len(t, merged.Files, 3)
 }
 
-func TestMergeResults_Good_NilResults(t *testing.T) {
+func TestMergeResults_Good_NilResults_Good(t *testing.T) {
 	r1 := &Result{Items: 3}
 	merged := MergeResults("test", r1, nil, nil)
 	assert.Equal(t, 3, merged.Items)
 }
 
-func TestMergeResults_Good_Empty(t *testing.T) {
+func TestMergeResults_Good_Empty_Good(t *testing.T) {
 	merged := MergeResults("empty")
 	assert.Equal(t, 0, merged.Items)
 	assert.Equal(t, 0, merged.Errors)

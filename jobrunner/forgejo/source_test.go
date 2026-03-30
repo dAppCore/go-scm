@@ -37,7 +37,7 @@ func newTestClient(t *testing.T, url string) *forge.Client {
 	return client
 }
 
-func TestForgejoSource_Good_Name(t *testing.T) {
+func TestForgejoSource_Good_Name_Good(t *testing.T) {
 	s := New(Config{}, nil)
 	assert.Equal(t, "forgejo", s.Name())
 }
@@ -108,7 +108,7 @@ func TestForgejoSource_Poll_Good(t *testing.T) {
 	assert.Equal(t, "abc123", sig.LastCommitSHA)
 }
 
-func TestForgejoSource_Poll_Good_NoEpics(t *testing.T) {
+func TestForgejoSource_Poll_Good_NoEpics_Good(t *testing.T) {
 	srv := httptest.NewServer(withVersion(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode([]any{})

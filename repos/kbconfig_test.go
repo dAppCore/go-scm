@@ -47,7 +47,7 @@ func TestKBConfig_LoadSave_Good(t *testing.T) {
 	assert.True(t, loaded.Wiki.Enabled)
 }
 
-func TestKBConfig_Load_Good_NoFile(t *testing.T) {
+func TestKBConfig_Load_Good_NoFile_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	_ = m.EnsureDir("/workspace/.core")
 
@@ -56,7 +56,7 @@ func TestKBConfig_Load_Good_NoFile(t *testing.T) {
 	assert.Equal(t, DefaultKBConfig().Search.Collection, kb.Search.Collection)
 }
 
-func TestKBConfig_Load_Good_PartialOverride(t *testing.T) {
+func TestKBConfig_Load_Good_PartialOverride_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	_ = m.Write("/workspace/.core/kb.yaml", `
 version: 1
@@ -75,7 +75,7 @@ search:
 	assert.Equal(t, "embeddinggemma", kb.Search.EmbedModel)
 }
 
-func TestKBConfig_Load_Bad_InvalidYAML(t *testing.T) {
+func TestKBConfig_Load_Bad_InvalidYAML_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	_ = m.Write("/workspace/.core/kb.yaml", "{{{{broken")
 
@@ -92,7 +92,7 @@ func TestKBConfig_WikiRepoURL_Good(t *testing.T) {
 	assert.Equal(t, "ssh://git@forge.lthn.ai:2223/core/go-scm.wiki.git", url)
 }
 
-func TestKBConfig_WikiRepoURL_Good_CustomRemote(t *testing.T) {
+func TestKBConfig_WikiRepoURL_Good_CustomRemote_Good(t *testing.T) {
 	kb := &KBConfig{
 		Wiki: WikiConfig{Remote: "ssh://git@git.example.com/org"},
 	}

@@ -17,7 +17,7 @@ func isolateConfigEnv(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
 }
 
-func TestResolveConfig_Good_Defaults(t *testing.T) {
+func TestResolveConfig_Good_Defaults_Good(t *testing.T) {
 	isolateConfigEnv(t)
 
 	url, token, err := ResolveConfig("", "")
@@ -26,7 +26,7 @@ func TestResolveConfig_Good_Defaults(t *testing.T) {
 	assert.Empty(t, token, "token should be empty when nothing configured")
 }
 
-func TestResolveConfig_Good_FlagsOverrideAll(t *testing.T) {
+func TestResolveConfig_Good_FlagsOverrideAll_Good(t *testing.T) {
 	isolateConfigEnv(t)
 	t.Setenv("GITEA_URL", "https://env-url.example.com")
 	t.Setenv("GITEA_TOKEN", "env-token-abc")
@@ -37,7 +37,7 @@ func TestResolveConfig_Good_FlagsOverrideAll(t *testing.T) {
 	assert.Equal(t, "flag-token-xyz", token, "flag token should override env")
 }
 
-func TestResolveConfig_Good_EnvVarsOverrideConfig(t *testing.T) {
+func TestResolveConfig_Good_EnvVarsOverrideConfig_Good(t *testing.T) {
 	isolateConfigEnv(t)
 	t.Setenv("GITEA_URL", "https://env-url.example.com")
 	t.Setenv("GITEA_TOKEN", "env-token-123")
@@ -48,7 +48,7 @@ func TestResolveConfig_Good_EnvVarsOverrideConfig(t *testing.T) {
 	assert.Equal(t, "env-token-123", token)
 }
 
-func TestResolveConfig_Good_PartialOverrides(t *testing.T) {
+func TestResolveConfig_Good_PartialOverrides_Good(t *testing.T) {
 	isolateConfigEnv(t)
 	t.Setenv("GITEA_URL", "https://env-only.example.com")
 
@@ -58,7 +58,7 @@ func TestResolveConfig_Good_PartialOverrides(t *testing.T) {
 	assert.Equal(t, "flag-only-token", token, "flag token should be used")
 }
 
-func TestResolveConfig_Good_URLDefaultsWhenEmpty(t *testing.T) {
+func TestResolveConfig_Good_URLDefaultsWhenEmpty_Good(t *testing.T) {
 	isolateConfigEnv(t)
 	t.Setenv("GITEA_TOKEN", "some-token")
 
@@ -74,7 +74,7 @@ func TestConstants_Good(t *testing.T) {
 	assert.Equal(t, "https://gitea.snider.dev", DefaultURL)
 }
 
-func TestNewFromConfig_Bad_NoToken(t *testing.T) {
+func TestNewFromConfig_Bad_NoToken_Good(t *testing.T) {
 	isolateConfigEnv(t)
 
 	_, err := NewFromConfig("", "")
@@ -82,7 +82,7 @@ func TestNewFromConfig_Bad_NoToken(t *testing.T) {
 	assert.Contains(t, err.Error(), "no API token configured")
 }
 
-func TestNewFromConfig_Good_WithFlagToken(t *testing.T) {
+func TestNewFromConfig_Good_WithFlagToken_Good(t *testing.T) {
 	isolateConfigEnv(t)
 
 	srv := newMockGiteaServer(t)
@@ -94,7 +94,7 @@ func TestNewFromConfig_Good_WithFlagToken(t *testing.T) {
 	assert.Equal(t, srv.URL, client.URL())
 }
 
-func TestNewFromConfig_Good_EnvToken(t *testing.T) {
+func TestNewFromConfig_Good_EnvToken_Good(t *testing.T) {
 	isolateConfigEnv(t)
 
 	srv := newMockGiteaServer(t)

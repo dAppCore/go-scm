@@ -21,7 +21,7 @@ func TestClient_ListIssues_Good(t *testing.T) {
 	assert.Equal(t, "Issue 1", issues[0].Title)
 }
 
-func TestClient_ListIssues_Good_StateMapping(t *testing.T) {
+func TestClient_ListIssues_Good_StateMapping_Good(t *testing.T) {
 	tests := []struct {
 		name  string
 		state string
@@ -43,7 +43,7 @@ func TestClient_ListIssues_Good_StateMapping(t *testing.T) {
 	}
 }
 
-func TestClient_ListIssues_Good_CustomPageAndLimit(t *testing.T) {
+func TestClient_ListIssues_Good_CustomPageAndLimit_Good(t *testing.T) {
 	client, srv := newTestClient(t)
 	defer srv.Close()
 
@@ -54,7 +54,7 @@ func TestClient_ListIssues_Good_CustomPageAndLimit(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestClient_ListIssues_Bad_ServerError(t *testing.T) {
+func TestClient_ListIssues_Bad_ServerError_Good(t *testing.T) {
 	client, srv := newErrorServer(t)
 	defer srv.Close()
 
@@ -72,7 +72,7 @@ func TestClient_GetIssue_Good(t *testing.T) {
 	assert.Equal(t, "Issue 1", issue.Title)
 }
 
-func TestClient_GetIssue_Bad_ServerError(t *testing.T) {
+func TestClient_GetIssue_Bad_ServerError_Good(t *testing.T) {
 	client, srv := newErrorServer(t)
 	defer srv.Close()
 
@@ -93,7 +93,7 @@ func TestClient_CreateIssue_Good(t *testing.T) {
 	assert.NotNil(t, issue)
 }
 
-func TestClient_CreateIssue_Bad_ServerError(t *testing.T) {
+func TestClient_CreateIssue_Bad_ServerError_Good(t *testing.T) {
 	client, srv := newErrorServer(t)
 	defer srv.Close()
 
@@ -114,7 +114,7 @@ func TestClient_ListPullRequests_Good(t *testing.T) {
 	assert.Equal(t, "PR 1", prs[0].Title)
 }
 
-func TestClient_ListPullRequests_Good_StateMapping(t *testing.T) {
+func TestClient_ListPullRequests_Good_StateMapping_Good(t *testing.T) {
 	tests := []struct {
 		name  string
 		state string
@@ -136,7 +136,7 @@ func TestClient_ListPullRequests_Good_StateMapping(t *testing.T) {
 	}
 }
 
-func TestClient_ListPullRequests_Bad_ServerError(t *testing.T) {
+func TestClient_ListPullRequests_Bad_ServerError_Good(t *testing.T) {
 	client, srv := newErrorServer(t)
 	defer srv.Close()
 
@@ -154,7 +154,7 @@ func TestClient_GetPullRequest_Good(t *testing.T) {
 	assert.Equal(t, "PR 1", pr.Title)
 }
 
-func TestClient_GetPullRequest_Bad_ServerError(t *testing.T) {
+func TestClient_GetPullRequest_Bad_ServerError_Good(t *testing.T) {
 	client, srv := newErrorServer(t)
 	defer srv.Close()
 
@@ -165,7 +165,7 @@ func TestClient_GetPullRequest_Bad_ServerError(t *testing.T) {
 
 // --- ListIssuesOpts defaulting ---
 
-func TestListIssuesOpts_Good_Defaults(t *testing.T) {
+func TestListIssuesOpts_Good_Defaults_Good(t *testing.T) {
 	tests := []struct {
 		name          string
 		opts          ListIssuesOpts

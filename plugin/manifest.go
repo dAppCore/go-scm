@@ -38,6 +38,7 @@ func LoadManifest(m io.Medium, path string) (*Manifest, error) {
 
 // Validate checks the manifest for required fields.
 // Returns an error if name, version, or entrypoint are missing.
+// Usage: Validate(...)
 func (m *Manifest) Validate() error {
 	if m.Name == "" {
 		return coreerr.E("plugin.Manifest.Validate", "name is required", nil)

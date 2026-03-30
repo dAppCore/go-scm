@@ -21,7 +21,7 @@ func TestClient_ListOrgRepos_Good(t *testing.T) {
 	assert.Equal(t, "org-repo", repos[0].Name)
 }
 
-func TestClient_ListOrgRepos_Bad_ServerError(t *testing.T) {
+func TestClient_ListOrgRepos_Bad_ServerError_Good(t *testing.T) {
 	client, srv := newErrorServer(t)
 	defer srv.Close()
 
@@ -41,7 +41,7 @@ func TestClient_ListUserRepos_Good(t *testing.T) {
 	assert.Equal(t, "repo-b", repos[1].Name)
 }
 
-func TestClient_ListUserRepos_Bad_ServerError(t *testing.T) {
+func TestClient_ListUserRepos_Bad_ServerError_Good(t *testing.T) {
 	client, srv := newErrorServer(t)
 	defer srv.Close()
 
@@ -59,7 +59,7 @@ func TestClient_GetRepo_Good(t *testing.T) {
 	assert.Equal(t, "org-repo", repo.Name)
 }
 
-func TestClient_GetRepo_Bad_ServerError(t *testing.T) {
+func TestClient_GetRepo_Bad_ServerError_Good(t *testing.T) {
 	client, srv := newErrorServer(t)
 	defer srv.Close()
 
@@ -80,7 +80,7 @@ func TestClient_CreateOrgRepo_Good(t *testing.T) {
 	assert.NotNil(t, repo)
 }
 
-func TestClient_CreateOrgRepo_Bad_ServerError(t *testing.T) {
+func TestClient_CreateOrgRepo_Bad_ServerError_Good(t *testing.T) {
 	client, srv := newErrorServer(t)
 	defer srv.Close()
 
@@ -99,7 +99,7 @@ func TestClient_DeleteRepo_Good(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestClient_DeleteRepo_Bad_ServerError(t *testing.T) {
+func TestClient_DeleteRepo_Bad_ServerError_Good(t *testing.T) {
 	client, srv := newErrorServer(t)
 	defer srv.Close()
 
@@ -121,7 +121,7 @@ func TestClient_MigrateRepo_Good(t *testing.T) {
 	assert.NotNil(t, repo)
 }
 
-func TestClient_MigrateRepo_Bad_ServerError(t *testing.T) {
+func TestClient_MigrateRepo_Bad_ServerError_Good(t *testing.T) {
 	client, srv := newErrorServer(t)
 	defer srv.Close()
 

@@ -49,7 +49,7 @@ func TestGitState_LoadSave_Good(t *testing.T) {
 	assert.Equal(t, []string{"core-php", "core-tenant"}, loaded.Agents["cladius"].Active)
 }
 
-func TestGitState_Load_Good_NoFile(t *testing.T) {
+func TestGitState_Load_Good_NoFile_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	_ = m.EnsureDir("/workspace/.core")
 
@@ -60,7 +60,7 @@ func TestGitState_Load_Good_NoFile(t *testing.T) {
 	assert.Empty(t, gs.Agents)
 }
 
-func TestGitState_Load_Bad_InvalidYAML(t *testing.T) {
+func TestGitState_Load_Bad_InvalidYAML_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	_ = m.Write("/workspace/.core/git.yaml", "{{{{not yaml")
 
@@ -109,7 +109,7 @@ func TestGitState_UpdateRepo_Good(t *testing.T) {
 	assert.Equal(t, 1, r.Behind)
 }
 
-func TestGitState_UpdateRepo_Good_Overwrite(t *testing.T) {
+func TestGitState_UpdateRepo_Good_Overwrite_Good(t *testing.T) {
 	gs := NewGitState()
 	gs.UpdateRepo("core-php", "main", "origin", 1, 0)
 	gs.UpdateRepo("core-php", "main", "origin", 0, 0)
@@ -131,7 +131,7 @@ func TestGitState_Heartbeat_Good(t *testing.T) {
 	assert.True(t, agent.LastSeen.After(before) || agent.LastSeen.Equal(before))
 }
 
-func TestGitState_Heartbeat_Good_Updates(t *testing.T) {
+func TestGitState_Heartbeat_Good_Updates_Good(t *testing.T) {
 	gs := NewGitState()
 	gs.Heartbeat("cladius", []string{"core-php"})
 	gs.Heartbeat("cladius", []string{"core-php", "core-tenant"})
@@ -157,7 +157,7 @@ func TestGitState_StaleAgents_Good(t *testing.T) {
 	assert.NotContains(t, stale, "fresh")
 }
 
-func TestGitState_StaleAgents_Good_NoneStale(t *testing.T) {
+func TestGitState_StaleAgents_Good_NoneStale_Good(t *testing.T) {
 	gs := NewGitState()
 	gs.Heartbeat("cladius", []string{"core-php"})
 
@@ -177,7 +177,7 @@ func TestGitState_ActiveAgentsFor_Good(t *testing.T) {
 	assert.NotContains(t, agents, "athena")
 }
 
-func TestGitState_ActiveAgentsFor_Good_IgnoresStale(t *testing.T) {
+func TestGitState_ActiveAgentsFor_Good_IgnoresStale_Good(t *testing.T) {
 	gs := NewGitState()
 	gs.Agents["gone"] = &AgentState{
 		LastSeen: time.Now().Add(-20 * time.Minute),
@@ -188,7 +188,7 @@ func TestGitState_ActiveAgentsFor_Good_IgnoresStale(t *testing.T) {
 	assert.Empty(t, agents)
 }
 
-func TestGitState_ActiveAgentsFor_Good_NoMatch(t *testing.T) {
+func TestGitState_ActiveAgentsFor_Good_NoMatch_Good(t *testing.T) {
 	gs := NewGitState()
 	gs.Heartbeat("cladius", []string{"core-php"})
 
@@ -198,18 +198,18 @@ func TestGitState_ActiveAgentsFor_Good_NoMatch(t *testing.T) {
 
 // ── NeedsPull ──────────────────────────────────────────────────────
 
-func TestGitState_NeedsPull_Good_NeverPulled(t *testing.T) {
+func TestGitState_NeedsPull_Good_NeverPulled_Good(t *testing.T) {
 	gs := NewGitState()
 	assert.True(t, gs.NeedsPull("core-php", 5*time.Minute))
 }
 
-func TestGitState_NeedsPull_Good_RecentPull(t *testing.T) {
+func TestGitState_NeedsPull_Good_RecentPull_Good(t *testing.T) {
 	gs := NewGitState()
 	gs.TouchPull("core-php")
 	assert.False(t, gs.NeedsPull("core-php", 5*time.Minute))
 }
 
-func TestGitState_NeedsPull_Good_StalePull(t *testing.T) {
+func TestGitState_NeedsPull_Good_StalePull_Good(t *testing.T) {
 	gs := NewGitState()
 	gs.Repos["core-php"] = &RepoGitState{
 		LastPull: time.Now().Add(-10 * time.Minute),
