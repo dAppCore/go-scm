@@ -27,8 +27,6 @@ const (
 //  1. ~/.core/config.yaml keys: gitea.token, gitea.url
 //  2. GITEA_TOKEN + GITEA_URL environment variables (override config file)
 //  3. Provided flag overrides (highest priority; pass empty to skip)
-//
-//
 func NewFromConfig(flagURL, flagToken string) (*Client, error) {
 	url, token, err := ResolveConfig(flagURL, flagToken)
 	if err != nil {
@@ -44,7 +42,6 @@ func NewFromConfig(flagURL, flagToken string) (*Client, error) {
 
 // ResolveConfig resolves the Gitea URL and token from all config sources.
 // Flag values take highest priority, then env vars, then config file.
-//
 func ResolveConfig(flagURL, flagToken string) (url, token string, err error) {
 	// Start with config file values
 	cfg, cfgErr := config.New()
@@ -78,7 +75,6 @@ func ResolveConfig(flagURL, flagToken string) (url, token string, err error) {
 }
 
 // SaveConfig persists the Gitea URL and/or token to the config file.
-//
 func SaveConfig(url, token string) error {
 	cfg, err := config.New()
 	if err != nil {

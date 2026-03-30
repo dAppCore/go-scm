@@ -10,14 +10,12 @@ import (
 )
 
 // Loader loads plugins from the filesystem.
-//
 type Loader struct {
 	medium  io.Medium
 	baseDir string
 }
 
 // NewLoader creates a new plugin loader.
-//
 func NewLoader(m io.Medium, baseDir string) *Loader {
 	return &Loader{
 		medium:  m,

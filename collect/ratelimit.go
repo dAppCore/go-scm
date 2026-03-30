@@ -16,7 +16,6 @@ import (
 )
 
 // RateLimiter tracks per-source rate limiting to avoid overwhelming APIs.
-//
 type RateLimiter struct {
 	mu     sync.Mutex
 	delays map[string]time.Duration
@@ -33,7 +32,6 @@ var defaultDelays = map[string]time.Duration{
 }
 
 // NewRateLimiter creates a limiter with default delays.
-//
 func NewRateLimiter() *RateLimiter {
 	delays := make(map[string]time.Duration, len(defaultDelays))
 	maps.Copy(delays, defaultDelays)

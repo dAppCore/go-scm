@@ -30,7 +30,6 @@ var (
 )
 
 // AddCollectCommands registers the 'collect' command and all subcommands.
-//
 func AddCollectCommands(root *cli.Command) {
 	collectCmd := &cli.Command{
 		Use:   "collect",

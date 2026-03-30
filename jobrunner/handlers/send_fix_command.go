@@ -13,13 +13,11 @@ import (
 
 // SendFixCommandHandler posts a comment on a PR asking for conflict or
 // review fixes.
-//
 type SendFixCommandHandler struct {
 	forge *forge.Client
 }
 
 // NewSendFixCommandHandler creates a handler that posts fix commands.
-//
 func NewSendFixCommandHandler(f *forge.Client) *SendFixCommandHandler {
 	return &SendFixCommandHandler{forge: f}
 }

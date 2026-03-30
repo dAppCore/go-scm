@@ -17,14 +17,12 @@ import (
 )
 
 // Installer handles plugin installation from GitHub.
-//
 type Installer struct {
 	medium   io.Medium
 	registry *Registry
 }
 
 // NewInstaller creates a new plugin installer.
-//
 func NewInstaller(m io.Medium, registry *Registry) *Installer {
 	return &Installer{
 		medium:   m,
@@ -182,8 +180,6 @@ func (i *Installer) cloneRepo(ctx context.Context, org, repo, version, dest stri
 // Accepted formats:
 //   - "org/repo" -> org="org", repo="repo", version=""
 //   - "org/repo@v1.0" -> org="org", repo="repo", version="v1.0"
-//
-//
 func ParseSource(source string) (org, repo, version string, err error) {
 	source, err = url.PathUnescape(source)
 	if err != nil {

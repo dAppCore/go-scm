@@ -12,13 +12,11 @@ import (
 )
 
 // EnableAutoMergeHandler merges a PR that is ready using squash strategy.
-//
 type EnableAutoMergeHandler struct {
 	forge *forge.Client
 }
 
 // NewEnableAutoMergeHandler creates a handler that merges ready PRs.
-//
 func NewEnableAutoMergeHandler(f *forge.Client) *EnableAutoMergeHandler {
 	return &EnableAutoMergeHandler{forge: f}
 }

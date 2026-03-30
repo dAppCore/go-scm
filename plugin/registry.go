@@ -16,7 +16,6 @@ const registryFilename = "registry.json"
 
 // Registry manages installed plugins.
 // Plugin metadata is stored in a registry.json file under the base path.
-//
 type Registry struct {
 	medium   io.Medium
 	basePath string // e.g., ~/.core/plugins/
@@ -24,7 +23,6 @@ type Registry struct {
 }
 
 // NewRegistry creates a new plugin registry.
-//
 func NewRegistry(m io.Medium, basePath string) *Registry {
 	return &Registry{
 		medium:   m,

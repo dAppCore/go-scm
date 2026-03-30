@@ -27,8 +27,6 @@ const (
 //  1. ~/.core/config.yaml keys: forge.token, forge.url
 //  2. FORGE_TOKEN + FORGE_URL environment variables (override config file)
 //  3. Provided flag overrides (highest priority; pass empty to skip)
-//
-//
 func NewFromConfig(flagURL, flagToken string) (*Client, error) {
 	url, token, err := ResolveConfig(flagURL, flagToken)
 	if err != nil {
@@ -44,7 +42,6 @@ func NewFromConfig(flagURL, flagToken string) (*Client, error) {
 
 // ResolveConfig resolves the Forgejo URL and token from all config sources.
 // Flag values take highest priority, then env vars, then config file.
-//
 func ResolveConfig(flagURL, flagToken string) (url, token string, err error) {
 	// Start with config file values
 	cfg, cfgErr := config.New()
@@ -78,7 +75,6 @@ func ResolveConfig(flagURL, flagToken string) (url, token string, err error) {
 }
 
 // SaveConfig persists the Forgejo URL and/or token to the config file.
-//
 func SaveConfig(url, token string) error {
 	cfg, err := config.New()
 	if err != nil {

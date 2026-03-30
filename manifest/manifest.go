@@ -8,7 +8,6 @@ import (
 )
 
 // Manifest represents a .core/manifest.yaml application manifest.
-//
 type Manifest struct {
 	Code        string            `yaml:"code" json:"code"`
 	Name        string            `yaml:"name" json:"name"`
@@ -34,7 +33,6 @@ type Manifest struct {
 }
 
 // ElementSpec describes a web component for GUI rendering.
-//
 type ElementSpec struct {
 	// Tag is the custom element tag name, e.g. "core-cool-widget".
 	Tag string `yaml:"tag" json:"tag"`
@@ -50,7 +48,6 @@ func (m *Manifest) IsProvider() bool {
 }
 
 // Permissions declares the I/O capabilities a module requires.
-//
 type Permissions struct {
 	Read  []string `yaml:"read" json:"read"`
 	Write []string `yaml:"write" json:"write"`
@@ -59,7 +56,6 @@ type Permissions struct {
 }
 
 // DaemonSpec describes a long-running process managed by the runtime.
-//
 type DaemonSpec struct {
 	Binary  string   `yaml:"binary,omitempty" json:"binary,omitempty"`
 	Args    []string `yaml:"args,omitempty" json:"args,omitempty"`

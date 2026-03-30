@@ -17,7 +17,6 @@ import (
 )
 
 // RepoStatus represents the git status of a single repository.
-//
 type RepoStatus struct {
 	Name      string
 	Path      string
@@ -46,7 +45,6 @@ func (s *RepoStatus) HasUnpulled() bool {
 }
 
 // StatusOptions configures the status check.
-//
 type StatusOptions struct {
 	// Paths is a list of repo paths to check
 	Paths []string
@@ -55,7 +53,6 @@ type StatusOptions struct {
 }
 
 // Status checks git status for multiple repositories in parallel.
-//
 func Status(ctx context.Context, opts StatusOptions) []RepoStatus {
 	var wg sync.WaitGroup
 	results := make([]RepoStatus, len(opts.Paths))
@@ -77,7 +74,6 @@ func Status(ctx context.Context, opts StatusOptions) []RepoStatus {
 }
 
 // StatusIter returns an iterator over git status for multiple repositories.
-//
 func StatusIter(ctx context.Context, opts StatusOptions) iter.Seq[RepoStatus] {
 	return func(yield func(RepoStatus) bool) {
 		results := Status(ctx, opts)
@@ -162,20 +158,17 @@ func getAheadBehind(ctx context.Context, path string) (ahead, behind int) {
 
 // Push pushes commits for a single repository.
 // Uses interactive mode to support SSH passphrase prompts.
-//
 func Push(ctx context.Context, path string) error {
 	return gitInteractive(ctx, path, "push")
 }
 
 // Pull pulls changes for a single repository.
 // Uses interactive mode to support SSH passphrase prompts.
-//
 func Pull(ctx context.Context, path string) error {
 	return gitInteractive(ctx, path, "pull", "--rebase")
 }
 
 // IsNonFastForward checks if an error is a non-fast-forward rejection.
-//
 func IsNonFastForward(err error) bool {
 	if err == nil {
 		return false
@@ -210,7 +203,6 @@ func gitInteractive(ctx context.Context, dir string, args ...string) error {
 }
 
 // PushResult represents the result of a push operation.
-//
 type PushResult struct {
 	Name    string
 	Path    string
@@ -220,13 +212,11 @@ type PushResult struct {
 
 // PushMultiple pushes multiple repositories sequentially.
 // Sequential because SSH passphrase prompts need user interaction.
-//
 func PushMultiple(ctx context.Context, paths []string, names map[string]string) []PushResult {
 	return slices.Collect(PushMultipleIter(ctx, paths, names))
 }
 
 // PushMultipleIter returns an iterator that pushes repositories sequentially and yields results.
-//
 func PushMultipleIter(ctx context.Context, paths []string, names map[string]string) iter.Seq[PushResult] {
 	return func(yield func(PushResult) bool) {
 		for _, path := range paths {
@@ -275,7 +265,6 @@ func gitCommand(ctx context.Context, dir string, args ...string) (string, error)
 }
 
 // GitError wraps a git command error with stderr output.
-//
 type GitError struct {
 	Err    error
 	Stderr string

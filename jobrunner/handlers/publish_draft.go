@@ -12,13 +12,11 @@ import (
 )
 
 // PublishDraftHandler marks a draft PR as ready for review once its checks pass.
-//
 type PublishDraftHandler struct {
 	forge *forge.Client
 }
 
 // NewPublishDraftHandler creates a handler that publishes draft PRs.
-//
 func NewPublishDraftHandler(f *forge.Client) *PublishDraftHandler {
 	return &PublishDraftHandler{forge: f}
 }

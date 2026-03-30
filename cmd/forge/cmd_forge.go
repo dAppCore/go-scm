@@ -35,7 +35,6 @@ var (
 )
 
 // AddForgeCommands registers the 'forge' command and all subcommands.
-//
 func AddForgeCommands(root *cli.Command) {
 	forgeCmd := &cli.Command{
 		Use:   "forge",

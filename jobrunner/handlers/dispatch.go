@@ -35,7 +35,6 @@ const (
 
 // DispatchTicket is the JSON payload written to the agent's queue.
 // The ForgeToken is transferred separately via a .env file with 0600 permissions.
-//
 type DispatchTicket struct {
 	ID           string `json:"id"`
 	RepoOwner    string `json:"repo_owner"`
@@ -55,7 +54,6 @@ type DispatchTicket struct {
 }
 
 // DispatchHandler dispatches coding work to remote agent machines via SSH.
-//
 type DispatchHandler struct {
 	forge    *forge.Client
 	forgeURL string
@@ -64,7 +62,6 @@ type DispatchHandler struct {
 }
 
 // NewDispatchHandler creates a handler that dispatches tickets to agent machines.
-//
 func NewDispatchHandler(client *forge.Client, forgeURL, token string, spinner *agentci.Spinner) *DispatchHandler {
 	return &DispatchHandler{
 		forge:    client,

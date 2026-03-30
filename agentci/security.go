@@ -16,7 +16,6 @@ var safeNameRegex = regexp.MustCompile(`^[a-zA-Z0-9\-\_\.]+$`)
 
 // SanitizePath ensures a filename or directory name is safe and prevents path traversal.
 // Returns the validated input unchanged.
-//
 func SanitizePath(input string) (string, error) {
 	if input == "" {
 		return "", coreerr.E("agentci.SanitizePath", "path element is required", nil)
@@ -34,13 +33,11 @@ func SanitizePath(input string) (string, error) {
 }
 
 // ValidatePathElement validates a single local path element and returns its safe form.
-//
 func ValidatePathElement(input string) (string, error) {
 	return SanitizePath(input)
 }
 
 // ResolvePathWithinRoot resolves a validated path element beneath a root directory.
-//
 func ResolvePathWithinRoot(root string, input string) (string, string, error) {
 	safeName, err := ValidatePathElement(input)
 	if err != nil {
@@ -63,7 +60,6 @@ func ResolvePathWithinRoot(root string, input string) (string, string, error) {
 }
 
 // ValidateRemoteDir validates a remote directory path used over SSH.
-//
 func ValidateRemoteDir(dir string) (string, error) {
 	if strings.TrimSpace(dir) == "" {
 		return "", coreerr.E("agentci.ValidateRemoteDir", "directory is required", nil)
@@ -111,7 +107,6 @@ func ValidateRemoteDir(dir string) (string, error) {
 }
 
 // JoinRemotePath joins validated remote path elements using forward slashes.
-//
 func JoinRemotePath(base string, parts ...string) (string, error) {
 	safeBase, err := ValidateRemoteDir(base)
 	if err != nil {
@@ -138,13 +133,11 @@ func JoinRemotePath(base string, parts ...string) (string, error) {
 
 // EscapeShellArg wraps a string in single quotes for safe remote shell insertion.
 // Prefer exec.Command arguments over constructing shell strings where possible.
-//
 func EscapeShellArg(arg string) string {
 	return "'" + strings.ReplaceAll(arg, "'", "'\\''") + "'"
 }
 
 // SecureSSHCommand creates an SSH exec.Cmd with strict host key checking and batch mode.
-//
 func SecureSSHCommand(host string, remoteCmd string) *exec.Cmd {
 	return exec.Command("ssh",
 		"-o", "StrictHostKeyChecking=yes",
@@ -156,7 +149,6 @@ func SecureSSHCommand(host string, remoteCmd string) *exec.Cmd {
 }
 
 // MaskToken returns a masked version of a token for safe logging.
-//
 func MaskToken(token string) string {
 	if len(token) < 8 {
 		return "*****"

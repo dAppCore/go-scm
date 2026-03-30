@@ -18,13 +18,11 @@ const (
 )
 
 // CompletionHandler manages issue state when an agent finishes work.
-//
 type CompletionHandler struct {
 	forge *forge.Client
 }
 
 // NewCompletionHandler creates a handler for agent completion events.
-//
 func NewCompletionHandler(client *forge.Client) *CompletionHandler {
 	return &CompletionHandler{
 		forge: client,

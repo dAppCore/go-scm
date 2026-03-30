@@ -28,13 +28,10 @@ func (w fdWriter) Write(p []byte) (int, error) {
 }
 
 // Stdin exposes process stdin without importing os.
-//
 var Stdin io.Reader = fdReader{fd: 0}
 
 // Stdout exposes process stdout without importing os.
-//
 var Stdout io.Writer = fdWriter{fd: 1}
 
 // Stderr exposes process stderr without importing os.
-//
 var Stderr io.Writer = fdWriter{fd: 2}

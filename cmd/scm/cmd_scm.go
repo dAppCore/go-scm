@@ -27,7 +27,6 @@ var (
 )
 
 // AddScmCommands registers the 'scm' command and all subcommands.
-//
 func AddScmCommands(root *cli.Command) {
 	scmCmd := &cli.Command{
 		Use:   "scm",

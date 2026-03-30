@@ -31,7 +31,6 @@ const (
 )
 
 // Event represents a collection event.
-//
 type Event struct {
 	// Type is one of the Event* constants.
 	Type string `json:"type"`
@@ -50,19 +49,16 @@ type Event struct {
 }
 
 // EventHandler handles collection events.
-//
 type EventHandler func(Event)
 
 // Dispatcher manages event dispatch. Handlers are registered per event type
 // and are called synchronously when an event is emitted.
-//
 type Dispatcher struct {
 	mu       sync.RWMutex
 	handlers map[string][]EventHandler
 }
 
 // NewDispatcher creates a new event dispatcher.
-//
 func NewDispatcher() *Dispatcher {
 	return &Dispatcher{
 		handlers: make(map[string][]EventHandler),

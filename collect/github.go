@@ -40,7 +40,6 @@ type ghRepo struct {
 }
 
 // GitHubCollector collects issues and PRs from GitHub repositories.
-//
 type GitHubCollector struct {
 	// Org is the GitHub organisation.
 	Org string

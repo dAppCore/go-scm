@@ -13,7 +13,6 @@ import (
 
 // GitState holds per-machine git sync state for a workspace.
 // Stored at .core/git.yaml and .gitignored (not shared across machines).
-//
 type GitState struct {
 	Version int                      `yaml:"version"`
 	Repos   map[string]*RepoGitState `yaml:"repos,omitempty"`
@@ -21,7 +20,6 @@ type GitState struct {
 }
 
 // RepoGitState tracks the last known git state for a single repo.
-//
 type RepoGitState struct {
 	LastPull time.Time `yaml:"last_pull,omitempty"`
 	LastPush time.Time `yaml:"last_push,omitempty"`
@@ -32,7 +30,6 @@ type RepoGitState struct {
 }
 
 // AgentState tracks which agent last touched which repos.
-//
 type AgentState struct {
 	LastSeen time.Time `yaml:"last_seen"`
 	Active   []string  `yaml:"active,omitempty"`
@@ -40,7 +37,6 @@ type AgentState struct {
 
 // LoadGitState reads .core/git.yaml from the given workspace root directory.
 // Returns a new empty GitState if the file does not exist.
-//
 func LoadGitState(m io.Medium, root string) (*GitState, error) {
 	path := filepath.Join(root, ".core", "git.yaml")
 
@@ -69,7 +65,6 @@ func LoadGitState(m io.Medium, root string) (*GitState, error) {
 }
 
 // SaveGitState writes .core/git.yaml to the given workspace root directory.
-//
 func SaveGitState(m io.Medium, root string, gs *GitState) error {
 	coreDir := filepath.Join(root, ".core")
 	if err := m.EnsureDir(coreDir); err != nil {
@@ -90,7 +85,6 @@ func SaveGitState(m io.Medium, root string, gs *GitState) error {
 }
 
 // NewGitState returns a new empty GitState with version 1.
-//
 func NewGitState() *GitState {
 	return &GitState{
 		Version: 1,

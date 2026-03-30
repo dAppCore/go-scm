@@ -27,7 +27,6 @@ const (
 )
 
 // PapersCollector collects papers from IACR and arXiv.
-//
 type PapersCollector struct {
 	// Source is one of PaperSourceIACR, PaperSourceArXiv, or PaperSourceAll.
 	Source string
@@ -409,7 +408,6 @@ func formatPaperMarkdown(ppr paper) string {
 }
 
 // FormatPaperMarkdown is exported for testing.
-//
 func FormatPaperMarkdown(title string, authors []string, date, paperURL, source, abstract string) string {
 	return formatPaperMarkdown(paper{
 		Title:    title,

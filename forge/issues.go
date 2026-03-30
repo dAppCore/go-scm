@@ -11,7 +11,6 @@ import (
 )
 
 // ListIssuesOpts configures issue listing.
-//
 type ListIssuesOpts struct {
 	State  string   // "open", "closed", "all"
 	Labels []string // filter by label names

@@ -13,20 +13,17 @@ import (
 )
 
 // Config configures a ForgejoSource.
-//
 type Config struct {
 	Repos []string // "owner/repo" format
 }
 
 // ForgejoSource polls a Forgejo instance for pipeline signals from epic issues.
-//
 type ForgejoSource struct {
 	repos []string
 	forge *forge.Client
 }
 
 // New creates a ForgejoSource using the given forge client.
-//
 func New(cfg Config, client *forge.Client) *ForgejoSource {
 	return &ForgejoSource{
 		repos: cfg.Repos,

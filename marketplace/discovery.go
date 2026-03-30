@@ -14,7 +14,6 @@ import (
 )
 
 // DiscoveredProvider represents a runtime provider found on disk.
-//
 type DiscoveredProvider struct {
 	// Dir is the absolute path to the provider directory.
 	Dir string
@@ -27,7 +26,6 @@ type DiscoveredProvider struct {
 // Each subdirectory is checked for a .core/manifest.yaml file. Directories
 // without a valid manifest are skipped with a log warning.
 // Only manifests with provider fields (namespace + binary) are returned.
-//
 func DiscoverProviders(dir string) ([]DiscoveredProvider, error) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
@@ -73,7 +71,6 @@ func DiscoverProviders(dir string) ([]DiscoveredProvider, error) {
 }
 
 // ProviderRegistryEntry records metadata about an installed provider.
-//
 type ProviderRegistryEntry struct {
 	Installed string `yaml:"installed" json:"installed"`
 	Version   string `yaml:"version" json:"version"`
@@ -82,7 +79,6 @@ type ProviderRegistryEntry struct {
 }
 
 // ProviderRegistryFile represents the registry.yaml file tracking installed providers.
-//
 type ProviderRegistryFile struct {
 	Version   int                              `yaml:"version" json:"version"`
 	Providers map[string]ProviderRegistryEntry `yaml:"providers" json:"providers"`
@@ -90,7 +86,6 @@ type ProviderRegistryFile struct {
 
 // LoadProviderRegistry reads a registry.yaml file from the given path.
 // Returns an empty registry if the file does not exist.
-//
 func LoadProviderRegistry(path string) (*ProviderRegistryFile, error) {
 	raw, err := coreio.Local.Read(path)
 	if err != nil {
@@ -116,7 +111,6 @@ func LoadProviderRegistry(path string) (*ProviderRegistryFile, error) {
 }
 
 // SaveProviderRegistry writes the registry to the given path.
-//
 func SaveProviderRegistry(path string, reg *ProviderRegistryFile) error {
 	if err := coreio.Local.EnsureDir(filepath.Dir(path)); err != nil {
 		return coreerr.E("marketplace.SaveProviderRegistry", "ensure directory", err)

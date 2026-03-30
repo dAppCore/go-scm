@@ -13,58 +13,49 @@ import (
 // Queries for git service
 
 // QueryStatus requests git status for paths.
-//
 type QueryStatus struct {
 	Paths []string
 	Names map[string]string
 }
 
 // QueryDirtyRepos requests repos with uncommitted changes.
-//
 type QueryDirtyRepos struct{}
 
 // QueryAheadRepos requests repos with unpushed commits.
-//
 type QueryAheadRepos struct{}
 
 // Tasks for git service
 
 // TaskPush requests git push for a path.
-//
 type TaskPush struct {
 	Path string
 	Name string
 }
 
 // TaskPull requests git pull for a path.
-//
 type TaskPull struct {
 	Path string
 	Name string
 }
 
 // TaskPushMultiple requests git push for multiple paths.
-//
 type TaskPushMultiple struct {
 	Paths []string
 	Names map[string]string
 }
 
 // ServiceOptions for configuring the git service.
-//
 type ServiceOptions struct {
 	WorkDir string
 }
 
 // Service provides git operations as a Core service.
-//
 type Service struct {
 	*core.ServiceRuntime[ServiceOptions]
 	lastStatus []RepoStatus
 }
 
 // NewService creates a git service factory.
-//
 func NewService(opts ServiceOptions) func(*core.Core) (any, error) {
 	return func(c *core.Core) (any, error) {
 		return &Service{

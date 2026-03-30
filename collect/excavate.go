@@ -13,7 +13,6 @@ import (
 // Excavator runs multiple collectors as a coordinated operation.
 // It provides sequential execution with rate limit respect, state tracking
 // for resume support, and aggregated results.
-//
 type Excavator struct {
 	// Collectors is the list of collectors to run.
 	Collectors []Collector

@@ -18,7 +18,6 @@ import (
 var validPathComponent = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9._-]*$`)
 
 // JournalEntry is a single line in the JSONL audit log.
-//
 type JournalEntry struct {
 	Timestamp string         `json:"ts"`
 	Epic      int            `json:"epic"`
@@ -32,7 +31,6 @@ type JournalEntry struct {
 }
 
 // SignalSnapshot captures the structural state of a PR at the time of action.
-//
 type SignalSnapshot struct {
 	PRState         string `json:"pr_state"`
 	IsDraft         bool   `json:"is_draft"`
@@ -43,7 +41,6 @@ type SignalSnapshot struct {
 }
 
 // ResultSnapshot captures the outcome of an action.
-//
 type ResultSnapshot struct {
 	Success    bool   `json:"success"`
 	Error      string `json:"error,omitempty"`
@@ -51,14 +48,12 @@ type ResultSnapshot struct {
 }
 
 // Journal writes ActionResult entries to date-partitioned JSONL files.
-//
 type Journal struct {
 	baseDir string
 	mu      sync.Mutex
 }
 
 // NewJournal creates a new Journal rooted at baseDir.
-//
 func NewJournal(baseDir string) (*Journal, error) {
 	if baseDir == "" {
 		return nil, coreerr.E("jobrunner.NewJournal", "base directory is required", nil)

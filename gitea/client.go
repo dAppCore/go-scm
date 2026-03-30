@@ -17,14 +17,12 @@ import (
 )
 
 // Client wraps the Gitea SDK client with config-based auth.
-//
 type Client struct {
 	api *gitea.Client
 	url string
 }
 
 // New creates a new Gitea API client for the given URL and token.
-//
 func New(url, token string) (*Client, error) {
 	api, err := gitea.NewClient(url, gitea.SetToken(token))
 	if err != nil {

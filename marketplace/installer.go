@@ -21,7 +21,6 @@ import (
 const storeGroup = "_modules"
 
 // Installer handles module installation from Git repos.
-//
 type Installer struct {
 	medium     io.Medium
 	modulesDir string
@@ -29,7 +28,6 @@ type Installer struct {
 }
 
 // NewInstaller creates a new module installer.
-//
 func NewInstaller(m io.Medium, modulesDir string, st *store.Store) *Installer {
 	return &Installer{
 		medium:     m,
@@ -39,7 +37,6 @@ func NewInstaller(m io.Medium, modulesDir string, st *store.Store) *Installer {
 }
 
 // InstalledModule holds stored metadata about an installed module.
-//
 type InstalledModule struct {
 	Code        string               `json:"code"`
 	Name        string               `json:"name"`

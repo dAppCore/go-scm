@@ -16,7 +16,6 @@ import (
 )
 
 // Processor converts collected data to clean markdown.
-//
 type Processor struct {
 	// Source identifies the data source directory to process.
 	Source string
@@ -334,13 +333,11 @@ func jsonValueToMarkdown(b *strings.Builder, data any, depth int) {
 }
 
 // HTMLToMarkdown is exported for testing.
-//
 func HTMLToMarkdown(content string) (string, error) {
 	return htmlToMarkdown(content)
 }
 
 // JSONToMarkdown is exported for testing.
-//
 func JSONToMarkdown(content string) (string, error) {
 	return jsonToMarkdown(content)
 }

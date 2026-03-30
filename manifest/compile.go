@@ -15,7 +15,6 @@ import (
 // CompiledManifest is the distribution-ready form of a manifest, written as
 // core.json at the repository root (not inside .core/). It embeds the
 // original Manifest and adds build metadata stapled at compile time.
-//
 type CompiledManifest struct {
 	Manifest `json:",inline" yaml:",inline"`
 
@@ -27,7 +26,6 @@ type CompiledManifest struct {
 }
 
 // CompileOptions controls how Compile populates the build metadata.
-//
 type CompileOptions struct {
 	Commit  string             // Git commit hash
 	Tag     string             // Git tag (e.g. v1.0.0)
@@ -37,7 +35,6 @@ type CompileOptions struct {
 
 // Compile produces a CompiledManifest from a source manifest and build
 // options. If opts.SignKey is provided the manifest is signed first.
-//
 func Compile(m *Manifest, opts CompileOptions) (*CompiledManifest, error) {
 	if m == nil {
 		return nil, coreerr.E("manifest.Compile", "nil manifest", nil)
@@ -66,13 +63,11 @@ func Compile(m *Manifest, opts CompileOptions) (*CompiledManifest, error) {
 }
 
 // MarshalJSON serialises a CompiledManifest to JSON bytes.
-//
 func MarshalJSON(cm *CompiledManifest) ([]byte, error) {
 	return json.MarshalIndent(cm, "", "  ")
 }
 
 // ParseCompiled decodes a core.json into a CompiledManifest.
-//
 func ParseCompiled(data []byte) (*CompiledManifest, error) {
 	var cm CompiledManifest
 	if err := json.Unmarshal(data, &cm); err != nil {
@@ -85,7 +80,6 @@ const compiledPath = "core.json"
 
 // WriteCompiled writes a CompiledManifest as core.json to the given root
 // directory. The file lives at the distribution root, not inside .core/.
-//
 func WriteCompiled(medium io.Medium, root string, cm *CompiledManifest) error {
 	data, err := MarshalJSON(cm)
 	if err != nil {
@@ -96,7 +90,6 @@ func WriteCompiled(medium io.Medium, root string, cm *CompiledManifest) error {
 }
 
 // LoadCompiled reads and parses a core.json from the given root directory.
-//
 func LoadCompiled(medium io.Medium, root string) (*CompiledManifest, error) {
 	path := filepath.Join(root, compiledPath)
 	data, err := medium.Read(path)

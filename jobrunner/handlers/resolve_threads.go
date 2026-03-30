@@ -17,13 +17,11 @@ import (
 // DismissReviewsHandler dismisses stale "request changes" reviews on a PR.
 // This replaces the GitHub-only ResolveThreadsHandler because Forgejo does
 // not have a thread resolution API.
-//
 type DismissReviewsHandler struct {
 	forge *forge.Client
 }
 
 // NewDismissReviewsHandler creates a handler that dismisses stale reviews.
-//
 func NewDismissReviewsHandler(f *forge.Client) *DismissReviewsHandler {
 	return &DismissReviewsHandler{forge: f}
 }

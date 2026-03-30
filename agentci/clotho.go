@@ -10,7 +10,6 @@ import (
 )
 
 // RunMode determines the execution strategy for a dispatched task.
-//
 type RunMode string
 
 const (
@@ -21,14 +20,12 @@ const (
 )
 
 // Spinner is the Clotho orchestrator that determines the fate of each task.
-//
 type Spinner struct {
 	Config ClothoConfig
 	Agents map[string]AgentConfig
 }
 
 // NewSpinner creates a new Clotho orchestrator.
-//
 func NewSpinner(cfg ClothoConfig, agents map[string]AgentConfig) *Spinner {
 	return &Spinner{
 		Config: cfg,

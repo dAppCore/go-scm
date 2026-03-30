@@ -9,7 +9,6 @@ import (
 
 // PipelineSignal is the structural snapshot of a child issue/PR.
 // Carries structural state plus issue title/body for dispatch prompts.
-//
 type PipelineSignal struct {
 	EpicNumber      int
 	ChildNumber     int
@@ -46,7 +45,6 @@ func (s *PipelineSignal) HasUnresolvedThreads() bool {
 }
 
 // ActionResult carries the outcome of a handler execution.
-//
 type ActionResult struct {
 	Action      string        `json:"action"`
 	RepoOwner   string        `json:"repo_owner"`
@@ -62,7 +60,6 @@ type ActionResult struct {
 }
 
 // JobSource discovers actionable work from an external system.
-//
 type JobSource interface {
 	Name() string
 	Poll(ctx context.Context) ([]*PipelineSignal, error)
@@ -70,7 +67,6 @@ type JobSource interface {
 }
 
 // JobHandler processes a single pipeline signal.
-//
 type JobHandler interface {
 	Name() string
 	Match(signal *PipelineSignal) bool

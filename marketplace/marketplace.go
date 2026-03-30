@@ -10,7 +10,6 @@ import (
 )
 
 // Module is a marketplace entry pointing to a module's Git repo.
-//
 type Module struct {
 	Code     string `json:"code"`
 	Name     string `json:"name"`
@@ -20,7 +19,6 @@ type Module struct {
 }
 
 // Index is the root marketplace catalog.
-//
 type Index struct {
 	Version    int      `json:"version"`
 	Modules    []Module `json:"modules"`
@@ -28,7 +26,6 @@ type Index struct {
 }
 
 // ParseIndex decodes a marketplace index.json.
-//
 func ParseIndex(data []byte) (*Index, error) {
 	var idx Index
 	if err := json.Unmarshal(data, &idx); err != nil {

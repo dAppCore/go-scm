@@ -11,7 +11,6 @@ import (
 
 // Manifest represents a plugin.json manifest file.
 // Each plugin repository must contain a plugin.json at its root.
-//
 type Manifest struct {
 	Name         string   `json:"name"`
 	Version      string   `json:"version"`
@@ -23,7 +22,6 @@ type Manifest struct {
 }
 
 // LoadManifest reads and parses a plugin.json file from the given path.
-//
 func LoadManifest(m io.Medium, path string) (*Manifest, error) {
 	content, err := m.Read(path)
 	if err != nil {

@@ -16,12 +16,10 @@ import (
 )
 
 // IndexVersion is the current marketplace index format version.
-//
 const IndexVersion = 1
 
 // Builder constructs a marketplace Index by crawling directories for
 // core.json (compiled manifests) or .core/manifest.yaml files.
-//
 type Builder struct {
 	// BaseURL is the prefix for constructing repository URLs, e.g.
 	// "https://forge.lthn.ai". When set, module Repo is derived as
@@ -88,7 +86,6 @@ func (b *Builder) BuildFromDirs(dirs ...string) (*Index, error) {
 // BuildFromManifests constructs an Index from pre-loaded manifests.
 // This is useful when manifests have already been collected (e.g. from
 // a Forge API crawl).
-//
 func BuildFromManifests(manifests []*manifest.Manifest) *Index {
 	var modules []Module
 	seen := make(map[string]bool)
@@ -119,7 +116,6 @@ func BuildFromManifests(manifests []*manifest.Manifest) *Index {
 }
 
 // WriteIndex serialises an Index to JSON and writes it to the given path.
-//
 func WriteIndex(path string, idx *Index) error {
 	if err := coreio.Local.EnsureDir(filepath.Dir(path)); err != nil {
 		return coreerr.E("marketplace.WriteIndex", "mkdir failed", err)

@@ -16,7 +16,6 @@ import (
 )
 
 // Registry represents a collection of repositories defined in repos.yaml.
-//
 type Registry struct {
 	Version  int              `yaml:"version"`
 	Org      string           `yaml:"org"`
@@ -27,7 +26,6 @@ type Registry struct {
 }
 
 // RegistryDefaults contains default values applied to all repos.
-//
 type RegistryDefaults struct {
 	CI      string `yaml:"ci"`
 	License string `yaml:"license"`
@@ -35,7 +33,6 @@ type RegistryDefaults struct {
 }
 
 // RepoType indicates the role of a repository in the ecosystem.
-//
 type RepoType string
 
 // Repository type constants for ecosystem classification.
@@ -55,7 +52,6 @@ const (
 )
 
 // Repo represents a single repository in the registry.
-//
 type Repo struct {
 	Name        string   `yaml:"-"` // Set from map key
 	Type        string   `yaml:"type"`

@@ -26,7 +26,6 @@ import (
 // ScmProvider wraps go-scm marketplace, manifest, and registry operations
 // as a service provider. It implements Provider, Streamable, Describable,
 // and Renderable.
-//
 type ScmProvider struct {
 	index     *marketplace.Index
 	installer *marketplace.Installer
@@ -46,7 +45,6 @@ var (
 // NewProvider creates an SCM provider backed by the given marketplace index,
 // installer, and registry. The WS hub is used to emit real-time events.
 // Pass nil for any dependency that is not available.
-//
 func NewProvider(idx *marketplace.Index, inst *marketplace.Installer, reg *repos.Registry, hub *ws.Hub) *ScmProvider {
 	return &ScmProvider{
 		index:     idx,
