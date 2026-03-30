@@ -1,4 +1,4 @@
-// SPDX-Licence-Identifier: EUPL-1.2
+// SPDX-License-Identifier: EUPL-1.2
 
 // Package agentci provides configuration, security, and orchestration for AgentCI dispatch targets.
 package agentci

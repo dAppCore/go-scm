@@ -1,4 +1,4 @@
-// SPDX-Licence-Identifier: EUPL-1.2
+// SPDX-License-Identifier: EUPL-1.2
 
 // Package scm provides CLI commands for manifest compilation and marketplace
 // index generation.

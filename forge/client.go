@@ -1,4 +1,4 @@
-// SPDX-Licence-Identifier: EUPL-1.2
+// SPDX-License-Identifier: EUPL-1.2
 
 // Package forge provides a thin wrapper around the Forgejo Go SDK
 // for managing repositories, issues, and pull requests on a Forgejo instance.

@@ -1,4 +1,4 @@
-// SPDX-Licence-Identifier: EUPL-1.2
+// SPDX-License-Identifier: EUPL-1.2
 
 // Package locales embeds translation files for this module.
 package locales

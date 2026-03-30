@@ -1,4 +1,4 @@
-// SPDX-Licence-Identifier: EUPL-1.2
+// SPDX-License-Identifier: EUPL-1.2
 
 import { LitElement, html, css, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';

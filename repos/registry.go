@@ -1,4 +1,4 @@
-// SPDX-Licence-Identifier: EUPL-1.2
+// SPDX-License-Identifier: EUPL-1.2
 
 // Package repos provides functionality for managing multi-repo workspaces.
 // It reads a repos.yaml registry file that defines repositories, their types,

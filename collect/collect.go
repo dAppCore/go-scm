@@ -1,4 +1,4 @@
-// SPDX-Licence-Identifier: EUPL-1.2
+// SPDX-License-Identifier: EUPL-1.2
 
 // Package collect provides a data collection subsystem for gathering information
 // from multiple sources including GitHub, BitcoinTalk, CoinGecko, and academic

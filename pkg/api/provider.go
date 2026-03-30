@@ -1,4 +1,4 @@
-// SPDX-Licence-Identifier: EUPL-1.2
+// SPDX-License-Identifier: EUPL-1.2
 
 // Package api provides a service provider that wraps go-scm marketplace,
 // manifest, and registry functionality as REST endpoints with WebSocket
