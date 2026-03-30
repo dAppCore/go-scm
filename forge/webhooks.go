@@ -9,6 +9,7 @@ import (
 )
 
 // CreateRepoWebhook creates a webhook on a repository.
+// Usage: CreateRepoWebhook(...)
 func (c *Client) CreateRepoWebhook(owner, repo string, opts forgejo.CreateHookOption) (*forgejo.Hook, error) {
 	hook, _, err := c.api.CreateRepoHook(owner, repo, opts)
 	if err != nil {
@@ -19,6 +20,7 @@ func (c *Client) CreateRepoWebhook(owner, repo string, opts forgejo.CreateHookOp
 }
 
 // ListRepoWebhooks returns all webhooks for a repository.
+// Usage: ListRepoWebhooks(...)
 func (c *Client) ListRepoWebhooks(owner, repo string) ([]*forgejo.Hook, error) {
 	var all []*forgejo.Hook
 	page := 1

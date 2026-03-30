@@ -62,6 +62,7 @@ type DispatchHandler struct {
 }
 
 // NewDispatchHandler creates a handler that dispatches tickets to agent machines.
+// Usage: NewDispatchHandler(...)
 func NewDispatchHandler(client *forge.Client, forgeURL, token string, spinner *agentci.Spinner) *DispatchHandler {
 	return &DispatchHandler{
 		forge:    client,
@@ -72,12 +73,14 @@ func NewDispatchHandler(client *forge.Client, forgeURL, token string, spinner *a
 }
 
 // Name returns the handler identifier.
+// Usage: Name(...)
 func (h *DispatchHandler) Name() string {
 	return "dispatch"
 }
 
 // Match returns true for signals where a child issue needs coding (no PR yet)
 // and the assignee is a known agent (by config key or Forgejo username).
+// Usage: Match(...)
 func (h *DispatchHandler) Match(signal *jobrunner.PipelineSignal) bool {
 	if !signal.NeedsCoding {
 		return false
@@ -87,6 +90,7 @@ func (h *DispatchHandler) Match(signal *jobrunner.PipelineSignal) bool {
 }
 
 // Execute creates a ticket JSON and transfers it securely to the agent's queue directory.
+// Usage: Execute(...)
 func (h *DispatchHandler) Execute(ctx context.Context, signal *jobrunner.PipelineSignal) (*jobrunner.ActionResult, error) {
 	start := time.Now()
 

@@ -22,6 +22,7 @@ type TickParentHandler struct {
 }
 
 // NewTickParentHandler creates a handler that ticks parent epic checkboxes.
+// Usage: NewTickParentHandler(...)
 func NewTickParentHandler(f *forge.Client) *TickParentHandler {
 	return &TickParentHandler{forge: f}
 }

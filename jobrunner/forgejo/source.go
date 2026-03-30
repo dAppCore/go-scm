@@ -24,6 +24,7 @@ type ForgejoSource struct {
 }
 
 // New creates a ForgejoSource using the given forge client.
+// Usage: New(...)
 func New(cfg Config, client *forge.Client) *ForgejoSource {
 	return &ForgejoSource{
 		repos: cfg.Repos,
@@ -32,12 +33,14 @@ func New(cfg Config, client *forge.Client) *ForgejoSource {
 }
 
 // Name returns the source identifier.
+// Usage: Name(...)
 func (s *ForgejoSource) Name() string {
 	return "forgejo"
 }
 
 // Poll fetches epics and their linked PRs from all configured repositories,
 // returning a PipelineSignal for each unchecked child that has a linked PR.
+// Usage: Poll(...)
 func (s *ForgejoSource) Poll(ctx context.Context) ([]*jobrunner.PipelineSignal, error) {
 	var signals []*jobrunner.PipelineSignal
 
@@ -61,6 +64,7 @@ func (s *ForgejoSource) Poll(ctx context.Context) ([]*jobrunner.PipelineSignal, 
 }
 
 // Report posts the action result as a comment on the epic issue.
+// Usage: Report(...)
 func (s *ForgejoSource) Report(ctx context.Context, result *jobrunner.ActionResult) error {
 	if result == nil {
 		return nil

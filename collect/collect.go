@@ -67,6 +67,7 @@ type Result struct {
 // NewConfig creates a Config with sensible defaults.
 // It initialises a MockMedium for output if none is provided,
 // sets up a rate limiter, state tracker, and event dispatcher.
+// Usage: NewConfig(...)
 func NewConfig(outputDir string) *Config {
 	m := io.NewMockMedium()
 	return &Config{
@@ -79,6 +80,7 @@ func NewConfig(outputDir string) *Config {
 }
 
 // NewConfigWithMedium creates a Config using the specified storage medium.
+// Usage: NewConfigWithMedium(...)
 func NewConfigWithMedium(m io.Medium, outputDir string) *Config {
 	return &Config{
 		Output:     m,
@@ -90,6 +92,7 @@ func NewConfigWithMedium(m io.Medium, outputDir string) *Config {
 }
 
 // MergeResults combines multiple results into a single aggregated result.
+// Usage: MergeResults(...)
 func MergeResults(source string, results ...*Result) *Result {
 	merged := &Result{Source: source}
 	for _, r := range results {

@@ -67,6 +67,8 @@ type DaemonSpec struct {
 // Parse decodes YAML bytes into a Manifest.
 //
 //	m, err := manifest.Parse(yamlBytes)
+//
+// Usage: Parse(...)
 func Parse(data []byte) (*Manifest, error) {
 	var m Manifest
 	if err := yaml.Unmarshal(data, &m); err != nil {
@@ -76,6 +78,7 @@ func Parse(data []byte) (*Manifest, error) {
 }
 
 // SlotNames returns a deduplicated list of component names from slots.
+// Usage: SlotNames(...)
 func (m *Manifest) SlotNames() []string {
 	seen := make(map[string]bool)
 	var names []string
@@ -92,6 +95,7 @@ func (m *Manifest) SlotNames() []string {
 // A daemon is the default if it has Default:true, or if it is the only daemon
 // in the map. If multiple daemons have Default:true, returns false (ambiguous).
 // Returns empty values and false if no default can be determined.
+// Usage: DefaultDaemon(...)
 func (m *Manifest) DefaultDaemon() (string, DaemonSpec, bool) {
 	if len(m.Daemons) == 0 {
 		return "", DaemonSpec{}, false

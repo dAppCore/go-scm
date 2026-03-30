@@ -55,6 +55,7 @@ type GitHubCollector struct {
 }
 
 // Name returns the collector name.
+// Usage: Name(...)
 func (g *GitHubCollector) Name() string {
 	if g.Repo != "" {
 		return fmt.Sprintf("github:%s/%s", g.Org, g.Repo)
@@ -63,6 +64,7 @@ func (g *GitHubCollector) Name() string {
 }
 
 // Collect gathers issues and/or PRs from GitHub repositories.
+// Usage: Collect(...)
 func (g *GitHubCollector) Collect(ctx context.Context, cfg *Config) (*Result, error) {
 	result := &Result{Source: g.Name()}
 

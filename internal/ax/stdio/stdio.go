@@ -11,6 +11,8 @@ type fdReader struct {
 	fd int
 }
 
+// Read implements io.Reader for stdin without importing os.
+// Usage: Read(...)
 func (r fdReader) Read(p []byte) (int, error) {
 	n, err := syscall.Read(r.fd, p)
 	if n == 0 && err == nil {
@@ -23,6 +25,8 @@ type fdWriter struct {
 	fd int
 }
 
+// Write implements io.Writer for stdout and stderr without importing os.
+// Usage: Write(...)
 func (w fdWriter) Write(p []byte) (int, error) {
 	return syscall.Write(w.fd, p)
 }

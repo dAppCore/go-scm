@@ -11,6 +11,7 @@ import (
 )
 
 // ListOrgRepos returns all repositories for the given organisation.
+// Usage: ListOrgRepos(...)
 func (c *Client) ListOrgRepos(org string) ([]*gitea.Repository, error) {
 	var all []*gitea.Repository
 	page := 1
@@ -35,6 +36,7 @@ func (c *Client) ListOrgRepos(org string) ([]*gitea.Repository, error) {
 }
 
 // ListOrgReposIter returns an iterator over repositories for the given organisation.
+// Usage: ListOrgReposIter(...)
 func (c *Client) ListOrgReposIter(org string) iter.Seq2[*gitea.Repository, error] {
 	return func(yield func(*gitea.Repository, error) bool) {
 		page := 1
@@ -60,6 +62,7 @@ func (c *Client) ListOrgReposIter(org string) iter.Seq2[*gitea.Repository, error
 }
 
 // ListUserRepos returns all repositories for the authenticated user.
+// Usage: ListUserRepos(...)
 func (c *Client) ListUserRepos() ([]*gitea.Repository, error) {
 	var all []*gitea.Repository
 	page := 1
@@ -84,6 +87,7 @@ func (c *Client) ListUserRepos() ([]*gitea.Repository, error) {
 }
 
 // ListUserReposIter returns an iterator over repositories for the authenticated user.
+// Usage: ListUserReposIter(...)
 func (c *Client) ListUserReposIter() iter.Seq2[*gitea.Repository, error] {
 	return func(yield func(*gitea.Repository, error) bool) {
 		page := 1
@@ -109,6 +113,7 @@ func (c *Client) ListUserReposIter() iter.Seq2[*gitea.Repository, error] {
 }
 
 // GetRepo returns a single repository by owner and name.
+// Usage: GetRepo(...)
 func (c *Client) GetRepo(owner, name string) (*gitea.Repository, error) {
 	repo, _, err := c.api.GetRepo(owner, name)
 	if err != nil {
@@ -121,6 +126,7 @@ func (c *Client) GetRepo(owner, name string) (*gitea.Repository, error) {
 // CreateMirror creates a mirror repository on Gitea from a GitHub clone URL.
 // This uses the Gitea migration API to set up a pull mirror.
 // If authToken is provided, it is used to authenticate against the source (e.g. for private GitHub repos).
+// Usage: CreateMirror(...)
 func (c *Client) CreateMirror(owner, name, cloneURL, authToken string) (*gitea.Repository, error) {
 	opts := gitea.MigrateRepoOption{
 		RepoName:    name,
@@ -144,6 +150,7 @@ func (c *Client) CreateMirror(owner, name, cloneURL, authToken string) (*gitea.R
 }
 
 // DeleteRepo deletes a repository from Gitea.
+// Usage: DeleteRepo(...)
 func (c *Client) DeleteRepo(owner, name string) error {
 	_, err := c.api.DeleteRepo(owner, name)
 	if err != nil {
@@ -154,6 +161,7 @@ func (c *Client) DeleteRepo(owner, name string) error {
 }
 
 // CreateOrgRepo creates a new empty repository under an organisation.
+// Usage: CreateOrgRepo(...)
 func (c *Client) CreateOrgRepo(org string, opts gitea.CreateRepoOption) (*gitea.Repository, error) {
 	repo, _, err := c.api.CreateOrgRepo(org, opts)
 	if err != nil {

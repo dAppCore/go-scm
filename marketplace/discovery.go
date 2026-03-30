@@ -26,6 +26,7 @@ type DiscoveredProvider struct {
 // Each subdirectory is checked for a .core/manifest.yaml file. Directories
 // without a valid manifest are skipped with a log warning.
 // Only manifests with provider fields (namespace + binary) are returned.
+// Usage: DiscoverProviders(...)
 func DiscoverProviders(dir string) ([]DiscoveredProvider, error) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
@@ -86,6 +87,7 @@ type ProviderRegistryFile struct {
 
 // LoadProviderRegistry reads a registry.yaml file from the given path.
 // Returns an empty registry if the file does not exist.
+// Usage: LoadProviderRegistry(...)
 func LoadProviderRegistry(path string) (*ProviderRegistryFile, error) {
 	raw, err := coreio.Local.Read(path)
 	if err != nil {
@@ -111,6 +113,7 @@ func LoadProviderRegistry(path string) (*ProviderRegistryFile, error) {
 }
 
 // SaveProviderRegistry writes the registry to the given path.
+// Usage: SaveProviderRegistry(...)
 func SaveProviderRegistry(path string, reg *ProviderRegistryFile) error {
 	if err := coreio.Local.EnsureDir(filepath.Dir(path)); err != nil {
 		return coreerr.E("marketplace.SaveProviderRegistry", "ensure directory", err)
@@ -125,6 +128,7 @@ func SaveProviderRegistry(path string, reg *ProviderRegistryFile) error {
 }
 
 // Add adds or updates a provider entry in the registry.
+// Usage: Add(...)
 func (r *ProviderRegistryFile) Add(code string, entry ProviderRegistryEntry) {
 	if r.Providers == nil {
 		r.Providers = make(map[string]ProviderRegistryEntry)
@@ -133,17 +137,20 @@ func (r *ProviderRegistryFile) Add(code string, entry ProviderRegistryEntry) {
 }
 
 // Remove removes a provider entry from the registry.
+// Usage: Remove(...)
 func (r *ProviderRegistryFile) Remove(code string) {
 	delete(r.Providers, code)
 }
 
 // Get returns a provider entry and true if found, or zero value and false.
+// Usage: Get(...)
 func (r *ProviderRegistryFile) Get(code string) (ProviderRegistryEntry, bool) {
 	entry, ok := r.Providers[code]
 	return entry, ok
 }
 
 // List returns all provider codes in the registry.
+// Usage: List(...)
 func (r *ProviderRegistryFile) List() []string {
 	codes := make([]string, 0, len(r.Providers))
 	for code := range r.Providers {
@@ -153,6 +160,7 @@ func (r *ProviderRegistryFile) List() []string {
 }
 
 // AutoStartProviders returns codes of providers with auto_start enabled.
+// Usage: AutoStartProviders(...)
 func (r *ProviderRegistryFile) AutoStartProviders() []string {
 	var codes []string
 	for code, entry := range r.Providers {

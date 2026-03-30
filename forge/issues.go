@@ -19,6 +19,7 @@ type ListIssuesOpts struct {
 }
 
 // ListIssues returns issues for the given repository.
+// Usage: ListIssues(...)
 func (c *Client) ListIssues(owner, repo string, opts ListIssuesOpts) ([]*forgejo.Issue, error) {
 	state := forgejo.StateOpen
 	switch opts.State {
@@ -54,6 +55,7 @@ func (c *Client) ListIssues(owner, repo string, opts ListIssuesOpts) ([]*forgejo
 }
 
 // GetIssue returns a single issue by number.
+// Usage: GetIssue(...)
 func (c *Client) GetIssue(owner, repo string, number int64) (*forgejo.Issue, error) {
 	issue, _, err := c.api.GetIssue(owner, repo, number)
 	if err != nil {
@@ -64,6 +66,7 @@ func (c *Client) GetIssue(owner, repo string, number int64) (*forgejo.Issue, err
 }
 
 // CreateIssue creates a new issue in the given repository.
+// Usage: CreateIssue(...)
 func (c *Client) CreateIssue(owner, repo string, opts forgejo.CreateIssueOption) (*forgejo.Issue, error) {
 	issue, _, err := c.api.CreateIssue(owner, repo, opts)
 	if err != nil {
@@ -74,6 +77,7 @@ func (c *Client) CreateIssue(owner, repo string, opts forgejo.CreateIssueOption)
 }
 
 // EditIssue edits an existing issue.
+// Usage: EditIssue(...)
 func (c *Client) EditIssue(owner, repo string, number int64, opts forgejo.EditIssueOption) (*forgejo.Issue, error) {
 	issue, _, err := c.api.EditIssue(owner, repo, number, opts)
 	if err != nil {
@@ -84,6 +88,7 @@ func (c *Client) EditIssue(owner, repo string, number int64, opts forgejo.EditIs
 }
 
 // AssignIssue assigns an issue to the specified users.
+// Usage: AssignIssue(...)
 func (c *Client) AssignIssue(owner, repo string, number int64, assignees []string) error {
 	_, _, err := c.api.EditIssue(owner, repo, number, forgejo.EditIssueOption{
 		Assignees: assignees,
@@ -95,6 +100,7 @@ func (c *Client) AssignIssue(owner, repo string, number int64, assignees []strin
 }
 
 // ListPullRequests returns pull requests for the given repository.
+// Usage: ListPullRequests(...)
 func (c *Client) ListPullRequests(owner, repo string, state string) ([]*forgejo.PullRequest, error) {
 	st := forgejo.StateOpen
 	switch state {
@@ -128,6 +134,7 @@ func (c *Client) ListPullRequests(owner, repo string, state string) ([]*forgejo.
 }
 
 // ListPullRequestsIter returns an iterator over pull requests for the given repository.
+// Usage: ListPullRequestsIter(...)
 func (c *Client) ListPullRequestsIter(owner, repo string, state string) iter.Seq2[*forgejo.PullRequest, error] {
 	st := forgejo.StateOpen
 	switch state {
@@ -162,6 +169,7 @@ func (c *Client) ListPullRequestsIter(owner, repo string, state string) iter.Seq
 }
 
 // GetPullRequest returns a single pull request by number.
+// Usage: GetPullRequest(...)
 func (c *Client) GetPullRequest(owner, repo string, number int64) (*forgejo.PullRequest, error) {
 	pr, _, err := c.api.GetPullRequest(owner, repo, number)
 	if err != nil {
@@ -172,6 +180,7 @@ func (c *Client) GetPullRequest(owner, repo string, number int64) (*forgejo.Pull
 }
 
 // CreateIssueComment posts a comment on an issue or pull request.
+// Usage: CreateIssueComment(...)
 func (c *Client) CreateIssueComment(owner, repo string, issue int64, body string) error {
 	_, _, err := c.api.CreateIssueComment(owner, repo, issue, forgejo.CreateIssueCommentOption{
 		Body: body,
@@ -183,6 +192,7 @@ func (c *Client) CreateIssueComment(owner, repo string, issue int64, body string
 }
 
 // ListIssueComments returns comments for an issue.
+// Usage: ListIssueComments(...)
 func (c *Client) ListIssueComments(owner, repo string, number int64) ([]*forgejo.Comment, error) {
 	var all []*forgejo.Comment
 	page := 1
@@ -207,6 +217,7 @@ func (c *Client) ListIssueComments(owner, repo string, number int64) ([]*forgejo
 }
 
 // CloseIssue closes an issue by setting its state to closed.
+// Usage: CloseIssue(...)
 func (c *Client) CloseIssue(owner, repo string, number int64) error {
 	closed := forgejo.StateClosed
 	_, _, err := c.api.EditIssue(owner, repo, number, forgejo.EditIssueOption{

@@ -36,6 +36,7 @@ type AgentPolicy struct {
 }
 
 // DefaultWorkConfig returns sensible defaults for workspace sync.
+// Usage: DefaultWorkConfig(...)
 func DefaultWorkConfig() *WorkConfig {
 	return &WorkConfig{
 		Version: 1,
@@ -56,6 +57,7 @@ func DefaultWorkConfig() *WorkConfig {
 
 // LoadWorkConfig reads .core/work.yaml from the given workspace root directory.
 // Returns defaults if the file does not exist.
+// Usage: LoadWorkConfig(...)
 func LoadWorkConfig(m io.Medium, root string) (*WorkConfig, error) {
 	path := filepath.Join(root, ".core", "work.yaml")
 
@@ -77,6 +79,7 @@ func LoadWorkConfig(m io.Medium, root string) (*WorkConfig, error) {
 }
 
 // SaveWorkConfig writes .core/work.yaml to the given workspace root directory.
+// Usage: SaveWorkConfig(...)
 func SaveWorkConfig(m io.Medium, root string, wc *WorkConfig) error {
 	coreDir := filepath.Join(root, ".core")
 	if err := m.EnsureDir(coreDir); err != nil {
@@ -97,6 +100,7 @@ func SaveWorkConfig(m io.Medium, root string, wc *WorkConfig) error {
 }
 
 // HasTrigger returns true if the given trigger name is in the triggers list.
+// Usage: HasTrigger(...)
 func (wc *WorkConfig) HasTrigger(name string) bool {
 	for _, t := range wc.Triggers {
 		if t == name {

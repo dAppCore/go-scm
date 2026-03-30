@@ -18,6 +18,7 @@ type ListIssuesOpts struct {
 }
 
 // ListIssues returns issues for the given repository.
+// Usage: ListIssues(...)
 func (c *Client) ListIssues(owner, repo string, opts ListIssuesOpts) ([]*gitea.Issue, error) {
 	state := gitea.StateOpen
 	switch opts.State {
@@ -50,6 +51,7 @@ func (c *Client) ListIssues(owner, repo string, opts ListIssuesOpts) ([]*gitea.I
 }
 
 // GetIssue returns a single issue by number.
+// Usage: GetIssue(...)
 func (c *Client) GetIssue(owner, repo string, number int64) (*gitea.Issue, error) {
 	issue, _, err := c.api.GetIssue(owner, repo, number)
 	if err != nil {
@@ -60,6 +62,7 @@ func (c *Client) GetIssue(owner, repo string, number int64) (*gitea.Issue, error
 }
 
 // CreateIssue creates a new issue in the given repository.
+// Usage: CreateIssue(...)
 func (c *Client) CreateIssue(owner, repo string, opts gitea.CreateIssueOption) (*gitea.Issue, error) {
 	issue, _, err := c.api.CreateIssue(owner, repo, opts)
 	if err != nil {
@@ -70,6 +73,7 @@ func (c *Client) CreateIssue(owner, repo string, opts gitea.CreateIssueOption) (
 }
 
 // ListPullRequests returns pull requests for the given repository.
+// Usage: ListPullRequests(...)
 func (c *Client) ListPullRequests(owner, repo string, state string) ([]*gitea.PullRequest, error) {
 	st := gitea.StateOpen
 	switch state {
@@ -103,6 +107,7 @@ func (c *Client) ListPullRequests(owner, repo string, state string) ([]*gitea.Pu
 }
 
 // ListPullRequestsIter returns an iterator over pull requests for the given repository.
+// Usage: ListPullRequestsIter(...)
 func (c *Client) ListPullRequestsIter(owner, repo string, state string) iter.Seq2[*gitea.PullRequest, error] {
 	st := gitea.StateOpen
 	switch state {
@@ -137,6 +142,7 @@ func (c *Client) ListPullRequestsIter(owner, repo string, state string) iter.Seq
 }
 
 // GetPullRequest returns a single pull request by number.
+// Usage: GetPullRequest(...)
 func (c *Client) GetPullRequest(owner, repo string, number int64) (*gitea.PullRequest, error) {
 	pr, _, err := c.api.GetPullRequest(owner, repo, number)
 	if err != nil {

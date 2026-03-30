@@ -23,6 +23,7 @@ type Registry struct {
 }
 
 // NewRegistry creates a new plugin registry.
+// Usage: NewRegistry(...)
 func NewRegistry(m io.Medium, basePath string) *Registry {
 	return &Registry{
 		medium:   m,

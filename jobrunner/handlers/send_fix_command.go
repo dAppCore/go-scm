@@ -18,6 +18,7 @@ type SendFixCommandHandler struct {
 }
 
 // NewSendFixCommandHandler creates a handler that posts fix commands.
+// Usage: NewSendFixCommandHandler(...)
 func NewSendFixCommandHandler(f *forge.Client) *SendFixCommandHandler {
 	return &SendFixCommandHandler{forge: f}
 }

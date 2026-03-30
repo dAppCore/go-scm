@@ -28,6 +28,7 @@ type Installer struct {
 }
 
 // NewInstaller creates a new module installer.
+// Usage: NewInstaller(...)
 func NewInstaller(m io.Medium, modulesDir string, st *store.Store) *Installer {
 	return &Installer{
 		medium:     m,
@@ -49,6 +50,7 @@ type InstalledModule struct {
 }
 
 // Install clones a module repo, verifies its manifest signature, and registers it.
+// Usage: Install(...)
 func (i *Installer) Install(ctx context.Context, mod Module) error {
 	safeCode, dest, err := i.resolveModulePath(mod.Code)
 	if err != nil {
@@ -111,6 +113,7 @@ func (i *Installer) Install(ctx context.Context, mod Module) error {
 }
 
 // Remove uninstalls a module by deleting its files and store entry.
+// Usage: Remove(...)
 func (i *Installer) Remove(code string) error {
 	safeCode, dest, err := i.resolveModulePath(code)
 	if err != nil {
@@ -129,6 +132,7 @@ func (i *Installer) Remove(code string) error {
 }
 
 // Update pulls latest changes and re-verifies the manifest.
+// Usage: Update(...)
 func (i *Installer) Update(ctx context.Context, code string) error {
 	safeCode, dest, err := i.resolveModulePath(code)
 	if err != nil {
@@ -175,6 +179,7 @@ func (i *Installer) Update(ctx context.Context, code string) error {
 }
 
 // Installed returns all installed module metadata.
+// Usage: Installed(...)
 func (i *Installer) Installed() ([]InstalledModule, error) {
 	all, err := i.store.GetAll(storeGroup)
 	if err != nil {

@@ -9,6 +9,7 @@ import (
 )
 
 // ListMyOrgs returns all organisations for the authenticated user.
+// Usage: ListMyOrgs(...)
 func (c *Client) ListMyOrgs() ([]*forgejo.Organization, error) {
 	var all []*forgejo.Organization
 	page := 1
@@ -33,6 +34,7 @@ func (c *Client) ListMyOrgs() ([]*forgejo.Organization, error) {
 }
 
 // GetOrg returns a single organisation by name.
+// Usage: GetOrg(...)
 func (c *Client) GetOrg(name string) (*forgejo.Organization, error) {
 	org, _, err := c.api.GetOrg(name)
 	if err != nil {
@@ -43,6 +45,7 @@ func (c *Client) GetOrg(name string) (*forgejo.Organization, error) {
 }
 
 // CreateOrg creates a new organisation.
+// Usage: CreateOrg(...)
 func (c *Client) CreateOrg(opts forgejo.CreateOrgOption) (*forgejo.Organization, error) {
 	org, _, err := c.api.CreateOrg(opts)
 	if err != nil {

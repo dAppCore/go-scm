@@ -32,6 +32,7 @@ var (
 )
 
 // AddGiteaCommands registers the 'gitea' command and all subcommands.
+// Usage: AddGiteaCommands(...)
 func AddGiteaCommands(root *cli.Command) {
 	giteaCmd := &cli.Command{
 		Use:   "gitea",

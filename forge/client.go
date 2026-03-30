@@ -24,6 +24,7 @@ type Client struct {
 }
 
 // New creates a new Forgejo API client for the given URL and token.
+// Usage: New(...)
 func New(url, token string) (*Client, error) {
 	api, err := forgejo.NewClient(url, forgejo.SetToken(token))
 	if err != nil {

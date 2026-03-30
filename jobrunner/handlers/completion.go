@@ -23,6 +23,7 @@ type CompletionHandler struct {
 }
 
 // NewCompletionHandler creates a handler for agent completion events.
+// Usage: NewCompletionHandler(...)
 func NewCompletionHandler(client *forge.Client) *CompletionHandler {
 	return &CompletionHandler{
 		forge: client,

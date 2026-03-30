@@ -32,32 +32,38 @@ var Stdout = stdio.Stdout
 var Stderr = stdio.Stderr
 
 // Getenv mirrors os.Getenv.
+// Usage: Getenv(...)
 func Getenv(key string) string {
 	value, _ := syscall.Getenv(key)
 	return value
 }
 
 // Getwd mirrors os.Getwd.
+// Usage: Getwd(...)
 func Getwd() (string, error) {
 	return syscall.Getwd()
 }
 
 // IsNotExist mirrors os.IsNotExist.
+// Usage: IsNotExist(...)
 func IsNotExist(err error) bool {
 	return core.Is(err, fs.ErrNotExist)
 }
 
 // MkdirAll mirrors os.MkdirAll.
+// Usage: MkdirAll(...)
 func MkdirAll(path string, _ fs.FileMode) error {
 	return coreio.Local.EnsureDir(path)
 }
 
 // Open mirrors os.Open.
+// Usage: Open(...)
 func Open(path string) (fs.File, error) {
 	return coreio.Local.Open(path)
 }
 
 // OpenFile mirrors the append/create/write mode used in this repo.
+// Usage: OpenFile(...)
 func OpenFile(path string, flag int, _ fs.FileMode) (io.WriteCloser, error) {
 	if flag&O_APPEND != 0 {
 		return coreio.Local.Append(path)
@@ -66,22 +72,26 @@ func OpenFile(path string, flag int, _ fs.FileMode) (io.WriteCloser, error) {
 }
 
 // ReadDir mirrors os.ReadDir.
+// Usage: ReadDir(...)
 func ReadDir(path string) ([]fs.DirEntry, error) {
 	return coreio.Local.List(path)
 }
 
 // ReadFile mirrors os.ReadFile.
+// Usage: ReadFile(...)
 func ReadFile(path string) ([]byte, error) {
 	content, err := coreio.Local.Read(path)
 	return []byte(content), err
 }
 
 // Stat mirrors os.Stat.
+// Usage: Stat(...)
 func Stat(path string) (fs.FileInfo, error) {
 	return coreio.Local.Stat(path)
 }
 
 // UserHomeDir mirrors os.UserHomeDir.
+// Usage: UserHomeDir(...)
 func UserHomeDir() (string, error) {
 	if home := Getenv("HOME"); home != "" {
 		return home, nil
@@ -94,6 +104,7 @@ func UserHomeDir() (string, error) {
 }
 
 // WriteFile mirrors os.WriteFile.
+// Usage: WriteFile(...)
 func WriteFile(path string, data []byte, perm fs.FileMode) error {
 	return coreio.Local.WriteMode(path, string(data), perm)
 }

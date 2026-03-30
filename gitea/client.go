@@ -23,6 +23,7 @@ type Client struct {
 }
 
 // New creates a new Gitea API client for the given URL and token.
+// Usage: New(...)
 func New(url, token string) (*Client, error) {
 	api, err := gitea.NewClient(url, gitea.SetToken(token))
 	if err != nil {

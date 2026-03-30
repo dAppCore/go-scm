@@ -18,6 +18,7 @@ func signable(m *Manifest) ([]byte, error) {
 }
 
 // Sign computes the ed25519 signature and stores it in m.Sign (base64).
+// Usage: Sign(...)
 func Sign(m *Manifest, priv ed25519.PrivateKey) error {
 	msg, err := signable(m)
 	if err != nil {
@@ -29,6 +30,7 @@ func Sign(m *Manifest, priv ed25519.PrivateKey) error {
 }
 
 // Verify checks the ed25519 signature in m.Sign against the public key.
+// Usage: Verify(...)
 func Verify(m *Manifest, pub ed25519.PublicKey) (bool, error) {
 	if m.Sign == "" {
 		return false, coreerr.E("manifest.Verify", "no signature present", nil)

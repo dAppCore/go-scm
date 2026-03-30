@@ -35,6 +35,7 @@ type BitcoinTalkCollector struct {
 }
 
 // Name returns the collector name.
+// Usage: Name(...)
 func (b *BitcoinTalkCollector) Name() string {
 	id := b.TopicID
 	if id == "" && b.URL != "" {
@@ -44,6 +45,7 @@ func (b *BitcoinTalkCollector) Name() string {
 }
 
 // Collect gathers posts from a BitcoinTalk topic.
+// Usage: Collect(...)
 func (b *BitcoinTalkCollector) Collect(ctx context.Context, cfg *Config) (*Result, error) {
 	result := &Result{Source: b.Name()}
 
@@ -283,6 +285,7 @@ func formatPostMarkdown(num int, post btPost) string {
 
 // ParsePostsFromHTML parses BitcoinTalk posts from raw HTML content.
 // This is exported for testing purposes.
+// Usage: ParsePostsFromHTML(...)
 func ParsePostsFromHTML(htmlContent string) ([]btPost, error) {
 	doc, err := html.Parse(strings.NewReader(htmlContent))
 	if err != nil {
@@ -292,6 +295,7 @@ func ParsePostsFromHTML(htmlContent string) ([]btPost, error) {
 }
 
 // FormatPostMarkdown is exported for testing purposes.
+// Usage: FormatPostMarkdown(...)
 func FormatPostMarkdown(num int, author, date, content string) string {
 	return formatPostMarkdown(num, btPost{Author: author, Date: date, Content: content})
 }
@@ -307,6 +311,7 @@ type BitcoinTalkCollectorWithFetcher struct {
 
 // SetHTTPClient replaces the package-level HTTP client.
 // Use this in tests to inject a custom transport or timeout.
+// Usage: SetHTTPClient(...)
 func SetHTTPClient(c *http.Client) {
 	httpClient = c
 }

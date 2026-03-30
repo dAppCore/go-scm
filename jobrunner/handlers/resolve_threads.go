@@ -22,6 +22,7 @@ type DismissReviewsHandler struct {
 }
 
 // NewDismissReviewsHandler creates a handler that dismisses stale reviews.
+// Usage: NewDismissReviewsHandler(...)
 func NewDismissReviewsHandler(f *forge.Client) *DismissReviewsHandler {
 	return &DismissReviewsHandler{forge: f}
 }

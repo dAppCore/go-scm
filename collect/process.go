@@ -25,12 +25,14 @@ type Processor struct {
 }
 
 // Name returns the processor name.
+// Usage: Name(...)
 func (p *Processor) Name() string {
 	return fmt.Sprintf("process:%s", p.Source)
 }
 
 // Process reads files from the source directory, converts HTML or JSON
 // to clean markdown, and writes the results to the output directory.
+// Usage: Process(...)
 func (p *Processor) Process(ctx context.Context, cfg *Config) (*Result, error) {
 	result := &Result{Source: p.Name()}
 
@@ -333,11 +335,13 @@ func jsonValueToMarkdown(b *strings.Builder, data any, depth int) {
 }
 
 // HTMLToMarkdown is exported for testing.
+// Usage: HTMLToMarkdown(...)
 func HTMLToMarkdown(content string) (string, error) {
 	return htmlToMarkdown(content)
 }
 
 // JSONToMarkdown is exported for testing.
+// Usage: JSONToMarkdown(...)
 func JSONToMarkdown(content string) (string, error) {
 	return jsonToMarkdown(content)
 }

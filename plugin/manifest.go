@@ -22,6 +22,7 @@ type Manifest struct {
 }
 
 // LoadManifest reads and parses a plugin.json file from the given path.
+// Usage: LoadManifest(...)
 func LoadManifest(m io.Medium, path string) (*Manifest, error) {
 	content, err := m.Read(path)
 	if err != nil {

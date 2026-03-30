@@ -56,6 +56,7 @@ type Service struct {
 }
 
 // NewService creates a git service factory.
+// Usage: NewService(...)
 func NewService(opts ServiceOptions) func(*core.Core) (any, error) {
 	return func(c *core.Core) (any, error) {
 		return &Service{
@@ -65,6 +66,7 @@ func NewService(opts ServiceOptions) func(*core.Core) (any, error) {
 }
 
 // OnStartup registers query and task handlers.
+// Usage: OnStartup(...)
 func (s *Service) OnStartup(ctx context.Context) error {
 	s.Core().RegisterQuery(s.handleQuery)
 	s.Core().RegisterTask(s.handleTask)
@@ -103,14 +105,17 @@ func (s *Service) handleTask(c *core.Core, t core.Task) core.Result {
 }
 
 // Status returns last status result.
+// Usage: Status(...)
 func (s *Service) Status() []RepoStatus { return s.lastStatus }
 
 // StatusIter returns an iterator over last status result.
+// Usage: StatusIter(...)
 func (s *Service) StatusIter() iter.Seq[RepoStatus] {
 	return slices.Values(s.lastStatus)
 }
 
 // DirtyRepos returns repos with uncommitted changes.
+// Usage: DirtyRepos(...)
 func (s *Service) DirtyRepos() []RepoStatus {
 	var dirty []RepoStatus
 	for _, st := range s.lastStatus {
@@ -122,6 +127,7 @@ func (s *Service) DirtyRepos() []RepoStatus {
 }
 
 // DirtyReposIter returns an iterator over repos with uncommitted changes.
+// Usage: DirtyReposIter(...)
 func (s *Service) DirtyReposIter() iter.Seq[RepoStatus] {
 	return func(yield func(RepoStatus) bool) {
 		for _, st := range s.lastStatus {
@@ -135,6 +141,7 @@ func (s *Service) DirtyReposIter() iter.Seq[RepoStatus] {
 }
 
 // AheadRepos returns repos with unpushed commits.
+// Usage: AheadRepos(...)
 func (s *Service) AheadRepos() []RepoStatus {
 	var ahead []RepoStatus
 	for _, st := range s.lastStatus {
@@ -146,6 +153,7 @@ func (s *Service) AheadRepos() []RepoStatus {
 }
 
 // AheadReposIter returns an iterator over repos with unpushed commits.
+// Usage: AheadReposIter(...)
 func (s *Service) AheadReposIter() iter.Seq[RepoStatus] {
 	return func(yield func(RepoStatus) bool) {
 		for _, st := range s.lastStatus {

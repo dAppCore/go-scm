@@ -26,6 +26,7 @@ type Spinner struct {
 }
 
 // NewSpinner creates a new Clotho orchestrator.
+// Usage: NewSpinner(...)
 func NewSpinner(cfg ClothoConfig, agents map[string]AgentConfig) *Spinner {
 	return &Spinner{
 		Config: cfg,
@@ -35,6 +36,7 @@ func NewSpinner(cfg ClothoConfig, agents map[string]AgentConfig) *Spinner {
 
 // DeterminePlan decides if a signal requires dual-run verification based on
 // the global strategy, agent configuration, and repository criticality.
+// Usage: DeterminePlan(...)
 func (s *Spinner) DeterminePlan(signal *jobrunner.PipelineSignal, agentName string) RunMode {
 	if s.Config.Strategy != "clotho-verified" {
 		return ModeStandard
@@ -57,6 +59,7 @@ func (s *Spinner) DeterminePlan(signal *jobrunner.PipelineSignal, agentName stri
 }
 
 // GetVerifierModel returns the model for the secondary "signed" verification run.
+// Usage: GetVerifierModel(...)
 func (s *Spinner) GetVerifierModel(agentName string) string {
 	agent, ok := s.Agents[agentName]
 	if !ok || agent.VerifyModel == "" {
@@ -67,6 +70,7 @@ func (s *Spinner) GetVerifierModel(agentName string) string {
 
 // FindByForgejoUser resolves a Forgejo username to the agent config key and config.
 // This decouples agent naming (mythological roles) from Forgejo identity.
+// Usage: FindByForgejoUser(...)
 func (s *Spinner) FindByForgejoUser(forgejoUser string) (string, AgentConfig, bool) {
 	if forgejoUser == "" {
 		return "", AgentConfig{}, false
@@ -86,6 +90,7 @@ func (s *Spinner) FindByForgejoUser(forgejoUser string) (string, AgentConfig, bo
 
 // Weave compares primary and verifier outputs. Returns true if they converge.
 // This is a placeholder for future semantic diff logic.
+// Usage: Weave(...)
 func (s *Spinner) Weave(ctx context.Context, primaryOutput, signedOutput []byte) (bool, error) {
 	return string(primaryOutput) == string(signedOutput), nil
 }

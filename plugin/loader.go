@@ -16,6 +16,7 @@ type Loader struct {
 }
 
 // NewLoader creates a new plugin loader.
+// Usage: NewLoader(...)
 func NewLoader(m io.Medium, baseDir string) *Loader {
 	return &Loader{
 		medium:  m,

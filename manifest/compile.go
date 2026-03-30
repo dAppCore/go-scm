@@ -35,6 +35,7 @@ type CompileOptions struct {
 
 // Compile produces a CompiledManifest from a source manifest and build
 // options. If opts.SignKey is provided the manifest is signed first.
+// Usage: Compile(...)
 func Compile(m *Manifest, opts CompileOptions) (*CompiledManifest, error) {
 	if m == nil {
 		return nil, coreerr.E("manifest.Compile", "nil manifest", nil)
@@ -63,11 +64,13 @@ func Compile(m *Manifest, opts CompileOptions) (*CompiledManifest, error) {
 }
 
 // MarshalJSON serialises a CompiledManifest to JSON bytes.
+// Usage: MarshalJSON(...)
 func MarshalJSON(cm *CompiledManifest) ([]byte, error) {
 	return json.MarshalIndent(cm, "", "  ")
 }
 
 // ParseCompiled decodes a core.json into a CompiledManifest.
+// Usage: ParseCompiled(...)
 func ParseCompiled(data []byte) (*CompiledManifest, error) {
 	var cm CompiledManifest
 	if err := json.Unmarshal(data, &cm); err != nil {
@@ -80,6 +83,7 @@ const compiledPath = "core.json"
 
 // WriteCompiled writes a CompiledManifest as core.json to the given root
 // directory. The file lives at the distribution root, not inside .core/.
+// Usage: WriteCompiled(...)
 func WriteCompiled(medium io.Medium, root string, cm *CompiledManifest) error {
 	data, err := MarshalJSON(cm)
 	if err != nil {
@@ -90,6 +94,7 @@ func WriteCompiled(medium io.Medium, root string, cm *CompiledManifest) error {
 }
 
 // LoadCompiled reads and parses a core.json from the given root directory.
+// Usage: LoadCompiled(...)
 func LoadCompiled(medium io.Medium, root string) (*CompiledManifest, error) {
 	path := filepath.Join(root, compiledPath)
 	data, err := medium.Read(path)

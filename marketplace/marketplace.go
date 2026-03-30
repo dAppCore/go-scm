@@ -26,6 +26,7 @@ type Index struct {
 }
 
 // ParseIndex decodes a marketplace index.json.
+// Usage: ParseIndex(...)
 func ParseIndex(data []byte) (*Index, error) {
 	var idx Index
 	if err := json.Unmarshal(data, &idx); err != nil {
@@ -35,6 +36,7 @@ func ParseIndex(data []byte) (*Index, error) {
 }
 
 // Search returns modules matching the query in code, name, or category.
+// Usage: Search(...)
 func (idx *Index) Search(query string) []Module {
 	q := strings.ToLower(query)
 	var results []Module
@@ -49,6 +51,7 @@ func (idx *Index) Search(query string) []Module {
 }
 
 // ByCategory returns all modules in the given category.
+// Usage: ByCategory(...)
 func (idx *Index) ByCategory(category string) []Module {
 	var results []Module
 	for _, m := range idx.Modules {
@@ -60,6 +63,7 @@ func (idx *Index) ByCategory(category string) []Module {
 }
 
 // Find returns the module with the given code, or false if not found.
+// Usage: Find(...)
 func (idx *Index) Find(code string) (Module, bool) {
 	for _, m := range idx.Modules {
 		if m.Code == code {

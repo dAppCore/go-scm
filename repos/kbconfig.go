@@ -47,6 +47,7 @@ type KBSearch struct {
 }
 
 // DefaultKBConfig returns sensible defaults for knowledge base config.
+// Usage: DefaultKBConfig(...)
 func DefaultKBConfig() *KBConfig {
 	return &KBConfig{
 		Version: 1,
@@ -68,6 +69,7 @@ func DefaultKBConfig() *KBConfig {
 
 // LoadKBConfig reads .core/kb.yaml from the given workspace root directory.
 // Returns defaults if the file does not exist.
+// Usage: LoadKBConfig(...)
 func LoadKBConfig(m io.Medium, root string) (*KBConfig, error) {
 	path := filepath.Join(root, ".core", "kb.yaml")
 
@@ -89,6 +91,7 @@ func LoadKBConfig(m io.Medium, root string) (*KBConfig, error) {
 }
 
 // SaveKBConfig writes .core/kb.yaml to the given workspace root directory.
+// Usage: SaveKBConfig(...)
 func SaveKBConfig(m io.Medium, root string, kb *KBConfig) error {
 	coreDir := filepath.Join(root, ".core")
 	if err := m.EnsureDir(coreDir); err != nil {
@@ -109,11 +112,13 @@ func SaveKBConfig(m io.Medium, root string, kb *KBConfig) error {
 }
 
 // WikiRepoURL returns the full clone URL for a repo's wiki.
+// Usage: WikiRepoURL(...)
 func (kb *KBConfig) WikiRepoURL(repoName string) string {
 	return fmt.Sprintf("%s/%s.wiki.git", kb.Wiki.Remote, repoName)
 }
 
 // WikiLocalPath returns the local path for a repo's wiki clone.
+// Usage: WikiLocalPath(...)
 func (kb *KBConfig) WikiLocalPath(root, repoName string) string {
 	return filepath.Join(root, ".core", kb.Wiki.Dir, repoName)
 }

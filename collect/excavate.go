@@ -25,12 +25,14 @@ type Excavator struct {
 }
 
 // Name returns the orchestrator name.
+// Usage: Name(...)
 func (e *Excavator) Name() string {
 	return "excavator"
 }
 
 // Run executes all collectors sequentially, respecting rate limits and
 // using state for resume support. Results are aggregated from all collectors.
+// Usage: Run(...)
 func (e *Excavator) Run(ctx context.Context, cfg *Config) (*Result, error) {
 	result := &Result{Source: e.Name()}
 

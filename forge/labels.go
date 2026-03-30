@@ -14,6 +14,7 @@ import (
 // Note: The Forgejo SDK does not have a dedicated org-level labels endpoint.
 // This lists labels from the first repo found, which works when orgs use shared label sets.
 // For org-wide label management, use ListRepoLabels with a specific repo.
+// Usage: ListOrgLabels(...)
 func (c *Client) ListOrgLabels(org string) ([]*forgejo.Label, error) {
 	// Forgejo doesn't expose org-level labels via SDK — list repos and aggregate unique labels.
 	repos, err := c.ListOrgRepos(org)
@@ -30,6 +31,7 @@ func (c *Client) ListOrgLabels(org string) ([]*forgejo.Label, error) {
 }
 
 // ListRepoLabels returns all labels for a repository.
+// Usage: ListRepoLabels(...)
 func (c *Client) ListRepoLabels(owner, repo string) ([]*forgejo.Label, error) {
 	var all []*forgejo.Label
 	page := 1
@@ -54,6 +56,7 @@ func (c *Client) ListRepoLabels(owner, repo string) ([]*forgejo.Label, error) {
 }
 
 // CreateRepoLabel creates a label on a repository.
+// Usage: CreateRepoLabel(...)
 func (c *Client) CreateRepoLabel(owner, repo string, opts forgejo.CreateLabelOption) (*forgejo.Label, error) {
 	label, _, err := c.api.CreateLabel(owner, repo, opts)
 	if err != nil {
@@ -64,6 +67,7 @@ func (c *Client) CreateRepoLabel(owner, repo string, opts forgejo.CreateLabelOpt
 }
 
 // GetLabelByName retrieves a specific label by name from a repository.
+// Usage: GetLabelByName(...)
 func (c *Client) GetLabelByName(owner, repo, name string) (*forgejo.Label, error) {
 	labels, err := c.ListRepoLabels(owner, repo)
 	if err != nil {
@@ -80,6 +84,7 @@ func (c *Client) GetLabelByName(owner, repo, name string) (*forgejo.Label, error
 }
 
 // EnsureLabel checks if a label exists, and creates it if it doesn't.
+// Usage: EnsureLabel(...)
 func (c *Client) EnsureLabel(owner, repo, name, color string) (*forgejo.Label, error) {
 	label, err := c.GetLabelByName(owner, repo, name)
 	if err == nil {
@@ -93,6 +98,7 @@ func (c *Client) EnsureLabel(owner, repo, name, color string) (*forgejo.Label, e
 }
 
 // AddIssueLabels adds labels to an issue.
+// Usage: AddIssueLabels(...)
 func (c *Client) AddIssueLabels(owner, repo string, number int64, labelIDs []int64) error {
 	_, _, err := c.api.AddIssueLabels(owner, repo, number, forgejo.IssueLabelsOption{
 		Labels: labelIDs,
@@ -104,6 +110,7 @@ func (c *Client) AddIssueLabels(owner, repo string, number int64, labelIDs []int
 }
 
 // RemoveIssueLabel removes a label from an issue.
+// Usage: RemoveIssueLabel(...)
 func (c *Client) RemoveIssueLabel(owner, repo string, number int64, labelID int64) error {
 	_, err := c.api.DeleteIssueLabel(owner, repo, number, labelID)
 	if err != nil {

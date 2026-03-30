@@ -33,6 +33,7 @@ type Builder struct {
 // BuildFromDirs scans each directory for subdirectories containing either
 // core.json (preferred) or .core/manifest.yaml. Each valid manifest is
 // added to the resulting Index as a Module.
+// Usage: BuildFromDirs(...)
 func (b *Builder) BuildFromDirs(dirs ...string) (*Index, error) {
 	var modules []Module
 	seen := make(map[string]bool)
@@ -86,6 +87,7 @@ func (b *Builder) BuildFromDirs(dirs ...string) (*Index, error) {
 // BuildFromManifests constructs an Index from pre-loaded manifests.
 // This is useful when manifests have already been collected (e.g. from
 // a Forge API crawl).
+// Usage: BuildFromManifests(...)
 func BuildFromManifests(manifests []*manifest.Manifest) *Index {
 	var modules []Module
 	seen := make(map[string]bool)
@@ -116,6 +118,7 @@ func BuildFromManifests(manifests []*manifest.Manifest) *Index {
 }
 
 // WriteIndex serialises an Index to JSON and writes it to the given path.
+// Usage: WriteIndex(...)
 func WriteIndex(path string, idx *Index) error {
 	if err := coreio.Local.EnsureDir(filepath.Dir(path)); err != nil {
 		return coreerr.E("marketplace.WriteIndex", "mkdir failed", err)

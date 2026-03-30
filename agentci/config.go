@@ -33,6 +33,7 @@ type ClothoConfig struct {
 
 // LoadAgents reads agent targets from config and returns a map of AgentConfig.
 // Returns an empty map (not an error) if no agents are configured.
+// Usage: LoadAgents(...)
 func LoadAgents(cfg *config.Config) (map[string]AgentConfig, error) {
 	var agents map[string]AgentConfig
 	if err := cfg.Get("agentci.agents", &agents); err != nil {
@@ -63,6 +64,7 @@ func LoadAgents(cfg *config.Config) (map[string]AgentConfig, error) {
 }
 
 // LoadActiveAgents returns only active agents.
+// Usage: LoadActiveAgents(...)
 func LoadActiveAgents(cfg *config.Config) (map[string]AgentConfig, error) {
 	all, err := LoadAgents(cfg)
 	if err != nil {
@@ -79,6 +81,7 @@ func LoadActiveAgents(cfg *config.Config) (map[string]AgentConfig, error) {
 
 // LoadClothoConfig loads the Clotho orchestrator settings.
 // Returns sensible defaults if no config is present.
+// Usage: LoadClothoConfig(...)
 func LoadClothoConfig(cfg *config.Config) (ClothoConfig, error) {
 	var cc ClothoConfig
 	if err := cfg.Get("agentci.clotho", &cc); err != nil {
@@ -97,6 +100,7 @@ func LoadClothoConfig(cfg *config.Config) (ClothoConfig, error) {
 }
 
 // SaveAgent writes an agent config entry to the config file.
+// Usage: SaveAgent(...)
 func SaveAgent(cfg *config.Config, name string, ac AgentConfig) error {
 	key := fmt.Sprintf("agentci.agents.%s", name)
 	data := map[string]any{
@@ -125,6 +129,7 @@ func SaveAgent(cfg *config.Config, name string, ac AgentConfig) error {
 }
 
 // RemoveAgent removes an agent from the config file.
+// Usage: RemoveAgent(...)
 func RemoveAgent(cfg *config.Config, name string) error {
 	var agents map[string]AgentConfig
 	if err := cfg.Get("agentci.agents", &agents); err != nil {
@@ -138,6 +143,7 @@ func RemoveAgent(cfg *config.Config, name string) error {
 }
 
 // ListAgents returns all configured agents (active and inactive).
+// Usage: ListAgents(...)
 func ListAgents(cfg *config.Config) (map[string]AgentConfig, error) {
 	var agents map[string]AgentConfig
 	if err := cfg.Get("agentci.agents", &agents); err != nil {

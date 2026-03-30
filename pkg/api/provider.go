@@ -45,6 +45,7 @@ var (
 // NewProvider creates an SCM provider backed by the given marketplace index,
 // installer, and registry. The WS hub is used to emit real-time events.
 // Pass nil for any dependency that is not available.
+// Usage: NewProvider(...)
 func NewProvider(idx *marketplace.Index, inst *marketplace.Installer, reg *repos.Registry, hub *ws.Hub) *ScmProvider {
 	return &ScmProvider{
 		index:     idx,
@@ -56,12 +57,15 @@ func NewProvider(idx *marketplace.Index, inst *marketplace.Installer, reg *repos
 }
 
 // Name implements api.RouteGroup.
+// Usage: Name(...)
 func (p *ScmProvider) Name() string { return "scm" }
 
 // BasePath implements api.RouteGroup.
+// Usage: BasePath(...)
 func (p *ScmProvider) BasePath() string { return "/api/v1/scm" }
 
 // Element implements provider.Renderable.
+// Usage: Element(...)
 func (p *ScmProvider) Element() provider.ElementSpec {
 	return provider.ElementSpec{
 		Tag:    "core-scm-panel",
@@ -70,6 +74,7 @@ func (p *ScmProvider) Element() provider.ElementSpec {
 }
 
 // Channels implements provider.Streamable.
+// Usage: Channels(...)
 func (p *ScmProvider) Channels() []string {
 	return []string{
 		"scm.marketplace.refreshed",
@@ -81,6 +86,7 @@ func (p *ScmProvider) Channels() []string {
 }
 
 // RegisterRoutes implements api.RouteGroup.
+// Usage: RegisterRoutes(...)
 func (p *ScmProvider) RegisterRoutes(rg *gin.RouterGroup) {
 	// Marketplace
 	rg.GET("/marketplace", p.listMarketplace)
@@ -103,6 +109,7 @@ func (p *ScmProvider) RegisterRoutes(rg *gin.RouterGroup) {
 }
 
 // Describe implements api.DescribableGroup.
+// Usage: Describe(...)
 func (p *ScmProvider) Describe() []api.RouteDescription {
 	return []api.RouteDescription{
 		{

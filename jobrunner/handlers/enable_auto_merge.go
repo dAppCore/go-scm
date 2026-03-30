@@ -17,6 +17,7 @@ type EnableAutoMergeHandler struct {
 }
 
 // NewEnableAutoMergeHandler creates a handler that merges ready PRs.
+// Usage: NewEnableAutoMergeHandler(...)
 func NewEnableAutoMergeHandler(f *forge.Client) *EnableAutoMergeHandler {
 	return &EnableAutoMergeHandler{forge: f}
 }

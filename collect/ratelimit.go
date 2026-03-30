@@ -32,6 +32,7 @@ var defaultDelays = map[string]time.Duration{
 }
 
 // NewRateLimiter creates a limiter with default delays.
+// Usage: NewRateLimiter(...)
 func NewRateLimiter() *RateLimiter {
 	delays := make(map[string]time.Duration, len(defaultDelays))
 	maps.Copy(delays, defaultDelays)

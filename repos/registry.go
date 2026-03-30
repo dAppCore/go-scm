@@ -71,6 +71,8 @@ type Repo struct {
 // The path should be a valid path for the provided medium.
 //
 //	reg, err := repos.LoadRegistry(io.Local, ".core/repos.yaml")
+//
+// Usage: LoadRegistry(...)
 func LoadRegistry(m io.Medium, path string) (*Registry, error) {
 	content, err := m.Read(path)
 	if err != nil {
@@ -112,6 +114,8 @@ func LoadRegistry(m io.Medium, path string) (*Registry, error) {
 // This function is primarily intended for use with io.Local or other local-like filesystems.
 //
 //	path, err := repos.FindRegistry(io.Local)
+//
+// Usage: FindRegistry(...)
 func FindRegistry(m io.Medium) (string, error) {
 	// Check current directory and parents
 	dir, err := os.Getwd()
@@ -164,6 +168,8 @@ func FindRegistry(m io.Medium) (string, error) {
 // The dir should be a valid path for the provided medium.
 //
 //	reg, err := repos.ScanDirectory(io.Local, "/home/user/Code/core")
+//
+// Usage: ScanDirectory(...)
 func ScanDirectory(m io.Medium, dir string) (*Registry, error) {
 	entries, err := m.List(dir)
 	if err != nil {
@@ -255,6 +261,8 @@ func detectOrg(m io.Medium, repoPath string) string {
 // List returns all repos in the registry.
 //
 //	repos := reg.List()
+//
+// Usage: List(...)
 func (r *Registry) List() []*Repo {
 	repos := make([]*Repo, 0, len(r.Repos))
 	for _, repo := range r.Repos {
@@ -267,6 +275,8 @@ func (r *Registry) List() []*Repo {
 // Get returns a repo by name.
 //
 //	repo, ok := reg.Get("go-io")
+//
+// Usage: Get(...)
 func (r *Registry) Get(name string) (*Repo, bool) {
 	repo, ok := r.Repos[name]
 	return repo, ok
@@ -275,6 +285,8 @@ func (r *Registry) Get(name string) (*Repo, bool) {
 // ByType returns repos filtered by type.
 //
 //	goRepos := reg.ByType("go")
+//
+// Usage: ByType(...)
 func (r *Registry) ByType(t string) []*Repo {
 	var repos []*Repo
 	for _, repo := range r.Repos {
@@ -289,6 +301,8 @@ func (r *Registry) ByType(t string) []*Repo {
 // Foundation repos come first, then modules, then products.
 //
 //	ordered, err := reg.TopologicalOrder()
+//
+// Usage: TopologicalOrder(...)
 func (r *Registry) TopologicalOrder() ([]*Repo, error) {
 	// Build dependency graph
 	visited := make(map[string]bool)
@@ -331,11 +345,13 @@ func (r *Registry) TopologicalOrder() ([]*Repo, error) {
 }
 
 // Exists checks if the repo directory exists on disk.
+// Usage: Exists(...)
 func (repo *Repo) Exists() bool {
 	return repo.getMedium().IsDir(repo.Path)
 }
 
 // IsGitRepo checks if the repo directory contains a .git folder.
+// Usage: IsGitRepo(...)
 func (repo *Repo) IsGitRepo() bool {
 	gitPath := filepath.Join(repo.Path, ".git")
 	return repo.getMedium().IsDir(gitPath)

@@ -41,6 +41,7 @@ type StateEntry struct {
 
 // NewState creates a state tracker that persists to the given path
 // using the provided storage medium.
+// Usage: NewState(...)
 func NewState(m io.Medium, path string) *State {
 	return &State{
 		medium:  m,
@@ -51,6 +52,7 @@ func NewState(m io.Medium, path string) *State {
 
 // Load reads state from disk. If the file does not exist, the state
 // is initialised as empty without error.
+// Usage: Load(...)
 func (s *State) Load() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -77,6 +79,7 @@ func (s *State) Load() error {
 }
 
 // Save writes state to disk.
+// Usage: Save(...)
 func (s *State) Save() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -95,6 +98,7 @@ func (s *State) Save() error {
 
 // Get returns a copy of the state for a source. The second return value
 // indicates whether the entry was found.
+// Usage: Get(...)
 func (s *State) Get(source string) (*StateEntry, bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -108,6 +112,7 @@ func (s *State) Get(source string) (*StateEntry, bool) {
 }
 
 // Set updates state for a source.
+// Usage: Set(...)
 func (s *State) Set(source string, entry *StateEntry) {
 	s.mu.Lock()
 	defer s.mu.Unlock()

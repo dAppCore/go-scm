@@ -54,6 +54,7 @@ type Journal struct {
 }
 
 // NewJournal creates a new Journal rooted at baseDir.
+// Usage: NewJournal(...)
 func NewJournal(baseDir string) (*Journal, error) {
 	if baseDir == "" {
 		return nil, coreerr.E("jobrunner.NewJournal", "base directory is required", nil)
@@ -92,6 +93,7 @@ func sanitizePathComponent(name string) (string, error) {
 }
 
 // Append writes a journal entry for the given signal and result.
+// Usage: Append(...)
 func (j *Journal) Append(signal *PipelineSignal, result *ActionResult) error {
 	if signal == nil {
 		return coreerr.E("jobrunner.Journal.Append", "signal is required", nil)

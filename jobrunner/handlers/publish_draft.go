@@ -17,6 +17,7 @@ type PublishDraftHandler struct {
 }
 
 // NewPublishDraftHandler creates a handler that publishes draft PRs.
+// Usage: NewPublishDraftHandler(...)
 func NewPublishDraftHandler(f *forge.Client) *PublishDraftHandler {
 	return &PublishDraftHandler{forge: f}
 }
