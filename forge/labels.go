@@ -10,13 +10,12 @@ import (
 	"dappco.re/go/core/log"
 )
 
-// ListOrgLabels returns all labels for repos in the given organisation.
+// ListOrgLabels returns all unique labels across repos in the given organisation.
 // Note: The Forgejo SDK does not have a dedicated org-level labels endpoint.
-// This lists labels from the first repo found, which works when orgs use shared label sets.
-// For org-wide label management, use ListRepoLabels with a specific repo.
+// We aggregate labels from each repo and deduplicate them by name, preserving
+// the first seen label metadata.
 // Usage: ListOrgLabels(...)
 func (c *Client) ListOrgLabels(org string) ([]*forgejo.Label, error) {
-	// Forgejo doesn't expose org-level labels via SDK — list repos and aggregate unique labels.
 	repos, err := c.ListOrgRepos(org)
 	if err != nil {
 		return nil, err
@@ -26,8 +25,25 @@ func (c *Client) ListOrgLabels(org string) ([]*forgejo.Label, error) {
 		return nil, nil
 	}
 
-	// Use the first repo's labels as representative of the org's label set.
-	return c.ListRepoLabels(repos[0].Owner.UserName, repos[0].Name)
+	seen := make(map[string]struct{}, len(repos))
+	var all []*forgejo.Label
+
+	for _, repo := range repos {
+		labels, err := c.ListRepoLabels(repo.Owner.UserName, repo.Name)
+		if err != nil {
+			return nil, err
+		}
+		for _, label := range labels {
+			key := strings.ToLower(label.Name)
+			if _, ok := seen[key]; ok {
+				continue
+			}
+			seen[key] = struct{}{}
+			all = append(all, label)
+		}
+	}
+
+	return all, nil
 }
 
 // ListRepoLabels returns all labels for a repository.

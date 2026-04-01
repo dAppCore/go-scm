@@ -58,6 +58,7 @@ func newForgejoMux() *http.ServeMux {
 		}
 		jsonResponse(w, []map[string]any{
 			{"id": 10, "name": "org-repo", "full_name": "test-org/org-repo", "owner": map[string]any{"login": "test-org", "id": 100}},
+			{"id": 11, "name": "second-repo", "full_name": "test-org/second-repo", "owner": map[string]any{"login": "test-org", "id": 100}},
 		})
 	})
 
@@ -226,6 +227,13 @@ func newForgejoMux() *http.ServeMux {
 		jsonResponse(w, []map[string]any{
 			{"id": 1, "name": "bug", "color": "#ff0000"},
 			{"id": 2, "name": "feature", "color": "#0000ff"},
+		})
+	})
+
+	mux.HandleFunc("/api/v1/repos/test-org/second-repo/labels", func(w http.ResponseWriter, r *http.Request) {
+		jsonResponse(w, []map[string]any{
+			{"id": 2, "name": "feature", "color": "#0000ff"},
+			{"id": 3, "name": "documentation", "color": "#00aa00"},
 		})
 	})
 

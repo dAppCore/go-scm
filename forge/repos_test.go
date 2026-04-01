@@ -17,8 +17,9 @@ func TestClient_ListOrgRepos_Good(t *testing.T) {
 
 	repos, err := client.ListOrgRepos("test-org")
 	require.NoError(t, err)
-	require.Len(t, repos, 1)
+	require.Len(t, repos, 2)
 	assert.Equal(t, "org-repo", repos[0].Name)
+	assert.Equal(t, "second-repo", repos[1].Name)
 }
 
 func TestClient_ListOrgRepos_Bad_ServerError_Good(t *testing.T) {

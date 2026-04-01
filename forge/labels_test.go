@@ -106,8 +106,10 @@ func TestClient_ListOrgLabels_Good(t *testing.T) {
 
 	labels, err := client.ListOrgLabels("test-org")
 	require.NoError(t, err)
-	// Uses first repo's labels as representative.
-	assert.NotEmpty(t, labels)
+	require.Len(t, labels, 3)
+	assert.Equal(t, "bug", labels[0].Name)
+	assert.Equal(t, "feature", labels[1].Name)
+	assert.Equal(t, "documentation", labels[2].Name)
 }
 
 func TestClient_ListOrgLabels_Bad_ServerError_Good(t *testing.T) {
