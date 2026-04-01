@@ -82,7 +82,8 @@ func newForgejoMux() *http.ServeMux {
 		}
 		jsonResponse(w, map[string]any{
 			"id": 10, "name": "org-repo", "full_name": "test-org/org-repo",
-			"owner": map[string]any{"login": "test-org"},
+			"owner":          map[string]any{"login": "test-org"},
+			"default_branch": "main",
 		})
 	})
 

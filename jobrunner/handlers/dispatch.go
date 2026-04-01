@@ -157,7 +157,7 @@ func (h *DispatchHandler) Execute(ctx context.Context, signal *jobrunner.Pipelin
 	}
 
 	// Build ticket.
-	targetBranch := "new" // TODO: resolve from epic or repo default
+	targetBranch := h.resolveTargetBranch(safeOwner, safeRepo)
 	ticketID := fmt.Sprintf("%s-%s-%d-%d", safeOwner, safeRepo, signal.ChildNumber, time.Now().Unix())
 
 	ticket := DispatchTicket{
@@ -261,6 +261,21 @@ func (h *DispatchHandler) Execute(ctx context.Context, signal *jobrunner.Pipelin
 		Timestamp:   time.Now(),
 		Duration:    time.Since(start),
 	}, nil
+}
+
+func (h *DispatchHandler) resolveTargetBranch(owner, repo string) string {
+	const fallbackBranch = "main"
+
+	if h.forge == nil {
+		return fallbackBranch
+	}
+
+	repoInfo, err := h.forge.GetRepo(owner, repo)
+	if err != nil || repoInfo == nil || repoInfo.DefaultBranch == "" {
+		return fallbackBranch
+	}
+
+	return repoInfo.DefaultBranch
 }
 
 // failDispatch handles cleanup when dispatch fails (adds failed label, removes in-progress).

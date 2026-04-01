@@ -175,7 +175,7 @@ func TestDispatch_TicketJSON_Good(t *testing.T) {
 		IssueNumber:  5,
 		IssueTitle:   "Fix the thing",
 		IssueBody:    "Please fix this bug",
-		TargetBranch: "new",
+		TargetBranch: "main",
 		EpicNumber:   3,
 		ForgeURL:     "https://forge.lthn.ai",
 		ForgeUser:    "darbs-claude",
@@ -198,7 +198,7 @@ func TestDispatch_TicketJSON_Good(t *testing.T) {
 	assert.Equal(t, float64(5), decoded["issue_number"])
 	assert.Equal(t, "Fix the thing", decoded["issue_title"])
 	assert.Equal(t, "Please fix this bug", decoded["issue_body"])
-	assert.Equal(t, "new", decoded["target_branch"])
+	assert.Equal(t, "main", decoded["target_branch"])
 	assert.Equal(t, float64(3), decoded["epic_number"])
 	assert.Equal(t, "https://forge.lthn.ai", decoded["forge_url"])
 	assert.Equal(t, "darbs-claude", decoded["forgejo_user"])
@@ -252,6 +252,30 @@ func TestDispatch_TicketJSON_Good_OmitsEmptyModelRunner_Good(t *testing.T) {
 	_, hasRunner := decoded["runner"]
 	assert.False(t, hasModel, "model should be omitted when empty")
 	assert.False(t, hasRunner, "runner should be omitted when empty")
+}
+
+func TestDispatch_Execute_Good_UsesRepoDefaultBranch_Good(t *testing.T) {
+	srv := httptest.NewServer(withVersion(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})))
+	defer srv.Close()
+
+	client := newTestForgeClient(t, srv.URL)
+	spinner := newTestSpinner(map[string]agentci.AgentConfig{
+		"darbs-claude": {Host: "claude@192.168.0.201", QueueDir: "~/ai-work/queue", Active: true},
+	})
+	h := NewDispatchHandler(client, srv.URL, "test-token", spinner)
+
+	sig := &jobrunner.PipelineSignal{
+		NeedsCoding: true,
+		Assignee:    "darbs-claude",
+		RepoOwner:   "test-org",
+		RepoName:    "org-repo",
+		ChildNumber: 1,
+	}
+
+	branch := h.resolveTargetBranch(sig.RepoOwner, sig.RepoName)
+	assert.Equal(t, "main", branch)
 }
 
 func TestDispatch_runRemote_Good_EscapesPath_Good(t *testing.T) {
