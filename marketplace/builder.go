@@ -31,15 +31,19 @@ type Builder struct {
 	Org string
 }
 
-// BuildFromDirs scans each directory for subdirectories containing either
-// core.json (preferred) or .core/manifest.yaml. Each valid manifest is
-// added to the resulting Index as a Module.
+// BuildFromDirs scans each directory, then its immediate subdirectories, for
+// core.json (preferred) or .core/manifest.yaml. Each valid manifest is added
+// to the resulting Index as a Module.
 // Usage: BuildFromDirs(...)
 func (b *Builder) BuildFromDirs(dirs ...string) (*Index, error) {
 	var modules []Module
 	seen := make(map[string]bool)
 
 	for _, dir := range dirs {
+		if err := b.loadInto(&modules, seen, dir); err != nil {
+			core.Warn(core.Sprintf("marketplace: skipping %s: %v", filepath.Base(dir), err))
+		}
+
 		entries, err := os.ReadDir(dir)
 		if err != nil {
 			if os.IsNotExist(err) {
@@ -53,26 +57,10 @@ func (b *Builder) BuildFromDirs(dirs ...string) (*Index, error) {
 				continue
 			}
 
-			m, err := b.loadFromDir(filepath.Join(dir, e.Name()))
-			if err != nil {
+			child := filepath.Join(dir, e.Name())
+			if err := b.loadInto(&modules, seen, child); err != nil {
 				core.Warn(core.Sprintf("marketplace: skipping %s: %v", e.Name(), err))
-				continue
 			}
-			if m == nil {
-				continue
-			}
-			if seen[m.Code] {
-				continue
-			}
-			seen[m.Code] = true
-
-			mod := Module{
-				Code:    m.Code,
-				Name:    m.Name,
-				Repo:    b.repoURL(m.Code),
-				SignKey: m.Sign,
-			}
-			modules = append(modules, mod)
 		}
 	}
 
@@ -84,6 +72,29 @@ func (b *Builder) BuildFromDirs(dirs ...string) (*Index, error) {
 		Version: IndexVersion,
 		Modules: modules,
 	}, nil
+}
+
+func (b *Builder) loadInto(modules *[]Module, seen map[string]bool, dir string) error {
+	m, err := b.loadFromDir(dir)
+	if err != nil {
+		return err
+	}
+	if m == nil {
+		return nil
+	}
+	if seen[m.Code] {
+		return nil
+	}
+	seen[m.Code] = true
+
+	mod := Module{
+		Code:    m.Code,
+		Name:    m.Name,
+		Repo:    b.repoURL(m.Code),
+		SignKey: m.Sign,
+	}
+	*modules = append(*modules, mod)
+	return nil
 }
 
 // BuildFromManifests constructs an Index from pre-loaded manifests.

@@ -65,6 +65,20 @@ func TestBuildFromDirs_Good_ManifestYAML_Good(t *testing.T) {
 	assert.Equal(t, IndexVersion, idx.Version)
 }
 
+func TestBuildFromDirs_Good_IndexesRootDirectory_Good(t *testing.T) {
+	root := t.TempDir()
+	writeManifestYAML(t, root, "root-mod", "Root Module", "1.0.0")
+
+	b := &Builder{BaseURL: "https://forge.lthn.ai", Org: "core"}
+	idx, err := b.BuildFromDirs(root)
+	require.NoError(t, err)
+
+	require.Len(t, idx.Modules, 1)
+	assert.Equal(t, "root-mod", idx.Modules[0].Code)
+	assert.Equal(t, "Root Module", idx.Modules[0].Name)
+	assert.Equal(t, "https://forge.lthn.ai/core/root-mod.git", idx.Modules[0].Repo)
+}
+
 func TestBuildFromDirs_Good_CarriesSignKey_Good(t *testing.T) {
 	root := t.TempDir()
 	modDir := filepath.Join(root, "signed-mod")
