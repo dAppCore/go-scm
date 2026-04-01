@@ -161,6 +161,31 @@ func TestClient_ListOrgLabels_Good(t *testing.T) {
 	assert.Equal(t, "documentation", labels[2].Name)
 }
 
+func TestClient_ListOrgLabelsIter_Good(t *testing.T) {
+	client, srv := newTestClient(t)
+	defer srv.Close()
+
+	var names []string
+	for label, err := range client.ListOrgLabelsIter("test-org") {
+		require.NoError(t, err)
+		names = append(names, label.Name)
+	}
+
+	require.Len(t, names, 3)
+	assert.Equal(t, []string{"bug", "feature", "documentation"}, names)
+}
+
+func TestClient_ListOrgLabelsIter_Bad_ServerError_Good(t *testing.T) {
+	client, srv := newErrorServer(t)
+	defer srv.Close()
+
+	for _, err := range client.ListOrgLabelsIter("test-org") {
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to list org repos")
+		break
+	}
+}
+
 func TestClient_ListOrgLabels_Bad_ServerError_Good(t *testing.T) {
 	client, srv := newErrorServer(t)
 	defer srv.Close()

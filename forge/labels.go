@@ -48,6 +48,40 @@ func (c *Client) ListOrgLabels(org string) ([]*forgejo.Label, error) {
 	return all, nil
 }
 
+// ListOrgLabelsIter returns an iterator over unique labels across repos in the given organisation.
+// Note: The Forgejo SDK does not have a dedicated org-level labels endpoint.
+// Labels are yielded in first-seen order across repositories and deduplicated by name.
+// Usage: ListOrgLabelsIter(...)
+func (c *Client) ListOrgLabelsIter(org string) iter.Seq2[*forgejo.Label, error] {
+	return func(yield func(*forgejo.Label, error) bool) {
+		seen := make(map[string]struct{})
+
+		for repo, err := range c.ListOrgReposIter(org) {
+			if err != nil {
+				yield(nil, log.E("forge.ListOrgLabels", "failed to list org repos", err))
+				return
+			}
+
+			for label, err := range c.ListRepoLabelsIter(repo.Owner.UserName, repo.Name) {
+				if err != nil {
+					yield(nil, log.E("forge.ListOrgLabels", "failed to list repo labels", err))
+					return
+				}
+
+				key := strings.ToLower(label.Name)
+				if _, ok := seen[key]; ok {
+					continue
+				}
+				seen[key] = struct{}{}
+
+				if !yield(label, nil) {
+					return
+				}
+			}
+		}
+	}
+}
+
 // ListRepoLabels returns all labels for a repository.
 // Usage: ListRepoLabels(...)
 func (c *Client) ListRepoLabels(owner, repo string) ([]*forgejo.Label, error) {
