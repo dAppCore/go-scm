@@ -1,0 +1,77 @@
+// SPDX-License-Identifier: EUPL-1.2
+
+package marketplace
+
+import (
+	"sort"
+
+	"dappco.re/go/core/io"
+	"dappco.re/go/core/scm/manifest"
+)
+
+// IndexOptions controls how BuildIndex populates marketplace metadata.
+// Usage: IndexOptions{...}
+type IndexOptions struct {
+	// Org is the default organisation used when constructing repo URLs.
+	Org string
+
+	// ForgeURL is the base URL used when constructing repo URLs.
+	ForgeURL string
+
+	// CategoryFn assigns a category to a module code.
+	CategoryFn func(code string) string
+}
+
+// BuildIndex reads .core/manifest.yaml from each repository root and produces
+// a marketplace index. Repositories without a manifest are skipped silently.
+// Categories are deduplicated and sorted.
+// Usage: BuildIndex(...)
+func BuildIndex(medium io.Medium, repoPaths []string, opts IndexOptions) (*Index, error) {
+	idx := &Index{
+		Version: IndexVersion,
+	}
+
+	seen := make(map[string]bool)
+	categories := make(map[string]bool)
+
+	for _, repoPath := range repoPaths {
+		m, err := manifest.Load(medium, repoPath)
+		if err != nil {
+			continue
+		}
+		if m == nil || m.Code == "" {
+			continue
+		}
+		if seen[m.Code] {
+			continue
+		}
+		seen[m.Code] = true
+
+		module := Module{
+			Code: m.Code,
+			Name: m.Name,
+		}
+		if opts.ForgeURL != "" && opts.Org != "" {
+			module.Repo = opts.ForgeURL + "/" + opts.Org + "/" + m.Code
+		}
+		if opts.CategoryFn != nil {
+			module.Category = opts.CategoryFn(m.Code)
+		}
+		if module.Category != "" {
+			categories[module.Category] = true
+		}
+
+		idx.Modules = append(idx.Modules, module)
+	}
+
+	sort.Slice(idx.Modules, func(i, j int) bool {
+		return idx.Modules[i].Code < idx.Modules[j].Code
+	})
+
+	for category := range categories {
+		idx.Categories = append(idx.Categories, category)
+	}
+	sort.Strings(idx.Categories)
+
+	return idx, nil
+}
