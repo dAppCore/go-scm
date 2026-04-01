@@ -66,9 +66,10 @@ func (b *Builder) BuildFromDirs(dirs ...string) (*Index, error) {
 			seen[m.Code] = true
 
 			mod := Module{
-				Code: m.Code,
-				Name: m.Name,
-				Repo: b.repoURL(m.Code),
+				Code:    m.Code,
+				Name:    m.Name,
+				Repo:    b.repoURL(m.Code),
+				SignKey: m.Sign,
 			}
 			modules = append(modules, mod)
 		}
@@ -102,8 +103,9 @@ func BuildFromManifests(manifests []*manifest.Manifest) *Index {
 		seen[m.Code] = true
 
 		modules = append(modules, Module{
-			Code: m.Code,
-			Name: m.Name,
+			Code:    m.Code,
+			Name:    m.Name,
+			SignKey: m.Sign,
 		})
 	}
 

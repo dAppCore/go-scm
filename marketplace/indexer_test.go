@@ -17,16 +17,19 @@ func TestBuildIndex_Good_CategoriesAndRepoURLs_Good(t *testing.T) {
 code: a
 name: Alpha
 version: 1.0.0
+sign: key-a
 `))
 	require.NoError(t, medium.Write("/repos/b/.core/manifest.yaml", `
 code: b
 name: Beta
 version: 1.0.0
+sign: key-b
 `))
 	require.NoError(t, medium.Write("/repos/c/.core/manifest.yaml", `
 code: c
 name: Gamma
 version: 1.0.0
+sign: key-c
 `))
 
 	idx, err := BuildIndex(medium, []string{"/repos/a", "/repos/b", "/repos/c"}, IndexOptions{
@@ -47,6 +50,7 @@ version: 1.0.0
 	assert.Equal(t, "a", idx.Modules[0].Code)
 	assert.Equal(t, "https://forge.example.com/core/a", idx.Modules[0].Repo)
 	assert.Equal(t, "tools", idx.Modules[0].Category)
+	assert.Equal(t, "key-a", idx.Modules[0].SignKey)
 	assert.Equal(t, []string{"products", "tools"}, idx.Categories)
 }
 
@@ -57,6 +61,7 @@ func TestBuildIndex_Good_SkipsMissingManifest_Good(t *testing.T) {
 code: one
 name: One
 version: 1.0.0
+sign: key-one
 `))
 
 	idx, err := BuildIndex(medium, []string{"/repos/one", "/repos/missing"}, IndexOptions{})

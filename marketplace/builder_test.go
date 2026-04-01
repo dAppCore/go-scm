@@ -23,6 +23,15 @@ func writeManifestYAML(t *testing.T, dir, code, name, version string) {
 	require.NoError(t, os.WriteFile(filepath.Join(coreDir, "manifest.yaml"), []byte(yaml), 0644))
 }
 
+// writeManifestYAMLWithSign writes a .core/manifest.yaml with a signing key.
+func writeManifestYAMLWithSign(t *testing.T, dir, code, name, version, sign string) {
+	t.Helper()
+	coreDir := filepath.Join(dir, ".core")
+	require.NoError(t, os.MkdirAll(coreDir, 0755))
+	yaml := "code: " + code + "\nname: " + name + "\nversion: " + version + "\nsign: " + sign + "\n"
+	require.NoError(t, os.WriteFile(filepath.Join(coreDir, "manifest.yaml"), []byte(yaml), 0644))
+}
+
 // writeCoreJSON writes a core.json for a module directory.
 func writeCoreJSON(t *testing.T, dir, code, name, version string) {
 	t.Helper()
@@ -54,6 +63,20 @@ func TestBuildFromDirs_Good_ManifestYAML_Good(t *testing.T) {
 	assert.Equal(t, "My Widget", idx.Modules[0].Name)
 	assert.Equal(t, "https://forge.lthn.ai/core/my-widget", idx.Modules[0].Repo)
 	assert.Equal(t, IndexVersion, idx.Version)
+}
+
+func TestBuildFromDirs_Good_CarriesSignKey_Good(t *testing.T) {
+	root := t.TempDir()
+	modDir := filepath.Join(root, "signed-mod")
+	require.NoError(t, os.MkdirAll(modDir, 0755))
+	writeManifestYAMLWithSign(t, modDir, "signed-mod", "Signed Module", "1.0.0", "abc123")
+
+	b := &Builder{}
+	idx, err := b.BuildFromDirs(root)
+	require.NoError(t, err)
+
+	require.Len(t, idx.Modules, 1)
+	assert.Equal(t, "abc123", idx.Modules[0].SignKey)
 }
 
 func TestBuildFromDirs_Good_CoreJSON_Good(t *testing.T) {
@@ -168,14 +191,16 @@ func TestBuildFromDirs_Good_NoRepoURLWithoutConfig_Good(t *testing.T) {
 
 func TestBuildFromManifests_Good(t *testing.T) {
 	manifests := []*manifest.Manifest{
-		{Code: "bravo", Name: "Bravo"},
-		{Code: "alpha", Name: "Alpha"},
+		{Code: "bravo", Name: "Bravo", Sign: "key-bravo"},
+		{Code: "alpha", Name: "Alpha", Sign: "key-alpha"},
 	}
 	idx := BuildFromManifests(manifests)
 	require.Len(t, idx.Modules, 2)
 	assert.Equal(t, "alpha", idx.Modules[0].Code)
 	assert.Equal(t, "bravo", idx.Modules[1].Code)
 	assert.Equal(t, IndexVersion, idx.Version)
+	assert.Equal(t, "key-alpha", idx.Modules[0].SignKey)
+	assert.Equal(t, "key-bravo", idx.Modules[1].SignKey)
 }
 
 func TestBuildFromManifests_Good_SkipsNil_Good(t *testing.T) {

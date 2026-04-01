@@ -48,8 +48,9 @@ func BuildIndex(medium io.Medium, repoPaths []string, opts IndexOptions) (*Index
 		seen[m.Code] = true
 
 		module := Module{
-			Code: m.Code,
-			Name: m.Name,
+			Code:    m.Code,
+			Name:    m.Name,
+			SignKey: m.Sign,
 		}
 		if opts.ForgeURL != "" && opts.Org != "" {
 			module.Repo = opts.ForgeURL + "/" + opts.Org + "/" + m.Code
