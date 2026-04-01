@@ -490,7 +490,12 @@ func (p *ScmProvider) listRegistry(c *gin.Context) {
 		return
 	}
 
-	repoList := p.registry.List()
+	repoList, err := p.registry.TopologicalOrder()
+	if err != nil {
+		// Keep the endpoint usable if the registry is malformed.
+		repoList = p.registry.List()
+	}
+
 	summaries := make([]repoSummary, 0, len(repoList))
 	for _, r := range repoList {
 		summaries = append(summaries, repoSummary{

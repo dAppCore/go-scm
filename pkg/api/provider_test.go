@@ -11,8 +11,10 @@ import (
 	"testing"
 
 	goapi "dappco.re/go/core/api"
+	"dappco.re/go/core/io"
 	"dappco.re/go/core/scm/marketplace"
 	scmapi "dappco.re/go/core/scm/pkg/api"
+	"dappco.re/go/core/scm/repos"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -214,6 +216,39 @@ func TestScmProvider_ListRegistry_NilRegistry_Good(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, resp.Success)
 	assert.Empty(t, resp.Data)
+}
+
+func TestScmProvider_ListRegistry_TopologicalOrder_Good(t *testing.T) {
+	medium := io.NewMockMedium()
+	require.NoError(t, medium.Write("/tmp/repos.yaml", `
+version: 1
+org: host-uk
+base_path: /tmp/repos
+repos:
+  core-php:
+    type: foundation
+  core-admin:
+    type: module
+    depends_on: [core-php]
+`))
+
+	reg, err := repos.LoadRegistry(medium, "/tmp/repos.yaml")
+	require.NoError(t, err)
+
+	p := scmapi.NewProvider(nil, nil, reg, nil)
+	r := setupRouter(p)
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/api/v1/scm/registry", nil)
+	r.ServeHTTP(w, req)
+
+	require.Equal(t, http.StatusOK, w.Code)
+
+	var resp goapi.Response[[]map[string]any]
+	err = json.Unmarshal(w.Body.Bytes(), &resp)
+	require.NoError(t, err)
+	require.Len(t, resp.Data, 2)
+	assert.Equal(t, "core-php", resp.Data[0]["name"])
+	assert.Equal(t, "core-admin", resp.Data[1]["name"])
 }
 
 func TestScmProvider_RefreshMarketplace_Good(t *testing.T) {
