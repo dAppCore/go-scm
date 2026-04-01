@@ -60,6 +60,42 @@ func TestClient_ListPRReviews_Good(t *testing.T) {
 	require.Len(t, reviews, 1)
 }
 
+func TestClient_ListPRReviewsIter_Good_Paginates_Good(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/v1/version", func(w http.ResponseWriter, r *http.Request) {
+		jsonResponse(w, map[string]string{"version": "1.21.0"})
+	})
+	mux.HandleFunc("/api/v1/repos/test-org/org-repo/pulls/1/reviews", func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Query().Get("page") {
+		case "2":
+			jsonResponse(w, []map[string]any{
+				{"id": 2, "state": "REQUEST_CHANGES", "user": map[string]any{"login": "reviewer2"}},
+			})
+		case "3":
+			jsonResponse(w, []map[string]any{})
+		default:
+			w.Header().Set("Link", "<http://"+r.Host+"/api/v1/repos/test-org/org-repo/pulls/1/reviews?page=2>; rel=\"next\", <http://"+r.Host+"/api/v1/repos/test-org/org-repo/pulls/1/reviews?page=2>; rel=\"last\"")
+			jsonResponse(w, []map[string]any{
+				{"id": 1, "state": "APPROVED", "user": map[string]any{"login": "reviewer1"}},
+			})
+		}
+	})
+
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+
+	client, err := New(srv.URL, "test-token")
+	require.NoError(t, err)
+
+	var states []string
+	for review, err := range client.ListPRReviewsIter("test-org", "org-repo", 1) {
+		require.NoError(t, err)
+		states = append(states, review.State)
+	}
+
+	require.Equal(t, []string{"APPROVED", "REQUEST_CHANGES"}, states)
+}
+
 func TestClient_ListPRReviews_Bad_ServerError_Good(t *testing.T) {
 	client, srv := newErrorServer(t)
 	defer srv.Close()
@@ -67,6 +103,19 @@ func TestClient_ListPRReviews_Bad_ServerError_Good(t *testing.T) {
 	_, err := client.ListPRReviews("test-org", "org-repo", 1)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to list reviews")
+}
+
+func TestClient_ListPRReviewsIter_Bad_ServerError_Good(t *testing.T) {
+	client, srv := newErrorServer(t)
+	defer srv.Close()
+
+	var got bool
+	for _, err := range client.ListPRReviewsIter("test-org", "org-repo", 1) {
+		assert.Error(t, err)
+		got = true
+	}
+
+	assert.True(t, got)
 }
 
 func TestClient_GetCombinedStatus_Good(t *testing.T) {
