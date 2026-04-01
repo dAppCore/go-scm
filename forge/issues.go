@@ -39,19 +39,32 @@ func (c *Client) ListIssues(owner, repo string, opts ListIssuesOpts) ([]*forgejo
 		page = 1
 	}
 
-	listOpt := forgejo.ListIssueOption{
-		ListOptions: forgejo.ListOptions{Page: page, PageSize: limit},
-		State:       state,
-		Type:        forgejo.IssueTypeIssue,
-		Labels:      opts.Labels,
+	var all []*forgejo.Issue
+
+	for {
+		listOpt := forgejo.ListIssueOption{
+			ListOptions: forgejo.ListOptions{Page: page, PageSize: limit},
+			State:       state,
+			Type:        forgejo.IssueTypeIssue,
+			Labels:      opts.Labels,
+		}
+
+		issues, resp, err := c.api.ListRepoIssues(owner, repo, listOpt)
+		if err != nil {
+			return nil, log.E("forge.ListIssues", "failed to list issues", err)
+		}
+
+		all = append(all, issues...)
+		if len(issues) < limit || len(issues) == 0 {
+			break
+		}
+		if resp != nil && resp.LastPage > 0 && page >= resp.LastPage {
+			break
+		}
+		page++
 	}
 
-	issues, _, err := c.api.ListRepoIssues(owner, repo, listOpt)
-	if err != nil {
-		return nil, log.E("forge.ListIssues", "failed to list issues", err)
-	}
-
-	return issues, nil
+	return all, nil
 }
 
 // GetIssue returns a single issue by number.

@@ -3,6 +3,8 @@
 package gitea
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	giteaSDK "code.gitea.io/sdk/gitea"
@@ -10,6 +12,34 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func newPaginatedIssuesClient(t *testing.T) (*Client, *httptest.Server) {
+	t.Helper()
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/v1/version", func(w http.ResponseWriter, r *http.Request) {
+		jsonResponse(w, map[string]string{"version": "1.21.0"})
+	})
+	mux.HandleFunc("/api/v1/repos/test-org/org-repo/issues", func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Query().Get("page") {
+		case "2":
+			jsonResponse(w, []map[string]any{
+				{"id": 2, "number": 2, "title": "Issue 2", "state": "open", "body": "Second issue"},
+			})
+		case "3":
+			jsonResponse(w, []map[string]any{})
+		default:
+			jsonResponse(w, []map[string]any{
+				{"id": 1, "number": 1, "title": "Issue 1", "state": "open", "body": "First issue"},
+			})
+		}
+	})
+
+	srv := httptest.NewServer(mux)
+	client, err := New(srv.URL, "test-token")
+	require.NoError(t, err)
+	return client, srv
+}
 
 func TestClient_ListIssues_Good(t *testing.T) {
 	client, srv := newTestClient(t)
@@ -19,6 +49,17 @@ func TestClient_ListIssues_Good(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, issues, 2)
 	assert.Equal(t, "Issue 1", issues[0].Title)
+}
+
+func TestClient_ListIssues_Good_Paginates_Good(t *testing.T) {
+	client, srv := newPaginatedIssuesClient(t)
+	defer srv.Close()
+
+	issues, err := client.ListIssues("test-org", "org-repo", ListIssuesOpts{Limit: 1})
+	require.NoError(t, err)
+	require.Len(t, issues, 2)
+	assert.Equal(t, "Issue 1", issues[0].Title)
+	assert.Equal(t, "Issue 2", issues[1].Title)
 }
 
 func TestClient_ListIssues_Good_StateMapping_Good(t *testing.T) {

@@ -38,16 +38,29 @@ func (c *Client) ListIssues(owner, repo string, opts ListIssuesOpts) ([]*gitea.I
 		page = 1
 	}
 
-	issues, _, err := c.api.ListRepoIssues(owner, repo, gitea.ListIssueOption{
-		ListOptions: gitea.ListOptions{Page: page, PageSize: limit},
-		State:       state,
-		Type:        gitea.IssueTypeIssue,
-	})
-	if err != nil {
-		return nil, log.E("gitea.ListIssues", "failed to list issues", err)
+	var all []*gitea.Issue
+
+	for {
+		issues, resp, err := c.api.ListRepoIssues(owner, repo, gitea.ListIssueOption{
+			ListOptions: gitea.ListOptions{Page: page, PageSize: limit},
+			State:       state,
+			Type:        gitea.IssueTypeIssue,
+		})
+		if err != nil {
+			return nil, log.E("gitea.ListIssues", "failed to list issues", err)
+		}
+
+		all = append(all, issues...)
+		if len(issues) < limit || len(issues) == 0 {
+			break
+		}
+		if resp != nil && resp.LastPage > 0 && page >= resp.LastPage {
+			break
+		}
+		page++
 	}
 
-	return issues, nil
+	return all, nil
 }
 
 // GetIssue returns a single issue by number.
