@@ -16,28 +16,36 @@ import (
 var safeNameRegex = regexp.MustCompile(`^[a-zA-Z0-9\-\_\.]+$`)
 
 // SanitizePath ensures a filename or directory name is safe and prevents path traversal.
-// Returns the validated input unchanged.
+// Returns the validated basename.
 // Usage: SanitizePath(...)
 func SanitizePath(input string) (string, error) {
 	if input == "" {
 		return "", coreerr.E("agentci.SanitizePath", "path element is required", nil)
 	}
-	if strings.ContainsAny(input, `/\`) {
-		return "", coreerr.E("agentci.SanitizePath", "path separators are not allowed: "+input, nil)
-	}
-	if input == "." || input == ".." {
+	safeName := filepath.Base(input)
+	if safeName == "." || safeName == ".." {
 		return "", coreerr.E("agentci.SanitizePath", "invalid path element: "+input, nil)
 	}
-	if !safeNameRegex.MatchString(input) {
+	if strings.ContainsAny(safeName, `/\`) {
+		return "", coreerr.E("agentci.SanitizePath", "path separators are not allowed: "+input, nil)
+	}
+	if !safeNameRegex.MatchString(safeName) {
 		return "", coreerr.E("agentci.SanitizePath", "invalid characters in path element: "+input, nil)
 	}
-	return input, nil
+	return safeName, nil
 }
 
 // ValidatePathElement validates a single local path element and returns its safe form.
 // Usage: ValidatePathElement(...)
 func ValidatePathElement(input string) (string, error) {
-	return SanitizePath(input)
+	safeName, err := SanitizePath(input)
+	if err != nil {
+		return "", err
+	}
+	if safeName != input {
+		return "", coreerr.E("agentci.ValidatePathElement", "path separators are not allowed: "+input, nil)
+	}
+	return safeName, nil
 }
 
 // ResolvePathWithinRoot resolves a validated path element beneath a root directory.
