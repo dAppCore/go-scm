@@ -130,9 +130,9 @@ The Forgejo SDK v2 and Gitea SDK do not accept `context.Context`. All Forgejo/Gi
 
 None of the HTTP-dependent collectors (`bitcointalk.go`, `github.go`, `market.go`, `papers.go`) implement retry on transient failures. A single HTTP error causes the collector to return an error and increment the `Errors` count in the result. The `Excavator` continues to the next collector. For long-running collection runs, transient network errors cause silent data gaps.
 
-**Journal replay — no public API**
+**Journal replay**
 
-The journal can be replayed by scanning the JSONL files directly, but there is no exported `Query` or `Filter` function. Replay filtering patterns exist only in tests. A future phase should export a query interface.
+The journal now exposes `Journal.Query(...)` for replay and filtering over the JSONL archive. It supports repo, action, and time-range filters while preserving the date-partitioned storage layout used by `Append(...)`.
 
 **git.Service framework integration**
 
