@@ -3,6 +3,8 @@
 package forge
 
 import (
+	"iter"
+
 	strings "dappco.re/go/core/scm/internal/ax/stringsx"
 
 	forgejo "codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2"
@@ -69,6 +71,35 @@ func (c *Client) ListRepoLabels(owner, repo string) ([]*forgejo.Label, error) {
 	}
 
 	return all, nil
+}
+
+// ListRepoLabelsIter returns an iterator over labels for a repository.
+// Usage: ListRepoLabelsIter(...)
+func (c *Client) ListRepoLabelsIter(owner, repo string) iter.Seq2[*forgejo.Label, error] {
+	return func(yield func(*forgejo.Label, error) bool) {
+		page := 1
+
+		for {
+			labels, resp, err := c.api.ListRepoLabels(owner, repo, forgejo.ListLabelsOptions{
+				ListOptions: forgejo.ListOptions{Page: page, PageSize: 50},
+			})
+			if err != nil {
+				yield(nil, log.E("forge.ListRepoLabels", "failed to list repo labels", err))
+				return
+			}
+
+			for _, label := range labels {
+				if !yield(label, nil) {
+					return
+				}
+			}
+
+			if resp == nil || page >= resp.LastPage {
+				break
+			}
+			page++
+		}
+	}
 }
 
 // CreateRepoLabel creates a label on a repository.
