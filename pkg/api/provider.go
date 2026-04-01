@@ -11,6 +11,7 @@ import (
 	"encoding/hex"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"dappco.re/go/core/api"
 	"dappco.re/go/core/api/pkg/provider"
@@ -117,7 +118,7 @@ func (p *ScmProvider) Describe() []api.RouteDescription {
 			Method:      "GET",
 			Path:        "/marketplace",
 			Summary:     "List available providers",
-			Description: "Returns all providers from the marketplace index, optionally filtered by query or category.",
+			Description: "Returns all providers from the marketplace index, optionally filtered by query and category.",
 			Tags:        []string{"scm", "marketplace"},
 		},
 		{
@@ -229,14 +230,18 @@ func (p *ScmProvider) listMarketplace(c *gin.Context) {
 	query := c.Query("q")
 	category := c.Query("category")
 
-	var modules []marketplace.Module
-	switch {
-	case query != "":
-		modules = p.index.Search(query)
-	case category != "":
+	modules := p.index.Modules
+	if category != "" {
 		modules = p.index.ByCategory(category)
-	default:
-		modules = p.index.Modules
+	}
+	if query != "" {
+		filtered := make([]marketplace.Module, 0, len(modules))
+		for _, mod := range modules {
+			if moduleMatchesQuery(mod, query) {
+				filtered = append(filtered, mod)
+			}
+		}
+		modules = filtered
 	}
 
 	if modules == nil {
@@ -540,4 +545,11 @@ func normaliseMarketplaceCode(raw string) (string, error) {
 	}
 
 	return agentci.ValidatePathElement(decoded)
+}
+
+func moduleMatchesQuery(mod marketplace.Module, query string) bool {
+	q := strings.ToLower(query)
+	return strings.Contains(strings.ToLower(mod.Code), q) ||
+		strings.Contains(strings.ToLower(mod.Name), q) ||
+		strings.Contains(strings.ToLower(mod.Category), q)
 }
