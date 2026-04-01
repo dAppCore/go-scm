@@ -296,7 +296,7 @@ func (h *DispatchHandler) secureTransfer(ctx context.Context, agent agentci.Agen
 	safePath := agentci.EscapeShellArg(remotePath)
 	remoteCmd := fmt.Sprintf("cat > %s && chmod %o %s", safePath, mode, safePath)
 
-	cmd := agentci.SecureSSHCommand(agent.Host, remoteCmd)
+	cmd := agentci.SecureSSHCommandContext(ctx, agent.Host, remoteCmd)
 	cmd.Stdin = bytes.NewReader(data)
 
 	output, err := cmd.CombinedOutput()
@@ -318,7 +318,7 @@ func (h *DispatchHandler) runRemote(ctx context.Context, agent agentci.AgentConf
 		remoteCmd = strings.Join(escaped, " ")
 	}
 
-	cmd := agentci.SecureSSHCommand(agent.Host, remoteCmd)
+	cmd := agentci.SecureSSHCommandContext(ctx, agent.Host, remoteCmd)
 	return cmd.Run()
 }
 
@@ -357,6 +357,6 @@ func (h *DispatchHandler) ticketExists(ctx context.Context, agent agentci.AgentC
 		"test -f %s || test -f %s || test -f %s",
 		queuePath, activePath, donePath,
 	)
-	cmd := agentci.SecureSSHCommand(agent.Host, checkCmd)
+	cmd := agentci.SecureSSHCommandContext(ctx, agent.Host, checkCmd)
 	return cmd.Run() == nil
 }

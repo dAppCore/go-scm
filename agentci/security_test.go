@@ -3,6 +3,7 @@
 package agentci
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -78,6 +79,19 @@ func TestEscapeShellArg_Good(t *testing.T) {
 
 func TestSecureSSHCommand_Good(t *testing.T) {
 	cmd := SecureSSHCommand("host.example.com", "ls -la")
+	args := cmd.Args
+
+	assert.Equal(t, "ssh", args[0])
+	assert.Contains(t, args, "-o")
+	assert.Contains(t, args, "StrictHostKeyChecking=yes")
+	assert.Contains(t, args, "BatchMode=yes")
+	assert.Contains(t, args, "ConnectTimeout=10")
+	assert.Equal(t, "host.example.com", args[len(args)-2])
+	assert.Equal(t, "ls -la", args[len(args)-1])
+}
+
+func TestSecureSSHCommandContext_Good(t *testing.T) {
+	cmd := SecureSSHCommandContext(context.Background(), "host.example.com", "ls -la")
 	args := cmd.Args
 
 	assert.Equal(t, "ssh", args[0])

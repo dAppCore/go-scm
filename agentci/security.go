@@ -3,6 +3,7 @@
 package agentci
 
 import (
+	"context"
 	strings "dappco.re/go/core/scm/internal/ax/stringsx"
 	exec "golang.org/x/sys/execabs"
 	"path"
@@ -146,7 +147,17 @@ func EscapeShellArg(arg string) string {
 // SecureSSHCommand creates an SSH exec.Cmd with strict host key checking and batch mode.
 // Usage: SecureSSHCommand(...)
 func SecureSSHCommand(host string, remoteCmd string) *exec.Cmd {
-	return exec.Command("ssh",
+	return SecureSSHCommandContext(context.Background(), host, remoteCmd)
+}
+
+// SecureSSHCommandContext creates an SSH exec.Cmd with strict host key checking and batch mode.
+// Usage: SecureSSHCommandContext(...)
+func SecureSSHCommandContext(ctx context.Context, host string, remoteCmd string) *exec.Cmd {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	return exec.CommandContext(ctx, "ssh",
 		"-o", "StrictHostKeyChecking=yes",
 		"-o", "BatchMode=yes",
 		"-o", "ConnectTimeout=10",
