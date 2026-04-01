@@ -90,7 +90,7 @@ func TestClient_ListPRReviewsIter_Good_Paginates_Good(t *testing.T) {
 	var states []string
 	for review, err := range client.ListPRReviewsIter("test-org", "org-repo", 1) {
 		require.NoError(t, err)
-		states = append(states, review.State)
+		states = append(states, string(review.State))
 	}
 
 	require.Equal(t, []string{"APPROVED", "REQUEST_CHANGES"}, states)
