@@ -196,6 +196,7 @@ func TestScmProvider_Describe_RouteCount_Good(t *testing.T) {
 		"/installed",
 		"/installed/:code/update",
 		"/registry",
+		"/marketplace/refresh",
 	}
 	paths := make(map[string]bool)
 	for _, d := range descs {

@@ -8,6 +8,7 @@ import (
 	os "dappco.re/go/core/scm/internal/ax/osx"
 	"testing"
 
+	"dappco.re/go/core/io"
 	"dappco.re/go/core/scm/manifest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -243,4 +244,27 @@ func TestWriteIndex_Good_RoundTrip_Good(t *testing.T) {
 	require.Len(t, parsed.Modules, 1)
 	assert.Equal(t, "roundtrip", parsed.Modules[0].Code)
 	assert.Equal(t, "https://forge.lthn.ai/core/roundtrip", parsed.Modules[0].Repo)
+}
+
+func TestLoadIndex_Good(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "index.json")
+
+	idx := &Index{
+		Version: 1,
+		Modules: []Module{
+			{Code: "refresh", Name: "Refresh Module"},
+		},
+	}
+	require.NoError(t, WriteIndex(path, idx))
+
+	loaded, err := LoadIndex(io.Local, path)
+	require.NoError(t, err)
+	require.Len(t, loaded.Modules, 1)
+	assert.Equal(t, "refresh", loaded.Modules[0].Code)
+}
+
+func TestLoadIndex_Bad_NotFound_Good(t *testing.T) {
+	_, err := LoadIndex(io.Local, "/missing/index.json")
+	require.Error(t, err)
 }

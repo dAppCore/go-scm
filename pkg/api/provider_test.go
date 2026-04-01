@@ -3,6 +3,8 @@
 package api_test
 
 import (
+	"bytes"
+	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
 	json "dappco.re/go/core/scm/internal/ax/jsonx"
 	"net/http"
 	"net/http/httptest"
@@ -212,6 +214,47 @@ func TestScmProvider_ListRegistry_NilRegistry_Good(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, resp.Success)
 	assert.Empty(t, resp.Data)
+}
+
+func TestScmProvider_RefreshMarketplace_Good(t *testing.T) {
+	dir := t.TempDir()
+	indexPath := filepath.Join(dir, "index.json")
+
+	idx := &marketplace.Index{
+		Version: 1,
+		Modules: []marketplace.Module{
+			{Code: "refreshed", Name: "Refreshed Module"},
+		},
+	}
+	require.NoError(t, marketplace.WriteIndex(indexPath, idx))
+
+	p := scmapi.NewProvider(nil, nil, nil, nil)
+	r := setupRouter(p)
+
+	w := httptest.NewRecorder()
+	body := []byte(`{"index_path":"` + indexPath + `"}`)
+	req, _ := http.NewRequest("POST", "/api/v1/scm/marketplace/refresh", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	var resp goapi.Response[map[string]any]
+	err := json.Unmarshal(w.Body.Bytes(), &resp)
+	require.NoError(t, err)
+	assert.True(t, resp.Success)
+	assert.Equal(t, float64(1), resp.Data["modules"])
+
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", "/api/v1/scm/marketplace", nil)
+	r.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	var listed goapi.Response[[]marketplace.Module]
+	err = json.Unmarshal(w.Body.Bytes(), &listed)
+	require.NoError(t, err)
+	require.Len(t, listed.Data, 1)
+	assert.Equal(t, "refreshed", listed.Data[0].Code)
 }
 
 // -- Route Registration -------------------------------------------------------

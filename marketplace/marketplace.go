@@ -6,6 +6,7 @@ import (
 	json "dappco.re/go/core/scm/internal/ax/jsonx"
 	strings "dappco.re/go/core/scm/internal/ax/stringsx"
 
+	"dappco.re/go/core/io"
 	coreerr "dappco.re/go/core/log"
 )
 
@@ -33,6 +34,16 @@ func ParseIndex(data []byte) (*Index, error) {
 		return nil, coreerr.E("marketplace.ParseIndex", "unmarshal failed", err)
 	}
 	return &idx, nil
+}
+
+// LoadIndex reads and parses a marketplace index.json from the given path.
+// Usage: LoadIndex(...)
+func LoadIndex(m io.Medium, path string) (*Index, error) {
+	data, err := m.Read(path)
+	if err != nil {
+		return nil, coreerr.E("marketplace.LoadIndex", "read failed", err)
+	}
+	return ParseIndex([]byte(data))
 }
 
 // Search returns modules matching the query in code, name, or category.

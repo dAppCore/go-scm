@@ -93,6 +93,7 @@ func (p *ScmProvider) RegisterRoutes(rg *gin.RouterGroup) {
 	rg.GET("/marketplace/:code", p.getMarketplaceItem)
 	rg.POST("/marketplace/:code/install", p.installItem)
 	rg.DELETE("/marketplace/:code", p.removeItem)
+	rg.POST("/marketplace/refresh", p.refreshMarketplace)
 
 	// Manifest
 	rg.GET("/manifest", p.getManifest)
@@ -139,6 +140,19 @@ func (p *ScmProvider) Describe() []api.RouteDescription {
 			Summary:     "Remove an installed provider",
 			Description: "Uninstalls a provider by removing its files and store entry.",
 			Tags:        []string{"scm", "marketplace"},
+		},
+		{
+			Method:      "POST",
+			Path:        "/marketplace/refresh",
+			Summary:     "Refresh marketplace index",
+			Description: "Reloads an index.json file and replaces the in-memory marketplace catalogue.",
+			Tags:        []string{"scm", "marketplace"},
+			RequestBody: map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"index_path": map[string]any{"type": "string", "description": "Path to an index.json file", "default": "index.json"},
+				},
+			},
 		},
 		{
 			Method:      "GET",
@@ -296,6 +310,41 @@ func (p *ScmProvider) removeItem(c *gin.Context) {
 	p.emitEvent("scm.marketplace.removed", map[string]any{"code": code})
 
 	c.JSON(http.StatusOK, api.OK(map[string]any{"removed": true, "code": code}))
+}
+
+type refreshRequest struct {
+	IndexPath string `json:"index_path"`
+}
+
+func (p *ScmProvider) refreshMarketplace(c *gin.Context) {
+	var req refreshRequest
+	if c.Request.ContentLength != 0 {
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, api.Fail("invalid_request", "index_path is invalid"))
+			return
+		}
+	}
+	if req.IndexPath == "" {
+		req.IndexPath = "index.json"
+	}
+
+	idx, err := marketplace.LoadIndex(p.medium, req.IndexPath)
+	if err != nil {
+		c.JSON(http.StatusNotFound, api.Fail("index_not_found", err.Error()))
+		return
+	}
+
+	p.index = idx
+	p.emitEvent("scm.marketplace.refreshed", map[string]any{
+		"index_path": req.IndexPath,
+		"modules":    len(idx.Modules),
+	})
+
+	c.JSON(http.StatusOK, api.OK(map[string]any{
+		"refreshed":  true,
+		"index_path": req.IndexPath,
+		"modules":    len(idx.Modules),
+	}))
 }
 
 // -- Manifest Handlers --------------------------------------------------------
