@@ -67,6 +67,55 @@ func (c *Client) ListIssues(owner, repo string, opts ListIssuesOpts) ([]*forgejo
 	return all, nil
 }
 
+// ListIssuesIter returns an iterator over issues for the given repository.
+// Usage: ListIssuesIter(...)
+func (c *Client) ListIssuesIter(owner, repo string, opts ListIssuesOpts) iter.Seq2[*forgejo.Issue, error] {
+	state := forgejo.StateOpen
+	switch opts.State {
+	case "closed":
+		state = forgejo.StateClosed
+	case "all":
+		state = forgejo.StateAll
+	}
+
+	limit := opts.Limit
+	if limit == 0 {
+		limit = 50
+	}
+
+	page := opts.Page
+	if page == 0 {
+		page = 1
+	}
+
+	return func(yield func(*forgejo.Issue, error) bool) {
+		for {
+			issues, resp, err := c.api.ListRepoIssues(owner, repo, forgejo.ListIssueOption{
+				ListOptions: forgejo.ListOptions{Page: page, PageSize: limit},
+				State:       state,
+				Type:        forgejo.IssueTypeIssue,
+				Labels:      opts.Labels,
+			})
+			if err != nil {
+				yield(nil, log.E("forge.ListIssues", "failed to list issues", err))
+				return
+			}
+			for _, issue := range issues {
+				if !yield(issue, nil) {
+					return
+				}
+			}
+			if len(issues) < limit || len(issues) == 0 {
+				break
+			}
+			if resp != nil && resp.LastPage > 0 && page >= resp.LastPage {
+				break
+			}
+			page++
+		}
+	}
+}
+
 // GetIssue returns a single issue by number.
 // Usage: GetIssue(...)
 func (c *Client) GetIssue(owner, repo string, number int64) (*forgejo.Issue, error) {

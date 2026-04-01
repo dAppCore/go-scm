@@ -62,6 +62,20 @@ func TestClient_ListIssues_Good_Paginates_Good(t *testing.T) {
 	assert.Equal(t, "Issue 2", issues[1].Title)
 }
 
+func TestClient_ListIssuesIter_Good_Paginates_Good(t *testing.T) {
+	client, srv := newPaginatedIssuesClient(t)
+	defer srv.Close()
+
+	var titles []string
+	for issue, err := range client.ListIssuesIter("test-org", "org-repo", ListIssuesOpts{Limit: 1}) {
+		require.NoError(t, err)
+		titles = append(titles, issue.Title)
+	}
+
+	require.Len(t, titles, 2)
+	assert.Equal(t, []string{"Issue 1", "Issue 2"}, titles)
+}
+
 func TestClient_ListIssues_Good_StateMapping_Good(t *testing.T) {
 	tests := []struct {
 		name  string

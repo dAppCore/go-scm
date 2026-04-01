@@ -63,6 +63,54 @@ func (c *Client) ListIssues(owner, repo string, opts ListIssuesOpts) ([]*gitea.I
 	return all, nil
 }
 
+// ListIssuesIter returns an iterator over issues for the given repository.
+// Usage: ListIssuesIter(...)
+func (c *Client) ListIssuesIter(owner, repo string, opts ListIssuesOpts) iter.Seq2[*gitea.Issue, error] {
+	state := gitea.StateOpen
+	switch opts.State {
+	case "closed":
+		state = gitea.StateClosed
+	case "all":
+		state = gitea.StateAll
+	}
+
+	limit := opts.Limit
+	if limit == 0 {
+		limit = 50
+	}
+
+	page := opts.Page
+	if page == 0 {
+		page = 1
+	}
+
+	return func(yield func(*gitea.Issue, error) bool) {
+		for {
+			issues, resp, err := c.api.ListRepoIssues(owner, repo, gitea.ListIssueOption{
+				ListOptions: gitea.ListOptions{Page: page, PageSize: limit},
+				State:       state,
+				Type:        gitea.IssueTypeIssue,
+			})
+			if err != nil {
+				yield(nil, log.E("gitea.ListIssues", "failed to list issues", err))
+				return
+			}
+			for _, issue := range issues {
+				if !yield(issue, nil) {
+					return
+				}
+			}
+			if len(issues) < limit || len(issues) == 0 {
+				break
+			}
+			if resp != nil && resp.LastPage > 0 && page >= resp.LastPage {
+				break
+			}
+			page++
+		}
+	}
+}
+
 // GetIssue returns a single issue by number.
 // Usage: GetIssue(...)
 func (c *Client) GetIssue(owner, repo string, number int64) (*gitea.Issue, error) {
