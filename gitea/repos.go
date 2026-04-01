@@ -123,16 +123,14 @@ func (c *Client) GetRepo(owner, name string) (*gitea.Repository, error) {
 	return repo, nil
 }
 
-// CreateMirror creates a mirror repository on Gitea from a GitHub clone URL.
-// This uses the Gitea migration API to set up a pull mirror.
-// If authToken is provided, it is used to authenticate against the source (e.g. for private GitHub repos).
-// Usage: CreateMirror(...)
-func (c *Client) CreateMirror(owner, name, cloneURL, authToken string) (*gitea.Repository, error) {
+// CreateMirrorFromService creates a mirror repository from an arbitrary git service.
+// Usage: CreateMirrorFromService(...)
+func (c *Client) CreateMirrorFromService(owner, name, cloneURL string, service gitea.GitServiceType, authToken string) (*gitea.Repository, error) {
 	opts := gitea.MigrateRepoOption{
 		RepoName:    name,
 		RepoOwner:   owner,
 		CloneAddr:   cloneURL,
-		Service:     gitea.GitServiceGithub,
+		Service:     service,
 		Mirror:      true,
 		Description: "Mirror of " + cloneURL,
 	}
@@ -143,10 +141,18 @@ func (c *Client) CreateMirror(owner, name, cloneURL, authToken string) (*gitea.R
 
 	repo, _, err := c.api.MigrateRepo(opts)
 	if err != nil {
-		return nil, log.E("gitea.CreateMirror", "failed to create mirror", err)
+		return nil, log.E("gitea.CreateMirrorFromService", "failed to create mirror", err)
 	}
 
 	return repo, nil
+}
+
+// CreateMirror creates a mirror repository on Gitea from a GitHub clone URL.
+// This uses the Gitea migration API to set up a pull mirror.
+// If authToken is provided, it is used to authenticate against the source (e.g. for private GitHub repos).
+// Usage: CreateMirror(...)
+func (c *Client) CreateMirror(owner, name, cloneURL, authToken string) (*gitea.Repository, error) {
+	return c.CreateMirrorFromService(owner, name, cloneURL, gitea.GitServiceGithub, authToken)
 }
 
 // DeleteRepo deletes a repository from Gitea.

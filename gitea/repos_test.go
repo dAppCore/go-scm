@@ -3,6 +3,9 @@
 package gitea
 
 import (
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	giteaSDK "code.gitea.io/sdk/gitea"
@@ -95,6 +98,38 @@ func TestClient_CreateMirror_Bad_ServerError_Good(t *testing.T) {
 	_, err := client.CreateMirror("test-org", "mirrored", "https://github.com/example/repo.git", "ghp_token")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to create mirror")
+}
+
+func TestClient_CreateMirrorFromService_Good_Gitea_Good(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/v1/version", func(w http.ResponseWriter, r *http.Request) {
+		jsonResponse(w, map[string]string{"version": "1.21.0"})
+	})
+	mux.HandleFunc("/api/v1/repos/migrate", func(w http.ResponseWriter, r *http.Request) {
+		var opts map[string]any
+		require.NoError(t, json.NewDecoder(r.Body).Decode(&opts))
+		assert.Equal(t, "gitea", opts["service"])
+		assert.Equal(t, true, opts["mirror"])
+		assert.Equal(t, "https://forge.example.org/core/go-scm.git", opts["clone_addr"])
+		assert.Equal(t, "secret-token", opts["auth_token"])
+		w.WriteHeader(http.StatusCreated)
+		jsonResponse(w, map[string]any{
+			"id": 40, "name": "public-mirror", "full_name": "test-org/public-mirror",
+			"owner":  map[string]any{"login": "test-org"},
+			"mirror": true,
+		})
+	})
+
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+
+	client, err := New(srv.URL, "test-token")
+	require.NoError(t, err)
+
+	repo, err := client.CreateMirrorFromService("test-org", "public-mirror", "https://forge.example.org/core/go-scm.git", giteaSDK.GitServiceGitea, "secret-token")
+	require.NoError(t, err)
+	require.NotNil(t, repo)
+	assert.Equal(t, "public-mirror", repo.Name)
 }
 
 func TestClient_DeleteRepo_Good(t *testing.T) {
