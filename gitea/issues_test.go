@@ -190,6 +190,27 @@ func TestClient_ListIssueCommentsIter_Good_Paginates_Good(t *testing.T) {
 	assert.Equal(t, "comment 51", bodies[50])
 }
 
+func TestClient_ListIssueComments_Good_Paginates_Good(t *testing.T) {
+	client, srv := newPaginatedCommentsClient(t)
+	defer srv.Close()
+
+	comments, err := client.ListIssueComments("test-org", "org-repo", 1)
+	require.NoError(t, err)
+	require.Len(t, comments, 51)
+	assert.Equal(t, "comment 1", comments[0].Body)
+	assert.Equal(t, "comment 50", comments[49].Body)
+	assert.Equal(t, "comment 51", comments[50].Body)
+}
+
+func TestClient_ListIssueComments_Bad_ServerError_Good(t *testing.T) {
+	client, srv := newErrorServer(t)
+	defer srv.Close()
+
+	_, err := client.ListIssueComments("test-org", "org-repo", 1)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to list comments")
+}
+
 func TestClient_CreateIssue_Good(t *testing.T) {
 	client, srv := newTestClient(t)
 	defer srv.Close()

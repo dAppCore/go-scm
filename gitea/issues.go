@@ -133,6 +133,31 @@ func (c *Client) CreateIssue(owner, repo string, opts gitea.CreateIssueOption) (
 	return issue, nil
 }
 
+// ListIssueComments returns all comments for an issue.
+// Usage: ListIssueComments(...)
+func (c *Client) ListIssueComments(owner, repo string, number int64) ([]*gitea.Comment, error) {
+	var all []*gitea.Comment
+	page := 1
+
+	for {
+		comments, resp, err := c.api.ListIssueComments(owner, repo, number, gitea.ListIssueCommentOptions{
+			ListOptions: gitea.ListOptions{Page: page, PageSize: commentPageSize},
+		})
+		if err != nil {
+			return nil, log.E("gitea.ListIssueComments", "failed to list comments", err)
+		}
+
+		all = append(all, comments...)
+
+		if resp == nil || page >= resp.LastPage {
+			break
+		}
+		page++
+	}
+
+	return all, nil
+}
+
 // ListPullRequests returns pull requests for the given repository.
 // Usage: ListPullRequests(...)
 func (c *Client) ListPullRequests(owner, repo string, state string) ([]*gitea.PullRequest, error) {
