@@ -5,6 +5,7 @@ package gitea
 import (
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 
 	giteaSDK "code.gitea.io/sdk/gitea"
@@ -32,6 +33,43 @@ func newPaginatedIssuesClient(t *testing.T) (*Client, *httptest.Server) {
 			jsonResponse(w, []map[string]any{
 				{"id": 1, "number": 1, "title": "Issue 1", "state": "open", "body": "First issue"},
 			})
+		}
+	})
+
+	srv := httptest.NewServer(mux)
+	client, err := New(srv.URL, "test-token")
+	require.NoError(t, err)
+	return client, srv
+}
+
+func newPaginatedCommentsClient(t *testing.T) (*Client, *httptest.Server) {
+	t.Helper()
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/v1/version", func(w http.ResponseWriter, r *http.Request) {
+		jsonResponse(w, map[string]string{"version": "1.21.0"})
+	})
+	mux.HandleFunc("/api/v1/repos/test-org/org-repo/issues/1/comments", func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Query().Get("page") {
+		case "2":
+			jsonResponse(w, []map[string]any{
+				{"id": 150, "body": "comment 51", "user": map[string]any{"login": "user51"}, "created_at": "2026-01-02T00:00:00Z", "updated_at": "2026-01-02T00:00:00Z"},
+			})
+		case "3":
+			jsonResponse(w, []map[string]any{})
+		default:
+			w.Header().Set("Link", `</api/v1/repos/test-org/org-repo/issues/1/comments?page=2>; rel="next", </api/v1/repos/test-org/org-repo/issues/1/comments?page=2>; rel="last"`)
+			comments := make([]map[string]any, 0, 50)
+			for i := 1; i <= 50; i++ {
+				comments = append(comments, map[string]any{
+					"id":         99 + i,
+					"body":       "comment " + strconv.Itoa(i),
+					"user":       map[string]any{"login": "user" + strconv.Itoa(i)},
+					"created_at": "2026-01-01T00:00:00Z",
+					"updated_at": "2026-01-01T00:00:00Z",
+				})
+			}
+			jsonResponse(w, comments)
 		}
 	})
 
@@ -134,6 +172,22 @@ func TestClient_GetIssue_Bad_ServerError_Good(t *testing.T) {
 	_, err := client.GetIssue("test-org", "org-repo", 1)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to get issue")
+}
+
+func TestClient_ListIssueCommentsIter_Good_Paginates_Good(t *testing.T) {
+	client, srv := newPaginatedCommentsClient(t)
+	defer srv.Close()
+
+	var bodies []string
+	for comment, err := range client.ListIssueCommentsIter("test-org", "org-repo", 1) {
+		require.NoError(t, err)
+		bodies = append(bodies, comment.Body)
+	}
+
+	require.Len(t, bodies, 51)
+	assert.Equal(t, "comment 1", bodies[0])
+	assert.Equal(t, "comment 50", bodies[49])
+	assert.Equal(t, "comment 51", bodies[50])
 }
 
 func TestClient_CreateIssue_Good(t *testing.T) {

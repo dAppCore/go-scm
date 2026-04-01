@@ -5,8 +5,6 @@ package forge
 import (
 	"time"
 
-	forgejo "codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2"
-
 	"dappco.re/go/core/log"
 )
 
@@ -78,19 +76,11 @@ func (c *Client) GetPRMeta(owner, repo string, pr int64) (*PRMeta, error) {
 	// Fetch comment count from the issue side (PRs are issues in Forgejo).
 	// Paginate to get an accurate count.
 	count := 0
-	page := 1
-	for {
-		comments, _, listErr := c.api.ListIssueComments(owner, repo, pr, forgejo.ListIssueCommentOptions{
-			ListOptions: forgejo.ListOptions{Page: page, PageSize: commentPageSize},
-		})
-		if listErr != nil {
+	for _, err := range c.ListIssueCommentsIter(owner, repo, pr) {
+		if err != nil {
 			break
 		}
-		count += len(comments)
-		if len(comments) < commentPageSize {
-			break
-		}
-		page++
+		count++
 	}
 	meta.CommentCount = count
 
@@ -101,37 +91,21 @@ func (c *Client) GetPRMeta(owner, repo string, pr int64) (*PRMeta, error) {
 // Usage: GetCommentBodies(...)
 func (c *Client) GetCommentBodies(owner, repo string, pr int64) ([]Comment, error) {
 	var comments []Comment
-	page := 1
-
-	for {
-		raw, _, err := c.api.ListIssueComments(owner, repo, pr, forgejo.ListIssueCommentOptions{
-			ListOptions: forgejo.ListOptions{Page: page, PageSize: commentPageSize},
-		})
+	for raw, err := range c.ListIssueCommentsIter(owner, repo, pr) {
 		if err != nil {
 			return nil, log.E("forge.GetCommentBodies", "failed to get PR comments", err)
 		}
 
-		if len(raw) == 0 {
-			break
+		comment := Comment{
+			ID:        raw.ID,
+			Body:      raw.Body,
+			CreatedAt: raw.Created,
+			UpdatedAt: raw.Updated,
 		}
-
-		for _, rc := range raw {
-			comment := Comment{
-				ID:        rc.ID,
-				Body:      rc.Body,
-				CreatedAt: rc.Created,
-				UpdatedAt: rc.Updated,
-			}
-			if rc.Poster != nil {
-				comment.Author = rc.Poster.UserName
-			}
-			comments = append(comments, comment)
+		if raw.Poster != nil {
+			comment.Author = raw.Poster.UserName
 		}
-
-		if len(raw) < commentPageSize {
-			break
-		}
-		page++
+		comments = append(comments, comment)
 	}
 
 	return comments, nil

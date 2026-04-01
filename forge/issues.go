@@ -278,6 +278,32 @@ func (c *Client) ListIssueComments(owner, repo string, number int64) ([]*forgejo
 	return all, nil
 }
 
+// ListIssueCommentsIter returns an iterator over comments for an issue.
+// Usage: ListIssueCommentsIter(...)
+func (c *Client) ListIssueCommentsIter(owner, repo string, number int64) iter.Seq2[*forgejo.Comment, error] {
+	return func(yield func(*forgejo.Comment, error) bool) {
+		page := 1
+		for {
+			comments, resp, err := c.api.ListIssueComments(owner, repo, number, forgejo.ListIssueCommentOptions{
+				ListOptions: forgejo.ListOptions{Page: page, PageSize: commentPageSize},
+			})
+			if err != nil {
+				yield(nil, log.E("forge.ListIssueComments", "failed to list comments", err))
+				return
+			}
+			for _, comment := range comments {
+				if !yield(comment, nil) {
+					return
+				}
+			}
+			if resp == nil || page >= resp.LastPage {
+				break
+			}
+			page++
+		}
+	}
+}
+
 // CloseIssue closes an issue by setting its state to closed.
 // Usage: CloseIssue(...)
 func (c *Client) CloseIssue(owner, repo string, number int64) error {

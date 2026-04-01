@@ -202,6 +202,32 @@ func (c *Client) ListPullRequestsIter(owner, repo string, state string) iter.Seq
 	}
 }
 
+// ListIssueCommentsIter returns an iterator over comments for an issue.
+// Usage: ListIssueCommentsIter(...)
+func (c *Client) ListIssueCommentsIter(owner, repo string, number int64) iter.Seq2[*gitea.Comment, error] {
+	return func(yield func(*gitea.Comment, error) bool) {
+		page := 1
+		for {
+			comments, resp, err := c.api.ListIssueComments(owner, repo, number, gitea.ListIssueCommentOptions{
+				ListOptions: gitea.ListOptions{Page: page, PageSize: commentPageSize},
+			})
+			if err != nil {
+				yield(nil, log.E("gitea.ListIssueComments", "failed to list comments", err))
+				return
+			}
+			for _, comment := range comments {
+				if !yield(comment, nil) {
+					return
+				}
+			}
+			if resp == nil || page >= resp.LastPage {
+				break
+			}
+			page++
+		}
+	}
+}
+
 // GetPullRequest returns a single pull request by number.
 // Usage: GetPullRequest(...)
 func (c *Client) GetPullRequest(owner, repo string, number int64) (*gitea.PullRequest, error) {
