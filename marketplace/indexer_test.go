@@ -48,7 +48,7 @@ sign: key-c
 
 	require.Len(t, idx.Modules, 3)
 	assert.Equal(t, "a", idx.Modules[0].Code)
-	assert.Equal(t, "https://forge.example.com/core/a", idx.Modules[0].Repo)
+	assert.Equal(t, "https://forge.example.com/core/a.git", idx.Modules[0].Repo)
 	assert.Equal(t, "tools", idx.Modules[0].Category)
 	assert.Equal(t, "key-a", idx.Modules[0].SignKey)
 	assert.Equal(t, []string{"products", "tools"}, idx.Categories)

@@ -3,11 +3,15 @@
 package marketplace
 
 import (
+	"fmt"
 	"sort"
+	"strings"
 
 	"dappco.re/go/core/io"
 	"dappco.re/go/core/scm/manifest"
 )
+
+const defaultForgeURL = "https://forge.lthn.ai"
 
 // IndexOptions controls how BuildIndex populates marketplace metadata.
 // Usage: IndexOptions{...}
@@ -16,6 +20,7 @@ type IndexOptions struct {
 	Org string
 
 	// ForgeURL is the base URL used when constructing repo URLs.
+	// If empty, the default Forge URL is used.
 	ForgeURL string
 
 	// CategoryFn assigns a category to a module code.
@@ -27,6 +32,10 @@ type IndexOptions struct {
 // Categories are deduplicated and sorted.
 // Usage: BuildIndex(...)
 func BuildIndex(medium io.Medium, repoPaths []string, opts IndexOptions) (*Index, error) {
+	if opts.ForgeURL == "" {
+		opts.ForgeURL = defaultForgeURL
+	}
+
 	idx := &Index{
 		Version: IndexVersion,
 	}
@@ -52,8 +61,9 @@ func BuildIndex(medium io.Medium, repoPaths []string, opts IndexOptions) (*Index
 			Name:    m.Name,
 			SignKey: m.Sign,
 		}
-		if opts.ForgeURL != "" && opts.Org != "" {
-			module.Repo = opts.ForgeURL + "/" + opts.Org + "/" + m.Code
+		if opts.Org != "" {
+			baseURL := strings.TrimSuffix(opts.ForgeURL, "/")
+			module.Repo = fmt.Sprintf("%s/%s/%s.git", baseURL, opts.Org, m.Code)
 		}
 		if opts.CategoryFn != nil {
 			module.Category = opts.CategoryFn(m.Code)

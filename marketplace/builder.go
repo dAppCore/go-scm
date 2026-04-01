@@ -7,6 +7,7 @@ import (
 	json "dappco.re/go/core/scm/internal/ax/jsonx"
 	os "dappco.re/go/core/scm/internal/ax/osx"
 	"sort"
+	"strings"
 
 	core "dappco.re/go/core"
 
@@ -23,7 +24,7 @@ const IndexVersion = 1
 type Builder struct {
 	// BaseURL is the prefix for constructing repository URLs, e.g.
 	// "https://forge.lthn.ai". When set, module Repo is derived as
-	// BaseURL + "/" + org + "/" + code.
+	// BaseURL + "/" + org + "/" + code + ".git".
 	BaseURL string
 
 	// Org is the default organisation used when constructing Repo URLs.
@@ -160,8 +161,13 @@ func (b *Builder) loadFromDir(dir string) (*manifest.Manifest, error) {
 
 // repoURL constructs a module repository URL from the builder config.
 func (b *Builder) repoURL(code string) string {
-	if b.BaseURL == "" || b.Org == "" {
+	if b.Org == "" {
 		return ""
 	}
-	return b.BaseURL + "/" + b.Org + "/" + code
+	baseURL := b.BaseURL
+	if baseURL == "" {
+		baseURL = defaultForgeURL
+	}
+	baseURL = strings.TrimSuffix(baseURL, "/")
+	return baseURL + "/" + b.Org + "/" + code + ".git"
 }

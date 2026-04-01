@@ -61,7 +61,7 @@ func TestBuildFromDirs_Good_ManifestYAML_Good(t *testing.T) {
 	require.Len(t, idx.Modules, 1)
 	assert.Equal(t, "my-widget", idx.Modules[0].Code)
 	assert.Equal(t, "My Widget", idx.Modules[0].Name)
-	assert.Equal(t, "https://forge.lthn.ai/core/my-widget", idx.Modules[0].Repo)
+	assert.Equal(t, "https://forge.lthn.ai/core/my-widget.git", idx.Modules[0].Repo)
 	assert.Equal(t, IndexVersion, idx.Version)
 }
 
@@ -189,6 +189,20 @@ func TestBuildFromDirs_Good_NoRepoURLWithoutConfig_Good(t *testing.T) {
 	assert.Empty(t, idx.Modules[0].Repo)
 }
 
+func TestBuildFromDirs_Good_DefaultForgeURL_Good(t *testing.T) {
+	root := t.TempDir()
+	modDir := filepath.Join(root, "mod")
+	require.NoError(t, os.MkdirAll(modDir, 0755))
+	writeManifestYAML(t, modDir, "mod", "Module", "1.0.0")
+
+	b := &Builder{Org: "core"}
+	idx, err := b.BuildFromDirs(root)
+	require.NoError(t, err)
+
+	require.Len(t, idx.Modules, 1)
+	assert.Equal(t, "https://forge.lthn.ai/core/mod.git", idx.Modules[0].Repo)
+}
+
 func TestBuildFromManifests_Good(t *testing.T) {
 	manifests := []*manifest.Manifest{
 		{Code: "bravo", Name: "Bravo", Sign: "key-bravo"},
@@ -268,7 +282,7 @@ func TestWriteIndex_Good_RoundTrip_Good(t *testing.T) {
 
 	require.Len(t, parsed.Modules, 1)
 	assert.Equal(t, "roundtrip", parsed.Modules[0].Code)
-	assert.Equal(t, "https://forge.lthn.ai/core/roundtrip", parsed.Modules[0].Repo)
+	assert.Equal(t, "https://forge.lthn.ai/core/roundtrip.git", parsed.Modules[0].Repo)
 }
 
 func TestLoadIndex_Good(t *testing.T) {
