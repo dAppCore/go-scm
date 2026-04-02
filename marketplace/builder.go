@@ -131,17 +131,18 @@ func BuildFromManifests(manifests []*manifest.Manifest) *Index {
 	}
 }
 
-// WriteIndex serialises an Index to JSON and writes it to the given path.
+// WriteIndex serialises an Index to JSON and writes it to the given path
+// using the provided filesystem medium.
 // Usage: WriteIndex(...)
-func WriteIndex(path string, idx *Index) error {
-	if err := coreio.Local.EnsureDir(filepath.Dir(path)); err != nil {
+func WriteIndex(m coreio.Medium, path string, idx *Index) error {
+	if err := m.EnsureDir(filepath.Dir(path)); err != nil {
 		return coreerr.E("marketplace.WriteIndex", "mkdir failed", err)
 	}
 	data, err := json.MarshalIndent(idx, "", "  ")
 	if err != nil {
 		return coreerr.E("marketplace.WriteIndex", "marshal failed", err)
 	}
-	return coreio.Local.Write(path, string(data))
+	return m.Write(path, string(data))
 }
 
 // loadFromDir tries core.json first, then falls back to .core/manifest.yaml.

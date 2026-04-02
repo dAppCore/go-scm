@@ -6,6 +6,7 @@ import (
 	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
 	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
 
+	"dappco.re/go/core/io"
 	"dappco.re/go/core/scm/marketplace"
 	"forge.lthn.ai/core/cli/pkg/cli"
 )
@@ -53,7 +54,7 @@ func runIndex(dirs []string, output, baseURL, org string) error {
 	if err != nil {
 		return cli.WrapVerb(err, "resolve", output)
 	}
-	if err := marketplace.WriteIndex(absOutput, idx); err != nil {
+	if err := marketplace.WriteIndex(io.Local, absOutput, idx); err != nil {
 		return err
 	}
 

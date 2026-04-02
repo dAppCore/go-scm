@@ -261,7 +261,7 @@ func TestScmProvider_RefreshMarketplace_Good(t *testing.T) {
 			{Code: "refreshed", Name: "Refreshed Module"},
 		},
 	}
-	require.NoError(t, marketplace.WriteIndex(indexPath, idx))
+	require.NoError(t, marketplace.WriteIndex(io.Local, indexPath, idx))
 
 	p := scmapi.NewProvider(nil, nil, nil, nil)
 	r := setupRouter(p)

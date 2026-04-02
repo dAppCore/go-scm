@@ -262,7 +262,7 @@ func TestWriteIndex_Good(t *testing.T) {
 		},
 	}
 
-	err := WriteIndex(path, idx)
+	err := WriteIndex(io.Local, path, idx)
 	require.NoError(t, err)
 
 	data, err := os.ReadFile(path)
@@ -287,7 +287,7 @@ func TestWriteIndex_Good_RoundTrip_Good(t *testing.T) {
 	idx, err := b.BuildFromDirs(root)
 	require.NoError(t, err)
 
-	require.NoError(t, WriteIndex(path, idx))
+	require.NoError(t, WriteIndex(io.Local, path, idx))
 
 	data, err := os.ReadFile(path)
 	require.NoError(t, err)
@@ -309,7 +309,7 @@ func TestLoadIndex_Good(t *testing.T) {
 			{Code: "refresh", Name: "Refresh Module"},
 		},
 	}
-	require.NoError(t, WriteIndex(path, idx))
+	require.NoError(t, WriteIndex(io.Local, path, idx))
 
 	loaded, err := LoadIndex(io.Local, path)
 	require.NoError(t, err)
