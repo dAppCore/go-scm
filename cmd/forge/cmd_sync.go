@@ -8,10 +8,10 @@ import (
 	os "dappco.re/go/core/scm/internal/ax/osx"
 	strings "dappco.re/go/core/scm/internal/ax/stringsx"
 	exec "golang.org/x/sys/execabs"
-	"net/url"
 
 	coreerr "dappco.re/go/core/log"
 	"dappco.re/go/core/scm/agentci"
+	"dappco.re/go/core/scm/cmd/internal/syncutil"
 	fg "dappco.re/go/core/scm/forge"
 
 	forgejo "codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2"
@@ -99,7 +99,7 @@ func buildSyncRepoList(client *fg.Client, args []string, basePath string) ([]syn
 
 	if len(args) > 0 {
 		for _, arg := range args {
-			name, err := syncRepoNameFromArg(arg)
+			name, err := syncutil.ParseRepoName(arg)
 			if err != nil {
 				return nil, coreerr.E("forge.buildSyncRepoList", "invalid repo argument", err)
 			}
@@ -346,28 +346,4 @@ func syncCreateMainFromUpstream(client *fg.Client, org, repo string) error {
 	}
 
 	return nil
-}
-
-func syncRepoNameFromArg(arg string) (string, error) {
-	decoded, err := url.PathUnescape(arg)
-	if err != nil {
-		return "", coreerr.E("forge.syncRepoNameFromArg", "decode repo argument", err)
-	}
-
-	parts := strings.Split(decoded, "/")
-	switch len(parts) {
-	case 1:
-		return agentci.ValidatePathElement(parts[0])
-	case 2:
-		if _, err := agentci.ValidatePathElement(parts[0]); err != nil {
-			return "", coreerr.E("forge.syncRepoNameFromArg", "invalid repo owner", err)
-		}
-		name, err := agentci.ValidatePathElement(parts[1])
-		if err != nil {
-			return "", coreerr.E("forge.syncRepoNameFromArg", "invalid repo name", err)
-		}
-		return name, nil
-	default:
-		return "", coreerr.E("forge.syncRepoNameFromArg", "repo argument must be repo or owner/repo", nil)
-	}
 }
