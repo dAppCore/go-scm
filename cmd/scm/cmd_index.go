@@ -5,6 +5,7 @@ package scm
 import (
 	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
 	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
+	os "dappco.re/go/core/scm/internal/ax/osx"
 
 	"dappco.re/go/core/io"
 	"dappco.re/go/core/scm/marketplace"
@@ -41,12 +42,15 @@ func addIndexCommand(parent *cli.Command) {
 }
 
 func runIndex(dirs []string, output, forgeURL, org string) error {
-	b := &marketplace.Builder{
-		BaseURL: forgeURL,
-		Org:     org,
+	repoPaths, err := expandIndexRepoPaths(dirs)
+	if err != nil {
+		return err
 	}
 
-	idx, err := b.BuildFromDirs(dirs...)
+	idx, err := marketplace.BuildIndex(io.Local, repoPaths, marketplace.IndexOptions{
+		ForgeURL: forgeURL,
+		Org:      org,
+	})
 	if err != nil {
 		return cli.WrapVerb(err, "build", "index")
 	}
@@ -65,4 +69,29 @@ func runIndex(dirs []string, output, forgeURL, org string) error {
 	cli.Blank()
 
 	return nil
+}
+
+func expandIndexRepoPaths(dirs []string) ([]string, error) {
+	var repoPaths []string
+
+	for _, dir := range dirs {
+		repoPaths = append(repoPaths, dir)
+
+		entries, err := os.ReadDir(dir)
+		if err != nil {
+			if os.IsNotExist(err) {
+				continue
+			}
+			return nil, cli.WrapVerb(err, "read", dir)
+		}
+
+		for _, entry := range entries {
+			if !entry.IsDir() {
+				continue
+			}
+			repoPaths = append(repoPaths, filepath.Join(dir, entry.Name()))
+		}
+	}
+
+	return repoPaths, nil
 }

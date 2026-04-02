@@ -3,6 +3,7 @@
 package marketplace
 
 import (
+	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
 	"fmt"
 	"sort"
 	"strings"
@@ -44,11 +45,8 @@ func BuildIndex(medium io.Medium, repoPaths []string, opts IndexOptions) (*Index
 	categories := make(map[string]bool)
 
 	for _, repoPath := range repoPaths {
-		m, err := manifest.Load(medium, repoPath)
-		if err != nil {
-			continue
-		}
-		if m == nil || m.Code == "" {
+		m, err := loadIndexManifest(medium, repoPath)
+		if err != nil || m == nil || m.Code == "" {
 			continue
 		}
 		if seen[m.Code] {
@@ -85,4 +83,17 @@ func BuildIndex(medium io.Medium, repoPaths []string, opts IndexOptions) (*Index
 	sort.Strings(idx.Categories)
 
 	return idx, nil
+}
+
+func loadIndexManifest(medium io.Medium, repoPath string) (*manifest.Manifest, error) {
+	coreJSON := filepath.Join(repoPath, "core.json")
+	if raw, err := medium.Read(coreJSON); err == nil {
+		cm, parseErr := manifest.ParseCompiled([]byte(raw))
+		if parseErr != nil {
+			return nil, parseErr
+		}
+		return &cm.Manifest, nil
+	}
+
+	return manifest.Load(medium, repoPath)
 }
