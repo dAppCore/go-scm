@@ -27,6 +27,7 @@ type CompiledManifest struct {
 
 // CompileOptions controls how Compile populates the build metadata.
 type CompileOptions struct {
+	Version string             // Optional override for the manifest version
 	Commit  string             // Git commit hash
 	Tag     string             // Git tag (e.g. v1.0.0)
 	BuiltBy string             // Builder identity (e.g. "core build")
@@ -45,6 +46,10 @@ func Compile(m *Manifest, opts CompileOptions) (*CompiledManifest, error) {
 	}
 	if m.Version == "" {
 		return nil, coreerr.E("manifest.Compile", "missing version", nil)
+	}
+
+	if opts.Version != "" {
+		m.Version = opts.Version
 	}
 
 	// Sign if a key is supplied.

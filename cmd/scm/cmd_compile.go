@@ -16,6 +16,7 @@ import (
 
 func addCompileCommand(parent *cli.Command) {
 	var (
+		version string
 		dir     string
 		signKey string
 		builtBy string
@@ -27,11 +28,12 @@ func addCompileCommand(parent *cli.Command) {
 		Short: "Compile manifest.yaml into core.json",
 		Long:  "Read .core/manifest.yaml, attach build metadata (commit, tag), and write core.json to the project root or a custom output path.",
 		RunE: func(cmd *cli.Command, args []string) error {
-			return runCompile(dir, signKey, builtBy, output)
+			return runCompile(dir, version, signKey, builtBy, output)
 		},
 	}
 
 	cmd.Flags().StringVarP(&dir, "dir", "d", ".", "Project root directory")
+	cmd.Flags().StringVar(&version, "version", "", "Override the manifest version")
 	cmd.Flags().StringVar(&signKey, "sign-key", "", "Hex-encoded ed25519 private key for signing")
 	cmd.Flags().StringVar(&builtBy, "built-by", "core scm compile", "Builder identity")
 	cmd.Flags().StringVarP(&output, "output", "o", "core.json", "Output path for the compiled manifest")
@@ -39,7 +41,7 @@ func addCompileCommand(parent *cli.Command) {
 	parent.AddCommand(cmd)
 }
 
-func runCompile(dir, signKeyHex, builtBy, output string) error {
+func runCompile(dir, version, signKeyHex, builtBy, output string) error {
 	medium, err := io.NewSandboxed(dir)
 	if err != nil {
 		return cli.WrapVerb(err, "open", dir)
@@ -51,6 +53,7 @@ func runCompile(dir, signKeyHex, builtBy, output string) error {
 	}
 
 	opts := manifest.CompileOptions{
+		Version: version,
 		Commit:  gitCommit(dir),
 		Tag:     gitTag(dir),
 		BuiltBy: builtBy,
@@ -83,7 +86,7 @@ func runCompile(dir, signKeyHex, builtBy, output string) error {
 
 	cli.Blank()
 	cli.Print("  %s %s\n", successStyle.Render("compiled"), valueStyle.Render(m.Code))
-	cli.Print("  %s %s\n", dimStyle.Render("version:"), valueStyle.Render(m.Version))
+	cli.Print("  %s %s\n", dimStyle.Render("version:"), valueStyle.Render(cm.Version))
 	if opts.Commit != "" {
 		cli.Print("  %s %s\n", dimStyle.Render("commit:"), valueStyle.Render(opts.Commit))
 	}

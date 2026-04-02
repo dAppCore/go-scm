@@ -22,6 +22,7 @@ func TestCompile_Good(t *testing.T) {
 	}
 
 	cm, err := Compile(m, CompileOptions{
+		Version: "2.0.0",
 		Commit:  "abc1234",
 		Tag:     "v1.2.3",
 		BuiltBy: "core build",
@@ -30,7 +31,7 @@ func TestCompile_Good(t *testing.T) {
 
 	assert.Equal(t, "my-widget", cm.Code)
 	assert.Equal(t, "My Widget", cm.Name)
-	assert.Equal(t, "1.2.3", cm.Version)
+	assert.Equal(t, "2.0.0", cm.Version)
 	assert.Equal(t, "abc1234", cm.Commit)
 	assert.Equal(t, "v1.2.3", cm.Tag)
 	assert.Equal(t, "core build", cm.BuiltBy)
@@ -180,4 +181,19 @@ func TestCompile_Good_MinimalOptions_Good(t *testing.T) {
 	assert.Empty(t, cm.Tag)
 	assert.Empty(t, cm.BuiltBy)
 	assert.NotEmpty(t, cm.BuiltAt)
+}
+
+func TestCompile_Good_WithVersionOverride_Good(t *testing.T) {
+	m := &Manifest{
+		Code:    "override",
+		Name:    "Override",
+		Version: "0.0.1",
+	}
+
+	cm, err := Compile(m, CompileOptions{
+		Version: "9.9.9",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "9.9.9", cm.Version)
+	assert.Equal(t, "9.9.9", m.Version)
 }
