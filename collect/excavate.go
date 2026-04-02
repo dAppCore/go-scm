@@ -43,9 +43,11 @@ func (e *Excavator) Run(ctx context.Context, cfg *Config) (*Result, error) {
 	if cfg.Dispatcher != nil {
 		cfg.Dispatcher.EmitStart(e.Name(), fmt.Sprintf("Starting excavation with %d collectors", len(e.Collectors)))
 	}
+	verboseProgress(cfg, e.Name(), fmt.Sprintf("queueing %d collectors", len(e.Collectors)))
 
 	// Load state if resuming
 	if e.Resume && cfg.State != nil {
+		verboseProgress(cfg, e.Name(), "loading resume state")
 		if err := cfg.State.Load(); err != nil {
 			return result, core.E("collect.Excavator.Run", "failed to load state", err)
 		}
@@ -57,6 +59,7 @@ func (e *Excavator) Run(ctx context.Context, cfg *Config) (*Result, error) {
 			if cfg.Dispatcher != nil {
 				cfg.Dispatcher.EmitProgress(e.Name(), fmt.Sprintf("[scan] Would run collector: %s", c.Name()), nil)
 			}
+			verboseProgress(cfg, e.Name(), fmt.Sprintf("scan-only collector: %s", c.Name()))
 		}
 		return result, nil
 	}
@@ -70,6 +73,7 @@ func (e *Excavator) Run(ctx context.Context, cfg *Config) (*Result, error) {
 			cfg.Dispatcher.EmitProgress(e.Name(),
 				fmt.Sprintf("Running collector %d/%d: %s", i+1, len(e.Collectors), c.Name()), nil)
 		}
+		verboseProgress(cfg, e.Name(), fmt.Sprintf("dispatching collector %d/%d: %s", i+1, len(e.Collectors), c.Name()))
 
 		// Check if we should skip (already completed in a previous run)
 		if e.Resume && cfg.State != nil {
@@ -80,6 +84,7 @@ func (e *Excavator) Run(ctx context.Context, cfg *Config) (*Result, error) {
 							fmt.Sprintf("Skipping %s (already collected %d items on %s)",
 								c.Name(), entry.Items, entry.LastRun.Format(time.RFC3339)), nil)
 					}
+					verboseProgress(cfg, e.Name(), fmt.Sprintf("resume skip: %s", c.Name()))
 					result.Skipped++
 					continue
 				}
@@ -115,6 +120,7 @@ func (e *Excavator) Run(ctx context.Context, cfg *Config) (*Result, error) {
 
 	// Save state
 	if cfg.State != nil {
+		verboseProgress(cfg, e.Name(), "saving resume state")
 		if err := cfg.State.Save(); err != nil {
 			if cfg.Dispatcher != nil {
 				cfg.Dispatcher.EmitError(e.Name(), fmt.Sprintf("Failed to save state: %v", err), nil)

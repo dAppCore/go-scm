@@ -9,8 +9,10 @@ package collect
 import (
 	"context"
 	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
 
 	"dappco.re/go/core/io"
+	core "dappco.re/go/core/log"
 )
 
 // Collector is the interface all collection sources implement.
@@ -89,6 +91,19 @@ func NewConfigWithMedium(m io.Medium, outputDir string) *Config {
 		State:      NewState(m, filepath.Join(outputDir, ".collect-state.json")),
 		Dispatcher: NewDispatcher(),
 	}
+}
+
+// verboseProgress emits a progress event when verbose mode is enabled.
+// Usage: verboseProgress(cfg, "excavator", "loading state")
+func verboseProgress(cfg *Config, source, message string) {
+	if cfg == nil || !cfg.Verbose {
+		return
+	}
+	if cfg.Dispatcher != nil {
+		cfg.Dispatcher.EmitProgress(source, message, nil)
+		return
+	}
+	core.Warn(fmt.Sprintf("%s: %s", source, message))
 }
 
 // MergeResults combines multiple results into a single aggregated result.

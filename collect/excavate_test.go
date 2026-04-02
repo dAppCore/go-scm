@@ -203,3 +203,24 @@ func TestExcavator_Run_Good_Events_Good(t *testing.T) {
 	assert.Equal(t, 1, startCount)
 	assert.Equal(t, 1, completeCount)
 }
+
+func TestExcavator_Run_Good_VerboseProgress_Good(t *testing.T) {
+	m := io.NewMockMedium()
+	cfg := NewConfigWithMedium(m, "/output")
+	cfg.Limiter = nil
+	cfg.Verbose = true
+
+	var progressCount int
+	cfg.Dispatcher.On(EventProgress, func(e Event) {
+		progressCount++
+	})
+
+	c1 := &mockCollector{name: "source-a", items: 1}
+	e := &Excavator{
+		Collectors: []Collector{c1},
+	}
+
+	_, err := e.Run(context.Background(), cfg)
+	assert.NoError(t, err)
+	assert.GreaterOrEqual(t, progressCount, 2)
+}
