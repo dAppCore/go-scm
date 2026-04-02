@@ -253,6 +253,17 @@ func (c *Client) CreateIssueComment(owner, repo string, issue int64, body string
 	return nil
 }
 
+// GetIssueLabels returns the labels currently attached to an issue.
+// Usage: GetIssueLabels(...)
+func (c *Client) GetIssueLabels(owner, repo string, number int64) ([]*forgejo.Label, error) {
+	labels, _, err := c.api.GetIssueLabels(owner, repo, number, forgejo.ListLabelsOptions{})
+	if err != nil {
+		return nil, log.E("forge.GetIssueLabels", "failed to get issue labels", err)
+	}
+
+	return labels, nil
+}
+
 // ListIssueComments returns comments for an issue.
 // Usage: ListIssueComments(...)
 func (c *Client) ListIssueComments(owner, repo string, number int64) ([]*forgejo.Comment, error) {

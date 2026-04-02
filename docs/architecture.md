@@ -88,7 +88,7 @@ The `gitea/` package mirrors this using `GITEA_URL`/`GITEA_TOKEN` and `gitea.*` 
 |------|-----------|
 | `client.go` | `New`, `NewFromConfig`, `GetCurrentUser`, `ForkRepo`, `CreatePullRequest` |
 | `repos.go` | `ListOrgRepos`, `ListOrgReposIter`, `ListUserRepos`, `ListUserReposIter`, `GetRepo`, `CreateOrgRepo`, `DeleteRepo`, `MigrateRepo` |
-| `issues.go` | `ListIssues`, `ListIssuesIter`, `GetIssue`, `CreateIssue`, `EditIssue`, `AssignIssue`, `ListPullRequests`, `ListPullRequestsIter`, `GetPullRequest`, `CreateIssueComment`, `ListIssueComments`, `ListIssueCommentsIter`, `CloseIssue` |
+| `issues.go` | `ListIssues`, `ListIssuesIter`, `GetIssue`, `CreateIssue`, `EditIssue`, `AssignIssue`, `ListPullRequests`, `ListPullRequestsIter`, `GetPullRequest`, `CreateIssueComment`, `GetIssueLabels`, `ListIssueComments`, `ListIssueCommentsIter`, `CloseIssue` |
 | `labels.go` | `ListOrgLabels`, `ListOrgLabelsIter`, `ListRepoLabels`, `ListRepoLabelsIter`, `CreateRepoLabel`, `GetLabelByName`, `EnsureLabel`, `AddIssueLabels`, `RemoveIssueLabel` |
 | `prs.go` | `MergePullRequest`, `SetPRDraft`, `ListPRReviews`, `GetCombinedStatus`, `DismissReview`, `UndismissReview` |
 | `webhooks.go` | `CreateRepoWebhook`, `ListRepoWebhooks` |

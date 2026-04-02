@@ -312,6 +312,25 @@ func TestClient_CreateIssueComment_Bad_ServerError_Good(t *testing.T) {
 	assert.Contains(t, err.Error(), "failed to create comment")
 }
 
+func TestClient_GetIssueLabels_Good(t *testing.T) {
+	client, srv := newTestClient(t)
+	defer srv.Close()
+
+	labels, err := client.GetIssueLabels("test-org", "org-repo", 1)
+	require.NoError(t, err)
+	require.Len(t, labels, 1)
+	assert.Equal(t, "bug", labels[0].Name)
+}
+
+func TestClient_GetIssueLabels_Bad_ServerError_Good(t *testing.T) {
+	client, srv := newErrorServer(t)
+	defer srv.Close()
+
+	_, err := client.GetIssueLabels("test-org", "org-repo", 1)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to get issue labels")
+}
+
 func TestClient_ListIssueComments_Good(t *testing.T) {
 	client, srv := newTestClient(t)
 	defer srv.Close()
