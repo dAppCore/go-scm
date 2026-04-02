@@ -45,3 +45,14 @@ func (c *Client) URL() string { return c.url }
 // Token returns the Gitea API token.
 // Usage: Token(...)
 func (c *Client) Token() string { return c.token }
+
+// GetCurrentUser returns the authenticated user's information.
+// Usage: GetCurrentUser(...)
+func (c *Client) GetCurrentUser() (*gitea.User, error) {
+	user, _, err := c.api.GetMyUserInfo()
+	if err != nil {
+		return nil, log.E("gitea.GetCurrentUser", "failed to get current user", err)
+	}
+
+	return user, nil
+}

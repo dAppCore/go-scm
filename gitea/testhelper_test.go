@@ -27,6 +27,17 @@ func newGiteaMux() *http.ServeMux {
 		jsonResponse(w, map[string]string{"version": "1.21.0"})
 	})
 
+	// User info endpoint for GetCurrentUser / GetMyUserInfo.
+	mux.HandleFunc("/api/v1/user", func(w http.ResponseWriter, r *http.Request) {
+		jsonResponse(w, map[string]any{
+			"id":         1,
+			"login":      "test-user",
+			"full_name":  "Test User",
+			"email":      "test@example.com",
+			"login_name": "test-user",
+		})
+	})
+
 	// User repos listing.
 	mux.HandleFunc("/api/v1/user/repos", func(w http.ResponseWriter, r *http.Request) {
 		jsonResponse(w, []map[string]any{

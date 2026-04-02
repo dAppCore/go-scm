@@ -119,7 +119,7 @@ The two packages are structurally parallel but intentionally not unified behind 
 - PR merge, draft status, reviews, combined status, review dismissal
 - Repository migration (full import with issues/labels/PRs)
 
-The Gitea client has a `CreateMirror` method for setting up pull mirrors from GitHub -- a capability specific to the public mirror workflow.
+The Gitea client has a `GetCurrentUser` helper and a `CreateMirror` method for setting up pull mirrors from GitHub -- a capability specific to the public mirror workflow.
 
 **SDK limitation:** The Forgejo SDK v2 does not accept `context.Context` on API methods. All SDK calls are synchronous. Context propagation through the wrapper layer is nominal -- contexts are accepted at the boundary but cannot be forwarded.
 

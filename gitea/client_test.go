@@ -38,3 +38,22 @@ func TestClient_URL_Good(t *testing.T) {
 
 	assert.Equal(t, srv.URL, client.URL())
 }
+
+func TestClient_GetCurrentUser_Good(t *testing.T) {
+	client, srv := newTestClient(t)
+	defer srv.Close()
+
+	user, err := client.GetCurrentUser()
+	require.NoError(t, err)
+	require.NotNil(t, user)
+	assert.Equal(t, "test-user", user.UserName)
+}
+
+func TestClient_GetCurrentUser_Bad_ServerError_Good(t *testing.T) {
+	client, srv := newErrorServer(t)
+	defer srv.Close()
+
+	_, err := client.GetCurrentUser()
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to get current user")
+}
