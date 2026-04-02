@@ -29,45 +29,82 @@ export class ScmManifest extends LitElement {
   static styles = css`
     :host {
       display: block;
-      font-family: system-ui, -apple-system, sans-serif;
+      font-family:
+        Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+        sans-serif;
+      color: #111827;
     }
 
     .manifest {
-      border: 1px solid #e5e7eb;
-      border-radius: 0.5rem;
+      border: 1px solid rgba(226, 232, 240, 0.95);
+      border-radius: 1rem;
       padding: 1.25rem;
-      background: #fff;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.98));
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
     }
 
     .header {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
+      gap: 1rem;
       margin-bottom: 1rem;
+      padding-bottom: 0.9rem;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .header-copy {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
     }
 
     h3 {
       margin: 0;
-      font-size: 1.125rem;
-      font-weight: 600;
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: #0f172a;
     }
 
     .version {
       font-size: 0.75rem;
-      padding: 0.125rem 0.5rem;
-      background: #f3f4f6;
-      border-radius: 1rem;
-      colour: #6b7280;
+      padding: 0.25rem 0.625rem;
+      background: #eef2ff;
+      border-radius: 999px;
+      color: #4338ca;
+      font-weight: 700;
+    }
+
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .meta-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.25rem 0.6rem;
+      border-radius: 999px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      font-size: 0.6875rem;
+      font-weight: 700;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
 
     .field {
-      margin-bottom: 0.75rem;
+      margin-bottom: 0.875rem;
     }
 
     .field-label {
       font-size: 0.75rem;
-      font-weight: 600;
-      colour: #6b7280;
+      font-weight: 800;
+      color: #64748b;
       text-transform: uppercase;
       letter-spacing: 0.025em;
       margin-bottom: 0.25rem;
@@ -75,14 +112,17 @@ export class ScmManifest extends LitElement {
 
     .field-value {
       font-size: 0.875rem;
+      color: #0f172a;
     }
 
     .code {
       font-family: monospace;
       font-size: 0.8125rem;
-      background: #f9fafb;
-      padding: 0.25rem 0.5rem;
-      border-radius: 0.25rem;
+      background: #f8fafc;
+      padding: 0.35rem 0.55rem;
+      border-radius: 0.45rem;
+      border: 1px solid #e2e8f0;
+      color: #1f2937;
     }
 
     .slots {
@@ -90,16 +130,20 @@ export class ScmManifest extends LitElement {
       grid-template-columns: auto 1fr;
       gap: 0.25rem 1rem;
       font-size: 0.8125rem;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 0.75rem;
+      padding: 0.75rem;
     }
 
     .slot-key {
-      font-weight: 600;
-      colour: #374151;
+      font-weight: 700;
+      color: #334155;
     }
 
     .slot-value {
       font-family: monospace;
-      colour: #6b7280;
+      color: #64748b;
     }
 
     .permissions-grid {
@@ -109,15 +153,16 @@ export class ScmManifest extends LitElement {
     }
 
     .perm-group {
-      border: 1px solid #e5e7eb;
-      border-radius: 0.375rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 0.75rem;
       padding: 0.5rem;
+      background: #fff;
     }
 
     .perm-group-label {
       font-size: 0.6875rem;
-      font-weight: 700;
-      colour: #6b7280;
+      font-weight: 800;
+      color: #64748b;
       text-transform: uppercase;
       margin-bottom: 0.25rem;
     }
@@ -125,7 +170,8 @@ export class ScmManifest extends LitElement {
     .perm-item {
       font-size: 0.8125rem;
       font-family: monospace;
-      colour: #374151;
+      color: #374151;
+      word-break: break-word;
     }
 
     .signature {
@@ -134,8 +180,9 @@ export class ScmManifest extends LitElement {
       gap: 0.75rem;
       margin-top: 1rem;
       padding: 0.75rem;
-      border-radius: 0.375rem;
+      border-radius: 0.75rem;
       font-size: 0.875rem;
+      font-weight: 600;
     }
 
     .signature.signed {
@@ -155,84 +202,142 @@ export class ScmManifest extends LitElement {
 
     .badge {
       font-size: 0.75rem;
-      font-weight: 600;
-      padding: 0.125rem 0.5rem;
-      border-radius: 1rem;
+      font-weight: 800;
+      padding: 0.25rem 0.55rem;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
     }
 
     .badge.verified {
       background: #dcfce7;
-      colour: #166534;
+      color: #166534;
+    }
+
+    .badge.signed {
+      background: #e0e7ff;
+      color: #4338ca;
     }
 
     .badge.unsigned {
       background: #fef3c7;
-      colour: #92400e;
+      color: #92400e;
     }
 
     .badge.invalid {
       background: #fee2e2;
-      colour: #991b1b;
+      color: #991b1b;
     }
 
     .actions {
       margin-top: 1rem;
       display: flex;
       gap: 0.5rem;
+      flex-wrap: wrap;
     }
 
     .verify-input {
       flex: 1;
-      padding: 0.375rem 0.75rem;
-      border: 1px solid #d1d5db;
-      border-radius: 0.375rem;
+      min-width: 14rem;
+      padding: 0.6rem 0.85rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 0.75rem;
       font-size: 0.8125rem;
       font-family: monospace;
+      background: #fff;
     }
 
     button {
-      padding: 0.375rem 1rem;
-      border-radius: 0.375rem;
+      padding: 0.6rem 1rem;
+      border-radius: 0.75rem;
       font-size: 0.8125rem;
       cursor: pointer;
       border: 1px solid #d1d5db;
       background: #fff;
-      transition: background 0.15s;
+      transition:
+        background 0.15s ease,
+        transform 0.15s ease;
     }
 
     button:hover {
       background: #f3f4f6;
+      transform: translateY(-1px);
     }
 
     button.primary {
-      background: #6366f1;
-      colour: #fff;
-      border-colour: #6366f1;
+      background: linear-gradient(180deg, #6366f1, #4f46e5);
+      color: #fff;
+      border-color: #6366f1;
     }
 
     button.primary:hover {
-      background: #4f46e5;
+      background: linear-gradient(180deg, #4f46e5, #4338ca);
     }
 
     .empty {
       text-align: center;
       padding: 2rem;
-      colour: #9ca3af;
+      color: #64748b;
       font-size: 0.875rem;
     }
 
     .error {
-      colour: #dc2626;
+      color: #dc2626;
       padding: 0.75rem;
       background: #fef2f2;
-      border-radius: 0.375rem;
+      border: 1px solid #fecaca;
+      border-radius: 0.75rem;
       font-size: 0.875rem;
+      margin-bottom: 0.75rem;
     }
 
     .loading {
       text-align: center;
       padding: 2rem;
-      colour: #6b7280;
+      color: #64748b;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .status-dot {
+      width: 0.5rem;
+      height: 0.5rem;
+      border-radius: 999px;
+    }
+
+    .status-dot.verified {
+      background: #22c55e;
+    }
+
+    .status-dot.signed {
+      background: #6366f1;
+    }
+
+    .status-dot.unsigned {
+      background: #f59e0b;
+    }
+
+    .status-dot.invalid {
+      background: #ef4444;
+    }
+
+    @media (max-width: 720px) {
+      .manifest {
+        padding: 1rem;
+      }
+
+      .header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .actions {
+        flex-direction: column;
+      }
     }
   `;
 
@@ -332,14 +437,39 @@ export class ScmManifest extends LitElement {
 
     const m = this.manifest;
     const hasSig = !!m.sign;
+    const status = hasSig
+      ? this.verifyResult
+        ? this.verifyResult.valid
+          ? 'verified'
+          : 'invalid'
+        : 'signed'
+      : 'unsigned';
+    const statusLabel = hasSig
+      ? this.verifyResult
+        ? this.verifyResult.valid
+          ? 'Verified'
+          : 'Invalid'
+        : 'Signed'
+      : 'Unsigned';
+    const permissionCount =
+      (m.permissions?.read?.length ?? 0) +
+      (m.permissions?.write?.length ?? 0) +
+      (m.permissions?.net?.length ?? 0) +
+      (m.permissions?.run?.length ?? 0);
 
     return html`
       ${this.error ? html`<div class="error">${this.error}</div>` : nothing}
       <div class="manifest">
         <div class="header">
-          <div>
+          <div class="header-copy">
             <h3>${m.name}</h3>
-            <span class="code">${m.code}</span>
+            <div class="meta-row">
+              <span class="meta-chip">${m.code}</span>
+              <span class="meta-chip">${permissionCount} permissions</span>
+              ${m.modules?.length
+                ? html`<span class="meta-chip">${m.modules.length} modules</span>`
+                : nothing}
+            </div>
           </div>
           <span class="version">v${m.version}</span>
         </div>
@@ -381,16 +511,17 @@ export class ScmManifest extends LitElement {
           ? html`
               <div class="field">
                 <div class="field-label">Modules</div>
-                ${m.modules.map((mod) => html`<div class="code" style="margin-bottom:0.25rem">${mod}</div>`)}
+                ${m.modules.map((mod) => html`<div class="code" style="margin-bottom:0.35rem">${mod}</div>`)}
               </div>
             `
           : nothing}
 
-        <div class="signature ${hasSig ? (this.verifyResult ? (this.verifyResult.valid ? 'signed' : 'invalid') : 'signed') : 'unsigned'}">
-          <span class="badge ${hasSig ? (this.verifyResult ? (this.verifyResult.valid ? 'verified' : 'invalid') : 'unsigned') : 'unsigned'}">
-            ${hasSig ? (this.verifyResult ? (this.verifyResult.valid ? 'Verified' : 'Invalid') : 'Signed') : 'Unsigned'}
+        <div class="signature ${status}">
+          <span class="badge ${status}">${statusLabel}</span>
+          <span class="status">
+            <span class="status-dot ${status}"></span>
+            ${hasSig ? html`<span>Signature present</span>` : html`<span>No signature</span>`}
           </span>
-          ${hasSig ? html`<span>Signature present</span>` : html`<span>No signature</span>`}
         </div>
 
         <div class="actions">

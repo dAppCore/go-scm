@@ -12,15 +12,23 @@
       }
 
       body {
-        font-family: system-ui, -apple-system, sans-serif;
-        background: #f3f4f6;
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+          sans-serif;
+        background:
+          radial-gradient(circle at top left, rgba(99, 102, 241, 0.15), transparent 24%),
+          linear-gradient(180deg, #eef2ff 0%, #f8fafc 30%, #f3f4f6 100%);
         padding: 2rem;
+        color: #111827;
       }
 
       h1 {
-        font-size: 1.5rem;
-        margin-bottom: 1.5rem;
-        colour: #111827;
+        font-size: 1.65rem;
+        margin: 0 auto 1.5rem;
+        max-width: 960px;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        color: #0f172a;
       }
 
       .demo-panel {
@@ -28,25 +36,31 @@
         max-width: 960px;
         margin: 0 auto;
         height: 80vh;
-        border: 1px solid #d1d5db;
-        border-radius: 0.5rem;
+        border: 1px solid rgba(226, 232, 240, 0.95);
+        border-radius: 1rem;
         overflow: hidden;
+        box-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
+        background: rgba(255, 255, 255, 0.82);
+        backdrop-filter: blur(18px);
       }
 
       h2 {
         font-size: 1.125rem;
         margin: 2rem auto 1rem;
         max-width: 960px;
-        colour: #374151;
+        color: #374151;
+        font-weight: 700;
       }
 
       .standalone {
         max-width: 960px;
         margin: 0 auto 2rem;
-        border: 1px solid #d1d5db;
-        border-radius: 0.5rem;
+        border: 1px solid rgba(226, 232, 240, 0.95);
+        border-radius: 1rem;
         padding: 1rem;
-        background: #fff;
+        background: rgba(255, 255, 255, 0.82);
+        box-shadow: 0 18px 40px rgba(15, 23, 42, 0.05);
+        backdrop-filter: blur(18px);
       }
     </style>
     <script type="module" src="./src/index.ts"></script>
