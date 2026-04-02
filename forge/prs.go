@@ -4,9 +4,9 @@ package forge
 
 import (
 	"bytes"
-	"iter"
 	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
 	json "dappco.re/go/core/scm/internal/ax/jsonx"
+	"iter"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -155,6 +155,16 @@ func (c *Client) DismissReview(owner, repo string, index, reviewID int64, messag
 	})
 	if err != nil {
 		return log.E("forge.DismissReview", "failed to dismiss review", err)
+	}
+	return nil
+}
+
+// UndismissReview removes a dismissal from a pull request review.
+// Usage: UndismissReview(...)
+func (c *Client) UndismissReview(owner, repo string, index, reviewID int64) error {
+	_, err := c.api.UnDismissPullReview(owner, repo, index, reviewID)
+	if err != nil {
+		return log.E("forge.UndismissReview", "failed to undismiss review", err)
 	}
 	return nil
 }

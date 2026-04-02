@@ -304,6 +304,13 @@ func newForgejoMux() *http.ServeMux {
 		})
 	})
 
+	// Undismiss review.
+	mux.HandleFunc("/api/v1/repos/test-org/org-repo/pulls/1/reviews/1/undismissals", func(w http.ResponseWriter, r *http.Request) {
+		jsonResponse(w, map[string]any{
+			"id": 1, "state": "open",
+		})
+	})
+
 	// Generic fallback — handles PATCH for SetPRDraft and other unmatched routes.
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		// Handle PATCH requests (SetPRDraft).

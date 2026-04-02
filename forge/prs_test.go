@@ -153,6 +153,23 @@ func TestClient_DismissReview_Bad_ServerError_Good(t *testing.T) {
 	assert.Contains(t, err.Error(), "failed to dismiss review")
 }
 
+func TestClient_UndismissReview_Good(t *testing.T) {
+	client, srv := newTestClient(t)
+	defer srv.Close()
+
+	err := client.UndismissReview("test-org", "org-repo", 1, 1)
+	require.NoError(t, err)
+}
+
+func TestClient_UndismissReview_Bad_ServerError_Good(t *testing.T) {
+	client, srv := newErrorServer(t)
+	defer srv.Close()
+
+	err := client.UndismissReview("test-org", "org-repo", 1, 1)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to undismiss review")
+}
+
 func TestClient_SetPRDraft_Good_Request_Good(t *testing.T) {
 	var method, path string
 	var payload map[string]any
