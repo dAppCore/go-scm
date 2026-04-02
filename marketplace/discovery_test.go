@@ -258,6 +258,23 @@ func TestProviderRegistry_List_Good(t *testing.T) {
 	assert.Contains(t, codes, "b")
 }
 
+func TestProviderRegistry_List_Good_Sorted_Good(t *testing.T) {
+	reg := &ProviderRegistryFile{
+		Version: 1,
+		Providers: map[string]ProviderRegistryEntry{
+			"zulu":  {Version: "1.0"},
+			"alpha": {Version: "2.0"},
+			"mike":  {Version: "3.0"},
+		},
+	}
+
+	codes := reg.List()
+	require.Len(t, codes, 3)
+	assert.Equal(t, "alpha", codes[0])
+	assert.Equal(t, "mike", codes[1])
+	assert.Equal(t, "zulu", codes[2])
+}
+
 func TestProviderRegistry_AutoStartProviders_Good(t *testing.T) {
 	reg := &ProviderRegistryFile{
 		Version: 1,
@@ -272,4 +289,20 @@ func TestProviderRegistry_AutoStartProviders_Good(t *testing.T) {
 	assert.Len(t, auto, 2)
 	assert.Contains(t, auto, "auto-a")
 	assert.Contains(t, auto, "auto-c")
+}
+
+func TestProviderRegistry_AutoStartProviders_Good_Sorted_Good(t *testing.T) {
+	reg := &ProviderRegistryFile{
+		Version: 1,
+		Providers: map[string]ProviderRegistryEntry{
+			"zulu":  {Version: "1.0", AutoStart: true},
+			"alpha": {Version: "2.0", AutoStart: true},
+			"mike":  {Version: "3.0", AutoStart: false},
+		},
+	}
+
+	auto := reg.AutoStartProviders()
+	require.Len(t, auto, 2)
+	assert.Equal(t, "alpha", auto[0])
+	assert.Equal(t, "zulu", auto[1])
 }

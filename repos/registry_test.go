@@ -173,6 +173,32 @@ func TestRegistry_List_Good(t *testing.T) {
 	assert.Len(t, repos, 4)
 }
 
+func TestRegistry_List_Good_SortedByName_Good(t *testing.T) {
+	m := io.NewMockMedium()
+	yaml := `
+version: 1
+org: host-uk
+base_path: /tmp/repos
+repos:
+  zulu:
+    type: module
+  alpha:
+    type: module
+  mike:
+    type: module
+`
+	_ = m.Write("/tmp/repos.yaml", yaml)
+
+	reg, err := LoadRegistry(m, "/tmp/repos.yaml")
+	require.NoError(t, err)
+
+	repos := reg.List()
+	require.Len(t, repos, 3)
+	assert.Equal(t, "alpha", repos[0].Name)
+	assert.Equal(t, "mike", repos[1].Name)
+	assert.Equal(t, "zulu", repos[2].Name)
+}
+
 func TestRegistry_Get_Good(t *testing.T) {
 	reg := newTestRegistry(t)
 	repo, ok := reg.Get("core-php")
@@ -198,6 +224,31 @@ func TestRegistry_ByType_Good(t *testing.T) {
 
 	products := reg.ByType("product")
 	assert.Len(t, products, 1)
+}
+
+func TestRegistry_ByType_Good_SortedByName_Good(t *testing.T) {
+	m := io.NewMockMedium()
+	yaml := `
+version: 1
+org: host-uk
+base_path: /tmp/repos
+repos:
+  zulu:
+    type: module
+  alpha:
+    type: module
+  mike:
+    type: foundation
+`
+	_ = m.Write("/tmp/repos.yaml", yaml)
+
+	reg, err := LoadRegistry(m, "/tmp/repos.yaml")
+	require.NoError(t, err)
+
+	modules := reg.ByType("module")
+	require.Len(t, modules, 2)
+	assert.Equal(t, "alpha", modules[0].Name)
+	assert.Equal(t, "zulu", modules[1].Name)
 }
 
 func TestRegistry_ByType_Good_NoMatch_Good(t *testing.T) {
@@ -304,6 +355,29 @@ repos:
 	order, err := reg.TopologicalOrder()
 	require.NoError(t, err)
 	assert.Len(t, order, 2)
+}
+
+func TestTopologicalOrder_Good_NoDeps_Sorted_Good(t *testing.T) {
+	m := io.NewMockMedium()
+	yaml := `
+version: 1
+org: test
+base_path: /tmp
+repos:
+  zulu:
+    type: module
+  alpha:
+    type: module
+`
+	_ = m.Write("/tmp/repos.yaml", yaml)
+	reg, err := LoadRegistry(m, "/tmp/repos.yaml")
+	require.NoError(t, err)
+
+	order, err := reg.TopologicalOrder()
+	require.NoError(t, err)
+	require.Len(t, order, 2)
+	assert.Equal(t, "alpha", order[0].Name)
+	assert.Equal(t, "zulu", order[1].Name)
 }
 
 // ── ScanDirectory ──────────────────────────────────────────────────

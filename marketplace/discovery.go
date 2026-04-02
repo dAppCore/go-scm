@@ -5,6 +5,7 @@ package marketplace
 import (
 	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
 	os "dappco.re/go/core/scm/internal/ax/osx"
+	"sort"
 
 	core "dappco.re/go/core"
 	coreio "dappco.re/go/core/io"
@@ -156,6 +157,7 @@ func (r *ProviderRegistryFile) List() []string {
 	for code := range r.Providers {
 		codes = append(codes, code)
 	}
+	sort.Strings(codes)
 	return codes
 }
 
@@ -168,5 +170,6 @@ func (r *ProviderRegistryFile) AutoStartProviders() []string {
 			codes = append(codes, code)
 		}
 	}
+	sort.Strings(codes)
 	return codes
 }

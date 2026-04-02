@@ -9,6 +9,7 @@ import (
 	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
 	os "dappco.re/go/core/scm/internal/ax/osx"
 	strings "dappco.re/go/core/scm/internal/ax/stringsx"
+	"sort"
 
 	"dappco.re/go/core/io"
 	coreerr "dappco.re/go/core/log"
@@ -266,9 +267,11 @@ func detectOrg(m io.Medium, repoPath string) string {
 func (r *Registry) List() []*Repo {
 	repos := make([]*Repo, 0, len(r.Repos))
 	for _, repo := range r.Repos {
-
 		repos = append(repos, repo)
 	}
+	sort.Slice(repos, func(i, j int) bool {
+		return repos[i].Name < repos[j].Name
+	})
 	return repos
 }
 
@@ -294,6 +297,9 @@ func (r *Registry) ByType(t string) []*Repo {
 			repos = append(repos, repo)
 		}
 	}
+	sort.Slice(repos, func(i, j int) bool {
+		return repos[i].Name < repos[j].Name
+	})
 	return repos
 }
 
@@ -335,7 +341,13 @@ func (r *Registry) TopologicalOrder() ([]*Repo, error) {
 		return nil
 	}
 
+	names := make([]string, 0, len(r.Repos))
 	for name := range r.Repos {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+
+	for _, name := range names {
 		if err := visit(name); err != nil {
 			return nil, err
 		}
