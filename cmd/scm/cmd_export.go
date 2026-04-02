@@ -4,6 +4,7 @@ package scm
 
 import (
 	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
+	os "dappco.re/go/core/scm/internal/ax/osx"
 
 	"dappco.re/go/core/io"
 	"dappco.re/go/core/scm/manifest"
@@ -16,7 +17,7 @@ func addExportCommand(parent *cli.Command) {
 	cmd := &cli.Command{
 		Use:   "export",
 		Short: "Export compiled manifest as JSON",
-		Long:  "Read core.json from the project root and print it to stdout. Falls back to compiling .core/manifest.yaml if core.json is not found.",
+		Long:  "Read core.json from the project root and print it to stdout. Falls back to compiling .core/manifest.yaml only when core.json is missing.",
 		RunE: func(cmd *cli.Command, args []string) error {
 			return runExport(dir)
 		},
@@ -33,10 +34,18 @@ func runExport(dir string) error {
 		return cli.WrapVerb(err, "open", dir)
 	}
 
-	// Try core.json first.
-	cm, err := manifest.LoadCompiled(medium, ".")
-	if err != nil {
-		// Fall back to compiling from source.
+	var cm *manifest.CompiledManifest
+
+	// Prefer core.json if it exists and is valid.
+	if raw, readErr := medium.Read("core.json"); readErr == nil {
+		cm, err = manifest.ParseCompiled([]byte(raw))
+		if err != nil {
+			return err
+		}
+	} else if !os.IsNotExist(readErr) {
+		return cli.WrapVerb(readErr, "read", "core.json")
+	} else {
+		// Fall back to compiling from source only when the compiled artifact is absent.
 		m, loadErr := manifest.Load(medium, ".")
 		if loadErr != nil {
 			return cli.WrapVerb(loadErr, "load", "manifest")

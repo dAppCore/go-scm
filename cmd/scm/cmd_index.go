@@ -49,7 +49,10 @@ func runIndex(dirs []string, output, baseURL, org string) error {
 		return cli.WrapVerb(err, "build", "index")
 	}
 
-	absOutput, _ := filepath.Abs(output)
+	absOutput, err := filepath.Abs(output)
+	if err != nil {
+		return cli.WrapVerb(err, "resolve", output)
+	}
 	if err := marketplace.WriteIndex(absOutput, idx); err != nil {
 		return err
 	}
