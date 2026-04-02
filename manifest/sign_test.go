@@ -51,3 +51,25 @@ func TestVerify_Bad_Unsigned_Good(t *testing.T) {
 	assert.Error(t, err)
 	assert.False(t, ok)
 }
+
+func TestSign_Bad_InvalidPrivateKey_Good(t *testing.T) {
+	m := &Manifest{Code: "test-app", Version: "1.0.0"}
+
+	err := Sign(m, ed25519.PrivateKey([]byte("short")))
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid private key length")
+	assert.Empty(t, m.Sign)
+}
+
+func TestSign_Bad_NilManifest_Good(t *testing.T) {
+	err := Sign(nil, ed25519.PrivateKey(make([]byte, ed25519.PrivateKeySize)))
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "nil manifest")
+}
+
+func TestVerify_Bad_NilManifest_Good(t *testing.T) {
+	ok, err := Verify(nil, ed25519.PublicKey(make([]byte, ed25519.PublicKeySize)))
+	assert.Error(t, err)
+	assert.False(t, ok)
+	assert.Contains(t, err.Error(), "nil manifest")
+}

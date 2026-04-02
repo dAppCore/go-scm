@@ -20,6 +20,13 @@ func signable(m *Manifest) ([]byte, error) {
 // Sign computes the ed25519 signature and stores it in m.Sign (base64).
 // Usage: Sign(...)
 func Sign(m *Manifest, priv ed25519.PrivateKey) error {
+	if m == nil {
+		return coreerr.E("manifest.Sign", "nil manifest", nil)
+	}
+	if len(priv) != ed25519.PrivateKeySize {
+		return coreerr.E("manifest.Sign", "invalid private key length", nil)
+	}
+
 	msg, err := signable(m)
 	if err != nil {
 		return coreerr.E("manifest.Sign", "marshal failed", err)
@@ -32,6 +39,9 @@ func Sign(m *Manifest, priv ed25519.PrivateKey) error {
 // Verify checks the ed25519 signature in m.Sign against the public key.
 // Usage: Verify(...)
 func Verify(m *Manifest, pub ed25519.PublicKey) (bool, error) {
+	if m == nil {
+		return false, coreerr.E("manifest.Verify", "nil manifest", nil)
+	}
 	if m.Sign == "" {
 		return false, coreerr.E("manifest.Verify", "no signature present", nil)
 	}

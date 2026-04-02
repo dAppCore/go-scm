@@ -5,6 +5,7 @@ package scm
 import (
 	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
 	os "dappco.re/go/core/scm/internal/ax/osx"
+	"encoding/hex"
 	"testing"
 
 	"dappco.re/go/core/io"
@@ -56,4 +57,19 @@ version: 2.0.0
 	require.NoError(t, err)
 	assert.Equal(t, "compile-custom", cm.Code)
 	assert.Equal(t, "custom builder", cm.BuiltBy)
+}
+
+func TestRunCompile_Bad_InvalidSignKey_Good(t *testing.T) {
+	dir := t.TempDir()
+	coreDir := filepath.Join(dir, ".core")
+	require.NoError(t, os.MkdirAll(coreDir, 0755))
+	require.NoError(t, os.WriteFile(filepath.Join(coreDir, "manifest.yaml"), []byte(`
+code: compile-invalid-key
+name: Compile Invalid Key
+version: 1.0.0
+`), 0644))
+
+	err := runCompile(dir, hex.EncodeToString([]byte("short")), "core scm compile", "core.json")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid private key length")
 }
