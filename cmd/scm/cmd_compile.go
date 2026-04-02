@@ -4,6 +4,7 @@ package scm
 
 import (
 	"crypto/ed25519"
+	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
 	strings "dappco.re/go/core/scm/internal/ax/stringsx"
 	"encoding/hex"
 	exec "golang.org/x/sys/execabs"
@@ -18,25 +19,27 @@ func addCompileCommand(parent *cli.Command) {
 		dir     string
 		signKey string
 		builtBy string
+		output  string
 	)
 
 	cmd := &cli.Command{
 		Use:   "compile",
 		Short: "Compile manifest.yaml into core.json",
-		Long:  "Read .core/manifest.yaml, attach build metadata (commit, tag), and write core.json to the project root.",
+		Long:  "Read .core/manifest.yaml, attach build metadata (commit, tag), and write core.json to the project root or a custom output path.",
 		RunE: func(cmd *cli.Command, args []string) error {
-			return runCompile(dir, signKey, builtBy)
+			return runCompile(dir, signKey, builtBy, output)
 		},
 	}
 
 	cmd.Flags().StringVarP(&dir, "dir", "d", ".", "Project root directory")
 	cmd.Flags().StringVar(&signKey, "sign-key", "", "Hex-encoded ed25519 private key for signing")
 	cmd.Flags().StringVar(&builtBy, "built-by", "core scm compile", "Builder identity")
+	cmd.Flags().StringVarP(&output, "output", "o", "core.json", "Output path for the compiled manifest")
 
 	parent.AddCommand(cmd)
 }
 
-func runCompile(dir, signKeyHex, builtBy string) error {
+func runCompile(dir, signKeyHex, builtBy, output string) error {
 	medium, err := io.NewSandboxed(dir)
 	if err != nil {
 		return cli.WrapVerb(err, "open", dir)
@@ -66,8 +69,16 @@ func runCompile(dir, signKeyHex, builtBy string) error {
 		return err
 	}
 
-	if err := manifest.WriteCompiled(medium, ".", cm); err != nil {
-		return err
+	data, err := manifest.MarshalJSON(cm)
+	if err != nil {
+		return cli.WrapVerb(err, "marshal", "manifest")
+	}
+
+	if err := medium.EnsureDir(filepath.Dir(output)); err != nil {
+		return cli.WrapVerb(err, "create", filepath.Dir(output))
+	}
+	if err := medium.Write(output, string(data)); err != nil {
+		return cli.WrapVerb(err, "write", output)
 	}
 
 	cli.Blank()
@@ -79,7 +90,7 @@ func runCompile(dir, signKeyHex, builtBy string) error {
 	if opts.Tag != "" {
 		cli.Print("  %s %s\n", dimStyle.Render("tag:"), valueStyle.Render(opts.Tag))
 	}
-	cli.Print("  %s %s\n", dimStyle.Render("output:"), valueStyle.Render("core.json"))
+	cli.Print("  %s %s\n", dimStyle.Render("output:"), valueStyle.Render(output))
 	cli.Blank()
 
 	return nil
