@@ -22,6 +22,10 @@ const IndexVersion = 1
 // Builder constructs a marketplace Index by crawling directories for
 // core.json (compiled manifests) or .core/manifest.yaml files.
 type Builder struct {
+	// Medium is the filesystem abstraction used for manifest reads.
+	// If nil, io.Local is used.
+	Medium coreio.Medium
+
 	// BaseURL is the prefix for constructing repository URLs, e.g.
 	// "https://forge.lthn.ai". When set, module Repo is derived as
 	// BaseURL + "/" + org + "/" + code + ".git".
@@ -147,9 +151,14 @@ func WriteIndex(m coreio.Medium, path string, idx *Index) error {
 
 // loadFromDir tries core.json first, then falls back to .core/manifest.yaml.
 func (b *Builder) loadFromDir(dir string) (*manifest.Manifest, error) {
+	medium := b.Medium
+	if medium == nil {
+		medium = coreio.Local
+	}
+
 	// Prefer compiled manifest (core.json).
 	coreJSON := filepath.Join(dir, "core.json")
-	if raw, err := coreio.Local.Read(coreJSON); err == nil {
+	if raw, err := medium.Read(coreJSON); err == nil {
 		cm, err := manifest.ParseCompiled([]byte(raw))
 		if err != nil {
 			return nil, coreerr.E("marketplace.Builder.loadFromDir", "parse core.json", err)
@@ -159,7 +168,7 @@ func (b *Builder) loadFromDir(dir string) (*manifest.Manifest, error) {
 
 	// Fall back to source manifest.
 	manifestYAML := filepath.Join(dir, ".core", "manifest.yaml")
-	raw, err := coreio.Local.Read(manifestYAML)
+	raw, err := medium.Read(manifestYAML)
 	if err != nil {
 		return nil, nil // No manifest — skip silently.
 	}

@@ -7,6 +7,7 @@ import (
 	os "dappco.re/go/core/scm/internal/ax/osx"
 	"testing"
 
+	"dappco.re/go/core/io"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -163,6 +164,31 @@ binary: ./test-prov
 	assert.Equal(t, filepath.Join(dir, "test-prov"), providers[0].Dir)
 }
 
+func TestDiscoverProvidersWithMedium_Good(t *testing.T) {
+	medium := io.NewMockMedium()
+	medium.Dirs["/providers"] = true
+	medium.Dirs["/providers/cool-widget"] = true
+	medium.Dirs["/providers/data-viz"] = true
+	medium.Files["/providers/cool-widget/.core/manifest.yaml"] = `
+code: cool-widget
+name: Cool Widget
+version: 1.0.0
+namespace: /api/v1/cool-widget
+binary: ./cool-widget
+`
+	medium.Files["/providers/data-viz/.core/manifest.yaml"] = `
+code: data-viz
+name: Data Visualiser
+version: 0.2.0
+namespace: /api/v1/data-viz
+binary: ./data-viz
+`
+
+	providers, err := DiscoverProvidersWithMedium(medium, "/providers")
+	require.NoError(t, err)
+	assert.Len(t, providers, 2)
+}
+
 // -- ProviderRegistryFile tests -----------------------------------------------
 
 func TestProviderRegistry_LoadSave_Good(t *testing.T) {
@@ -199,6 +225,30 @@ func TestProviderRegistry_Load_Good_NonexistentFile_Good(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 1, reg.Version)
 	assert.Empty(t, reg.Providers)
+}
+
+func TestProviderRegistry_LoadSave_WithMedium_Good(t *testing.T) {
+	medium := io.NewMockMedium()
+	path := "/registry/registry.yaml"
+
+	reg := &ProviderRegistryFile{
+		Version:   1,
+		Providers: map[string]ProviderRegistryEntry{},
+	}
+	reg.Add("cool-widget", ProviderRegistryEntry{
+		Installed: "2026-03-14T12:00:00Z",
+		Version:   "1.0.0",
+		Source:    "forge.lthn.ai/someone/cool-widget",
+		AutoStart: true,
+	})
+
+	err := SaveProviderRegistryWithMedium(medium, path, reg)
+	require.NoError(t, err)
+
+	loaded, err := LoadProviderRegistryWithMedium(medium, path)
+	require.NoError(t, err)
+	assert.Equal(t, 1, loaded.Version)
+	assert.Len(t, loaded.Providers, 1)
 }
 
 func TestProviderRegistry_Add_Good(t *testing.T) {

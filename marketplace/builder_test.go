@@ -108,6 +108,34 @@ func TestBuildFromDirs_Good_CoreJSON_Good(t *testing.T) {
 	assert.Equal(t, "Compiled Module", idx.Modules[0].Name)
 }
 
+func TestBuildFromDirs_Good_UsesInjectedMedium_Good(t *testing.T) {
+	root := t.TempDir()
+	modDir := filepath.Join(root, "virtual-mod")
+	require.NoError(t, os.MkdirAll(modDir, 0755))
+
+	medium := io.NewMockMedium()
+	cm := manifest.CompiledManifest{
+		Manifest: manifest.Manifest{
+			Code:    "virtual-mod",
+			Name:    "Virtual Module",
+			Version: "9.9.9",
+			Sign:    "sig-virtual",
+		},
+		Commit: "commit-virtual",
+	}
+	data, err := json.Marshal(cm)
+	require.NoError(t, err)
+	require.NoError(t, medium.Write(filepath.Join(modDir, "core.json"), string(data)))
+
+	b := &Builder{Medium: medium}
+	idx, err := b.BuildFromDirs(root)
+	require.NoError(t, err)
+
+	require.Len(t, idx.Modules, 1)
+	assert.Equal(t, "virtual-mod", idx.Modules[0].Code)
+	assert.Equal(t, "sig-virtual", idx.Modules[0].SignKey)
+}
+
 func TestBuildFromDirs_Good_PrefersCompiledOverSource_Good(t *testing.T) {
 	root := t.TempDir()
 	modDir := filepath.Join(root, "dual-mod")
