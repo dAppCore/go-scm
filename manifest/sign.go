@@ -45,6 +45,9 @@ func Verify(m *Manifest, pub ed25519.PublicKey) (bool, error) {
 	if m.Sign == "" {
 		return false, coreerr.E("manifest.Verify", "no signature present", nil)
 	}
+	if len(pub) != ed25519.PublicKeySize {
+		return false, coreerr.E("manifest.Verify", "invalid public key length", nil)
+	}
 	sig, err := base64.StdEncoding.DecodeString(m.Sign)
 	if err != nil {
 		return false, coreerr.E("manifest.Verify", "decode failed", err)

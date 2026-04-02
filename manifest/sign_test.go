@@ -73,3 +73,12 @@ func TestVerify_Bad_NilManifest_Good(t *testing.T) {
 	assert.False(t, ok)
 	assert.Contains(t, err.Error(), "nil manifest")
 }
+
+func TestVerify_Bad_InvalidPublicKey_Good(t *testing.T) {
+	m := &Manifest{Code: "test-app", Sign: "c2ln"}
+
+	ok, err := Verify(m, ed25519.PublicKey([]byte("short")))
+	assert.Error(t, err)
+	assert.False(t, ok)
+	assert.Contains(t, err.Error(), "invalid public key length")
+}

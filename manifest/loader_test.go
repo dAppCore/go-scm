@@ -63,3 +63,17 @@ func TestLoadVerified_Bad_Tampered_Good(t *testing.T) {
 	_, err := LoadVerified(fs, ".", pub)
 	assert.Error(t, err)
 }
+
+func TestLoadVerified_Bad_InvalidPublicKey_Good(t *testing.T) {
+	fs := io.NewMockMedium()
+	fs.Files[".core/manifest.yaml"] = `
+code: signed-app
+name: Signed
+version: 1.0.0
+sign: c2ln
+`
+
+	_, err := LoadVerified(fs, ".", ed25519.PublicKey([]byte("short")))
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid public key length")
+}
