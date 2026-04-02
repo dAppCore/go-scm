@@ -234,6 +234,132 @@ func TestClient_CreateIssue_Bad_ServerError_Good(t *testing.T) {
 	assert.Contains(t, err.Error(), "failed to create issue")
 }
 
+func TestClient_EditIssue_Good(t *testing.T) {
+	client, srv := newTestClient(t)
+	defer srv.Close()
+
+	issue, err := client.EditIssue("test-org", "org-repo", 1, giteaSDK.EditIssueOption{
+		Title: "Updated Title",
+	})
+	require.NoError(t, err)
+	assert.NotNil(t, issue)
+}
+
+func TestClient_EditIssue_Bad_ServerError_Good(t *testing.T) {
+	client, srv := newErrorServer(t)
+	defer srv.Close()
+
+	_, err := client.EditIssue("test-org", "org-repo", 1, giteaSDK.EditIssueOption{
+		Title: "Updated Title",
+	})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to edit issue")
+}
+
+func TestClient_AssignIssue_Good(t *testing.T) {
+	client, srv := newTestClient(t)
+	defer srv.Close()
+
+	err := client.AssignIssue("test-org", "org-repo", 1, []string{"dev1", "dev2"})
+	require.NoError(t, err)
+}
+
+func TestClient_AssignIssue_Bad_ServerError_Good(t *testing.T) {
+	client, srv := newErrorServer(t)
+	defer srv.Close()
+
+	err := client.AssignIssue("test-org", "org-repo", 1, []string{"dev1"})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to assign issue")
+}
+
+func TestClient_CreateIssueComment_Good(t *testing.T) {
+	client, srv := newTestClient(t)
+	defer srv.Close()
+
+	err := client.CreateIssueComment("test-org", "org-repo", 1, "LGTM")
+	require.NoError(t, err)
+}
+
+func TestClient_CreateIssueComment_Bad_ServerError_Good(t *testing.T) {
+	client, srv := newErrorServer(t)
+	defer srv.Close()
+
+	err := client.CreateIssueComment("test-org", "org-repo", 1, "LGTM")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to create comment")
+}
+
+func TestClient_GetIssueLabels_Good(t *testing.T) {
+	client, srv := newTestClient(t)
+	defer srv.Close()
+
+	labels, err := client.GetIssueLabels("test-org", "org-repo", 1)
+	require.NoError(t, err)
+	require.Len(t, labels, 1)
+	assert.Equal(t, "bug", labels[0].Name)
+}
+
+func TestClient_GetIssueLabels_Bad_ServerError_Good(t *testing.T) {
+	client, srv := newErrorServer(t)
+	defer srv.Close()
+
+	_, err := client.GetIssueLabels("test-org", "org-repo", 1)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to get issue labels")
+}
+
+func TestClient_AddIssueLabels_Good(t *testing.T) {
+	client, srv := newTestClient(t)
+	defer srv.Close()
+
+	err := client.AddIssueLabels("test-org", "org-repo", 1, []int64{1})
+	require.NoError(t, err)
+}
+
+func TestClient_AddIssueLabels_Bad_ServerError_Good(t *testing.T) {
+	client, srv := newErrorServer(t)
+	defer srv.Close()
+
+	err := client.AddIssueLabels("test-org", "org-repo", 1, []int64{1})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to add labels to issue")
+}
+
+func TestClient_RemoveIssueLabel_Good(t *testing.T) {
+	client, srv := newTestClient(t)
+	defer srv.Close()
+
+	err := client.RemoveIssueLabel("test-org", "org-repo", 1, 1)
+	require.NoError(t, err)
+}
+
+func TestClient_RemoveIssueLabel_Bad_ServerError_Good(t *testing.T) {
+	client, srv := newErrorServer(t)
+	defer srv.Close()
+
+	err := client.RemoveIssueLabel("test-org", "org-repo", 1, 1)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to remove label from issue")
+}
+
+func TestClient_CloseIssue_Good(t *testing.T) {
+	client, srv := newTestClient(t)
+	defer srv.Close()
+
+	err := client.CloseIssue("test-org", "org-repo", 1)
+	require.NoError(t, err)
+}
+
+func TestClient_CloseIssue_Bad_ServerError_Good(t *testing.T) {
+	client, srv := newErrorServer(t)
+	defer srv.Close()
+
+	err := client.CloseIssue("test-org", "org-repo", 1)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to close issue")
+}
+
 func TestClient_ListPullRequests_Good(t *testing.T) {
 	client, srv := newTestClient(t)
 	defer srv.Close()

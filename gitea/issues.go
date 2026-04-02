@@ -133,6 +133,41 @@ func (c *Client) CreateIssue(owner, repo string, opts gitea.CreateIssueOption) (
 	return issue, nil
 }
 
+// EditIssue edits an existing issue.
+// Usage: EditIssue(...)
+func (c *Client) EditIssue(owner, repo string, number int64, opts gitea.EditIssueOption) (*gitea.Issue, error) {
+	issue, _, err := c.api.EditIssue(owner, repo, number, opts)
+	if err != nil {
+		return nil, log.E("gitea.EditIssue", "failed to edit issue", err)
+	}
+
+	return issue, nil
+}
+
+// AssignIssue assigns an issue to the specified users.
+// Usage: AssignIssue(...)
+func (c *Client) AssignIssue(owner, repo string, number int64, assignees []string) error {
+	_, _, err := c.api.EditIssue(owner, repo, number, gitea.EditIssueOption{
+		Assignees: assignees,
+	})
+	if err != nil {
+		return log.E("gitea.AssignIssue", "failed to assign issue", err)
+	}
+	return nil
+}
+
+// CreateIssueComment posts a comment on an issue or pull request.
+// Usage: CreateIssueComment(...)
+func (c *Client) CreateIssueComment(owner, repo string, issue int64, body string) error {
+	_, _, err := c.api.CreateIssueComment(owner, repo, issue, gitea.CreateIssueCommentOption{
+		Body: body,
+	})
+	if err != nil {
+		return log.E("gitea.CreateIssueComment", "failed to create comment", err)
+	}
+	return nil
+}
+
 // ListIssueComments returns all comments for an issue.
 // Usage: ListIssueComments(...)
 func (c *Client) ListIssueComments(owner, repo string, number int64) ([]*gitea.Comment, error) {
@@ -251,6 +286,52 @@ func (c *Client) ListIssueCommentsIter(owner, repo string, number int64) iter.Se
 			page++
 		}
 	}
+}
+
+// GetIssueLabels returns the labels currently attached to an issue.
+// Usage: GetIssueLabels(...)
+func (c *Client) GetIssueLabels(owner, repo string, number int64) ([]*gitea.Label, error) {
+	labels, _, err := c.api.GetIssueLabels(owner, repo, number, gitea.ListLabelsOptions{})
+	if err != nil {
+		return nil, log.E("gitea.GetIssueLabels", "failed to get issue labels", err)
+	}
+
+	return labels, nil
+}
+
+// AddIssueLabels adds labels to an issue.
+// Usage: AddIssueLabels(...)
+func (c *Client) AddIssueLabels(owner, repo string, number int64, labelIDs []int64) error {
+	_, _, err := c.api.AddIssueLabels(owner, repo, number, gitea.IssueLabelsOption{
+		Labels: labelIDs,
+	})
+	if err != nil {
+		return log.E("gitea.AddIssueLabels", "failed to add labels to issue", err)
+	}
+	return nil
+}
+
+// RemoveIssueLabel removes a label from an issue.
+// Usage: RemoveIssueLabel(...)
+func (c *Client) RemoveIssueLabel(owner, repo string, number, labelID int64) error {
+	_, err := c.api.DeleteIssueLabel(owner, repo, number, labelID)
+	if err != nil {
+		return log.E("gitea.RemoveIssueLabel", "failed to remove label from issue", err)
+	}
+	return nil
+}
+
+// CloseIssue closes an issue by setting its state to closed.
+// Usage: CloseIssue(...)
+func (c *Client) CloseIssue(owner, repo string, number int64) error {
+	closed := gitea.StateClosed
+	_, _, err := c.api.EditIssue(owner, repo, number, gitea.EditIssueOption{
+		State: &closed,
+	})
+	if err != nil {
+		return log.E("gitea.CloseIssue", "failed to close issue", err)
+	}
+	return nil
 }
 
 // GetPullRequest returns a single pull request by number.
