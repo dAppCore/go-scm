@@ -2,6 +2,7 @@
 
 import { LitElement, html, css, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
+import type { PropertyValues } from 'lit';
 import { connectScmEvents, type ScmEvent } from './shared/events.js';
 
 // Side-effect imports to register child elements
@@ -11,6 +12,9 @@ import './scm-manifest.js';
 import './scm-registry.js';
 
 type TabId = 'marketplace' | 'installed' | 'manifest' | 'registry';
+type RefreshableElement = HTMLElement & {
+  refresh?: () => Promise<void> | void;
+};
 
 /**
  * <core-scm-panel> — Top-level HLCRF panel with tabs.
@@ -154,18 +158,28 @@ export class ScmPanel extends LitElement {
     }
   }
 
-  disconnectedCallback() {
-    super.disconnectedCallback();
-    if (this.ws) {
-      this.ws.close();
-      this.ws = null;
+  updated(changedProperties: PropertyValues<this>) {
+    super.updated(changedProperties);
+    if (changedProperties.has('wsUrl') && this.isConnected) {
+      this.connectWs();
     }
   }
 
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this.disconnectWs();
+  }
+
   private connectWs() {
+    this.disconnectWs();
+    if (!this.wsUrl) {
+      return;
+    }
+
     this.ws = connectScmEvents(this.wsUrl, (event: ScmEvent) => {
       this.lastEvent = event.channel ?? event.type ?? '';
       this.requestUpdate();
+      this.refreshForEvent(event);
     });
     this.ws.onopen = () => {
       this.wsConnected = true;
@@ -175,25 +189,53 @@ export class ScmPanel extends LitElement {
     };
   }
 
+  private disconnectWs() {
+    if (!this.ws) {
+      return;
+    }
+
+    this.ws.close();
+    this.ws = null;
+  }
+
   private handleTabClick(tab: TabId) {
     this.activeTab = tab;
   }
 
-  private handleRefresh() {
-    // Force re-render of active child by toggling a key
-    const content = this.shadowRoot?.querySelector('.content');
-    if (content) {
-      const child = content.firstElementChild;
-      if (child && 'loadModules' in child) {
-        (child as any).loadModules();
-      } else if (child && 'loadInstalled' in child) {
-        (child as any).loadInstalled();
-      } else if (child && 'loadManifest' in child) {
-        (child as any).loadManifest();
-      } else if (child && 'loadRegistry' in child) {
-        (child as any).loadRegistry();
-      }
+  private async handleRefresh() {
+    await this.refreshActiveTab();
+  }
+
+  private refreshForEvent(event: ScmEvent) {
+    const targets = this.tabsForChannel(event.channel ?? event.type ?? '');
+    if (targets.includes(this.activeTab)) {
+      void this.refreshActiveTab();
     }
+  }
+
+  private tabsForChannel(channel: string): TabId[] {
+    if (channel.startsWith('scm.marketplace.')) {
+      return ['marketplace', 'installed'];
+    }
+    if (channel.startsWith('scm.installed.')) {
+      return ['installed'];
+    }
+    if (channel === 'scm.manifest.verified') {
+      return ['manifest'];
+    }
+    if (channel === 'scm.registry.changed') {
+      return ['registry'];
+    }
+    return [];
+  }
+
+  private async refreshActiveTab() {
+    const child = this.shadowRoot?.querySelector('.content > *') as RefreshableElement | null;
+    if (!child?.refresh) {
+      return;
+    }
+
+    await child.refresh();
   }
 
   private renderContent() {

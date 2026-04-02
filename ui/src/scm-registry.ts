@@ -170,6 +170,10 @@ export class ScmRegistry extends LitElement {
     }
   }
 
+  async refresh() {
+    await this.loadRegistry();
+  }
+
   render() {
     if (this.loading) {
       return html`<div class="loading">Loading registry\u2026</div>`;

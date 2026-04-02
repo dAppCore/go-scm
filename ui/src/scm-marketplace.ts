@@ -219,6 +219,10 @@ export class ScmMarketplace extends LitElement {
     }
   }
 
+  async refresh() {
+    await this.loadModules();
+  }
+
   private handleSearch(e: Event) {
     this.searchQuery = (e.target as HTMLInputElement).value;
     this.loadModules();

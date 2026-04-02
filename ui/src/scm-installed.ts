@@ -162,6 +162,10 @@ export class ScmInstalled extends LitElement {
     }
   }
 
+  async refresh() {
+    await this.loadInstalled();
+  }
+
   private async handleUpdate(code: string) {
     this.updating = new Set([...this.updating, code]);
     try {

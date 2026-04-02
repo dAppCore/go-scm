@@ -265,6 +265,11 @@ export class ScmManifest extends LitElement {
     }
   }
 
+  async refresh() {
+    this.verifyResult = null;
+    await this.loadManifest();
+  }
+
   private async handleVerify() {
     if (!this.verifyKey.trim()) return;
     try {
