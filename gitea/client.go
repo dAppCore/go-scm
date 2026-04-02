@@ -18,8 +18,9 @@ import (
 
 // Client wraps the Gitea SDK client with config-based auth.
 type Client struct {
-	api *gitea.Client
-	url string
+	api   *gitea.Client
+	url   string
+	token string
 }
 
 // New creates a new Gitea API client for the given URL and token.
@@ -30,7 +31,7 @@ func New(url, token string) (*Client, error) {
 		return nil, log.E("gitea.New", "failed to create client", err)
 	}
 
-	return &Client{api: api, url: url}, nil
+	return &Client{api: api, url: url, token: token}, nil
 }
 
 // API exposes the underlying SDK client for direct access.
@@ -40,3 +41,7 @@ func (c *Client) API() *gitea.Client { return c.api }
 // URL returns the Gitea instance URL.
 // Usage: URL(...)
 func (c *Client) URL() string { return c.url }
+
+// Token returns the Gitea API token.
+// Usage: Token(...)
+func (c *Client) Token() string { return c.token }
