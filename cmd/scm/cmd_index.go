@@ -13,10 +13,10 @@ import (
 
 func addIndexCommand(parent *cli.Command) {
 	var (
-		dirs    []string
-		output  string
-		baseURL string
-		org     string
+		dirs     []string
+		output   string
+		forgeURL string
+		org      string
 	)
 
 	cmd := &cli.Command{
@@ -27,21 +27,22 @@ func addIndexCommand(parent *cli.Command) {
 			if len(dirs) == 0 {
 				dirs = []string{"."}
 			}
-			return runIndex(dirs, output, baseURL, org)
+			return runIndex(dirs, output, forgeURL, org)
 		},
 	}
 
 	cmd.Flags().StringArrayVarP(&dirs, "dir", "d", nil, "Directories to scan (repeatable, default: current directory)")
 	cmd.Flags().StringVarP(&output, "output", "o", "index.json", "Output path for the index file")
-	cmd.Flags().StringVar(&baseURL, "base-url", "", "Base URL for repo links (e.g. https://forge.lthn.ai)")
+	cmd.Flags().StringVar(&forgeURL, "forge-url", "", "Forge base URL for repo links (e.g. https://forge.lthn.ai)")
+	cmd.Flags().StringVar(&forgeURL, "base-url", "", "Deprecated alias for --forge-url")
 	cmd.Flags().StringVar(&org, "org", "", "Organisation for repo links")
 
 	parent.AddCommand(cmd)
 }
 
-func runIndex(dirs []string, output, baseURL, org string) error {
+func runIndex(dirs []string, output, forgeURL, org string) error {
 	b := &marketplace.Builder{
-		BaseURL: baseURL,
+		BaseURL: forgeURL,
 		Org:     org,
 	}
 

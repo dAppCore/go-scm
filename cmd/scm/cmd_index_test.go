@@ -9,6 +9,7 @@ import (
 
 	"dappco.re/go/core/io"
 	"dappco.re/go/core/scm/marketplace"
+	"forge.lthn.ai/core/cli/pkg/cli"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -34,4 +35,30 @@ sign: key-a
 	require.Len(t, idx.Modules, 1)
 	assert.Equal(t, "mod-a", idx.Modules[0].Code)
 	assert.Equal(t, "https://forge.example.com/core/mod-a.git", idx.Modules[0].Repo)
+}
+
+func TestAddScmCommands_Good_IndexForgeURLFlagAlias_Good(t *testing.T) {
+	root := &cli.Command{Use: "root"}
+
+	AddScmCommands(root)
+
+	var scmCmd *cli.Command
+	for _, cmd := range root.Commands() {
+		if cmd.Name() == "scm" {
+			scmCmd = cmd
+			break
+		}
+	}
+	require.NotNil(t, scmCmd)
+
+	var indexCmd *cli.Command
+	for _, cmd := range scmCmd.Commands() {
+		if cmd.Name() == "index" {
+			indexCmd = cmd
+			break
+		}
+	}
+	require.NotNil(t, indexCmd)
+	assert.NotNil(t, indexCmd.Flags().Lookup("forge-url"))
+	assert.NotNil(t, indexCmd.Flags().Lookup("base-url"))
 }
