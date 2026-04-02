@@ -42,6 +42,7 @@ func TestScmProvider_Channels_Good(t *testing.T) {
 	assert.Contains(t, channels, "scm.marketplace.refreshed")
 	assert.Contains(t, channels, "scm.marketplace.installed")
 	assert.Contains(t, channels, "scm.marketplace.removed")
+	assert.Contains(t, channels, "scm.installed.changed")
 	assert.Contains(t, channels, "scm.manifest.verified")
 	assert.Contains(t, channels, "scm.registry.changed")
 }

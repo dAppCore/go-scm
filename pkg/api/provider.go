@@ -29,10 +29,17 @@ import (
 // and Renderable.
 type ScmProvider struct {
 	index     *marketplace.Index
-	installer *marketplace.Installer
+	installer marketplaceInstaller
 	registry  *repos.Registry
 	hub       *ws.Hub
 	medium    io.Medium
+}
+
+type marketplaceInstaller interface {
+	Install(context.Context, marketplace.Module) error
+	Remove(string) error
+	Update(context.Context, string) error
+	Installed() ([]marketplace.InstalledModule, error)
 }
 
 // compile-time interface checks
@@ -47,7 +54,7 @@ var (
 // installer, and registry. The WS hub is used to emit real-time events.
 // Pass nil for any dependency that is not available.
 // Usage: NewProvider(...)
-func NewProvider(idx *marketplace.Index, inst *marketplace.Installer, reg *repos.Registry, hub *ws.Hub) *ScmProvider {
+func NewProvider(idx *marketplace.Index, inst marketplaceInstaller, reg *repos.Registry, hub *ws.Hub) *ScmProvider {
 	return &ScmProvider{
 		index:     idx,
 		installer: inst,
@@ -81,6 +88,7 @@ func (p *ScmProvider) Channels() []string {
 		"scm.marketplace.refreshed",
 		"scm.marketplace.installed",
 		"scm.marketplace.removed",
+		"scm.installed.changed",
 		"scm.manifest.verified",
 		"scm.registry.changed",
 	}
@@ -293,6 +301,11 @@ func (p *ScmProvider) installItem(c *gin.Context) {
 		"code": mod.Code,
 		"name": mod.Name,
 	})
+	p.emitEvent("scm.installed.changed", map[string]any{
+		"action": "installed",
+		"code":   mod.Code,
+		"name":   mod.Name,
+	})
 
 	c.JSON(http.StatusOK, api.OK(map[string]any{"installed": true, "code": mod.Code}))
 }
@@ -313,6 +326,10 @@ func (p *ScmProvider) removeItem(c *gin.Context) {
 	}
 
 	p.emitEvent("scm.marketplace.removed", map[string]any{"code": code})
+	p.emitEvent("scm.installed.changed", map[string]any{
+		"action": "removed",
+		"code":   code,
+	})
 
 	c.JSON(http.StatusOK, api.OK(map[string]any{"removed": true, "code": code}))
 }
@@ -473,6 +490,11 @@ func (p *ScmProvider) updateInstalled(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, api.Fail("update_failed", err.Error()))
 		return
 	}
+
+	p.emitEvent("scm.installed.changed", map[string]any{
+		"action": "updated",
+		"code":   code,
+	})
 
 	c.JSON(http.StatusOK, api.OK(map[string]any{"updated": true, "code": code}))
 }
