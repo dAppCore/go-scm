@@ -5,6 +5,7 @@ package agentci
 import (
 	"context"
 	strings "dappco.re/go/core/scm/internal/ax/stringsx"
+	"math"
 
 	"dappco.re/go/core/scm/jobrunner"
 )
@@ -89,8 +90,61 @@ func (s *Spinner) FindByForgejoUser(forgejoUser string) (string, AgentConfig, bo
 }
 
 // Weave compares primary and verifier outputs. Returns true if they converge.
-// This is a placeholder for future semantic diff logic.
+// The comparison is a coarse token-overlap check controlled by the configured
+// validation threshold. It is intentionally deterministic and fast; richer
+// semantic diffing can replace it later without changing the signature.
 // Usage: Weave(...)
 func (s *Spinner) Weave(ctx context.Context, primaryOutput, signedOutput []byte) (bool, error) {
-	return string(primaryOutput) == string(signedOutput), nil
+	if ctx != nil {
+		select {
+		case <-ctx.Done():
+			return false, ctx.Err()
+		default:
+		}
+	}
+
+	primary := tokenizeWeaveOutput(primaryOutput)
+	signed := tokenizeWeaveOutput(signedOutput)
+
+	if len(primary) == 0 && len(signed) == 0 {
+		return true, nil
+	}
+
+	threshold := s.Config.ValidationThreshold
+	if threshold <= 0 || threshold > 1 {
+		threshold = 0.85
+	}
+
+	similarity := weaveDiceSimilarity(primary, signed)
+	return similarity >= threshold, nil
+}
+
+func tokenizeWeaveOutput(output []byte) []string {
+	fields := strings.Fields(strings.ReplaceAll(string(output), "\r\n", "\n"))
+	if len(fields) == 0 {
+		return nil
+	}
+	return fields
+}
+
+func weaveDiceSimilarity(primary, signed []string) float64 {
+	if len(primary) == 0 || len(signed) == 0 {
+		return 0
+	}
+
+	counts := make(map[string]int, len(primary))
+	for _, token := range primary {
+		counts[token]++
+	}
+
+	common := 0
+	for _, token := range signed {
+		if counts[token] == 0 {
+			continue
+		}
+		counts[token]--
+		common++
+	}
+
+	return math.Min(1, (2*float64(common))/float64(len(primary)+len(signed)))
 }

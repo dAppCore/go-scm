@@ -350,7 +350,7 @@ agentci:
 3. If the repository name is `core` or contains `security`, dual (Axiom 1: critical repos always verified).
 4. Otherwise, standard.
 
-In dual-run mode, `DispatchHandler` populates `DispatchTicket.VerifyModel` and `DispatchTicket.DualRun=true`. The `Weave` method compares primary and verifier outputs for convergence (currently byte-equal; semantic diff reserved for a future phase).
+In dual-run mode, `DispatchHandler` populates `DispatchTicket.VerifyModel` and `DispatchTicket.DualRun=true`. The `Weave` method compares primary and verifier outputs for convergence using a deterministic token-overlap score against `validation_threshold`; richer semantic diffing remains a future phase.
 
 ### Dispatch Ticket Transfer
 
