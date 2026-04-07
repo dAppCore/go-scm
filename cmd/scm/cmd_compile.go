@@ -11,7 +11,7 @@ import (
 
 	"dappco.re/go/core/io"
 	"dappco.re/go/core/scm/manifest"
-	"forge.lthn.ai/core/cli/pkg/cli"
+	"dappco.re/go/core/cli/pkg/cli"
 )
 
 func addCompileCommand(parent *cli.Command) {

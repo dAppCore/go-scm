@@ -65,12 +65,12 @@ func NewService(opts ServiceOptions) func(*core.Core) (any, error) {
 	}
 }
 
-// OnStartup registers query and task handlers.
+// OnStartup registers query and action handlers.
 // Usage: OnStartup(...)
-func (s *Service) OnStartup(ctx context.Context) error {
+func (s *Service) OnStartup(ctx context.Context) core.Result {
 	s.Core().RegisterQuery(s.handleQuery)
-	s.Core().RegisterTask(s.handleTask)
-	return nil
+	s.Core().RegisterAction(s.handleAction)
+	return core.Result{OK: true}
 }
 
 func (s *Service) handleQuery(c *core.Core, q core.Query) core.Result {
@@ -89,8 +89,8 @@ func (s *Service) handleQuery(c *core.Core, q core.Query) core.Result {
 	return core.Result{}
 }
 
-func (s *Service) handleTask(c *core.Core, t core.Task) core.Result {
-	switch m := t.(type) {
+func (s *Service) handleAction(c *core.Core, msg core.Message) core.Result {
+	switch m := msg.(type) {
 	case TaskPush:
 		return core.Result{}.Result(nil, Push(context.Background(), m.Path))
 

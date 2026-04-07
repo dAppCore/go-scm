@@ -6,7 +6,7 @@ import (
 	strings "dappco.re/go/core/scm/internal/ax/stringsx"
 	"path"
 
-	"forge.lthn.ai/core/cli/pkg/cli"
+	"dappco.re/go/core/cli/pkg/cli"
 )
 
 // splitOwnerRepo splits "owner/repo" into its parts.

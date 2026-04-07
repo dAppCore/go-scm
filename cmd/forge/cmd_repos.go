@@ -3,7 +3,7 @@
 package forge
 
 import (
-	"forge.lthn.ai/core/cli/pkg/cli"
+	"dappco.re/go/core/cli/pkg/cli"
 
 	forgejo "codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2"
 

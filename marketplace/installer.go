@@ -24,12 +24,12 @@ const storeGroup = "_modules"
 type Installer struct {
 	medium     io.Medium
 	modulesDir string
-	store      *store.Store
+	store      *store.KeyValueStore
 }
 
 // NewInstaller creates a new module installer.
 // Usage: NewInstaller(...)
-func NewInstaller(m io.Medium, modulesDir string, st *store.Store) *Installer {
+func NewInstaller(m io.Medium, modulesDir string, st *store.KeyValueStore) *Installer {
 	return &Installer{
 		medium:     m,
 		modulesDir: modulesDir,

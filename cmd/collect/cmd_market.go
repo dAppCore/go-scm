@@ -7,7 +7,7 @@ import (
 
 	"dappco.re/go/core/i18n"
 	"dappco.re/go/core/scm/collect"
-	"forge.lthn.ai/core/cli/pkg/cli"
+	"dappco.re/go/core/cli/pkg/cli"
 )
 
 // Market command flags

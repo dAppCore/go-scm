@@ -5,7 +5,7 @@ package collect
 import (
 	"time"
 
-	"forge.lthn.ai/core/cli/pkg/cli"
+	"dappco.re/go/core/cli/pkg/cli"
 
 	"dappco.re/go/core/i18n"
 	collectpkg "dappco.re/go/core/scm/collect"

@@ -8,7 +8,7 @@ import (
 	os "dappco.re/go/core/scm/internal/ax/osx"
 	strings "dappco.re/go/core/scm/internal/ax/stringsx"
 
-	"forge.lthn.ai/core/cli/pkg/cli"
+	"dappco.re/go/core/cli/pkg/cli"
 	coreerr "dappco.re/go/core/log"
 	"dappco.re/go/core/scm/agentci"
 	"dappco.re/go/core/scm/cmd/internal/syncutil"

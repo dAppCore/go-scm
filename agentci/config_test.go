@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"dappco.re/go/core/io"
-	"forge.lthn.ai/core/config"
+	"dappco.re/go/core/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

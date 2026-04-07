@@ -3,7 +3,7 @@
 package gitea
 
 import (
-	"forge.lthn.ai/core/cli/pkg/cli"
+	"dappco.re/go/core/cli/pkg/cli"
 
 	exec "golang.org/x/sys/execabs"
 

@@ -5,14 +5,14 @@ go 1.26.0
 require (
 	code.gitea.io/sdk/gitea v0.23.2
 	codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2 v2.2.0
-	dappco.re/go/core v0.5.0
+	dappco.re/go/core v0.8.0-alpha.1
 	dappco.re/go/core/api v0.2.0
-	dappco.re/go/core/i18n v0.2.0
-	dappco.re/go/core/io v0.2.0
-	dappco.re/go/core/log v0.1.0
+	dappco.re/go/core/cli v0.5.2
+	dappco.re/go/core/config v0.2.3
+	dappco.re/go/core/i18n v0.2.3
+	dappco.re/go/core/io v0.4.1
+	dappco.re/go/core/log v0.1.2
 	dappco.re/go/core/ws v0.3.0
-	dappco.re/go/core/cli v0.3.7
-	dappco.re/go/core/config v0.1.8
 	github.com/gin-gonic/gin v1.12.0
 	github.com/goccy/go-json v0.10.6
 	github.com/gorilla/websocket v1.5.3
@@ -23,11 +23,7 @@ require (
 )
 
 require (
-	dappco.re/go/core v0.3.3 // indirect
-	dappco.re/go/core/i18n v0.1.7 // indirect
-	dappco.re/go/core/inference v0.1.7 // indirect
-	dappco.re/go/core/io v0.1.7 // indirect
-	dappco.re/go/core/log v0.0.4 // indirect
+	dappco.re/go/core/inference v0.3.0 // indirect
 	github.com/42wim/httpsig v1.2.3 // indirect
 	github.com/99designs/gqlgen v0.17.88 // indirect
 	github.com/KyleBanks/depth v1.2.1 // indirect
