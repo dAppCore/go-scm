@@ -122,7 +122,7 @@ func TestLoader_LoadPlugin_Good(t *testing.T) {
 	assert.Equal(t, "1.0.0", manifest.Version)
 }
 
-func TestLoader_LoadPlugin_Bad_NotFound_Good(t *testing.T) {
+func TestLoader_LoadPlugin_Bad_NotFound_Bad(t *testing.T) {
 	m := io.NewMockMedium()
 	loader := NewLoader(m, "/home/user/.core/plugins")
 
@@ -131,7 +131,7 @@ func TestLoader_LoadPlugin_Bad_NotFound_Good(t *testing.T) {
 	assert.Contains(t, err.Error(), "failed to load plugin")
 }
 
-func TestLoader_LoadPlugin_Bad_InvalidManifest_Good(t *testing.T) {
+func TestLoader_LoadPlugin_Bad_InvalidManifest_Bad(t *testing.T) {
 	m := io.NewMockMedium()
 	baseDir := "/home/user/.core/plugins"
 

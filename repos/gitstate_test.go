@@ -60,7 +60,7 @@ func TestGitState_Load_Good_NoFile_Good(t *testing.T) {
 	assert.Empty(t, gs.Agents)
 }
 
-func TestGitState_Load_Bad_InvalidYAML_Good(t *testing.T) {
+func TestGitState_Load_Bad_InvalidYAML_Bad(t *testing.T) {
 	m := io.NewMockMedium()
 	_ = m.Write("/workspace/.core/git.yaml", "{{{{not yaml")
 

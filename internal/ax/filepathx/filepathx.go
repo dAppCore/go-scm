@@ -3,7 +3,9 @@
 package filepathx
 
 import (
+	"fmt"
 	"path"
+	"path/filepath"
 	"syscall"
 )
 
@@ -13,14 +15,14 @@ const Separator = '/'
 // Abs mirrors filepath.Abs for the paths used in this repo.
 // Usage: Abs(...)
 func Abs(p string) (string, error) {
-	if path.IsAbs(p) {
-		return path.Clean(p), nil
+	if filepath.IsAbs(p) {
+		return filepath.Clean(p), nil
 	}
 	cwd, err := syscall.Getwd()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("filepathx.Abs: %w", err)
 	}
-	return path.Clean(path.Join(cwd, p)), nil
+	return filepath.Clean(filepath.Join(cwd, p)), nil
 }
 
 // Base mirrors filepath.Base.

@@ -3,6 +3,7 @@
 package fmtx
 
 import (
+	"fmt"
 	"io"
 
 	core "dappco.re/go/core"
@@ -33,8 +34,14 @@ func Printf(format string, args ...any) (int, error) {
 	return Fprintf(stdio.Stdout, format, args...)
 }
 
-// Println mirrors fmt.Println.
+// Sprintln mirrors fmt.Sprintln — spaces between operands, trailing newline.
+// Usage: Sprintln(...)
+func Sprintln(args ...any) string {
+	return fmt.Sprintln(args...)
+}
+
+// Println mirrors fmt.Println — spaces between operands, trailing newline.
 // Usage: Println(...)
 func Println(args ...any) (int, error) {
-	return io.WriteString(stdio.Stdout, Sprint(args...)+"\n")
+	return io.WriteString(stdio.Stdout, Sprintln(args...))
 }

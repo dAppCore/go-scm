@@ -75,7 +75,7 @@ func TestState_SaveLoad_Good(t *testing.T) {
 	assert.True(t, now.Equal(got.LastRun))
 }
 
-func TestState_Load_Good_NoFile_Good(t *testing.T) {
+func TestState_Load_NoFile_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	s := NewState(m, "/nonexistent.json")
 
@@ -88,7 +88,7 @@ func TestState_Load_Good_NoFile_Good(t *testing.T) {
 	assert.False(t, ok)
 }
 
-func TestState_Load_Bad_InvalidJSON_Good(t *testing.T) {
+func TestState_Load_InvalidJSON_Bad(t *testing.T) {
 	m := io.NewMockMedium()
 	m.Files["/state.json"] = "not valid json"
 
@@ -97,7 +97,7 @@ func TestState_Load_Bad_InvalidJSON_Good(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestState_SaveLoad_Good_MultipleEntries_Good(t *testing.T) {
+func TestState_SaveLoad_MultipleEntries_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	s := NewState(m, "/state.json")
 
@@ -125,7 +125,7 @@ func TestState_SaveLoad_Good_MultipleEntries_Good(t *testing.T) {
 	assert.Equal(t, 30, c.Items)
 }
 
-func TestState_Set_Good_Overwrite_Good(t *testing.T) {
+func TestState_Set_Overwrite_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	s := NewState(m, "/state.json")
 

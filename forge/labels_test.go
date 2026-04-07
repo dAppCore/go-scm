@@ -38,6 +38,8 @@ func TestClient_ListRepoLabels_Bad_ServerError_Good(t *testing.T) {
 }
 
 func TestClient_ListRepoLabelsIter_Good_Paginates_Good(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/v1/version", func(w http.ResponseWriter, r *http.Request) {
 		jsonResponse(w, map[string]string{"version": "1.21.0"})

@@ -21,7 +21,11 @@ func ParseRepoName(arg string) (string, error) {
 	parts := strings.Split(decoded, "/")
 	switch len(parts) {
 	case 1:
-		return agentci.ValidatePathElement(parts[0])
+		name, err := agentci.ValidatePathElement(parts[0])
+		if err != nil {
+			return "", coreerr.E("syncutil.ParseRepoName", "invalid repo name", err)
+		}
+		return name, nil
 	case 2:
 		if _, err := agentci.ValidatePathElement(parts[0]); err != nil {
 			return "", coreerr.E("syncutil.ParseRepoName", "invalid repo owner", err)

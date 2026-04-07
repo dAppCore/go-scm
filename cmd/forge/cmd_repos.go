@@ -3,12 +3,12 @@
 package forge
 
 import (
-	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
+	"forge.lthn.ai/core/cli/pkg/cli"
 
 	forgejo "codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2"
 
 	fg "dappco.re/go/core/scm/forge"
-	"forge.lthn.ai/core/cli/pkg/cli"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
 )
 
 // Repos command flags.

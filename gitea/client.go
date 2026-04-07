@@ -42,9 +42,19 @@ func (c *Client) API() *gitea.Client { return c.api }
 // Usage: URL(...)
 func (c *Client) URL() string { return c.url }
 
-// Token returns the Gitea API token.
+// Token returns the Gitea API token for use in HTTP Authorization headers.
+// The token is used internally and should not be logged or exposed externally.
 // Usage: Token(...)
 func (c *Client) Token() string { return c.token }
+
+// RedactedToken returns a redacted representation of the API token for safe logging.
+// Usage: RedactedToken(...)
+func (c *Client) RedactedToken() string {
+	if len(c.token) <= 8 {
+		return "***"
+	}
+	return c.token[:4] + "****" + c.token[len(c.token)-4:]
+}
 
 // GetCurrentUser returns the authenticated user's information.
 // Usage: GetCurrentUser(...)

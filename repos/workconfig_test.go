@@ -78,7 +78,7 @@ sync:
 	assert.True(t, wc.Sync.CloneMissing)
 }
 
-func TestWorkConfig_Load_Bad_InvalidYAML_Good(t *testing.T) {
+func TestWorkConfig_Load_Bad_InvalidYAML_Bad(t *testing.T) {
 	m := io.NewMockMedium()
 	_ = m.Write("/workspace/.core/work.yaml", "{{{{broken")
 
@@ -96,7 +96,7 @@ func TestWorkConfig_HasTrigger_Good(t *testing.T) {
 	assert.True(t, wc.HasTrigger("scheduled"))
 }
 
-func TestWorkConfig_HasTrigger_Bad_NotFound_Good(t *testing.T) {
+func TestWorkConfig_HasTrigger_NotFound_Bad(t *testing.T) {
 	wc := DefaultWorkConfig()
 	assert.False(t, wc.HasTrigger("on_deploy"))
 }

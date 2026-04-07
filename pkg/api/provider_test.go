@@ -268,7 +268,8 @@ func TestScmProvider_RefreshMarketplace_Good(t *testing.T) {
 	r := setupRouter(p)
 
 	w := httptest.NewRecorder()
-	body := []byte(`{"index_path":"` + indexPath + `"}`)
+	body, err := json.Marshal(map[string]string{"index_path": indexPath})
+	require.NoError(t, err)
 	req, _ := http.NewRequest("POST", "/api/v1/scm/marketplace/refresh", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	r.ServeHTTP(w, req)
@@ -276,7 +277,7 @@ func TestScmProvider_RefreshMarketplace_Good(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	var resp goapi.Response[map[string]any]
-	err := json.Unmarshal(w.Body.Bytes(), &resp)
+	err = json.Unmarshal(w.Body.Bytes(), &resp)
 	require.NoError(t, err)
 	assert.True(t, resp.Success)
 	assert.Equal(t, float64(1), resp.Data["modules"])

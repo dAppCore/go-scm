@@ -48,9 +48,12 @@ func Compile(m *Manifest, opts CompileOptions) (*CompiledManifest, error) {
 		return nil, coreerr.E("manifest.Compile", "missing version", nil)
 	}
 
+	// Work on a copy to avoid mutating the caller's manifest.
+	mCopy := *m
 	if opts.Version != "" {
-		m.Version = opts.Version
+		mCopy.Version = opts.Version
 	}
+	m = &mCopy
 
 	// Sign if a key is supplied.
 	if opts.SignKey != nil {

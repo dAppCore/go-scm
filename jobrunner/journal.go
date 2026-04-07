@@ -206,6 +206,9 @@ func (j *Journal) Query(opts JournalQueryOptions) ([]JournalEntry, error) {
 		return nil, coreerr.E("jobrunner.Journal.Query", "journal is required", nil)
 	}
 
+	j.mu.Lock()
+	defer j.mu.Unlock()
+
 	ownerFilter, repoFilter, err := normaliseJournalQueryRepo(opts)
 	if err != nil {
 		return nil, coreerr.E("jobrunner.Journal.Query", "normalise repo filter", err)

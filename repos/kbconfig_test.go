@@ -75,7 +75,7 @@ search:
 	assert.Equal(t, "embeddinggemma", kb.Search.EmbedModel)
 }
 
-func TestKBConfig_Load_Bad_InvalidYAML_Good(t *testing.T) {
+func TestKBConfig_Load_Bad_InvalidYAML_Bad(t *testing.T) {
 	m := io.NewMockMedium()
 	_ = m.Write("/workspace/.core/kb.yaml", "{{{{broken")
 

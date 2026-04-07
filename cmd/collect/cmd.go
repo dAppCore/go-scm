@@ -3,12 +3,12 @@
 package collect
 
 import (
-	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
+	"forge.lthn.ai/core/cli/pkg/cli"
 
 	"dappco.re/go/core/i18n"
 	"dappco.re/go/core/io"
 	"dappco.re/go/core/scm/collect"
-	"forge.lthn.ai/core/cli/pkg/cli"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
 )
 
 func init() {

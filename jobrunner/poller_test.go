@@ -120,7 +120,7 @@ func TestPoller_RunOnce_Good(t *testing.T) {
 	assert.Equal(t, 1, p.Cycle())
 }
 
-func TestPoller_RunOnce_Good_NoSignals_Good(t *testing.T) {
+func TestPoller_RunOnce_NoSignals_Good(t *testing.T) {
 	src := &mockSource{
 		name:    "empty-source",
 		signals: nil,
@@ -151,7 +151,7 @@ func TestPoller_RunOnce_Good_NoSignals_Good(t *testing.T) {
 	assert.Equal(t, 1, p.Cycle())
 }
 
-func TestPoller_RunOnce_Good_NoMatchingHandler_Good(t *testing.T) {
+func TestPoller_RunOnce_NoMatchingHandler_Good(t *testing.T) {
 	sig := &PipelineSignal{
 		EpicNumber:  5,
 		ChildNumber: 8,
@@ -192,7 +192,7 @@ func TestPoller_RunOnce_Good_NoMatchingHandler_Good(t *testing.T) {
 	assert.Empty(t, src.reports)
 }
 
-func TestPoller_RunOnce_Good_DryRun_Good(t *testing.T) {
+func TestPoller_RunOnce_DryRun_Good(t *testing.T) {
 	sig := &PipelineSignal{
 		EpicNumber:  1,
 		ChildNumber: 3,

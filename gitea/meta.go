@@ -78,7 +78,7 @@ func (c *Client) GetPRMeta(owner, repo string, pr int64) (*PRMeta, error) {
 	count := 0
 	for _, err := range c.ListIssueCommentsIter(owner, repo, pr) {
 		if err != nil {
-			break
+			return nil, log.E("gitea.GetPRMeta", "list issue comments", err)
 		}
 		count++
 	}

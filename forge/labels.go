@@ -58,13 +58,13 @@ func (c *Client) ListOrgLabelsIter(org string) iter.Seq2[*forgejo.Label, error] 
 
 		for repo, err := range c.ListOrgReposIter(org) {
 			if err != nil {
-				yield(nil, log.E("forge.ListOrgLabels", "failed to list org repos", err))
+				yield(nil, log.E("forge.ListOrgLabelsIter", "failed to list org repos", err))
 				return
 			}
 
 			for label, err := range c.ListRepoLabelsIter(repo.Owner.UserName, repo.Name) {
 				if err != nil {
-					yield(nil, log.E("forge.ListOrgLabels", "failed to list repo labels", err))
+					yield(nil, log.E("forge.ListOrgLabelsIter", "failed to list repo labels", err))
 					return
 				}
 
@@ -118,7 +118,7 @@ func (c *Client) ListRepoLabelsIter(owner, repo string) iter.Seq2[*forgejo.Label
 				ListOptions: forgejo.ListOptions{Page: page, PageSize: 50},
 			})
 			if err != nil {
-				yield(nil, log.E("forge.ListRepoLabels", "failed to list repo labels", err))
+				yield(nil, log.E("forge.ListRepoLabelsIter", "failed to list repo labels", err))
 				return
 			}
 

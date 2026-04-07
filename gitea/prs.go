@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"time"
 
 	"code.gitea.io/sdk/gitea"
 
@@ -15,6 +16,9 @@ import (
 	"dappco.re/go/core/scm/agentci"
 	"dappco.re/go/core/scm/internal/ax/jsonx"
 )
+
+// httpClient is a package-level client with a timeout to avoid hanging indefinitely.
+var httpClient = &http.Client{Timeout: 30 * time.Second}
 
 // MergePullRequest merges a pull request with the given method ("squash", "rebase", "merge").
 // Usage: MergePullRequest(...)
@@ -74,7 +78,7 @@ func (c *Client) SetPRDraft(owner, repo string, index int64, draft bool) error {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "token "+c.Token())
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return log.E("gitea.SetPRDraft", "failed to update draft status", err)
 	}

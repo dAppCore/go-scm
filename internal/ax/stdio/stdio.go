@@ -28,7 +28,11 @@ type fdWriter struct {
 // Write implements io.Writer for stdout and stderr without importing os.
 // Usage: Write(...)
 func (w fdWriter) Write(p []byte) (int, error) {
-	return syscall.Write(w.fd, p)
+	n, err := syscall.Write(w.fd, p)
+	if n < len(p) && err == nil {
+		return n, io.ErrShortWrite
+	}
+	return n, err
 }
 
 // Stdin exposes process stdin without importing os.

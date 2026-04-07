@@ -3,12 +3,13 @@
 package gitea
 
 import (
-	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
-	strings "dappco.re/go/core/scm/internal/ax/stringsx"
+	"forge.lthn.ai/core/cli/pkg/cli"
+
 	exec "golang.org/x/sys/execabs"
 
 	gt "dappco.re/go/core/scm/gitea"
-	"forge.lthn.ai/core/cli/pkg/cli"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
+	strings "dappco.re/go/core/scm/internal/ax/stringsx"
 )
 
 // Mirror command flags.

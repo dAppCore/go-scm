@@ -25,7 +25,7 @@ func TestNewInstaller_Good(t *testing.T) {
 
 // ── Install error paths ────────────────────────────────────────────
 
-func TestInstall_Bad_InvalidSource_Good(t *testing.T) {
+func TestInstall_InvalidSource_Bad(t *testing.T) {
 	m := io.NewMockMedium()
 	reg := NewRegistry(m, "/plugins")
 	inst := NewInstaller(m, reg)
@@ -35,7 +35,7 @@ func TestInstall_Bad_InvalidSource_Good(t *testing.T) {
 	assert.Contains(t, err.Error(), "invalid source")
 }
 
-func TestInstall_Bad_AlreadyInstalled_Good(t *testing.T) {
+func TestInstall_AlreadyInstalled_Bad(t *testing.T) {
 	m := io.NewMockMedium()
 	reg := NewRegistry(m, "/plugins")
 	_ = reg.Add(&PluginConfig{Name: "my-plugin", Version: "1.0.0"})
@@ -80,7 +80,7 @@ func TestRemove_Good(t *testing.T) {
 	assert.False(t, m.Exists("/plugins/removable"))
 }
 
-func TestRemove_Good_DirAlreadyGone_Good(t *testing.T) {
+func TestRemove_DirAlreadyGone_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	reg := NewRegistry(m, "/plugins")
 	_ = reg.Add(&PluginConfig{Name: "ghost", Version: "1.0.0"})
@@ -94,7 +94,7 @@ func TestRemove_Good_DirAlreadyGone_Good(t *testing.T) {
 	assert.False(t, ok)
 }
 
-func TestRemove_Bad_NotFound_Good(t *testing.T) {
+func TestRemove_NotFound_Bad(t *testing.T) {
 	m := io.NewMockMedium()
 	reg := NewRegistry(m, "/plugins")
 	inst := NewInstaller(m, reg)
@@ -119,7 +119,7 @@ func TestRemove_Bad_PathTraversalName(t *testing.T) {
 
 // ── Update error paths ─────────────────────────────────────────────
 
-func TestUpdate_Bad_NotFound_Good(t *testing.T) {
+func TestUpdate_NotFound_Bad(t *testing.T) {
 	m := io.NewMockMedium()
 	reg := NewRegistry(m, "/plugins")
 	inst := NewInstaller(m, reg)
@@ -131,7 +131,7 @@ func TestUpdate_Bad_NotFound_Good(t *testing.T) {
 
 // ── ParseSource ────────────────────────────────────────────────────
 
-func TestParseSource_Good_OrgRepo_Good(t *testing.T) {
+func TestParseSource_OrgRepo_Good(t *testing.T) {
 	org, repo, version, err := ParseSource("host-uk/core-plugin")
 	assert.NoError(t, err)
 	assert.Equal(t, "host-uk", org)
@@ -139,7 +139,7 @@ func TestParseSource_Good_OrgRepo_Good(t *testing.T) {
 	assert.Equal(t, "", version)
 }
 
-func TestParseSource_Good_OrgRepoVersion_Good(t *testing.T) {
+func TestParseSource_OrgRepoVersion_Good(t *testing.T) {
 	org, repo, version, err := ParseSource("host-uk/core-plugin@v1.0.0")
 	assert.NoError(t, err)
 	assert.Equal(t, "host-uk", org)
@@ -147,7 +147,7 @@ func TestParseSource_Good_OrgRepoVersion_Good(t *testing.T) {
 	assert.Equal(t, "v1.0.0", version)
 }
 
-func TestParseSource_Good_VersionWithoutPrefix_Good(t *testing.T) {
+func TestParseSource_VersionWithoutPrefix_Good(t *testing.T) {
 	org, repo, version, err := ParseSource("org/repo@1.2.3")
 	assert.NoError(t, err)
 	assert.Equal(t, "org", org)
@@ -155,37 +155,37 @@ func TestParseSource_Good_VersionWithoutPrefix_Good(t *testing.T) {
 	assert.Equal(t, "1.2.3", version)
 }
 
-func TestParseSource_Bad_Empty_Good(t *testing.T) {
+func TestParseSource_Empty_Bad(t *testing.T) {
 	_, _, _, err := ParseSource("")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "source is empty")
 }
 
-func TestParseSource_Bad_NoSlash_Good(t *testing.T) {
+func TestParseSource_NoSlash_Bad(t *testing.T) {
 	_, _, _, err := ParseSource("just-a-name")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "org/repo")
 }
 
-func TestParseSource_Bad_TooManySlashes_Good(t *testing.T) {
+func TestParseSource_TooManySlashes_Bad(t *testing.T) {
 	_, _, _, err := ParseSource("a/b/c")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "org/repo")
 }
 
-func TestParseSource_Bad_EmptyOrg_Good(t *testing.T) {
+func TestParseSource_EmptyOrg_Bad(t *testing.T) {
 	_, _, _, err := ParseSource("/repo")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "org/repo")
 }
 
-func TestParseSource_Bad_EmptyRepo_Good(t *testing.T) {
+func TestParseSource_EmptyRepo_Bad(t *testing.T) {
 	_, _, _, err := ParseSource("org/")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "org/repo")
 }
 
-func TestParseSource_Bad_EmptyVersion_Good(t *testing.T) {
+func TestParseSource_EmptyVersion_Bad(t *testing.T) {
 	_, _, _, err := ParseSource("org/repo@")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "version is empty")

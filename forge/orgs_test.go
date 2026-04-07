@@ -71,11 +71,14 @@ func TestClient_ListMyOrgsIter_Bad_ServerError_Good(t *testing.T) {
 	client, srv := newErrorServer(t)
 	defer srv.Close()
 
+	seen := false
 	for _, err := range client.ListMyOrgsIter() {
+		seen = true
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "failed to list orgs")
 		break
 	}
+	require.True(t, seen, "expected ListMyOrgsIter to yield an error")
 }
 
 func TestClient_GetOrg_Good(t *testing.T) {

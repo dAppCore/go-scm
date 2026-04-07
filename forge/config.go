@@ -6,7 +6,7 @@ import (
 	os "dappco.re/go/core/scm/internal/ax/osx"
 
 	"dappco.re/go/core/log"
-	"forge.lthn.ai/core/config"
+	"dappco.re/go/core/config"
 )
 
 const (

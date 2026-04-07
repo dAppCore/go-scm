@@ -3,13 +3,13 @@
 package forge
 
 import (
-	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
-	strings "dappco.re/go/core/scm/internal/ax/stringsx"
+	"forge.lthn.ai/core/cli/pkg/cli"
 
 	forgejo "codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2"
 
 	fg "dappco.re/go/core/scm/forge"
-	"forge.lthn.ai/core/cli/pkg/cli"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
+	strings "dappco.re/go/core/scm/internal/ax/stringsx"
 )
 
 // PRs command flags.

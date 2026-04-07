@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 
 	"dappco.re/go/core/api"
 	"dappco.re/go/core/api/pkg/provider"
@@ -28,6 +29,7 @@ import (
 // as a service provider. It implements Provider, Streamable, Describable,
 // and Renderable.
 type ScmProvider struct {
+	mu        sync.RWMutex
 	index     *marketplace.Index
 	installer marketplaceInstaller
 	registry  *repos.Registry
@@ -230,7 +232,11 @@ func (p *ScmProvider) Describe() []api.RouteDescription {
 // -- Marketplace Handlers -----------------------------------------------------
 
 func (p *ScmProvider) listMarketplace(c *gin.Context) {
-	if p.index == nil {
+	p.mu.RLock()
+	idx := p.index
+	p.mu.RUnlock()
+
+	if idx == nil {
 		c.JSON(http.StatusOK, api.OK([]marketplace.Module{}))
 		return
 	}
@@ -238,9 +244,9 @@ func (p *ScmProvider) listMarketplace(c *gin.Context) {
 	query := c.Query("q")
 	category := c.Query("category")
 
-	modules := p.index.Modules
+	modules := idx.Modules
 	if category != "" {
-		modules = p.index.ByCategory(category)
+		modules = idx.ByCategory(category)
 	}
 	if query != "" {
 		filtered := make([]marketplace.Module, 0, len(modules))
@@ -259,7 +265,11 @@ func (p *ScmProvider) listMarketplace(c *gin.Context) {
 }
 
 func (p *ScmProvider) getMarketplaceItem(c *gin.Context) {
-	if p.index == nil {
+	p.mu.RLock()
+	idx := p.index
+	p.mu.RUnlock()
+
+	if idx == nil {
 		c.JSON(http.StatusNotFound, api.Fail("not_found", "marketplace index not loaded"))
 		return
 	}
@@ -268,7 +278,7 @@ func (p *ScmProvider) getMarketplaceItem(c *gin.Context) {
 	if !ok {
 		return
 	}
-	mod, ok := p.index.Find(code)
+	mod, ok := idx.Find(code)
 	if !ok {
 		c.JSON(http.StatusNotFound, api.Fail("not_found", "provider not found in marketplace"))
 		return
@@ -277,7 +287,12 @@ func (p *ScmProvider) getMarketplaceItem(c *gin.Context) {
 }
 
 func (p *ScmProvider) installItem(c *gin.Context) {
-	if p.index == nil || p.installer == nil {
+	p.mu.RLock()
+	idx := p.index
+	inst := p.installer
+	p.mu.RUnlock()
+
+	if idx == nil || inst == nil {
 		c.JSON(http.StatusServiceUnavailable, api.Fail("unavailable", "marketplace not configured"))
 		return
 	}
@@ -286,13 +301,13 @@ func (p *ScmProvider) installItem(c *gin.Context) {
 	if !ok {
 		return
 	}
-	mod, ok := p.index.Find(code)
+	mod, ok := idx.Find(code)
 	if !ok {
 		c.JSON(http.StatusNotFound, api.Fail("not_found", "provider not found in marketplace"))
 		return
 	}
 
-	if err := p.installer.Install(context.Background(), mod); err != nil {
+	if err := inst.Install(context.Background(), mod); err != nil {
 		c.JSON(http.StatusInternalServerError, api.Fail("install_failed", err.Error()))
 		return
 	}
@@ -356,7 +371,9 @@ func (p *ScmProvider) refreshMarketplace(c *gin.Context) {
 		return
 	}
 
+	p.mu.Lock()
 	p.index = idx
+	p.mu.Unlock()
 	p.emitEvent("scm.marketplace.refreshed", map[string]any{
 		"index_path": req.IndexPath,
 		"modules":    len(idx.Modules),

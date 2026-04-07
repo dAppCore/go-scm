@@ -75,8 +75,6 @@ func expandIndexRepoPaths(dirs []string) ([]string, error) {
 	var repoPaths []string
 
 	for _, dir := range dirs {
-		repoPaths = append(repoPaths, dir)
-
 		entries, err := os.ReadDir(dir)
 		if err != nil {
 			if os.IsNotExist(err) {
@@ -84,6 +82,8 @@ func expandIndexRepoPaths(dirs []string) ([]string, error) {
 			}
 			return nil, cli.WrapVerb(err, "read", dir)
 		}
+
+		repoPaths = append(repoPaths, dir)
 
 		for _, entry := range entries {
 			if !entry.IsDir() {

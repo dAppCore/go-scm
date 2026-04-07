@@ -10,25 +10,38 @@ import (
 )
 
 func TestParseRepoName_Good(t *testing.T) {
-	name, err := ParseRepoName("core")
-	require.NoError(t, err)
-	assert.Equal(t, "core", name)
+	tests := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{name: "RepoOnly", input: "core", want: "core"},
+		{name: "OwnerRepo", input: "host-uk/core", want: "core"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ParseRepoName(tt.input)
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
 }
 
-func TestParseRepoName_Good_OwnerRepo(t *testing.T) {
-	name, err := ParseRepoName("host-uk/core")
-	require.NoError(t, err)
-	assert.Equal(t, "core", name)
-}
+func TestParseRepoName_Bad(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+	}{
+		{name: "PathTraversal", input: "../escape"},
+		{name: "PathTraversalEncoded", input: "host-uk%2F..%2Fescape"},
+	}
 
-func TestParseRepoName_Bad_PathTraversal(t *testing.T) {
-	_, err := ParseRepoName("../escape")
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "syncutil.ParseRepoName")
-}
-
-func TestParseRepoName_Bad_PathTraversalEncoded(t *testing.T) {
-	_, err := ParseRepoName("host-uk%2F..%2Fescape")
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "syncutil.ParseRepoName")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := ParseRepoName(tt.input)
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), "syncutil.ParseRepoName")
+		})
+	}
 }

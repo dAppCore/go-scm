@@ -3,9 +3,9 @@
 package stringsx
 
 import (
-	"bufio"
 	"bytes"
 	"iter"
+	"strings"
 
 	core "dappco.re/go/core"
 )
@@ -34,13 +34,7 @@ func EqualFold(s, t string) bool {
 // Fields mirrors strings.Fields.
 // Usage: Fields(...)
 func Fields(s string) []string {
-	scanner := bufio.NewScanner(NewReader(s))
-	scanner.Split(bufio.ScanWords)
-	fields := make([]string, 0)
-	for scanner.Scan() {
-		fields = append(fields, scanner.Text())
-	}
-	return fields
+	return strings.Fields(s)
 }
 
 // HasPrefix mirrors strings.HasPrefix.
@@ -76,10 +70,7 @@ func NewReader(s string) *bytes.Reader {
 // Repeat mirrors strings.Repeat.
 // Usage: Repeat(...)
 func Repeat(s string, count int) string {
-	if count <= 0 {
-		return ""
-	}
-	return string(bytes.Repeat([]byte(s), count))
+	return strings.Repeat(s, count)
 }
 
 // ReplaceAll mirrors strings.ReplaceAll.
@@ -88,10 +79,10 @@ func ReplaceAll(s, old, new string) string {
 	return core.Replace(s, old, new)
 }
 
-// Replace mirrors strings.Replace for replace-all call sites.
+// Replace mirrors strings.Replace.
 // Usage: Replace(...)
-func Replace(s, old, new string, _ int) string {
-	return ReplaceAll(s, old, new)
+func Replace(s, old, new string, n int) string {
+	return strings.Replace(s, old, new, n)
 }
 
 // Split mirrors strings.Split.

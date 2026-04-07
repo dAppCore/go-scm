@@ -210,6 +210,7 @@ func jsonResponse(w http.ResponseWriter, data any) {
 // newTestClient creates a Client backed by the mock server.
 func newTestClient(t *testing.T) (*Client, *httptest.Server) {
 	t.Helper()
+	t.Setenv("HOME", t.TempDir())
 	srv := newMockGiteaServer(t)
 
 	client, err := New(srv.URL, "test-token")
@@ -224,6 +225,7 @@ func newTestClient(t *testing.T) (*Client, *httptest.Server) {
 // newErrorServer creates a mock server that returns errors for all API calls.
 func newErrorServer(t *testing.T) (*Client, *httptest.Server) {
 	t.Helper()
+	t.Setenv("HOME", t.TempDir())
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/api/v1/version", func(w http.ResponseWriter, r *http.Request) {
