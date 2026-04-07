@@ -1,10 +1,12 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package forge
 
 import (
-	"encoding/json"
+	json "dappco.re/go/core/scm/internal/ax/jsonx"
+	strings "dappco.re/go/core/scm/internal/ax/stringsx"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -19,7 +21,7 @@ func TestClient_MergePullRequest_Good(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestClient_MergePullRequest_Good_Squash(t *testing.T) {
+func TestClient_MergePullRequest_Good_Squash_Good(t *testing.T) {
 	client, srv := newTestClient(t)
 	defer srv.Close()
 
@@ -27,7 +29,7 @@ func TestClient_MergePullRequest_Good_Squash(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestClient_MergePullRequest_Good_Rebase(t *testing.T) {
+func TestClient_MergePullRequest_Good_Rebase_Good(t *testing.T) {
 	client, srv := newTestClient(t)
 	defer srv.Close()
 
@@ -35,7 +37,7 @@ func TestClient_MergePullRequest_Good_Rebase(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestClient_MergePullRequest_Bad_ServerError(t *testing.T) {
+func TestClient_MergePullRequest_Bad_ServerError_Good(t *testing.T) {
 	client, srv := newErrorServer(t)
 	defer srv.Close()
 
@@ -58,13 +60,62 @@ func TestClient_ListPRReviews_Good(t *testing.T) {
 	require.Len(t, reviews, 1)
 }
 
-func TestClient_ListPRReviews_Bad_ServerError(t *testing.T) {
+func TestClient_ListPRReviewsIter_Good_Paginates_Good(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/v1/version", func(w http.ResponseWriter, r *http.Request) {
+		jsonResponse(w, map[string]string{"version": "1.21.0"})
+	})
+	mux.HandleFunc("/api/v1/repos/test-org/org-repo/pulls/1/reviews", func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Query().Get("page") {
+		case "2":
+			jsonResponse(w, []map[string]any{
+				{"id": 2, "state": "REQUEST_CHANGES", "user": map[string]any{"login": "reviewer2"}},
+			})
+		case "3":
+			jsonResponse(w, []map[string]any{})
+		default:
+			w.Header().Set("Link", "<http://"+r.Host+"/api/v1/repos/test-org/org-repo/pulls/1/reviews?page=2>; rel=\"next\", <http://"+r.Host+"/api/v1/repos/test-org/org-repo/pulls/1/reviews?page=2>; rel=\"last\"")
+			jsonResponse(w, []map[string]any{
+				{"id": 1, "state": "APPROVED", "user": map[string]any{"login": "reviewer1"}},
+			})
+		}
+	})
+
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+
+	client, err := New(srv.URL, "test-token")
+	require.NoError(t, err)
+
+	var states []string
+	for review, err := range client.ListPRReviewsIter("test-org", "org-repo", 1) {
+		require.NoError(t, err)
+		states = append(states, string(review.State))
+	}
+
+	require.Equal(t, []string{"APPROVED", "REQUEST_CHANGES"}, states)
+}
+
+func TestClient_ListPRReviews_Bad_ServerError_Good(t *testing.T) {
 	client, srv := newErrorServer(t)
 	defer srv.Close()
 
 	_, err := client.ListPRReviews("test-org", "org-repo", 1)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to list reviews")
+}
+
+func TestClient_ListPRReviewsIter_Bad_ServerError_Good(t *testing.T) {
+	client, srv := newErrorServer(t)
+	defer srv.Close()
+
+	var got bool
+	for _, err := range client.ListPRReviewsIter("test-org", "org-repo", 1) {
+		assert.Error(t, err)
+		got = true
+	}
+
+	assert.True(t, got)
 }
 
 func TestClient_GetCombinedStatus_Good(t *testing.T) {
@@ -76,7 +127,7 @@ func TestClient_GetCombinedStatus_Good(t *testing.T) {
 	assert.NotNil(t, status)
 }
 
-func TestClient_GetCombinedStatus_Bad_ServerError(t *testing.T) {
+func TestClient_GetCombinedStatus_Bad_ServerError_Good(t *testing.T) {
 	client, srv := newErrorServer(t)
 	defer srv.Close()
 
@@ -93,7 +144,7 @@ func TestClient_DismissReview_Good(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestClient_DismissReview_Bad_ServerError(t *testing.T) {
+func TestClient_DismissReview_Bad_ServerError_Good(t *testing.T) {
 	client, srv := newErrorServer(t)
 	defer srv.Close()
 
@@ -102,7 +153,24 @@ func TestClient_DismissReview_Bad_ServerError(t *testing.T) {
 	assert.Contains(t, err.Error(), "failed to dismiss review")
 }
 
-func TestClient_SetPRDraft_Good_Request(t *testing.T) {
+func TestClient_UndismissReview_Good(t *testing.T) {
+	client, srv := newTestClient(t)
+	defer srv.Close()
+
+	err := client.UndismissReview("test-org", "org-repo", 1, 1)
+	require.NoError(t, err)
+}
+
+func TestClient_UndismissReview_Bad_ServerError_Good(t *testing.T) {
+	client, srv := newErrorServer(t)
+	defer srv.Close()
+
+	err := client.UndismissReview("test-org", "org-repo", 1, 1)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to undismiss review")
+}
+
+func TestClient_SetPRDraft_Good_Request_Good(t *testing.T) {
 	var method, path string
 	var payload map[string]any
 
@@ -130,7 +198,7 @@ func TestClient_SetPRDraft_Good_Request(t *testing.T) {
 	assert.Equal(t, false, payload["draft"])
 }
 
-func TestClient_SetPRDraft_Bad_PathTraversalOwner(t *testing.T) {
+func TestClient_SetPRDraft_Bad_PathTraversalOwner_Good(t *testing.T) {
 	client, srv := newTestClient(t)
 	defer srv.Close()
 
@@ -139,7 +207,7 @@ func TestClient_SetPRDraft_Bad_PathTraversalOwner(t *testing.T) {
 	assert.Contains(t, err.Error(), "invalid owner")
 }
 
-func TestClient_SetPRDraft_Bad_PathTraversalRepo(t *testing.T) {
+func TestClient_SetPRDraft_Bad_PathTraversalRepo_Good(t *testing.T) {
 	client, srv := newTestClient(t)
 	defer srv.Close()
 

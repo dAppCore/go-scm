@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package repos
 
 import (
@@ -37,7 +39,7 @@ repos:
 	assert.Equal(t, reg, repo.registry)
 }
 
-func TestLoadRegistry_Good_WithDefaults(t *testing.T) {
+func TestLoadRegistry_Good_WithDefaults_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	yaml := `
 version: 1
@@ -69,7 +71,7 @@ repos:
 	assert.Equal(t, "github-actions", admin.CI)
 }
 
-func TestLoadRegistry_Good_CustomRepoPath(t *testing.T) {
+func TestLoadRegistry_Good_CustomRepoPath_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	yaml := `
 version: 1
@@ -90,7 +92,7 @@ repos:
 	assert.Equal(t, "/opt/special-repo", repo.Path)
 }
 
-func TestLoadRegistry_Good_CIOverride(t *testing.T) {
+func TestLoadRegistry_Good_CIOverride_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	yaml := `
 version: 1
@@ -117,14 +119,14 @@ repos:
 	assert.Equal(t, "custom-ci", b.CI)
 }
 
-func TestLoadRegistry_Bad_FileNotFound(t *testing.T) {
+func TestLoadRegistry_Bad_FileNotFound_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	_, err := LoadRegistry(m, "/nonexistent/repos.yaml")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to read")
 }
 
-func TestLoadRegistry_Bad_InvalidYAML(t *testing.T) {
+func TestLoadRegistry_Bad_InvalidYAML_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	_ = m.Write("/tmp/bad.yaml", "{{{{not yaml at all")
 
@@ -171,6 +173,32 @@ func TestRegistry_List_Good(t *testing.T) {
 	assert.Len(t, repos, 4)
 }
 
+func TestRegistry_List_Good_SortedByName_Good(t *testing.T) {
+	m := io.NewMockMedium()
+	yaml := `
+version: 1
+org: host-uk
+base_path: /tmp/repos
+repos:
+  zulu:
+    type: module
+  alpha:
+    type: module
+  mike:
+    type: module
+`
+	_ = m.Write("/tmp/repos.yaml", yaml)
+
+	reg, err := LoadRegistry(m, "/tmp/repos.yaml")
+	require.NoError(t, err)
+
+	repos := reg.List()
+	require.Len(t, repos, 3)
+	assert.Equal(t, "alpha", repos[0].Name)
+	assert.Equal(t, "mike", repos[1].Name)
+	assert.Equal(t, "zulu", repos[2].Name)
+}
+
 func TestRegistry_Get_Good(t *testing.T) {
 	reg := newTestRegistry(t)
 	repo, ok := reg.Get("core-php")
@@ -178,7 +206,7 @@ func TestRegistry_Get_Good(t *testing.T) {
 	assert.Equal(t, "core-php", repo.Name)
 }
 
-func TestRegistry_Get_Bad_NotFound(t *testing.T) {
+func TestRegistry_Get_Bad_NotFound_Good(t *testing.T) {
 	reg := newTestRegistry(t)
 	_, ok := reg.Get("nonexistent")
 	assert.False(t, ok)
@@ -198,7 +226,32 @@ func TestRegistry_ByType_Good(t *testing.T) {
 	assert.Len(t, products, 1)
 }
 
-func TestRegistry_ByType_Good_NoMatch(t *testing.T) {
+func TestRegistry_ByType_Good_SortedByName_Good(t *testing.T) {
+	m := io.NewMockMedium()
+	yaml := `
+version: 1
+org: host-uk
+base_path: /tmp/repos
+repos:
+  zulu:
+    type: module
+  alpha:
+    type: module
+  mike:
+    type: foundation
+`
+	_ = m.Write("/tmp/repos.yaml", yaml)
+
+	reg, err := LoadRegistry(m, "/tmp/repos.yaml")
+	require.NoError(t, err)
+
+	modules := reg.ByType("module")
+	require.Len(t, modules, 2)
+	assert.Equal(t, "alpha", modules[0].Name)
+	assert.Equal(t, "zulu", modules[1].Name)
+}
+
+func TestRegistry_ByType_Good_NoMatch_Good(t *testing.T) {
 	reg := newTestRegistry(t)
 	templates := reg.ByType("template")
 	assert.Empty(t, templates)
@@ -240,7 +293,7 @@ func TopologicalOrder(reg *Registry) ([]*Repo, error) {
 	return reg.TopologicalOrder()
 }
 
-func TestTopologicalOrder_Bad_CircularDep(t *testing.T) {
+func TestTopologicalOrder_Bad_CircularDep_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	yaml := `
 version: 1
@@ -263,7 +316,7 @@ repos:
 	assert.Contains(t, err.Error(), "circular dependency")
 }
 
-func TestTopologicalOrder_Bad_UnknownDep(t *testing.T) {
+func TestTopologicalOrder_Bad_UnknownDep_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	yaml := `
 version: 1
@@ -283,7 +336,7 @@ repos:
 	assert.Contains(t, err.Error(), "unknown repo")
 }
 
-func TestTopologicalOrder_Good_NoDeps(t *testing.T) {
+func TestTopologicalOrder_Good_NoDeps_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	yaml := `
 version: 1
@@ -302,6 +355,29 @@ repos:
 	order, err := reg.TopologicalOrder()
 	require.NoError(t, err)
 	assert.Len(t, order, 2)
+}
+
+func TestTopologicalOrder_Good_NoDeps_Sorted_Good(t *testing.T) {
+	m := io.NewMockMedium()
+	yaml := `
+version: 1
+org: test
+base_path: /tmp
+repos:
+  zulu:
+    type: module
+  alpha:
+    type: module
+`
+	_ = m.Write("/tmp/repos.yaml", yaml)
+	reg, err := LoadRegistry(m, "/tmp/repos.yaml")
+	require.NoError(t, err)
+
+	order, err := reg.TopologicalOrder()
+	require.NoError(t, err)
+	require.Len(t, order, 2)
+	assert.Equal(t, "alpha", order[0].Name)
+	assert.Equal(t, "zulu", order[1].Name)
 }
 
 // ── ScanDirectory ──────────────────────────────────────────────────
@@ -331,7 +407,7 @@ func TestScanDirectory_Good(t *testing.T) {
 	assert.False(t, ok)
 }
 
-func TestScanDirectory_Good_DetectsGitHubOrg(t *testing.T) {
+func TestScanDirectory_Good_DetectsGitHubOrg_Good(t *testing.T) {
 	m := io.NewMockMedium()
 
 	_ = m.EnsureDir("/workspace/my-repo/.git")
@@ -347,7 +423,7 @@ func TestScanDirectory_Good_DetectsGitHubOrg(t *testing.T) {
 	assert.Equal(t, "host-uk", reg.Org)
 }
 
-func TestScanDirectory_Good_DetectsHTTPSOrg(t *testing.T) {
+func TestScanDirectory_Good_DetectsHTTPSOrg_Good(t *testing.T) {
 	m := io.NewMockMedium()
 
 	_ = m.EnsureDir("/workspace/my-repo/.git")
@@ -360,7 +436,7 @@ func TestScanDirectory_Good_DetectsHTTPSOrg(t *testing.T) {
 	assert.Equal(t, "lethean-io", reg.Org)
 }
 
-func TestScanDirectory_Good_EmptyDir(t *testing.T) {
+func TestScanDirectory_Good_EmptyDir_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	_ = m.EnsureDir("/empty")
 
@@ -370,7 +446,7 @@ func TestScanDirectory_Good_EmptyDir(t *testing.T) {
 	assert.Equal(t, "", reg.Org)
 }
 
-func TestScanDirectory_Bad_InvalidDir(t *testing.T) {
+func TestScanDirectory_Bad_InvalidDir_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	_, err := ScanDirectory(m, "/nonexistent")
 	assert.Error(t, err)
@@ -379,7 +455,7 @@ func TestScanDirectory_Bad_InvalidDir(t *testing.T) {
 
 // ── detectOrg ──────────────────────────────────────────────────────
 
-func TestDetectOrg_Good_SSHRemote(t *testing.T) {
+func TestDetectOrg_Good_SSHRemote_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	_ = m.Write("/repo/.git/config", `[remote "origin"]
 	url = git@github.com:host-uk/core.git
@@ -387,7 +463,7 @@ func TestDetectOrg_Good_SSHRemote(t *testing.T) {
 	assert.Equal(t, "host-uk", detectOrg(m, "/repo"))
 }
 
-func TestDetectOrg_Good_HTTPSRemote(t *testing.T) {
+func TestDetectOrg_Good_HTTPSRemote_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	_ = m.Write("/repo/.git/config", `[remote "origin"]
 	url = https://github.com/snider/project.git
@@ -395,12 +471,12 @@ func TestDetectOrg_Good_HTTPSRemote(t *testing.T) {
 	assert.Equal(t, "snider", detectOrg(m, "/repo"))
 }
 
-func TestDetectOrg_Bad_NoConfig(t *testing.T) {
+func TestDetectOrg_Bad_NoConfig_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	assert.Equal(t, "", detectOrg(m, "/nonexistent"))
 }
 
-func TestDetectOrg_Bad_NoRemote(t *testing.T) {
+func TestDetectOrg_Bad_NoRemote_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	_ = m.Write("/repo/.git/config", `[core]
 	repositoryformatversion = 0
@@ -408,7 +484,7 @@ func TestDetectOrg_Bad_NoRemote(t *testing.T) {
 	assert.Equal(t, "", detectOrg(m, "/repo"))
 }
 
-func TestDetectOrg_Bad_NonGitHubRemote(t *testing.T) {
+func TestDetectOrg_Bad_NonGitHubRemote_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	_ = m.Write("/repo/.git/config", `[remote "origin"]
 	url = ssh://git@forge.lthn.ai:2223/core/go.git
@@ -418,13 +494,13 @@ func TestDetectOrg_Bad_NonGitHubRemote(t *testing.T) {
 
 // ── expandPath ─────────────────────────────────────────────────────
 
-func TestExpandPath_Good_Tilde(t *testing.T) {
+func TestExpandPath_Good_Tilde_Good(t *testing.T) {
 	got := expandPath("~/Code/repos")
 	assert.NotContains(t, got, "~")
 	assert.Contains(t, got, "Code/repos")
 }
 
-func TestExpandPath_Good_NoTilde(t *testing.T) {
+func TestExpandPath_Good_NoTilde_Good(t *testing.T) {
 	assert.Equal(t, "/absolute/path", expandPath("/absolute/path"))
 	assert.Equal(t, "relative/path", expandPath("relative/path"))
 }
@@ -471,14 +547,14 @@ func TestRepo_IsGitRepo_Good(t *testing.T) {
 
 // ── getMedium fallback ─────────────────────────────────────────────
 
-func TestGetMedium_Good_FallbackToLocal(t *testing.T) {
+func TestGetMedium_Good_FallbackToLocal_Good(t *testing.T) {
 	repo := &Repo{Name: "orphan", Path: "/tmp/orphan"}
 	// No registry set — should fall back to io.Local.
 	m := repo.getMedium()
 	assert.Equal(t, io.Local, m)
 }
 
-func TestGetMedium_Good_NilMediumFallback(t *testing.T) {
+func TestGetMedium_Good_NilMediumFallback_Good(t *testing.T) {
 	reg := &Registry{} // medium is nil.
 	repo := &Repo{Name: "test", registry: reg}
 	m := repo.getMedium()

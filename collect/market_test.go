@@ -1,8 +1,10 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package collect
 
 import (
 	"context"
-	"encoding/json"
+	json "dappco.re/go/core/scm/internal/ax/jsonx"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -16,7 +18,7 @@ func TestMarketCollector_Name_Good(t *testing.T) {
 	assert.Equal(t, "market:bitcoin", m.Name())
 }
 
-func TestMarketCollector_Collect_Bad_NoCoinID(t *testing.T) {
+func TestMarketCollector_Collect_Bad_NoCoinID_Good(t *testing.T) {
 	mock := io.NewMockMedium()
 	cfg := NewConfigWithMedium(mock, "/output")
 
@@ -25,7 +27,7 @@ func TestMarketCollector_Collect_Bad_NoCoinID(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestMarketCollector_Collect_Good_DryRun(t *testing.T) {
+func TestMarketCollector_Collect_Good_DryRun_Good(t *testing.T) {
 	mock := io.NewMockMedium()
 	cfg := NewConfigWithMedium(mock, "/output")
 	cfg.DryRun = true
@@ -37,7 +39,7 @@ func TestMarketCollector_Collect_Good_DryRun(t *testing.T) {
 	assert.Equal(t, 0, result.Items)
 }
 
-func TestMarketCollector_Collect_Good_CurrentData(t *testing.T) {
+func TestMarketCollector_Collect_Good_CurrentData_Good(t *testing.T) {
 	// Set up a mock CoinGecko server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		data := coinData{
@@ -92,7 +94,7 @@ func TestMarketCollector_Collect_Good_CurrentData(t *testing.T) {
 	assert.Contains(t, summary, "42000.50")
 }
 
-func TestMarketCollector_Collect_Good_Historical(t *testing.T) {
+func TestMarketCollector_Collect_Good_Historical_Good(t *testing.T) {
 	callCount := 0
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		callCount++
@@ -164,7 +166,7 @@ func TestFormatMarketSummary_Good(t *testing.T) {
 	assert.Contains(t, summary, "Total Supply")
 }
 
-func TestMarketCollector_Collect_Bad_ServerError(t *testing.T) {
+func TestMarketCollector_Collect_Bad_ServerError_Good(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 	}))

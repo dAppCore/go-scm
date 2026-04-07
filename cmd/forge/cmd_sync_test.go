@@ -1,7 +1,9 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package forge
 
 import (
-	"path/filepath"
+	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -18,7 +20,7 @@ func TestBuildSyncRepoList_Good(t *testing.T) {
 	assert.Equal(t, filepath.Join(basePath, "core"), repos[0].localPath)
 }
 
-func TestBuildSyncRepoList_Bad_PathTraversal(t *testing.T) {
+func TestBuildSyncRepoList_Bad_PathTraversal_Good(t *testing.T) {
 	basePath := filepath.Join(t.TempDir(), "repos")
 
 	_, err := buildSyncRepoList(nil, []string{"../escape"}, basePath)
@@ -26,7 +28,7 @@ func TestBuildSyncRepoList_Bad_PathTraversal(t *testing.T) {
 	assert.Contains(t, err.Error(), "invalid repo argument")
 }
 
-func TestBuildSyncRepoList_Good_OwnerRepo(t *testing.T) {
+func TestBuildSyncRepoList_Good_OwnerRepo_Good(t *testing.T) {
 	basePath := filepath.Join(t.TempDir(), "repos")
 
 	repos, err := buildSyncRepoList(nil, []string{"Host-UK/core"}, basePath)
@@ -36,7 +38,7 @@ func TestBuildSyncRepoList_Good_OwnerRepo(t *testing.T) {
 	assert.Equal(t, filepath.Join(basePath, "core"), repos[0].localPath)
 }
 
-func TestBuildSyncRepoList_Bad_PathTraversal_OwnerRepo(t *testing.T) {
+func TestBuildSyncRepoList_Bad_PathTraversal_OwnerRepo_Good(t *testing.T) {
 	basePath := filepath.Join(t.TempDir(), "repos")
 
 	_, err := buildSyncRepoList(nil, []string{"host-uk/../escape"}, basePath)
@@ -44,7 +46,7 @@ func TestBuildSyncRepoList_Bad_PathTraversal_OwnerRepo(t *testing.T) {
 	assert.Contains(t, err.Error(), "invalid repo argument")
 }
 
-func TestBuildSyncRepoList_Bad_PathTraversal_OwnerRepoEncoded(t *testing.T) {
+func TestBuildSyncRepoList_Bad_PathTraversal_OwnerRepoEncoded_Good(t *testing.T) {
 	basePath := filepath.Join(t.TempDir(), "repos")
 
 	_, err := buildSyncRepoList(nil, []string{"host-uk%2F..%2Fescape"}, basePath)

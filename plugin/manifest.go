@@ -1,10 +1,12 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package plugin
 
 import (
-	"encoding/json"
+	json "dappco.re/go/core/scm/internal/ax/jsonx"
 
-	coreerr "dappco.re/go/core/log"
 	"dappco.re/go/core/io"
+	coreerr "dappco.re/go/core/log"
 )
 
 // Manifest represents a plugin.json manifest file.
@@ -20,6 +22,7 @@ type Manifest struct {
 }
 
 // LoadManifest reads and parses a plugin.json file from the given path.
+// Usage: LoadManifest(...)
 func LoadManifest(m io.Medium, path string) (*Manifest, error) {
 	content, err := m.Read(path)
 	if err != nil {
@@ -36,6 +39,7 @@ func LoadManifest(m io.Medium, path string) (*Manifest, error) {
 
 // Validate checks the manifest for required fields.
 // Returns an error if name, version, or entrypoint are missing.
+// Usage: Validate(...)
 func (m *Manifest) Validate() error {
 	if m.Name == "" {
 		return coreerr.E("plugin.Manifest.Validate", "name is required", nil)

@@ -1,16 +1,20 @@
-// SPDX-Licence-Identifier: EUPL-1.2
+// SPDX-License-Identifier: EUPL-1.2
 
 package api_test
 
 import (
-	"encoding/json"
+	"bytes"
+	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
+	json "dappco.re/go/core/scm/internal/ax/jsonx"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	goapi "dappco.re/go/core/api"
+	"dappco.re/go/core/io"
 	"dappco.re/go/core/scm/marketplace"
 	scmapi "dappco.re/go/core/scm/pkg/api"
+	"dappco.re/go/core/scm/repos"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -38,6 +42,7 @@ func TestScmProvider_Channels_Good(t *testing.T) {
 	assert.Contains(t, channels, "scm.marketplace.refreshed")
 	assert.Contains(t, channels, "scm.marketplace.installed")
 	assert.Contains(t, channels, "scm.marketplace.removed")
+	assert.Contains(t, channels, "scm.installed.changed")
 	assert.Contains(t, channels, "scm.manifest.verified")
 	assert.Contains(t, channels, "scm.registry.changed")
 }
@@ -164,7 +169,7 @@ func TestScmProvider_GetMarketplaceItem_Bad(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, w.Code)
 }
 
-func TestScmProvider_GetMarketplaceItem_Bad_PathTraversal(t *testing.T) {
+func TestScmProvider_GetMarketplaceItem_Bad_PathTraversal_Good(t *testing.T) {
 	idx := &marketplace.Index{Version: 1}
 	p := scmapi.NewProvider(idx, nil, nil, nil)
 
@@ -212,6 +217,81 @@ func TestScmProvider_ListRegistry_NilRegistry_Good(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, resp.Success)
 	assert.Empty(t, resp.Data)
+}
+
+func TestScmProvider_ListRegistry_TopologicalOrder_Good(t *testing.T) {
+	medium := io.NewMockMedium()
+	require.NoError(t, medium.Write("/tmp/repos.yaml", `
+version: 1
+org: host-uk
+base_path: /tmp/repos
+repos:
+  core-php:
+    type: foundation
+  core-admin:
+    type: module
+    depends_on: [core-php]
+`))
+
+	reg, err := repos.LoadRegistry(medium, "/tmp/repos.yaml")
+	require.NoError(t, err)
+
+	p := scmapi.NewProvider(nil, nil, reg, nil)
+	r := setupRouter(p)
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/api/v1/scm/registry", nil)
+	r.ServeHTTP(w, req)
+
+	require.Equal(t, http.StatusOK, w.Code)
+
+	var resp goapi.Response[[]map[string]any]
+	err = json.Unmarshal(w.Body.Bytes(), &resp)
+	require.NoError(t, err)
+	require.Len(t, resp.Data, 2)
+	assert.Equal(t, "core-php", resp.Data[0]["name"])
+	assert.Equal(t, "core-admin", resp.Data[1]["name"])
+}
+
+func TestScmProvider_RefreshMarketplace_Good(t *testing.T) {
+	dir := t.TempDir()
+	indexPath := filepath.Join(dir, "index.json")
+
+	idx := &marketplace.Index{
+		Version: 1,
+		Modules: []marketplace.Module{
+			{Code: "refreshed", Name: "Refreshed Module"},
+		},
+	}
+	require.NoError(t, marketplace.WriteIndex(io.Local, indexPath, idx))
+
+	p := scmapi.NewProvider(nil, nil, nil, nil)
+	r := setupRouter(p)
+
+	w := httptest.NewRecorder()
+	body, err := json.Marshal(map[string]string{"index_path": indexPath})
+	require.NoError(t, err)
+	req, _ := http.NewRequest("POST", "/api/v1/scm/marketplace/refresh", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	var resp goapi.Response[map[string]any]
+	err = json.Unmarshal(w.Body.Bytes(), &resp)
+	require.NoError(t, err)
+	assert.True(t, resp.Success)
+	assert.Equal(t, float64(1), resp.Data["modules"])
+
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", "/api/v1/scm/marketplace", nil)
+	r.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	var listed goapi.Response[[]marketplace.Module]
+	err = json.Unmarshal(w.Body.Bytes(), &listed)
+	require.NoError(t, err)
+	require.Len(t, listed.Data, 1)
+	assert.Equal(t, "refreshed", listed.Data[0].Code)
 }
 
 // -- Route Registration -------------------------------------------------------

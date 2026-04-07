@@ -1,8 +1,10 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package handlers
 
 import (
 	"context"
-	"fmt"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
 	"time"
 
 	forgejosdk "codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2"
@@ -20,21 +22,25 @@ type DismissReviewsHandler struct {
 }
 
 // NewDismissReviewsHandler creates a handler that dismisses stale reviews.
+// Usage: NewDismissReviewsHandler(...)
 func NewDismissReviewsHandler(f *forge.Client) *DismissReviewsHandler {
 	return &DismissReviewsHandler{forge: f}
 }
 
 // Name returns the handler identifier.
+// Usage: Name(...)
 func (h *DismissReviewsHandler) Name() string {
 	return "dismiss_reviews"
 }
 
 // Match returns true when the PR is open and has unresolved review threads.
+// Usage: Match(...)
 func (h *DismissReviewsHandler) Match(signal *jobrunner.PipelineSignal) bool {
 	return signal.PRState == "OPEN" && signal.HasUnresolvedThreads()
 }
 
 // Execute dismisses stale "request changes" reviews on the PR.
+// Usage: Execute(...)
 func (h *DismissReviewsHandler) Execute(ctx context.Context, signal *jobrunner.PipelineSignal) (*jobrunner.ActionResult, error) {
 	start := time.Now()
 

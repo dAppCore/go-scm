@@ -1,13 +1,15 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package plugin
 
 import (
 	"cmp"
-	"encoding/json"
-	"path/filepath"
+	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
+	json "dappco.re/go/core/scm/internal/ax/jsonx"
 	"slices"
 
-	coreerr "dappco.re/go/core/log"
 	"dappco.re/go/core/io"
+	coreerr "dappco.re/go/core/log"
 )
 
 const registryFilename = "registry.json"
@@ -21,6 +23,7 @@ type Registry struct {
 }
 
 // NewRegistry creates a new plugin registry.
+// Usage: NewRegistry(...)
 func NewRegistry(m io.Medium, basePath string) *Registry {
 	return &Registry{
 		medium:   m,
@@ -30,6 +33,7 @@ func NewRegistry(m io.Medium, basePath string) *Registry {
 }
 
 // List returns all installed plugins sorted by name.
+// Usage: List(...)
 func (r *Registry) List() []*PluginConfig {
 	result := make([]*PluginConfig, 0, len(r.plugins))
 	for _, cfg := range r.plugins {
@@ -43,12 +47,14 @@ func (r *Registry) List() []*PluginConfig {
 
 // Get returns a plugin by name.
 // The second return value indicates whether the plugin was found.
+// Usage: Get(...)
 func (r *Registry) Get(name string) (*PluginConfig, bool) {
 	cfg, ok := r.plugins[name]
 	return cfg, ok
 }
 
 // Add registers a plugin in the registry.
+// Usage: Add(...)
 func (r *Registry) Add(cfg *PluginConfig) error {
 	if cfg.Name == "" {
 		return coreerr.E("plugin.Registry.Add", "plugin name is required", nil)
@@ -58,6 +64,7 @@ func (r *Registry) Add(cfg *PluginConfig) error {
 }
 
 // Remove unregisters a plugin from the registry.
+// Usage: Remove(...)
 func (r *Registry) Remove(name string) error {
 	if _, ok := r.plugins[name]; !ok {
 		return coreerr.E("plugin.Registry.Remove", "plugin not found: "+name, nil)
@@ -73,6 +80,7 @@ func (r *Registry) registryPath() string {
 
 // Load reads the plugin registry from disk.
 // If the registry file does not exist, the registry starts empty.
+// Usage: Load(...)
 func (r *Registry) Load() error {
 	path := r.registryPath()
 
@@ -100,6 +108,7 @@ func (r *Registry) Load() error {
 }
 
 // Save writes the plugin registry to disk.
+// Usage: Save(...)
 func (r *Registry) Save() error {
 	if err := r.medium.EnsureDir(r.basePath); err != nil {
 		return coreerr.E("plugin.Registry.Save", "failed to create plugin directory", err)

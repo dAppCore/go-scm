@@ -1,4 +1,4 @@
-// SPDX-Licence-Identifier: EUPL-1.2
+// SPDX-License-Identifier: EUPL-1.2
 
 /**
  * ScmApi provides a typed fetch wrapper for the /api/v1/scm/* endpoints.
@@ -12,9 +12,12 @@ export class ScmApi {
 
   private async request<T>(path: string, opts?: RequestInit): Promise<T> {
     const res = await fetch(`${this.base}${path}`, opts);
-    const json = await res.json();
-    if (!json.success) {
-      throw new Error(json.error?.message ?? 'Request failed');
+    const json = await res.json().catch(() => null);
+    if (!res.ok) {
+      throw new Error(json?.error?.message ?? `Request failed (${res.status})`);
+    }
+    if (!json?.success) {
+      throw new Error(json?.error?.message ?? 'Request failed');
     }
     return json.data as T;
   }
@@ -28,15 +31,15 @@ export class ScmApi {
   }
 
   marketplaceItem(code: string) {
-    return this.request<any>(`/marketplace/${code}`);
+    return this.request<any>(`/marketplace/${encodeURIComponent(code)}`);
   }
 
   install(code: string) {
-    return this.request<any>(`/marketplace/${code}/install`, { method: 'POST' });
+    return this.request<any>(`/marketplace/${encodeURIComponent(code)}/install`, { method: 'POST' });
   }
 
   remove(code: string) {
-    return this.request<any>(`/marketplace/${code}`, { method: 'DELETE' });
+    return this.request<any>(`/marketplace/${encodeURIComponent(code)}`, { method: 'DELETE' });
   }
 
   installed() {
@@ -44,7 +47,7 @@ export class ScmApi {
   }
 
   updateInstalled(code: string) {
-    return this.request<any>(`/installed/${code}/update`, { method: 'POST' });
+    return this.request<any>(`/installed/${encodeURIComponent(code)}/update`, { method: 'POST' });
   }
 
   manifest() {

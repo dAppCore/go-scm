@@ -1,9 +1,11 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package manifest
 
 import (
 	"crypto/ed25519"
 	"crypto/rand"
-	"encoding/json"
+	json "dappco.re/go/core/scm/internal/ax/jsonx"
 	"testing"
 
 	"dappco.re/go/core/io"
@@ -20,6 +22,7 @@ func TestCompile_Good(t *testing.T) {
 	}
 
 	cm, err := Compile(m, CompileOptions{
+		Version: "2.0.0",
 		Commit:  "abc1234",
 		Tag:     "v1.2.3",
 		BuiltBy: "core build",
@@ -28,14 +31,14 @@ func TestCompile_Good(t *testing.T) {
 
 	assert.Equal(t, "my-widget", cm.Code)
 	assert.Equal(t, "My Widget", cm.Name)
-	assert.Equal(t, "1.2.3", cm.Version)
+	assert.Equal(t, "2.0.0", cm.Version)
 	assert.Equal(t, "abc1234", cm.Commit)
 	assert.Equal(t, "v1.2.3", cm.Tag)
 	assert.Equal(t, "core build", cm.BuiltBy)
 	assert.NotEmpty(t, cm.BuiltAt)
 }
 
-func TestCompile_Good_WithSigning(t *testing.T) {
+func TestCompile_Good_WithSigning_Good(t *testing.T) {
 	pub, priv, err := ed25519.GenerateKey(rand.Reader)
 	require.NoError(t, err)
 
@@ -58,20 +61,20 @@ func TestCompile_Good_WithSigning(t *testing.T) {
 	assert.True(t, ok)
 }
 
-func TestCompile_Bad_NilManifest(t *testing.T) {
+func TestCompile_Bad_NilManifest_Good(t *testing.T) {
 	_, err := Compile(nil, CompileOptions{})
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "nil manifest")
 }
 
-func TestCompile_Bad_MissingCode(t *testing.T) {
+func TestCompile_Bad_MissingCode_Good(t *testing.T) {
 	m := &Manifest{Version: "1.0.0"}
 	_, err := Compile(m, CompileOptions{})
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "missing code")
 }
 
-func TestCompile_Bad_MissingVersion(t *testing.T) {
+func TestCompile_Bad_MissingVersion_Good(t *testing.T) {
 	m := &Manifest{Code: "test"}
 	_, err := Compile(m, CompileOptions{})
 	assert.Error(t, err)
@@ -160,13 +163,13 @@ func TestLoadCompiled_Good(t *testing.T) {
 	assert.Equal(t, "ddd444", cm.Commit)
 }
 
-func TestLoadCompiled_Bad_NotFound(t *testing.T) {
+func TestLoadCompiled_Bad_NotFound_Good(t *testing.T) {
 	medium := io.NewMockMedium()
 	_, err := LoadCompiled(medium, "/missing")
 	assert.Error(t, err)
 }
 
-func TestCompile_Good_MinimalOptions(t *testing.T) {
+func TestCompile_Good_MinimalOptions_Good(t *testing.T) {
 	m := &Manifest{
 		Code:    "minimal",
 		Name:    "Minimal",
@@ -178,4 +181,19 @@ func TestCompile_Good_MinimalOptions(t *testing.T) {
 	assert.Empty(t, cm.Tag)
 	assert.Empty(t, cm.BuiltBy)
 	assert.NotEmpty(t, cm.BuiltAt)
+}
+
+func TestCompile_Good_WithVersionOverride_Good(t *testing.T) {
+	m := &Manifest{
+		Code:    "override",
+		Name:    "Override",
+		Version: "0.0.1",
+	}
+
+	cm, err := Compile(m, CompileOptions{
+		Version: "9.9.9",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "9.9.9", cm.Version)
+	assert.Equal(t, "9.9.9", m.Version)
 }

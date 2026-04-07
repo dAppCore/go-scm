@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 // Package forge provides CLI commands for managing a Forgejo instance.
 //
 // Commands:
@@ -33,6 +35,7 @@ var (
 )
 
 // AddForgeCommands registers the 'forge' command and all subcommands.
+// Usage: AddForgeCommands(...)
 func AddForgeCommands(root *cli.Command) {
 	forgeCmd := &cli.Command{
 		Use:   "forge",

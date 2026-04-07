@@ -1,14 +1,17 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package collect
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
+	core "dappco.re/go/core"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
+	json "dappco.re/go/core/scm/internal/ax/jsonx"
+	strings "dappco.re/go/core/scm/internal/ax/stringsx"
 	goio "io"
 	"io/fs"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 	"time"
 
@@ -16,6 +19,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func testErr(msg string) error {
+	return core.E("collect.test", msg, nil)
+}
+
+func testErrf(format string, args ...any) error {
+	return core.E("collect.test", fmt.Sprintf(format, args...), nil)
+}
 
 // errorMedium wraps MockMedium and injects errors on specific operations.
 type errorMedium struct {
@@ -50,16 +61,18 @@ func (e *errorMedium) Read(path string) (string, error) {
 	}
 	return e.MockMedium.Read(path)
 }
-func (e *errorMedium) FileGet(path string) (string, error)             { return e.MockMedium.FileGet(path) }
-func (e *errorMedium) FileSet(path, content string) error              { return e.MockMedium.FileSet(path, content) }
-func (e *errorMedium) Delete(path string) error                        { return e.MockMedium.Delete(path) }
-func (e *errorMedium) DeleteAll(path string) error                     { return e.MockMedium.DeleteAll(path) }
-func (e *errorMedium) Rename(old, new string) error                    { return e.MockMedium.Rename(old, new) }
-func (e *errorMedium) Stat(path string) (fs.FileInfo, error)           { return e.MockMedium.Stat(path) }
-func (e *errorMedium) Open(path string) (fs.File, error)               { return e.MockMedium.Open(path) }
-func (e *errorMedium) Create(path string) (goio.WriteCloser, error)    { return e.MockMedium.Create(path) }
-func (e *errorMedium) Append(path string) (goio.WriteCloser, error)    { return e.MockMedium.Append(path) }
-func (e *errorMedium) ReadStream(path string) (goio.ReadCloser, error) { return e.MockMedium.ReadStream(path) }
+func (e *errorMedium) FileGet(path string) (string, error)          { return e.MockMedium.FileGet(path) }
+func (e *errorMedium) FileSet(path, content string) error           { return e.MockMedium.FileSet(path, content) }
+func (e *errorMedium) Delete(path string) error                     { return e.MockMedium.Delete(path) }
+func (e *errorMedium) DeleteAll(path string) error                  { return e.MockMedium.DeleteAll(path) }
+func (e *errorMedium) Rename(old, new string) error                 { return e.MockMedium.Rename(old, new) }
+func (e *errorMedium) Stat(path string) (fs.FileInfo, error)        { return e.MockMedium.Stat(path) }
+func (e *errorMedium) Open(path string) (fs.File, error)            { return e.MockMedium.Open(path) }
+func (e *errorMedium) Create(path string) (goio.WriteCloser, error) { return e.MockMedium.Create(path) }
+func (e *errorMedium) Append(path string) (goio.WriteCloser, error) { return e.MockMedium.Append(path) }
+func (e *errorMedium) ReadStream(path string) (goio.ReadCloser, error) {
+	return e.MockMedium.ReadStream(path)
+}
 func (e *errorMedium) WriteStream(path string) (goio.WriteCloser, error) {
 	return e.MockMedium.WriteStream(path)
 }
@@ -73,8 +86,8 @@ type errorLimiterWaiter struct{}
 
 // --- Processor: list error ---
 
-func TestProcessor_Process_Bad_ListError(t *testing.T) {
-	em := &errorMedium{MockMedium: io.NewMockMedium(), listErr: fmt.Errorf("list denied")}
+func TestProcessor_Process_Bad_ListError_Good(t *testing.T) {
+	em := &errorMedium{MockMedium: io.NewMockMedium(), listErr: testErr("list denied")}
 	cfg := &Config{Output: em, OutputDir: "/output", Dispatcher: NewDispatcher()}
 
 	p := &Processor{Source: "test", Dir: "/input"}
@@ -85,8 +98,8 @@ func TestProcessor_Process_Bad_ListError(t *testing.T) {
 
 // --- Processor: ensureDir error ---
 
-func TestProcessor_Process_Bad_EnsureDirError(t *testing.T) {
-	em := &errorMedium{MockMedium: io.NewMockMedium(), ensureDirErr: fmt.Errorf("mkdir denied")}
+func TestProcessor_Process_Bad_EnsureDirError_Good(t *testing.T) {
+	em := &errorMedium{MockMedium: io.NewMockMedium(), ensureDirErr: testErr("mkdir denied")}
 	// Need to ensure List returns entries
 	em.MockMedium.Dirs["/input"] = true
 	em.MockMedium.Files["/input/test.html"] = "<h1>Test</h1>"
@@ -101,7 +114,7 @@ func TestProcessor_Process_Bad_EnsureDirError(t *testing.T) {
 
 // --- Processor: context cancellation during processing ---
 
-func TestProcessor_Process_Bad_ContextCancelledDuringLoop(t *testing.T) {
+func TestProcessor_Process_Bad_ContextCancelledDuringLoop_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	m.Dirs["/input"] = true
 	m.Files["/input/a.html"] = "<h1>Test</h1>"
@@ -120,8 +133,8 @@ func TestProcessor_Process_Bad_ContextCancelledDuringLoop(t *testing.T) {
 
 // --- Processor: read error during file processing ---
 
-func TestProcessor_Process_Bad_ReadError(t *testing.T) {
-	em := &errorMedium{MockMedium: io.NewMockMedium(), readErr: fmt.Errorf("read denied")}
+func TestProcessor_Process_Bad_ReadError_Good(t *testing.T) {
+	em := &errorMedium{MockMedium: io.NewMockMedium(), readErr: testErr("read denied")}
 	em.MockMedium.Dirs["/input"] = true
 	em.MockMedium.Files["/input/test.html"] = "<h1>Test</h1>"
 
@@ -135,7 +148,7 @@ func TestProcessor_Process_Bad_ReadError(t *testing.T) {
 
 // --- Processor: JSON conversion error ---
 
-func TestProcessor_Process_Bad_InvalidJSONFile(t *testing.T) {
+func TestProcessor_Process_Bad_InvalidJSONFile_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	m.Dirs["/input"] = true
 	m.Files["/input/bad.json"] = "not valid json {"
@@ -153,8 +166,8 @@ func TestProcessor_Process_Bad_InvalidJSONFile(t *testing.T) {
 
 // --- Processor: write error during output ---
 
-func TestProcessor_Process_Bad_WriteError(t *testing.T) {
-	em := &errorMedium{MockMedium: io.NewMockMedium(), writeErr: fmt.Errorf("disk full")}
+func TestProcessor_Process_Bad_WriteError_Good(t *testing.T) {
+	em := &errorMedium{MockMedium: io.NewMockMedium(), writeErr: testErr("disk full")}
 	em.MockMedium.Dirs["/input"] = true
 	em.MockMedium.Files["/input/page.html"] = "<h1>Title</h1>"
 
@@ -168,7 +181,7 @@ func TestProcessor_Process_Bad_WriteError(t *testing.T) {
 
 // --- Processor: successful processing with events ---
 
-func TestProcessor_Process_Good_EmitsItemAndComplete(t *testing.T) {
+func TestProcessor_Process_Good_EmitsItemAndComplete_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	m.Dirs["/input"] = true
 	m.Files["/input/page.html"] = "<h1>Title</h1><p>Body</p>"
@@ -188,7 +201,7 @@ func TestProcessor_Process_Good_EmitsItemAndComplete(t *testing.T) {
 
 // --- Papers: with rate limiter that fails ---
 
-func TestPapersCollector_CollectIACR_Bad_LimiterError(t *testing.T) {
+func TestPapersCollector_CollectIACR_Bad_LimiterError_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	cfg := NewConfigWithMedium(m, "/output")
 	cfg.Limiter = NewRateLimiter()
@@ -202,7 +215,7 @@ func TestPapersCollector_CollectIACR_Bad_LimiterError(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestPapersCollector_CollectArXiv_Bad_LimiterError(t *testing.T) {
+func TestPapersCollector_CollectArXiv_Bad_LimiterError_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	cfg := NewConfigWithMedium(m, "/output")
 	cfg.Limiter = NewRateLimiter()
@@ -218,7 +231,7 @@ func TestPapersCollector_CollectArXiv_Bad_LimiterError(t *testing.T) {
 
 // --- Papers: IACR with bad HTML response ---
 
-func TestPapersCollector_CollectIACR_Bad_InvalidHTML(t *testing.T) {
+func TestPapersCollector_CollectIACR_Bad_InvalidHTML_Good(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
 		// Serve valid-ish HTML but with no papers - the parse succeeds but returns empty.
@@ -243,7 +256,7 @@ func TestPapersCollector_CollectIACR_Bad_InvalidHTML(t *testing.T) {
 
 // --- Papers: IACR write error ---
 
-func TestPapersCollector_CollectIACR_Bad_WriteError(t *testing.T) {
+func TestPapersCollector_CollectIACR_Bad_WriteError_Good(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
 		_, _ = w.Write([]byte(sampleIACRHTML))
@@ -255,19 +268,19 @@ func TestPapersCollector_CollectIACR_Bad_WriteError(t *testing.T) {
 	httpClient = &http.Client{Transport: transport}
 	defer func() { httpClient = old }()
 
-	em := &errorMedium{MockMedium: io.NewMockMedium(), writeErr: fmt.Errorf("disk full")}
+	em := &errorMedium{MockMedium: io.NewMockMedium(), writeErr: testErr("disk full")}
 	cfg := &Config{Output: em, OutputDir: "/output", Dispatcher: NewDispatcher()}
 	cfg.Limiter = nil
 
 	p := &PapersCollector{Source: PaperSourceIACR, Query: "test"}
 	result, err := p.Collect(context.Background(), cfg)
-	require.NoError(t, err) // Write errors increment Errors, not returned
+	require.NoError(t, err)           // Write errors increment Errors, not returned
 	assert.Equal(t, 2, result.Errors) // 2 papers both fail to write
 }
 
 // --- Papers: IACR EnsureDir error ---
 
-func TestPapersCollector_CollectIACR_Bad_EnsureDirError(t *testing.T) {
+func TestPapersCollector_CollectIACR_Bad_EnsureDirError_Good(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
 		_, _ = w.Write([]byte(sampleIACRHTML))
@@ -279,7 +292,7 @@ func TestPapersCollector_CollectIACR_Bad_EnsureDirError(t *testing.T) {
 	httpClient = &http.Client{Transport: transport}
 	defer func() { httpClient = old }()
 
-	em := &errorMedium{MockMedium: io.NewMockMedium(), ensureDirErr: fmt.Errorf("mkdir denied")}
+	em := &errorMedium{MockMedium: io.NewMockMedium(), ensureDirErr: testErr("mkdir denied")}
 	cfg := &Config{Output: em, OutputDir: "/output", Dispatcher: NewDispatcher()}
 	cfg.Limiter = nil
 
@@ -291,7 +304,7 @@ func TestPapersCollector_CollectIACR_Bad_EnsureDirError(t *testing.T) {
 
 // --- Papers: arXiv write error ---
 
-func TestPapersCollector_CollectArXiv_Bad_WriteError(t *testing.T) {
+func TestPapersCollector_CollectArXiv_Bad_WriteError_Good(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/xml")
 		_, _ = w.Write([]byte(sampleArXivXML))
@@ -303,7 +316,7 @@ func TestPapersCollector_CollectArXiv_Bad_WriteError(t *testing.T) {
 	httpClient = &http.Client{Transport: transport}
 	defer func() { httpClient = old }()
 
-	em := &errorMedium{MockMedium: io.NewMockMedium(), writeErr: fmt.Errorf("disk full")}
+	em := &errorMedium{MockMedium: io.NewMockMedium(), writeErr: testErr("disk full")}
 	cfg := &Config{Output: em, OutputDir: "/output", Dispatcher: NewDispatcher()}
 	cfg.Limiter = nil
 
@@ -315,7 +328,7 @@ func TestPapersCollector_CollectArXiv_Bad_WriteError(t *testing.T) {
 
 // --- Papers: arXiv EnsureDir error ---
 
-func TestPapersCollector_CollectArXiv_Bad_EnsureDirError(t *testing.T) {
+func TestPapersCollector_CollectArXiv_Bad_EnsureDirError_Good(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/xml")
 		_, _ = w.Write([]byte(sampleArXivXML))
@@ -327,7 +340,7 @@ func TestPapersCollector_CollectArXiv_Bad_EnsureDirError(t *testing.T) {
 	httpClient = &http.Client{Transport: transport}
 	defer func() { httpClient = old }()
 
-	em := &errorMedium{MockMedium: io.NewMockMedium(), ensureDirErr: fmt.Errorf("mkdir denied")}
+	em := &errorMedium{MockMedium: io.NewMockMedium(), ensureDirErr: testErr("mkdir denied")}
 	cfg := &Config{Output: em, OutputDir: "/output", Dispatcher: NewDispatcher()}
 	cfg.Limiter = nil
 
@@ -339,7 +352,7 @@ func TestPapersCollector_CollectArXiv_Bad_EnsureDirError(t *testing.T) {
 
 // --- Papers: collectAll with dispatcher events ---
 
-func TestPapersCollector_CollectAll_Good_WithDispatcher(t *testing.T) {
+func TestPapersCollector_CollectAll_Good_WithDispatcher_Good(t *testing.T) {
 	callCount := 0
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		callCount++
@@ -374,7 +387,7 @@ func TestPapersCollector_CollectAll_Good_WithDispatcher(t *testing.T) {
 
 // --- Papers: IACR with events on item emit ---
 
-func TestPapersCollector_CollectIACR_Good_EmitsItemEvents(t *testing.T) {
+func TestPapersCollector_CollectIACR_Good_EmitsItemEvents_Good(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
 		_, _ = w.Write([]byte(sampleIACRHTML))
@@ -402,7 +415,7 @@ func TestPapersCollector_CollectIACR_Good_EmitsItemEvents(t *testing.T) {
 
 // --- Papers: arXiv with events on item emit ---
 
-func TestPapersCollector_CollectArXiv_Good_EmitsItemEvents(t *testing.T) {
+func TestPapersCollector_CollectArXiv_Good_EmitsItemEvents_Good(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/xml")
 		_, _ = w.Write([]byte(sampleArXivXML))
@@ -430,7 +443,7 @@ func TestPapersCollector_CollectArXiv_Good_EmitsItemEvents(t *testing.T) {
 
 // --- Market: collectCurrent write error (summary path) ---
 
-func TestMarketCollector_Collect_Bad_WriteError(t *testing.T) {
+func TestMarketCollector_Collect_Bad_WriteError_Good(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		if strings.Contains(r.URL.Path, "/market_chart") {
@@ -453,7 +466,7 @@ func TestMarketCollector_Collect_Bad_WriteError(t *testing.T) {
 	coinGeckoBaseURL = server.URL
 	defer func() { coinGeckoBaseURL = oldURL }()
 
-	em := &errorMedium{MockMedium: io.NewMockMedium(), writeErr: fmt.Errorf("disk full")}
+	em := &errorMedium{MockMedium: io.NewMockMedium(), writeErr: testErr("disk full")}
 	cfg := &Config{Output: em, OutputDir: "/output", Dispatcher: NewDispatcher()}
 	cfg.Limiter = nil
 
@@ -466,7 +479,7 @@ func TestMarketCollector_Collect_Bad_WriteError(t *testing.T) {
 
 // --- Market: EnsureDir error ---
 
-func TestMarketCollector_Collect_Bad_EnsureDirError(t *testing.T) {
+func TestMarketCollector_Collect_Bad_EnsureDirError_Good(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(coinData{ID: "bitcoin"})
@@ -477,7 +490,7 @@ func TestMarketCollector_Collect_Bad_EnsureDirError(t *testing.T) {
 	coinGeckoBaseURL = server.URL
 	defer func() { coinGeckoBaseURL = oldURL }()
 
-	em := &errorMedium{MockMedium: io.NewMockMedium(), ensureDirErr: fmt.Errorf("mkdir denied")}
+	em := &errorMedium{MockMedium: io.NewMockMedium(), ensureDirErr: testErr("mkdir denied")}
 	cfg := &Config{Output: em, OutputDir: "/output", Dispatcher: NewDispatcher()}
 	cfg.Limiter = nil
 
@@ -489,7 +502,7 @@ func TestMarketCollector_Collect_Bad_EnsureDirError(t *testing.T) {
 
 // --- Market: collectCurrent with limiter wait error ---
 
-func TestMarketCollector_Collect_Bad_LimiterError(t *testing.T) {
+func TestMarketCollector_Collect_Bad_LimiterError_Good(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(coinData{ID: "bitcoin"})
@@ -516,7 +529,7 @@ func TestMarketCollector_Collect_Bad_LimiterError(t *testing.T) {
 
 // --- Market: collectHistorical with custom FromDate ---
 
-func TestMarketCollector_Collect_Good_HistoricalCustomDate(t *testing.T) {
+func TestMarketCollector_Collect_Good_HistoricalCustomDate_Good(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		if strings.Contains(r.URL.Path, "/market_chart") {
@@ -551,8 +564,8 @@ func TestMarketCollector_Collect_Good_HistoricalCustomDate(t *testing.T) {
 
 // --- BitcoinTalk: EnsureDir error ---
 
-func TestBitcoinTalkCollector_Collect_Bad_EnsureDirError(t *testing.T) {
-	em := &errorMedium{MockMedium: io.NewMockMedium(), ensureDirErr: fmt.Errorf("mkdir denied")}
+func TestBitcoinTalkCollector_Collect_Bad_EnsureDirError_Good(t *testing.T) {
+	em := &errorMedium{MockMedium: io.NewMockMedium(), ensureDirErr: testErr("mkdir denied")}
 	cfg := &Config{Output: em, OutputDir: "/output", Dispatcher: NewDispatcher()}
 	cfg.Limiter = nil
 
@@ -564,7 +577,7 @@ func TestBitcoinTalkCollector_Collect_Bad_EnsureDirError(t *testing.T) {
 
 // --- BitcoinTalk: limiter error ---
 
-func TestBitcoinTalkCollector_Collect_Bad_LimiterError(t *testing.T) {
+func TestBitcoinTalkCollector_Collect_Bad_LimiterError_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	cfg := NewConfigWithMedium(m, "/output")
 	cfg.Limiter = NewRateLimiter()
@@ -580,7 +593,7 @@ func TestBitcoinTalkCollector_Collect_Bad_LimiterError(t *testing.T) {
 
 // --- BitcoinTalk: write error during post saving ---
 
-func TestBitcoinTalkCollector_Collect_Bad_WriteErrorOnPosts(t *testing.T) {
+func TestBitcoinTalkCollector_Collect_Bad_WriteErrorOnPosts_Good(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
 		_, _ = w.Write([]byte(sampleBTCTalkPage(3)))
@@ -592,20 +605,20 @@ func TestBitcoinTalkCollector_Collect_Bad_WriteErrorOnPosts(t *testing.T) {
 	httpClient = &http.Client{Transport: transport}
 	defer func() { httpClient = old }()
 
-	em := &errorMedium{MockMedium: io.NewMockMedium(), writeErr: fmt.Errorf("disk full")}
+	em := &errorMedium{MockMedium: io.NewMockMedium(), writeErr: testErr("disk full")}
 	cfg := &Config{Output: em, OutputDir: "/output", Dispatcher: NewDispatcher()}
 	cfg.Limiter = nil
 
 	b := &BitcoinTalkCollector{TopicID: "12345"}
 	result, err := b.Collect(context.Background(), cfg)
-	require.NoError(t, err) // write errors are counted
+	require.NoError(t, err)           // write errors are counted
 	assert.Equal(t, 3, result.Errors) // 3 posts all fail to write
 	assert.Equal(t, 0, result.Items)
 }
 
 // --- BitcoinTalk: fetchPage with bad HTTP status ---
 
-func TestBitcoinTalkCollector_FetchPage_Bad_NonOKStatus(t *testing.T) {
+func TestBitcoinTalkCollector_FetchPage_Bad_NonOKStatus_Good(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusForbidden)
 	}))
@@ -619,7 +632,7 @@ func TestBitcoinTalkCollector_FetchPage_Bad_NonOKStatus(t *testing.T) {
 
 // --- BitcoinTalk: fetchPage with request error ---
 
-func TestBitcoinTalkCollector_FetchPage_Bad_RequestError(t *testing.T) {
+func TestBitcoinTalkCollector_FetchPage_Bad_RequestError_Good(t *testing.T) {
 	old := httpClient
 	httpClient = &http.Client{Transport: &rewriteTransport{target: "http://127.0.0.1:1"}} // Connection refused
 	defer func() { httpClient = old }()
@@ -632,7 +645,7 @@ func TestBitcoinTalkCollector_FetchPage_Bad_RequestError(t *testing.T) {
 
 // --- BitcoinTalk: fetchPage with valid but empty page ---
 
-func TestBitcoinTalkCollector_FetchPage_Good_EmptyPage(t *testing.T) {
+func TestBitcoinTalkCollector_FetchPage_Good_EmptyPage_Good(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
 		_, _ = w.Write([]byte("<html><body></body></html>"))
@@ -651,7 +664,7 @@ func TestBitcoinTalkCollector_FetchPage_Good_EmptyPage(t *testing.T) {
 
 // --- BitcoinTalk: Collect with fetch error + dispatcher ---
 
-func TestBitcoinTalkCollector_Collect_Bad_FetchErrorWithDispatcher(t *testing.T) {
+func TestBitcoinTalkCollector_Collect_Bad_FetchErrorWithDispatcher_Good(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 	}))
@@ -678,7 +691,7 @@ func TestBitcoinTalkCollector_Collect_Bad_FetchErrorWithDispatcher(t *testing.T)
 
 // --- State: Save with a populated state ---
 
-func TestState_Save_Good_RoundTrip(t *testing.T) {
+func TestState_Save_Good_RoundTrip_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	s := NewState(m, "/data/state.json")
 
@@ -704,7 +717,7 @@ func TestState_Save_Good_RoundTrip(t *testing.T) {
 
 // --- GitHub: Collect with Repo set triggers collectIssues/collectPRs (which fail via gh) ---
 
-func TestGitHubCollector_Collect_Bad_GhNotAuthenticated(t *testing.T) {
+func TestGitHubCollector_Collect_Bad_GhNotAuthenticated_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	cfg := NewConfigWithMedium(m, "/output")
 	cfg.Limiter = nil
@@ -724,7 +737,7 @@ func TestGitHubCollector_Collect_Bad_GhNotAuthenticated(t *testing.T) {
 
 // --- GitHub: Collect IssuesOnly triggers only issues, not PRs ---
 
-func TestGitHubCollector_Collect_Bad_IssuesOnlyGhFails(t *testing.T) {
+func TestGitHubCollector_Collect_Bad_IssuesOnlyGhFails_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	cfg := NewConfigWithMedium(m, "/output")
 	cfg.Limiter = nil
@@ -737,7 +750,7 @@ func TestGitHubCollector_Collect_Bad_IssuesOnlyGhFails(t *testing.T) {
 
 // --- GitHub: Collect PRsOnly triggers only PRs, not issues ---
 
-func TestGitHubCollector_Collect_Bad_PRsOnlyGhFails(t *testing.T) {
+func TestGitHubCollector_Collect_Bad_PRsOnlyGhFails_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	cfg := NewConfigWithMedium(m, "/output")
 	cfg.Limiter = nil
@@ -750,7 +763,7 @@ func TestGitHubCollector_Collect_Bad_PRsOnlyGhFails(t *testing.T) {
 
 // --- extractText: text before a br/p/div element adds newline ---
 
-func TestExtractText_Good_TextBeforeBR(t *testing.T) {
+func TestExtractText_Good_TextBeforeBR_Good(t *testing.T) {
 	htmlStr := `<div class="inner">Hello<br>World<p>End</p></div>`
 	posts, err := ParsePostsFromHTML(fmt.Sprintf(`<html><body><div class="post"><div class="inner">%s</div></div></body></html>`,
 		"First text<br>Second text<div>Third text</div>"))
@@ -764,7 +777,7 @@ func TestExtractText_Good_TextBeforeBR(t *testing.T) {
 
 // --- ParsePostsFromHTML: posts with full structure ---
 
-func TestParsePostsFromHTML_Good_FullStructure(t *testing.T) {
+func TestParsePostsFromHTML_Good_FullStructure_Good(t *testing.T) {
 	htmlContent := `<html><body>
 		<div class="post">
 			<div class="poster_info">TestAuthor</div>
@@ -783,7 +796,7 @@ func TestParsePostsFromHTML_Good_FullStructure(t *testing.T) {
 
 // --- getChildrenText: nested element node path ---
 
-func TestHTMLToMarkdown_Good_NestedElements(t *testing.T) {
+func TestHTMLToMarkdown_Good_NestedElements_Good(t *testing.T) {
 	// <a> with nested <span> triggers getChildrenText with non-text child nodes
 	input := `<p><a href="https://example.com"><span>Nested</span> Link</a></p>`
 	result, err := HTMLToMarkdown(input)
@@ -793,7 +806,7 @@ func TestHTMLToMarkdown_Good_NestedElements(t *testing.T) {
 
 // --- HTML: ordered list ---
 
-func TestHTMLToMarkdown_Good_OL(t *testing.T) {
+func TestHTMLToMarkdown_Good_OL_Good(t *testing.T) {
 	input := `<ol><li>First</li><li>Second</li></ol>`
 	result, err := HTMLToMarkdown(input)
 	require.NoError(t, err)
@@ -803,7 +816,7 @@ func TestHTMLToMarkdown_Good_OL(t *testing.T) {
 
 // --- HTML: blockquote ---
 
-func TestHTMLToMarkdown_Good_BlockquoteElement(t *testing.T) {
+func TestHTMLToMarkdown_Good_BlockquoteElement_Good(t *testing.T) {
 	input := `<blockquote>Quoted text</blockquote>`
 	result, err := HTMLToMarkdown(input)
 	require.NoError(t, err)
@@ -812,7 +825,7 @@ func TestHTMLToMarkdown_Good_BlockquoteElement(t *testing.T) {
 
 // --- HTML: hr ---
 
-func TestHTMLToMarkdown_Good_HR(t *testing.T) {
+func TestHTMLToMarkdown_Good_HR_Good(t *testing.T) {
 	input := `<p>Before</p><hr><p>After</p>`
 	result, err := HTMLToMarkdown(input)
 	require.NoError(t, err)
@@ -821,7 +834,7 @@ func TestHTMLToMarkdown_Good_HR(t *testing.T) {
 
 // --- HTML: h4, h5, h6 ---
 
-func TestHTMLToMarkdown_Good_AllHeadingLevels(t *testing.T) {
+func TestHTMLToMarkdown_Good_AllHeadingLevels_Good(t *testing.T) {
 	input := `<h4>H4</h4><h5>H5</h5><h6>H6</h6>`
 	result, err := HTMLToMarkdown(input)
 	require.NoError(t, err)
@@ -832,7 +845,7 @@ func TestHTMLToMarkdown_Good_AllHeadingLevels(t *testing.T) {
 
 // --- HTML: link without href ---
 
-func TestHTMLToMarkdown_Good_LinkNoHref(t *testing.T) {
+func TestHTMLToMarkdown_Good_LinkNoHref_Good(t *testing.T) {
 	input := `<a>bare link text</a>`
 	result, err := HTMLToMarkdown(input)
 	require.NoError(t, err)
@@ -842,7 +855,7 @@ func TestHTMLToMarkdown_Good_LinkNoHref(t *testing.T) {
 
 // --- HTML: unordered list ---
 
-func TestHTMLToMarkdown_Good_UL(t *testing.T) {
+func TestHTMLToMarkdown_Good_UL_Good(t *testing.T) {
 	input := `<ul><li>Item A</li><li>Item B</li></ul>`
 	result, err := HTMLToMarkdown(input)
 	require.NoError(t, err)
@@ -852,7 +865,7 @@ func TestHTMLToMarkdown_Good_UL(t *testing.T) {
 
 // --- HTML: br tag ---
 
-func TestHTMLToMarkdown_Good_BRTag(t *testing.T) {
+func TestHTMLToMarkdown_Good_BRTag_Good(t *testing.T) {
 	input := `<p>Line one<br>Line two</p>`
 	result, err := HTMLToMarkdown(input)
 	require.NoError(t, err)
@@ -862,7 +875,7 @@ func TestHTMLToMarkdown_Good_BRTag(t *testing.T) {
 
 // --- HTML: style tag stripped ---
 
-func TestHTMLToMarkdown_Good_StyleStripped(t *testing.T) {
+func TestHTMLToMarkdown_Good_StyleStripped_Good(t *testing.T) {
 	input := `<html><head><style>body{color:red}</style></head><body><p>Clean</p></body></html>`
 	result, err := HTMLToMarkdown(input)
 	require.NoError(t, err)
@@ -872,7 +885,7 @@ func TestHTMLToMarkdown_Good_StyleStripped(t *testing.T) {
 
 // --- HTML: i and b tags ---
 
-func TestHTMLToMarkdown_Good_AlternateBoldItalic(t *testing.T) {
+func TestHTMLToMarkdown_Good_AlternateBoldItalic_Good(t *testing.T) {
 	input := `<p><b>bold</b> and <i>italic</i></p>`
 	result, err := HTMLToMarkdown(input)
 	require.NoError(t, err)
@@ -882,7 +895,7 @@ func TestHTMLToMarkdown_Good_AlternateBoldItalic(t *testing.T) {
 
 // --- Market: collectCurrent with limiter that actually blocks ---
 
-func TestMarketCollector_Collect_Bad_LimiterBlocksThenCancelled(t *testing.T) {
+func TestMarketCollector_Collect_Bad_LimiterBlocksThenCancelled_Good(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(coinData{ID: "bitcoin", Symbol: "btc", Name: "Bitcoin",
@@ -914,7 +927,7 @@ func TestMarketCollector_Collect_Bad_LimiterBlocksThenCancelled(t *testing.T) {
 
 // --- Papers: IACR with limiter that blocks ---
 
-func TestPapersCollector_CollectIACR_Bad_LimiterBlocks(t *testing.T) {
+func TestPapersCollector_CollectIACR_Bad_LimiterBlocks_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	cfg := NewConfigWithMedium(m, "/output")
 	cfg.Limiter = NewRateLimiter()
@@ -931,7 +944,7 @@ func TestPapersCollector_CollectIACR_Bad_LimiterBlocks(t *testing.T) {
 
 // --- Papers: arXiv with limiter that blocks ---
 
-func TestPapersCollector_CollectArXiv_Bad_LimiterBlocks(t *testing.T) {
+func TestPapersCollector_CollectArXiv_Bad_LimiterBlocks_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	cfg := NewConfigWithMedium(m, "/output")
 	cfg.Limiter = NewRateLimiter()
@@ -948,7 +961,7 @@ func TestPapersCollector_CollectArXiv_Bad_LimiterBlocks(t *testing.T) {
 
 // --- BitcoinTalk: limiter that blocks ---
 
-func TestBitcoinTalkCollector_Collect_Bad_LimiterBlocks(t *testing.T) {
+func TestBitcoinTalkCollector_Collect_Bad_LimiterBlocks_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	cfg := NewConfigWithMedium(m, "/output")
 	cfg.Limiter = NewRateLimiter()
@@ -968,37 +981,47 @@ func TestBitcoinTalkCollector_Collect_Bad_LimiterBlocks(t *testing.T) {
 // writeCountMedium fails after N successful writes.
 type writeCountMedium struct {
 	*io.MockMedium
-	writeCount   int
-	failAfterN   int
+	writeCount int
+	failAfterN int
 }
 
 func (w *writeCountMedium) Write(path, content string) error {
 	w.writeCount++
 	if w.writeCount > w.failAfterN {
-		return fmt.Errorf("write %d: disk full", w.writeCount)
+		return testErrf("write %d: disk full", w.writeCount)
 	}
 	return w.MockMedium.Write(path, content)
 }
-func (w *writeCountMedium) EnsureDir(path string) error              { return w.MockMedium.EnsureDir(path) }
-func (w *writeCountMedium) Read(path string) (string, error)         { return w.MockMedium.Read(path) }
-func (w *writeCountMedium) List(path string) ([]fs.DirEntry, error)  { return w.MockMedium.List(path) }
-func (w *writeCountMedium) IsFile(path string) bool                  { return w.MockMedium.IsFile(path) }
-func (w *writeCountMedium) FileGet(path string) (string, error)      { return w.MockMedium.FileGet(path) }
-func (w *writeCountMedium) FileSet(path, content string) error       { return w.MockMedium.FileSet(path, content) }
-func (w *writeCountMedium) Delete(path string) error                 { return w.MockMedium.Delete(path) }
-func (w *writeCountMedium) DeleteAll(path string) error              { return w.MockMedium.DeleteAll(path) }
-func (w *writeCountMedium) Rename(old, new string) error             { return w.MockMedium.Rename(old, new) }
-func (w *writeCountMedium) Stat(path string) (fs.FileInfo, error)    { return w.MockMedium.Stat(path) }
-func (w *writeCountMedium) Open(path string) (fs.File, error)        { return w.MockMedium.Open(path) }
-func (w *writeCountMedium) Create(path string) (goio.WriteCloser, error) { return w.MockMedium.Create(path) }
-func (w *writeCountMedium) Append(path string) (goio.WriteCloser, error) { return w.MockMedium.Append(path) }
-func (w *writeCountMedium) ReadStream(path string) (goio.ReadCloser, error) { return w.MockMedium.ReadStream(path) }
-func (w *writeCountMedium) WriteStream(path string) (goio.WriteCloser, error) { return w.MockMedium.WriteStream(path) }
-func (w *writeCountMedium) Exists(path string) bool                  { return w.MockMedium.Exists(path) }
-func (w *writeCountMedium) IsDir(path string) bool                   { return w.MockMedium.IsDir(path) }
+func (w *writeCountMedium) EnsureDir(path string) error             { return w.MockMedium.EnsureDir(path) }
+func (w *writeCountMedium) Read(path string) (string, error)        { return w.MockMedium.Read(path) }
+func (w *writeCountMedium) List(path string) ([]fs.DirEntry, error) { return w.MockMedium.List(path) }
+func (w *writeCountMedium) IsFile(path string) bool                 { return w.MockMedium.IsFile(path) }
+func (w *writeCountMedium) FileGet(path string) (string, error)     { return w.MockMedium.FileGet(path) }
+func (w *writeCountMedium) FileSet(path, content string) error {
+	return w.MockMedium.FileSet(path, content)
+}
+func (w *writeCountMedium) Delete(path string) error              { return w.MockMedium.Delete(path) }
+func (w *writeCountMedium) DeleteAll(path string) error           { return w.MockMedium.DeleteAll(path) }
+func (w *writeCountMedium) Rename(old, new string) error          { return w.MockMedium.Rename(old, new) }
+func (w *writeCountMedium) Stat(path string) (fs.FileInfo, error) { return w.MockMedium.Stat(path) }
+func (w *writeCountMedium) Open(path string) (fs.File, error)     { return w.MockMedium.Open(path) }
+func (w *writeCountMedium) Create(path string) (goio.WriteCloser, error) {
+	return w.MockMedium.Create(path)
+}
+func (w *writeCountMedium) Append(path string) (goio.WriteCloser, error) {
+	return w.MockMedium.Append(path)
+}
+func (w *writeCountMedium) ReadStream(path string) (goio.ReadCloser, error) {
+	return w.MockMedium.ReadStream(path)
+}
+func (w *writeCountMedium) WriteStream(path string) (goio.WriteCloser, error) {
+	return w.MockMedium.WriteStream(path)
+}
+func (w *writeCountMedium) Exists(path string) bool { return w.MockMedium.Exists(path) }
+func (w *writeCountMedium) IsDir(path string) bool  { return w.MockMedium.IsDir(path) }
 
 // Test that the summary.md write error in collectCurrent is handled.
-func TestMarketCollector_Collect_Bad_SummaryWriteError(t *testing.T) {
+func TestMarketCollector_Collect_Bad_SummaryWriteError_Good(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		if strings.Contains(r.URL.Path, "/market_chart") {
@@ -1035,7 +1058,7 @@ func TestMarketCollector_Collect_Bad_SummaryWriteError(t *testing.T) {
 
 // --- Market: collectHistorical write error ---
 
-func TestMarketCollector_Collect_Bad_HistoricalWriteError(t *testing.T) {
+func TestMarketCollector_Collect_Bad_HistoricalWriteError_Good(t *testing.T) {
 	callCount := 0
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		callCount++
@@ -1074,8 +1097,8 @@ func TestMarketCollector_Collect_Bad_HistoricalWriteError(t *testing.T) {
 
 // --- State: Save write error ---
 
-func TestState_Save_Bad_WriteError(t *testing.T) {
-	em := &errorMedium{MockMedium: io.NewMockMedium(), writeErr: fmt.Errorf("disk full")}
+func TestState_Save_Bad_WriteError_Good(t *testing.T) {
+	em := &errorMedium{MockMedium: io.NewMockMedium(), writeErr: testErr("disk full")}
 	s := NewState(em, "/state.json")
 	s.Set("test", &StateEntry{Source: "test", Items: 1})
 
@@ -1086,7 +1109,7 @@ func TestState_Save_Bad_WriteError(t *testing.T) {
 
 // --- Excavator: collector with state error ---
 
-func TestExcavator_Run_Bad_CollectorStateError(t *testing.T) {
+func TestExcavator_Run_Bad_CollectorStateError_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	cfg := NewConfigWithMedium(m, "/output")
 	cfg.State = NewState(m, "/state.json")
@@ -1108,7 +1131,7 @@ func TestExcavator_Run_Bad_CollectorStateError(t *testing.T) {
 
 // --- BitcoinTalk: page returns zero posts (empty content) ---
 
-func TestBitcoinTalkCollector_Collect_Good_ZeroPostsPage(t *testing.T) {
+func TestBitcoinTalkCollector_Collect_Good_ZeroPostsPage_Good(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
 		// Valid HTML with no post divs at all
@@ -1133,8 +1156,8 @@ func TestBitcoinTalkCollector_Collect_Good_ZeroPostsPage(t *testing.T) {
 
 // --- Excavator: state save error after collection ---
 
-func TestExcavator_Run_Bad_StateSaveError(t *testing.T) {
-	em := &errorMedium{MockMedium: io.NewMockMedium(), writeErr: fmt.Errorf("state write failed")}
+func TestExcavator_Run_Bad_StateSaveError_Good(t *testing.T) {
+	em := &errorMedium{MockMedium: io.NewMockMedium(), writeErr: testErr("state write failed")}
 	cfg := &Config{
 		Output:     io.NewMockMedium(), // Use regular medium for output
 		OutputDir:  "/output",
@@ -1157,8 +1180,8 @@ func TestExcavator_Run_Bad_StateSaveError(t *testing.T) {
 
 // --- State: Load with read error ---
 
-func TestState_Load_Bad_ReadError(t *testing.T) {
-	em := &errorMedium{MockMedium: io.NewMockMedium(), readErr: fmt.Errorf("read denied")}
+func TestState_Load_Bad_ReadError_Good(t *testing.T) {
+	em := &errorMedium{MockMedium: io.NewMockMedium(), readErr: testErr("read denied")}
 	em.MockMedium.Files["/state.json"] = "{}" // File exists but read will fail
 
 	s := NewState(em, "/state.json")
@@ -1169,7 +1192,7 @@ func TestState_Load_Bad_ReadError(t *testing.T) {
 
 // --- Papers: PaperSourceAll emits complete ---
 
-func TestPapersCollector_CollectAll_Good_ArxivFailsWithIACR(t *testing.T) {
+func TestPapersCollector_CollectAll_Good_ArxivFailsWithIACR_Good(t *testing.T) {
 	callCount := 0
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		callCount++
@@ -1206,7 +1229,7 @@ func TestPapersCollector_CollectAll_Good_ArxivFailsWithIACR(t *testing.T) {
 
 // --- Papers: IACR with cancelled context (request creation fails) ---
 
-func TestPapersCollector_CollectIACR_Bad_CancelledContextRequestFails(t *testing.T) {
+func TestPapersCollector_CollectIACR_Bad_CancelledContextRequestFails_Good(t *testing.T) {
 	// Don't set up any server - the request should fail because context is cancelled.
 	m := io.NewMockMedium()
 	cfg := NewConfigWithMedium(m, "/output")
@@ -1222,7 +1245,7 @@ func TestPapersCollector_CollectIACR_Bad_CancelledContextRequestFails(t *testing
 
 // --- Papers: arXiv with cancelled context ---
 
-func TestPapersCollector_CollectArXiv_Bad_CancelledContextRequestFails(t *testing.T) {
+func TestPapersCollector_CollectArXiv_Bad_CancelledContextRequestFails_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	cfg := NewConfigWithMedium(m, "/output")
 	cfg.Limiter = nil
@@ -1237,7 +1260,7 @@ func TestPapersCollector_CollectArXiv_Bad_CancelledContextRequestFails(t *testin
 
 // --- Market: collectHistorical limiter blocks ---
 
-func TestMarketCollector_Collect_Bad_HistoricalLimiterBlocks(t *testing.T) {
+func TestMarketCollector_Collect_Bad_HistoricalLimiterBlocks_Good(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(coinData{
@@ -1276,7 +1299,7 @@ func TestMarketCollector_Collect_Bad_HistoricalLimiterBlocks(t *testing.T) {
 
 // --- BitcoinTalk: fetchPage with invalid URL ---
 
-func TestBitcoinTalkCollector_FetchPage_Bad_InvalidURL(t *testing.T) {
+func TestBitcoinTalkCollector_FetchPage_Bad_InvalidURL_Good(t *testing.T) {
 	b := &BitcoinTalkCollector{TopicID: "12345"}
 	// Use a URL with control character that will fail NewRequestWithContext
 	_, err := b.fetchPage(context.Background(), "http://\x7f/invalid")

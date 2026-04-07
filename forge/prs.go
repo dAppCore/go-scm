@@ -1,9 +1,12 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package forge
 
 import (
 	"bytes"
-	"encoding/json"
-	"fmt"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
+	json "dappco.re/go/core/scm/internal/ax/jsonx"
+	"iter"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -15,6 +18,7 @@ import (
 )
 
 // MergePullRequest merges a pull request with the given method ("squash", "rebase", "merge").
+// Usage: MergePullRequest(...)
 func (c *Client) MergePullRequest(owner, repo string, index int64, method string) error {
 	style := forgejo.MergeStyleMerge
 	switch method {
@@ -40,6 +44,7 @@ func (c *Client) MergePullRequest(owner, repo string, index int64, method string
 // SetPRDraft sets or clears the draft status on a pull request.
 // The Forgejo SDK v2.2.0 doesn't expose the draft field on EditPullRequestOption,
 // so we use a raw HTTP PATCH request.
+// Usage: SetPRDraft(...)
 func (c *Client) SetPRDraft(owner, repo string, index int64, draft bool) error {
 	safeOwner, err := agentci.ValidatePathElement(owner)
 	if err != nil {
@@ -81,6 +86,7 @@ func (c *Client) SetPRDraft(owner, repo string, index int64, draft bool) error {
 }
 
 // ListPRReviews returns all reviews for a pull request.
+// Usage: ListPRReviews(...)
 func (c *Client) ListPRReviews(owner, repo string, index int64) ([]*forgejo.PullReview, error) {
 	var all []*forgejo.PullReview
 	page := 1
@@ -104,7 +110,35 @@ func (c *Client) ListPRReviews(owner, repo string, index int64) ([]*forgejo.Pull
 	return all, nil
 }
 
+// ListPRReviewsIter returns an iterator over reviews for a pull request.
+// Usage: ListPRReviewsIter(...)
+func (c *Client) ListPRReviewsIter(owner, repo string, index int64) iter.Seq2[*forgejo.PullReview, error] {
+	return func(yield func(*forgejo.PullReview, error) bool) {
+		page := 1
+
+		for {
+			reviews, resp, err := c.api.ListPullReviews(owner, repo, index, forgejo.ListPullReviewsOptions{
+				ListOptions: forgejo.ListOptions{Page: page, PageSize: 50},
+			})
+			if err != nil {
+				yield(nil, log.E("forge.ListPRReviews", "failed to list reviews", err))
+				return
+			}
+			for _, review := range reviews {
+				if !yield(review, nil) {
+					return
+				}
+			}
+			if resp == nil || page >= resp.LastPage {
+				break
+			}
+			page++
+		}
+	}
+}
+
 // GetCombinedStatus returns the combined commit status for a ref (SHA or branch).
+// Usage: GetCombinedStatus(...)
 func (c *Client) GetCombinedStatus(owner, repo string, ref string) (*forgejo.CombinedStatus, error) {
 	status, _, err := c.api.GetCombinedStatus(owner, repo, ref)
 	if err != nil {
@@ -114,12 +148,23 @@ func (c *Client) GetCombinedStatus(owner, repo string, ref string) (*forgejo.Com
 }
 
 // DismissReview dismisses a pull request review by ID.
+// Usage: DismissReview(...)
 func (c *Client) DismissReview(owner, repo string, index, reviewID int64, message string) error {
 	_, err := c.api.DismissPullReview(owner, repo, index, reviewID, forgejo.DismissPullReviewOptions{
 		Message: message,
 	})
 	if err != nil {
 		return log.E("forge.DismissReview", "failed to dismiss review", err)
+	}
+	return nil
+}
+
+// UndismissReview removes a dismissal from a pull request review.
+// Usage: UndismissReview(...)
+func (c *Client) UndismissReview(owner, repo string, index, reviewID int64) error {
+	_, err := c.api.UnDismissPullReview(owner, repo, index, reviewID)
+	if err != nil {
+		return log.E("forge.UndismissReview", "failed to undismiss review", err)
 	}
 	return nil
 }

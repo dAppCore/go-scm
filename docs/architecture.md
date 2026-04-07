@@ -88,9 +88,9 @@ The `gitea/` package mirrors this using `GITEA_URL`/`GITEA_TOKEN` and `gitea.*` 
 |------|-----------|
 | `client.go` | `New`, `NewFromConfig`, `GetCurrentUser`, `ForkRepo`, `CreatePullRequest` |
 | `repos.go` | `ListOrgRepos`, `ListOrgReposIter`, `ListUserRepos`, `ListUserReposIter`, `GetRepo`, `CreateOrgRepo`, `DeleteRepo`, `MigrateRepo` |
-| `issues.go` | `ListIssues`, `GetIssue`, `CreateIssue`, `EditIssue`, `AssignIssue`, `ListPullRequests`, `ListPullRequestsIter`, `GetPullRequest`, `CreateIssueComment`, `ListIssueComments`, `CloseIssue` |
-| `labels.go` | `ListOrgLabels`, `ListRepoLabels`, `CreateRepoLabel`, `GetLabelByName`, `EnsureLabel`, `AddIssueLabels`, `RemoveIssueLabel` |
-| `prs.go` | `MergePullRequest`, `SetPRDraft`, `ListPRReviews`, `GetCombinedStatus`, `DismissReview` |
+| `issues.go` | `ListIssues`, `ListIssuesIter`, `GetIssue`, `CreateIssue`, `EditIssue`, `AssignIssue`, `ListPullRequests`, `ListPullRequestsIter`, `GetPullRequest`, `CreateIssueComment`, `GetIssueLabels`, `ListIssueComments`, `ListIssueCommentsIter`, `CloseIssue` |
+| `labels.go` | `ListOrgLabels`, `ListOrgLabelsIter`, `ListRepoLabels`, `ListRepoLabelsIter`, `CreateRepoLabel`, `GetLabelByName`, `EnsureLabel`, `AddIssueLabels`, `RemoveIssueLabel` |
+| `prs.go` | `MergePullRequest`, `SetPRDraft`, `ListPRReviews`, `GetCombinedStatus`, `DismissReview`, `UndismissReview` |
 | `webhooks.go` | `CreateRepoWebhook`, `ListRepoWebhooks` |
 | `orgs.go` | `ListMyOrgs`, `GetOrg`, `CreateOrg` |
 | `meta.go` | `GetPRMeta`, `GetCommentBodies`, `GetIssueBody` |
@@ -119,7 +119,7 @@ The two packages are structurally parallel but intentionally not unified behind 
 - PR merge, draft status, reviews, combined status, review dismissal
 - Repository migration (full import with issues/labels/PRs)
 
-The Gitea client has a `CreateMirror` method for setting up pull mirrors from GitHub -- a capability specific to the public mirror workflow.
+The Gitea client has a `GetCurrentUser` helper and a `CreateMirror` method for setting up pull mirrors from GitHub -- a capability specific to the public mirror workflow.
 
 **SDK limitation:** The Forgejo SDK v2 does not accept `context.Context` on API methods. All SDK calls are synchronous. Context propagation through the wrapper layer is nominal -- contexts are accepted at the boundary but cannot be forwarded.
 
@@ -350,7 +350,7 @@ agentci:
 3. If the repository name is `core` or contains `security`, dual (Axiom 1: critical repos always verified).
 4. Otherwise, standard.
 
-In dual-run mode, `DispatchHandler` populates `DispatchTicket.VerifyModel` and `DispatchTicket.DualRun=true`. The `Weave` method compares primary and verifier outputs for convergence (currently byte-equal; semantic diff reserved for a future phase).
+In dual-run mode, `DispatchHandler` populates `DispatchTicket.VerifyModel` and `DispatchTicket.DualRun=true`. The `Weave` method compares primary and verifier outputs for convergence using a deterministic token-overlap score against `validation_threshold`; richer semantic diffing remains a future phase.
 
 ### Dispatch Ticket Transfer
 

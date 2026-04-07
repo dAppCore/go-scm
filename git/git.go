@@ -1,16 +1,18 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 // Package git provides utilities for git operations across multiple repositories.
 package git
 
 import (
 	"bytes"
 	"context"
+	os "dappco.re/go/core/scm/internal/ax/osx"
+	strings "dappco.re/go/core/scm/internal/ax/stringsx"
+	exec "golang.org/x/sys/execabs"
 	"io"
 	"iter"
-	"os"
-	"os/exec"
 	"slices"
 	"strconv"
-	"strings"
 	"sync"
 )
 
@@ -28,16 +30,19 @@ type RepoStatus struct {
 }
 
 // IsDirty returns true if there are uncommitted changes.
+// Usage: IsDirty(...)
 func (s *RepoStatus) IsDirty() bool {
 	return s.Modified > 0 || s.Untracked > 0 || s.Staged > 0
 }
 
 // HasUnpushed returns true if there are commits to push.
+// Usage: HasUnpushed(...)
 func (s *RepoStatus) HasUnpushed() bool {
 	return s.Ahead > 0
 }
 
 // HasUnpulled returns true if there are commits to pull.
+// Usage: HasUnpulled(...)
 func (s *RepoStatus) HasUnpulled() bool {
 	return s.Behind > 0
 }
@@ -51,6 +56,7 @@ type StatusOptions struct {
 }
 
 // Status checks git status for multiple repositories in parallel.
+// Usage: Status(...)
 func Status(ctx context.Context, opts StatusOptions) []RepoStatus {
 	var wg sync.WaitGroup
 	results := make([]RepoStatus, len(opts.Paths))
@@ -72,6 +78,7 @@ func Status(ctx context.Context, opts StatusOptions) []RepoStatus {
 }
 
 // StatusIter returns an iterator over git status for multiple repositories.
+// Usage: StatusIter(...)
 func StatusIter(ctx context.Context, opts StatusOptions) iter.Seq[RepoStatus] {
 	return func(yield func(RepoStatus) bool) {
 		results := Status(ctx, opts)
@@ -156,17 +163,20 @@ func getAheadBehind(ctx context.Context, path string) (ahead, behind int) {
 
 // Push pushes commits for a single repository.
 // Uses interactive mode to support SSH passphrase prompts.
+// Usage: Push(...)
 func Push(ctx context.Context, path string) error {
 	return gitInteractive(ctx, path, "push")
 }
 
 // Pull pulls changes for a single repository.
 // Uses interactive mode to support SSH passphrase prompts.
+// Usage: Pull(...)
 func Pull(ctx context.Context, path string) error {
 	return gitInteractive(ctx, path, "pull", "--rebase")
 }
 
 // IsNonFastForward checks if an error is a non-fast-forward rejection.
+// Usage: IsNonFastForward(...)
 func IsNonFastForward(err error) bool {
 	if err == nil {
 		return false
@@ -210,11 +220,13 @@ type PushResult struct {
 
 // PushMultiple pushes multiple repositories sequentially.
 // Sequential because SSH passphrase prompts need user interaction.
+// Usage: PushMultiple(...)
 func PushMultiple(ctx context.Context, paths []string, names map[string]string) []PushResult {
 	return slices.Collect(PushMultipleIter(ctx, paths, names))
 }
 
 // PushMultipleIter returns an iterator that pushes repositories sequentially and yields results.
+// Usage: PushMultipleIter(...)
 func PushMultipleIter(ctx context.Context, paths []string, names map[string]string) iter.Seq[PushResult] {
 	return func(yield func(PushResult) bool) {
 		for _, path := range paths {
@@ -269,6 +281,7 @@ type GitError struct {
 }
 
 // Error returns the git error message, preferring stderr output.
+// Usage: Error(...)
 func (e *GitError) Error() string {
 	// Return just the stderr message, trimmed
 	msg := strings.TrimSpace(e.Stderr)
@@ -279,6 +292,7 @@ func (e *GitError) Error() string {
 }
 
 // Unwrap returns the underlying error for error chain inspection.
+// Usage: Unwrap(...)
 func (e *GitError) Unwrap() error {
 	return e.Err
 }

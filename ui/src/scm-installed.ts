@@ -1,4 +1,4 @@
-// SPDX-Licence-Identifier: EUPL-1.2
+// SPDX-License-Identifier: EUPL-1.2
 
 import { LitElement, html, css, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
@@ -29,28 +29,74 @@ export class ScmInstalled extends LitElement {
   static styles = css`
     :host {
       display: block;
-      font-family: system-ui, -apple-system, sans-serif;
+      font-family:
+        Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+        sans-serif;
+      color: #111827;
+    }
+
+    .shell {
+      background: rgba(255, 255, 255, 0.84);
+      border: 1px solid rgba(226, 232, 240, 0.95);
+      border-radius: 1rem;
+      padding: 1rem;
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
+      backdrop-filter: blur(12px);
+    }
+
+    .summary {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .summary-copy {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .summary-title {
+      font-size: 1rem;
+      font-weight: 800;
+      color: #0f172a;
+    }
+
+    .summary-subtitle {
+      font-size: 0.8125rem;
+      color: #64748b;
     }
 
     .list {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: 0.75rem;
     }
 
     .item {
-      border: 1px solid #e5e7eb;
-      border-radius: 0.5rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 1rem;
       padding: 1rem;
-      background: #fff;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.98));
       display: flex;
       justify-content: space-between;
       align-items: center;
-      transition: box-shadow 0.15s;
+      gap: 1rem;
+      transition:
+        transform 0.15s ease,
+        box-shadow 0.15s ease,
+        border-color 0.15s ease;
     }
 
     .item:hover {
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
+      border-color: #c7d2fe;
+      transform: translateY(-2px);
     }
 
     .item-info {
@@ -58,20 +104,58 @@ export class ScmInstalled extends LitElement {
     }
 
     .item-name {
-      font-weight: 600;
-      font-size: 0.9375rem;
+      font-weight: 800;
+      font-size: 0.95rem;
+      color: #0f172a;
     }
 
     .item-meta {
       font-size: 0.75rem;
-      colour: #6b7280;
-      margin-top: 0.25rem;
+      color: #64748b;
+      margin-top: 0.35rem;
       display: flex;
       gap: 1rem;
+      flex-wrap: wrap;
     }
 
     .item-code {
       font-family: monospace;
+      color: #334155;
+      font-weight: 700;
+    }
+
+    .item-repo,
+    .item-entry {
+      font-family: monospace;
+      color: #475569;
+      word-break: break-word;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.6875rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #166534;
+    }
+
+    .badge::before {
+      content: '';
+      width: 0.45rem;
+      height: 0.45rem;
+      border-radius: 999px;
+      background: #22c55e;
+    }
+
+    .badge.unsigned {
+      color: #64748b;
+    }
+
+    .badge.unsigned::before {
+      background: #f59e0b;
     }
 
     .item-actions {
@@ -80,21 +164,26 @@ export class ScmInstalled extends LitElement {
     }
 
     button {
-      padding: 0.375rem 0.75rem;
-      border-radius: 0.375rem;
+      padding: 0.45rem 0.85rem;
+      border-radius: 0.75rem;
       font-size: 0.8125rem;
       cursor: pointer;
-      transition: background 0.15s;
+      font-weight: 700;
+      transition:
+        background 0.15s ease,
+        transform 0.15s ease,
+        box-shadow 0.15s ease;
     }
 
     button.update {
       background: #fff;
-      colour: #6366f1;
+      color: #4338ca;
       border: 1px solid #6366f1;
     }
 
     button.update:hover {
       background: #eef2ff;
+      transform: translateY(-1px);
     }
 
     button.update:disabled {
@@ -104,34 +193,56 @@ export class ScmInstalled extends LitElement {
 
     button.remove {
       background: #fff;
-      colour: #dc2626;
+      color: #dc2626;
       border: 1px solid #dc2626;
     }
 
     button.remove:hover {
       background: #fef2f2;
+      transform: translateY(-1px);
     }
 
     .empty {
       text-align: center;
       padding: 2rem;
-      colour: #9ca3af;
+      color: #64748b;
       font-size: 0.875rem;
     }
 
     .loading {
       text-align: center;
       padding: 2rem;
-      colour: #6b7280;
+      color: #64748b;
     }
 
     .error {
-      colour: #dc2626;
+      color: #dc2626;
       padding: 0.75rem;
       background: #fef2f2;
-      border-radius: 0.375rem;
+      border: 1px solid #fecaca;
+      border-radius: 0.75rem;
       font-size: 0.875rem;
       margin-bottom: 1rem;
+    }
+
+    @media (max-width: 720px) {
+      .shell {
+        padding: 0.875rem;
+      }
+
+      .summary,
+      .item {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .item-actions {
+        width: 100%;
+      }
+
+      button {
+        flex: 1;
+      }
     }
   `;
 
@@ -160,6 +271,10 @@ export class ScmInstalled extends LitElement {
     } finally {
       this.loading = false;
     }
+  }
+
+  async refresh() {
+    await this.loadInstalled();
   }
 
   private async handleUpdate(code: string) {
@@ -206,39 +321,61 @@ export class ScmInstalled extends LitElement {
     }
 
     return html`
-      ${this.error ? html`<div class="error">${this.error}</div>` : nothing}
-      ${this.modules.length === 0
-        ? html`<div class="empty">No providers installed.</div>`
-        : html`
-            <div class="list">
-              ${this.modules.map(
-                (mod) => html`
-                  <div class="item">
-                    <div class="item-info">
-                      <div class="item-name">${mod.name}</div>
-                      <div class="item-meta">
-                        <span class="item-code">${mod.code}</span>
-                        <span>v${mod.version}</span>
-                        <span>Installed ${this.formatDate(mod.installed_at)}</span>
+      <div class="shell">
+        <div class="summary">
+          <div class="summary-copy">
+            <span class="summary-title">Installed providers</span>
+            <span class="summary-subtitle">
+              Review local modules, update them, or remove stale installs.
+            </span>
+          </div>
+          <div class="summary-copy" style="text-align:right">
+            <span class="summary-title">${this.modules.length}</span>
+            <span class="summary-subtitle">Installed</span>
+          </div>
+        </div>
+
+        ${this.error ? html`<div class="error">${this.error}</div>` : nothing}
+        ${this.modules.length === 0
+          ? html`<div class="empty">No providers installed.</div>`
+          : html`
+              <div class="list">
+                ${this.modules.map(
+                  (mod) => html`
+                    <div class="item">
+                      <div class="item-info">
+                        <div class="item-name">${mod.name}</div>
+                        <div class="item-meta">
+                          <span class="item-code">${mod.code}</span>
+                          <span>v${mod.version}</span>
+                          <span>Installed ${this.formatDate(mod.installed_at)}</span>
+                        </div>
+                        <div class="item-meta">
+                          <span class="item-repo">${mod.repo}</span>
+                          <span class="item-entry">entry: ${mod.entry_point}</span>
+                        </div>
+                        <div class="badge ${mod.sign_key ? '' : 'unsigned'}">
+                          ${mod.sign_key ? 'Signed manifest' : 'Unsigned manifest'}
+                        </div>
+                      </div>
+                      <div class="item-actions">
+                        <button
+                          class="update"
+                          ?disabled=${this.updating.has(mod.code)}
+                          @click=${() => this.handleUpdate(mod.code)}
+                        >
+                          ${this.updating.has(mod.code) ? 'Updating\u2026' : 'Update'}
+                        </button>
+                        <button class="remove" @click=${() => this.handleRemove(mod.code)}>
+                          Remove
+                        </button>
                       </div>
                     </div>
-                    <div class="item-actions">
-                      <button
-                        class="update"
-                        ?disabled=${this.updating.has(mod.code)}
-                        @click=${() => this.handleUpdate(mod.code)}
-                      >
-                        ${this.updating.has(mod.code) ? 'Updating\u2026' : 'Update'}
-                      </button>
-                      <button class="remove" @click=${() => this.handleRemove(mod.code)}>
-                        Remove
-                      </button>
-                    </div>
-                  </div>
-                `,
-              )}
-            </div>
-          `}
+                  `,
+                )}
+              </div>
+            `}
+      </div>
     `;
   }
 }

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package collect
 
 import (
@@ -41,7 +43,7 @@ func TestDispatcher_On_Good(t *testing.T) {
 	assert.Equal(t, 3, count, "All three handlers should be called")
 }
 
-func TestDispatcher_Emit_Good_NoHandlers(t *testing.T) {
+func TestDispatcher_Emit_Good_NoHandlers_Good(t *testing.T) {
 	d := NewDispatcher()
 
 	// Should not panic when emitting an event with no handlers
@@ -54,7 +56,7 @@ func TestDispatcher_Emit_Good_NoHandlers(t *testing.T) {
 	})
 }
 
-func TestDispatcher_Emit_Good_MultipleEventTypes(t *testing.T) {
+func TestDispatcher_Emit_Good_MultipleEventTypes_Good(t *testing.T) {
 	d := NewDispatcher()
 
 	var starts, errors int
@@ -69,7 +71,7 @@ func TestDispatcher_Emit_Good_MultipleEventTypes(t *testing.T) {
 	assert.Equal(t, 1, errors)
 }
 
-func TestDispatcher_Emit_Good_SetsTime(t *testing.T) {
+func TestDispatcher_Emit_Good_SetsTime_Good(t *testing.T) {
 	d := NewDispatcher()
 
 	var received Event
@@ -85,7 +87,7 @@ func TestDispatcher_Emit_Good_SetsTime(t *testing.T) {
 	assert.True(t, received.Time.Before(after) || received.Time.Equal(after))
 }
 
-func TestDispatcher_Emit_Good_PreservesExistingTime(t *testing.T) {
+func TestDispatcher_Emit_Good_PreservesExistingTime_Good(t *testing.T) {
 	d := NewDispatcher()
 
 	customTime := time.Date(2025, 6, 15, 12, 0, 0, 0, time.UTC)

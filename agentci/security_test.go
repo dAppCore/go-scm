@@ -1,8 +1,9 @@
-// SPDX-Licence-Identifier: EUPL-1.2
+// SPDX-License-Identifier: EUPL-1.2
 
 package agentci
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -20,7 +21,9 @@ func TestSanitizePath_Good(t *testing.T) {
 		{"with.dot", "with.dot"},
 		{"CamelCase", "CamelCase"},
 		{"123", "123"},
-		{"path/to/file.txt", "file.txt"},
+		{"../secret", "secret"},
+		{"/var/tmp/report.txt", "report.txt"},
+		{"nested/path/file", "file"},
 	}
 
 	for _, tt := range tests {
@@ -44,8 +47,11 @@ func TestSanitizePath_Bad(t *testing.T) {
 		{"pipe", "file|name"},
 		{"ampersand", "file&name"},
 		{"dollar", "file$name"},
+		{"backslash", `path\to\file.txt`},
+		{"current dir", "."},
 		{"parent traversal base", ".."},
 		{"root", "/"},
+		{"empty", ""},
 	}
 
 	for _, tt := range tests {
@@ -76,6 +82,19 @@ func TestEscapeShellArg_Good(t *testing.T) {
 
 func TestSecureSSHCommand_Good(t *testing.T) {
 	cmd := SecureSSHCommand("host.example.com", "ls -la")
+	args := cmd.Args
+
+	assert.Equal(t, "ssh", args[0])
+	assert.Contains(t, args, "-o")
+	assert.Contains(t, args, "StrictHostKeyChecking=yes")
+	assert.Contains(t, args, "BatchMode=yes")
+	assert.Contains(t, args, "ConnectTimeout=10")
+	assert.Equal(t, "host.example.com", args[len(args)-2])
+	assert.Equal(t, "ls -la", args[len(args)-1])
+}
+
+func TestSecureSSHCommandContext_Good(t *testing.T) {
+	cmd := SecureSSHCommandContext(context.Background(), "host.example.com", "ls -la")
 	args := cmd.Args
 
 	assert.Equal(t, "ssh", args[0])

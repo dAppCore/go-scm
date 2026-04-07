@@ -1,12 +1,14 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package handlers
 
 import (
 	"context"
-	"encoding/json"
+	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
+	json "dappco.re/go/core/scm/internal/ax/jsonx"
+	os "dappco.re/go/core/scm/internal/ax/osx"
 	"net/http"
 	"net/http/httptest"
-	"os"
-	"path/filepath"
 	"strconv"
 	"testing"
 
@@ -35,7 +37,7 @@ func newTestSpinner(agents map[string]agentci.AgentConfig) *agentci.Spinner {
 
 // --- Match tests ---
 
-func TestDispatch_Match_Good_NeedsCoding(t *testing.T) {
+func TestDispatch_Match_Good_NeedsCoding_Good(t *testing.T) {
 	spinner := newTestSpinner(map[string]agentci.AgentConfig{
 		"darbs-claude": {Host: "claude@192.168.0.201", QueueDir: "~/ai-work/queue", Active: true},
 	})
@@ -47,7 +49,7 @@ func TestDispatch_Match_Good_NeedsCoding(t *testing.T) {
 	assert.True(t, h.Match(sig))
 }
 
-func TestDispatch_Match_Good_MultipleAgents(t *testing.T) {
+func TestDispatch_Match_Good_MultipleAgents_Good(t *testing.T) {
 	spinner := newTestSpinner(map[string]agentci.AgentConfig{
 		"darbs-claude": {Host: "claude@192.168.0.201", QueueDir: "~/ai-work/queue", Active: true},
 		"local-codex":  {Host: "localhost", QueueDir: "~/ai-work/queue", Active: true},
@@ -60,7 +62,7 @@ func TestDispatch_Match_Good_MultipleAgents(t *testing.T) {
 	assert.True(t, h.Match(sig))
 }
 
-func TestDispatch_Match_Bad_HasPR(t *testing.T) {
+func TestDispatch_Match_Bad_HasPR_Good(t *testing.T) {
 	spinner := newTestSpinner(map[string]agentci.AgentConfig{
 		"darbs-claude": {Host: "claude@192.168.0.201", QueueDir: "~/ai-work/queue", Active: true},
 	})
@@ -73,7 +75,7 @@ func TestDispatch_Match_Bad_HasPR(t *testing.T) {
 	assert.False(t, h.Match(sig))
 }
 
-func TestDispatch_Match_Bad_UnknownAgent(t *testing.T) {
+func TestDispatch_Match_Bad_UnknownAgent_Good(t *testing.T) {
 	spinner := newTestSpinner(map[string]agentci.AgentConfig{
 		"darbs-claude": {Host: "claude@192.168.0.201", QueueDir: "~/ai-work/queue", Active: true},
 	})
@@ -85,7 +87,7 @@ func TestDispatch_Match_Bad_UnknownAgent(t *testing.T) {
 	assert.False(t, h.Match(sig))
 }
 
-func TestDispatch_Match_Bad_NotAssigned(t *testing.T) {
+func TestDispatch_Match_Bad_NotAssigned_Good(t *testing.T) {
 	spinner := newTestSpinner(map[string]agentci.AgentConfig{
 		"darbs-claude": {Host: "claude@192.168.0.201", QueueDir: "~/ai-work/queue", Active: true},
 	})
@@ -97,7 +99,7 @@ func TestDispatch_Match_Bad_NotAssigned(t *testing.T) {
 	assert.False(t, h.Match(sig))
 }
 
-func TestDispatch_Match_Bad_EmptyAgentMap(t *testing.T) {
+func TestDispatch_Match_Bad_EmptyAgentMap_Good(t *testing.T) {
 	spinner := newTestSpinner(map[string]agentci.AgentConfig{})
 	h := NewDispatchHandler(nil, "", "", spinner)
 	sig := &jobrunner.PipelineSignal{
@@ -117,7 +119,7 @@ func TestDispatch_Name_Good(t *testing.T) {
 
 // --- Execute tests ---
 
-func TestDispatch_Execute_Bad_UnknownAgent(t *testing.T) {
+func TestDispatch_Execute_Bad_UnknownAgent_Good(t *testing.T) {
 	srv := httptest.NewServer(withVersion(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})))
@@ -142,7 +144,7 @@ func TestDispatch_Execute_Bad_UnknownAgent(t *testing.T) {
 	assert.Contains(t, err.Error(), "unknown agent")
 }
 
-func TestDispatch_Execute_Bad_InvalidQueueDir(t *testing.T) {
+func TestDispatch_Execute_Bad_InvalidQueueDir_Good(t *testing.T) {
 	spinner := newTestSpinner(map[string]agentci.AgentConfig{
 		"darbs-claude": {
 			Host:     "localhost",
@@ -173,7 +175,7 @@ func TestDispatch_TicketJSON_Good(t *testing.T) {
 		IssueNumber:  5,
 		IssueTitle:   "Fix the thing",
 		IssueBody:    "Please fix this bug",
-		TargetBranch: "new",
+		TargetBranch: "main",
 		EpicNumber:   3,
 		ForgeURL:     "https://forge.lthn.ai",
 		ForgeUser:    "darbs-claude",
@@ -196,7 +198,7 @@ func TestDispatch_TicketJSON_Good(t *testing.T) {
 	assert.Equal(t, float64(5), decoded["issue_number"])
 	assert.Equal(t, "Fix the thing", decoded["issue_title"])
 	assert.Equal(t, "Please fix this bug", decoded["issue_body"])
-	assert.Equal(t, "new", decoded["target_branch"])
+	assert.Equal(t, "main", decoded["target_branch"])
 	assert.Equal(t, float64(3), decoded["epic_number"])
 	assert.Equal(t, "https://forge.lthn.ai", decoded["forge_url"])
 	assert.Equal(t, "darbs-claude", decoded["forgejo_user"])
@@ -207,7 +209,7 @@ func TestDispatch_TicketJSON_Good(t *testing.T) {
 	assert.False(t, hasToken, "forge_token must not be in ticket JSON")
 }
 
-func TestDispatch_TicketJSON_Good_DualRun(t *testing.T) {
+func TestDispatch_TicketJSON_Good_DualRun_Good(t *testing.T) {
 	ticket := DispatchTicket{
 		ID:          "test-dual",
 		RepoOwner:   "host-uk",
@@ -229,7 +231,7 @@ func TestDispatch_TicketJSON_Good_DualRun(t *testing.T) {
 	assert.Equal(t, "gemini-1.5-pro", roundtrip.VerifyModel)
 }
 
-func TestDispatch_TicketJSON_Good_OmitsEmptyModelRunner(t *testing.T) {
+func TestDispatch_TicketJSON_Good_OmitsEmptyModelRunner_Good(t *testing.T) {
 	ticket := DispatchTicket{
 		ID:           "test-1",
 		RepoOwner:    "host-uk",
@@ -252,7 +254,31 @@ func TestDispatch_TicketJSON_Good_OmitsEmptyModelRunner(t *testing.T) {
 	assert.False(t, hasRunner, "runner should be omitted when empty")
 }
 
-func TestDispatch_runRemote_Good_EscapesPath(t *testing.T) {
+func TestDispatch_Execute_Good_UsesRepoDefaultBranch_Good(t *testing.T) {
+	srv := httptest.NewServer(withVersion(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})))
+	defer srv.Close()
+
+	client := newTestForgeClient(t, srv.URL)
+	spinner := newTestSpinner(map[string]agentci.AgentConfig{
+		"darbs-claude": {Host: "claude@192.168.0.201", QueueDir: "~/ai-work/queue", Active: true},
+	})
+	h := NewDispatchHandler(client, srv.URL, "test-token", spinner)
+
+	sig := &jobrunner.PipelineSignal{
+		NeedsCoding: true,
+		Assignee:    "darbs-claude",
+		RepoOwner:   "test-org",
+		RepoName:    "org-repo",
+		ChildNumber: 1,
+	}
+
+	branch := h.resolveTargetBranch(sig.RepoOwner, sig.RepoName)
+	assert.Equal(t, "main", branch)
+}
+
+func TestDispatch_runRemote_Good_EscapesPath_Good(t *testing.T) {
 	outputPath := filepath.Join(t.TempDir(), "ssh-output.txt")
 	toolPath := writeFakeSSHCommand(t, outputPath)
 	t.Setenv("PATH", toolPath+":"+os.Getenv("PATH"))
@@ -273,7 +299,7 @@ func TestDispatch_runRemote_Good_EscapesPath(t *testing.T) {
 	assert.Contains(t, string(output), "rm '-f' '"+dangerousPath+"'\n")
 }
 
-func TestDispatch_secureTransfer_Good_EscapesPath(t *testing.T) {
+func TestDispatch_secureTransfer_Good_EscapesPath_Good(t *testing.T) {
 	outputPath := filepath.Join(t.TempDir(), "ssh-output.txt")
 	toolPath := writeFakeSSHCommand(t, outputPath)
 	t.Setenv("PATH", toolPath+":"+os.Getenv("PATH"))
@@ -299,7 +325,7 @@ func TestDispatch_secureTransfer_Good_EscapesPath(t *testing.T) {
 	assert.Equal(t, "hello", string(input))
 }
 
-func TestDispatch_TicketJSON_Good_ModelRunnerVariants(t *testing.T) {
+func TestDispatch_TicketJSON_Good_ModelRunnerVariants_Good(t *testing.T) {
 	tests := []struct {
 		name   string
 		model  string
@@ -336,7 +362,7 @@ func TestDispatch_TicketJSON_Good_ModelRunnerVariants(t *testing.T) {
 	}
 }
 
-func TestDispatch_Execute_Good_PostsComment(t *testing.T) {
+func TestDispatch_Execute_Good_PostsComment_Good(t *testing.T) {
 	var commentPosted bool
 	var commentBody string
 

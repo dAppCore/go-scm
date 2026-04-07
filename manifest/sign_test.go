@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package manifest
 
 import (
@@ -29,7 +31,7 @@ func TestSignAndVerify_Good(t *testing.T) {
 	assert.True(t, ok)
 }
 
-func TestVerify_Bad_Tampered(t *testing.T) {
+func TestVerify_Bad_Tampered_Good(t *testing.T) {
 	pub, priv, _ := ed25519.GenerateKey(nil)
 	m := &Manifest{Code: "test-app", Version: "1.0.0"}
 	_ = Sign(m, priv)
@@ -41,11 +43,42 @@ func TestVerify_Bad_Tampered(t *testing.T) {
 	assert.False(t, ok)
 }
 
-func TestVerify_Bad_Unsigned(t *testing.T) {
+func TestVerify_Bad_Unsigned_Good(t *testing.T) {
 	pub, _, _ := ed25519.GenerateKey(nil)
 	m := &Manifest{Code: "test-app"}
 
 	ok, err := Verify(m, pub)
 	assert.Error(t, err)
 	assert.False(t, ok)
+}
+
+func TestSign_Bad_InvalidPrivateKey_Good(t *testing.T) {
+	m := &Manifest{Code: "test-app", Version: "1.0.0"}
+
+	err := Sign(m, ed25519.PrivateKey([]byte("short")))
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid private key length")
+	assert.Empty(t, m.Sign)
+}
+
+func TestSign_Bad_NilManifest_Good(t *testing.T) {
+	err := Sign(nil, ed25519.PrivateKey(make([]byte, ed25519.PrivateKeySize)))
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "nil manifest")
+}
+
+func TestVerify_Bad_NilManifest_Good(t *testing.T) {
+	ok, err := Verify(nil, ed25519.PublicKey(make([]byte, ed25519.PublicKeySize)))
+	assert.Error(t, err)
+	assert.False(t, ok)
+	assert.Contains(t, err.Error(), "nil manifest")
+}
+
+func TestVerify_Bad_InvalidPublicKey_Good(t *testing.T) {
+	m := &Manifest{Code: "test-app", Sign: "c2ln"}
+
+	ok, err := Verify(m, ed25519.PublicKey([]byte("short")))
+	assert.Error(t, err)
+	assert.False(t, ok)
+	assert.Contains(t, err.Error(), "invalid public key length")
 }

@@ -1,10 +1,13 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package marketplace
 
 import (
-	"os"
-	"path/filepath"
+	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
+	os "dappco.re/go/core/scm/internal/ax/osx"
 	"testing"
 
+	"dappco.re/go/core/io"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -56,7 +59,7 @@ binary: ./data-viz
 	assert.True(t, codes["data-viz"])
 }
 
-func TestDiscoverProviders_Good_SkipNonProvider(t *testing.T) {
+func TestDiscoverProviders_Good_SkipNonProvider_Good(t *testing.T) {
 	dir := t.TempDir()
 
 	// This has a valid manifest but no namespace/binary — not a provider.
@@ -81,7 +84,7 @@ binary: ./real-provider
 	assert.Equal(t, "real-provider", providers[0].Manifest.Code)
 }
 
-func TestDiscoverProviders_Good_SkipNoManifest(t *testing.T) {
+func TestDiscoverProviders_Good_SkipNoManifest_Good(t *testing.T) {
 	dir := t.TempDir()
 
 	// Directory with no manifest.
@@ -102,7 +105,7 @@ binary: ./good-provider
 	assert.Equal(t, "good-provider", providers[0].Manifest.Code)
 }
 
-func TestDiscoverProviders_Good_SkipInvalidManifest(t *testing.T) {
+func TestDiscoverProviders_Good_SkipInvalidManifest_Good(t *testing.T) {
 	dir := t.TempDir()
 
 	// Directory with invalid YAML.
@@ -119,7 +122,7 @@ func TestDiscoverProviders_Good_SkipInvalidManifest(t *testing.T) {
 	assert.Empty(t, providers)
 }
 
-func TestDiscoverProviders_Good_EmptyDir(t *testing.T) {
+func TestDiscoverProviders_Good_EmptyDir_Good(t *testing.T) {
 	dir := t.TempDir()
 
 	providers, err := DiscoverProviders(dir)
@@ -127,13 +130,13 @@ func TestDiscoverProviders_Good_EmptyDir(t *testing.T) {
 	assert.Empty(t, providers)
 }
 
-func TestDiscoverProviders_Good_NonexistentDir(t *testing.T) {
+func TestDiscoverProviders_Good_NonexistentDir_Good(t *testing.T) {
 	providers, err := DiscoverProviders("/tmp/nonexistent-discovery-test-dir")
 	require.NoError(t, err)
 	assert.Nil(t, providers)
 }
 
-func TestDiscoverProviders_Good_SkipFiles(t *testing.T) {
+func TestDiscoverProviders_Good_SkipFiles_Good(t *testing.T) {
 	dir := t.TempDir()
 
 	// Create a regular file (not a directory).
@@ -144,7 +147,7 @@ func TestDiscoverProviders_Good_SkipFiles(t *testing.T) {
 	assert.Empty(t, providers)
 }
 
-func TestDiscoverProviders_Good_ProviderDir(t *testing.T) {
+func TestDiscoverProviders_Good_ProviderDir_Good(t *testing.T) {
 	dir := t.TempDir()
 
 	createProviderDir(t, dir, "test-prov", `
@@ -159,6 +162,31 @@ binary: ./test-prov
 	require.NoError(t, err)
 	require.Len(t, providers, 1)
 	assert.Equal(t, filepath.Join(dir, "test-prov"), providers[0].Dir)
+}
+
+func TestDiscoverProvidersWithMedium_Good(t *testing.T) {
+	medium := io.NewMockMedium()
+	medium.Dirs["/providers"] = true
+	medium.Dirs["/providers/cool-widget"] = true
+	medium.Dirs["/providers/data-viz"] = true
+	medium.Files["/providers/cool-widget/.core/manifest.yaml"] = `
+code: cool-widget
+name: Cool Widget
+version: 1.0.0
+namespace: /api/v1/cool-widget
+binary: ./cool-widget
+`
+	medium.Files["/providers/data-viz/.core/manifest.yaml"] = `
+code: data-viz
+name: Data Visualiser
+version: 0.2.0
+namespace: /api/v1/data-viz
+binary: ./data-viz
+`
+
+	providers, err := DiscoverProvidersWithMedium(medium, "/providers")
+	require.NoError(t, err)
+	assert.Len(t, providers, 2)
 }
 
 // -- ProviderRegistryFile tests -----------------------------------------------
@@ -192,11 +220,35 @@ func TestProviderRegistry_LoadSave_Good(t *testing.T) {
 	assert.True(t, entry.AutoStart)
 }
 
-func TestProviderRegistry_Load_Good_NonexistentFile(t *testing.T) {
+func TestProviderRegistry_Load_Good_NonexistentFile_Good(t *testing.T) {
 	reg, err := LoadProviderRegistry("/tmp/nonexistent-registry-test.yaml")
 	require.NoError(t, err)
 	assert.Equal(t, 1, reg.Version)
 	assert.Empty(t, reg.Providers)
+}
+
+func TestProviderRegistry_LoadSave_WithMedium_Good(t *testing.T) {
+	medium := io.NewMockMedium()
+	path := "/registry/registry.yaml"
+
+	reg := &ProviderRegistryFile{
+		Version:   1,
+		Providers: map[string]ProviderRegistryEntry{},
+	}
+	reg.Add("cool-widget", ProviderRegistryEntry{
+		Installed: "2026-03-14T12:00:00Z",
+		Version:   "1.0.0",
+		Source:    "forge.lthn.ai/someone/cool-widget",
+		AutoStart: true,
+	})
+
+	err := SaveProviderRegistryWithMedium(medium, path, reg)
+	require.NoError(t, err)
+
+	loaded, err := LoadProviderRegistryWithMedium(medium, path)
+	require.NoError(t, err)
+	assert.Equal(t, 1, loaded.Version)
+	assert.Len(t, loaded.Providers, 1)
 }
 
 func TestProviderRegistry_Add_Good(t *testing.T) {
@@ -231,7 +283,7 @@ func TestProviderRegistry_Remove_Good(t *testing.T) {
 	assert.False(t, ok)
 }
 
-func TestProviderRegistry_Get_Bad_NotFound(t *testing.T) {
+func TestProviderRegistry_Get_Bad_NotFound_Good(t *testing.T) {
 	reg := &ProviderRegistryFile{
 		Version:   1,
 		Providers: map[string]ProviderRegistryEntry{},
@@ -256,6 +308,23 @@ func TestProviderRegistry_List_Good(t *testing.T) {
 	assert.Contains(t, codes, "b")
 }
 
+func TestProviderRegistry_List_Good_Sorted_Good(t *testing.T) {
+	reg := &ProviderRegistryFile{
+		Version: 1,
+		Providers: map[string]ProviderRegistryEntry{
+			"zulu":  {Version: "1.0"},
+			"alpha": {Version: "2.0"},
+			"mike":  {Version: "3.0"},
+		},
+	}
+
+	codes := reg.List()
+	require.Len(t, codes, 3)
+	assert.Equal(t, "alpha", codes[0])
+	assert.Equal(t, "mike", codes[1])
+	assert.Equal(t, "zulu", codes[2])
+}
+
 func TestProviderRegistry_AutoStartProviders_Good(t *testing.T) {
 	reg := &ProviderRegistryFile{
 		Version: 1,
@@ -270,4 +339,20 @@ func TestProviderRegistry_AutoStartProviders_Good(t *testing.T) {
 	assert.Len(t, auto, 2)
 	assert.Contains(t, auto, "auto-a")
 	assert.Contains(t, auto, "auto-c")
+}
+
+func TestProviderRegistry_AutoStartProviders_Good_Sorted_Good(t *testing.T) {
+	reg := &ProviderRegistryFile{
+		Version: 1,
+		Providers: map[string]ProviderRegistryEntry{
+			"zulu":  {Version: "1.0", AutoStart: true},
+			"alpha": {Version: "2.0", AutoStart: true},
+			"mike":  {Version: "3.0", AutoStart: false},
+		},
+	}
+
+	auto := reg.AutoStartProviders()
+	require.Len(t, auto, 2)
+	assert.Equal(t, "alpha", auto[0])
+	assert.Equal(t, "zulu", auto[1])
 }

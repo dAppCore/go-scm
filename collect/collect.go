@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 // Package collect provides a data collection subsystem for gathering information
 // from multiple sources including GitHub, BitcoinTalk, CoinGecko, and academic
 // paper repositories. It supports rate limiting, incremental state tracking,
@@ -6,9 +8,11 @@ package collect
 
 import (
 	"context"
-	"path/filepath"
+	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
 
 	"dappco.re/go/core/io"
+	core "dappco.re/go/core/log"
 )
 
 // Collector is the interface all collection sources implement.
@@ -65,6 +69,7 @@ type Result struct {
 // NewConfig creates a Config with sensible defaults.
 // It initialises a MockMedium for output if none is provided,
 // sets up a rate limiter, state tracker, and event dispatcher.
+// Usage: NewConfig(...)
 func NewConfig(outputDir string) *Config {
 	m := io.NewMockMedium()
 	return &Config{
@@ -77,6 +82,7 @@ func NewConfig(outputDir string) *Config {
 }
 
 // NewConfigWithMedium creates a Config using the specified storage medium.
+// Usage: NewConfigWithMedium(...)
 func NewConfigWithMedium(m io.Medium, outputDir string) *Config {
 	return &Config{
 		Output:     m,
@@ -87,7 +93,21 @@ func NewConfigWithMedium(m io.Medium, outputDir string) *Config {
 	}
 }
 
+// verboseProgress emits a progress event when verbose mode is enabled.
+// Usage: verboseProgress(cfg, "excavator", "loading state")
+func verboseProgress(cfg *Config, source, message string) {
+	if cfg == nil || !cfg.Verbose {
+		return
+	}
+	if cfg.Dispatcher != nil {
+		cfg.Dispatcher.EmitProgress(source, message, nil)
+		return
+	}
+	core.Warn(fmt.Sprintf("%s: %s", source, message))
+}
+
 // MergeResults combines multiple results into a single aggregated result.
+// Usage: MergeResults(...)
 func MergeResults(source string, results ...*Result) *Result {
 	merged := &Result{Source: source}
 	for _, r := range results {

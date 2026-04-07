@@ -1,8 +1,11 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package collect
 
 import (
 	"context"
-	"fmt"
+	core "dappco.re/go/core"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
 	"testing"
 
 	"dappco.re/go/core/io"
@@ -63,7 +66,7 @@ func TestExcavator_Run_Good(t *testing.T) {
 	assert.Len(t, result.Files, 8)
 }
 
-func TestExcavator_Run_Good_Empty(t *testing.T) {
+func TestExcavator_Run_Good_Empty_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	cfg := NewConfigWithMedium(m, "/output")
 
@@ -74,7 +77,7 @@ func TestExcavator_Run_Good_Empty(t *testing.T) {
 	assert.Equal(t, 0, result.Items)
 }
 
-func TestExcavator_Run_Good_DryRun(t *testing.T) {
+func TestExcavator_Run_Good_DryRun_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	cfg := NewConfigWithMedium(m, "/output")
 	cfg.DryRun = true
@@ -95,7 +98,7 @@ func TestExcavator_Run_Good_DryRun(t *testing.T) {
 	assert.Equal(t, 0, result.Items)
 }
 
-func TestExcavator_Run_Good_ScanOnly(t *testing.T) {
+func TestExcavator_Run_Good_ScanOnly_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	cfg := NewConfigWithMedium(m, "/output")
 
@@ -120,13 +123,13 @@ func TestExcavator_Run_Good_ScanOnly(t *testing.T) {
 	assert.Contains(t, progressMessages[0], "source-a")
 }
 
-func TestExcavator_Run_Good_WithErrors(t *testing.T) {
+func TestExcavator_Run_Good_WithErrors_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	cfg := NewConfigWithMedium(m, "/output")
 	cfg.Limiter = nil
 
 	c1 := &mockCollector{name: "good", items: 5}
-	c2 := &mockCollector{name: "bad", err: fmt.Errorf("network error")}
+	c2 := &mockCollector{name: "bad", err: core.E("collect.mockCollector.Collect", "network error", nil)}
 	c3 := &mockCollector{name: "also-good", items: 3}
 
 	e := &Excavator{
@@ -143,7 +146,7 @@ func TestExcavator_Run_Good_WithErrors(t *testing.T) {
 	assert.True(t, c3.called)
 }
 
-func TestExcavator_Run_Good_CancelledContext(t *testing.T) {
+func TestExcavator_Run_Good_CancelledContext_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	cfg := NewConfigWithMedium(m, "/output")
 
@@ -160,7 +163,7 @@ func TestExcavator_Run_Good_CancelledContext(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestExcavator_Run_Good_SavesState(t *testing.T) {
+func TestExcavator_Run_Good_SavesState_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	cfg := NewConfigWithMedium(m, "/output")
 	cfg.Limiter = nil
@@ -181,7 +184,7 @@ func TestExcavator_Run_Good_SavesState(t *testing.T) {
 	assert.Equal(t, "source-a", entry.Source)
 }
 
-func TestExcavator_Run_Good_Events(t *testing.T) {
+func TestExcavator_Run_Good_Events_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	cfg := NewConfigWithMedium(m, "/output")
 	cfg.Limiter = nil
@@ -199,4 +202,25 @@ func TestExcavator_Run_Good_Events(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 1, startCount)
 	assert.Equal(t, 1, completeCount)
+}
+
+func TestExcavator_Run_Good_VerboseProgress_Good(t *testing.T) {
+	m := io.NewMockMedium()
+	cfg := NewConfigWithMedium(m, "/output")
+	cfg.Limiter = nil
+	cfg.Verbose = true
+
+	var progressCount int
+	cfg.Dispatcher.On(EventProgress, func(e Event) {
+		progressCount++
+	})
+
+	c1 := &mockCollector{name: "source-a", items: 1}
+	e := &Excavator{
+		Collectors: []Collector{c1},
+	}
+
+	_, err := e.Run(context.Background(), cfg)
+	assert.NoError(t, err)
+	assert.GreaterOrEqual(t, progressCount, 2)
 }

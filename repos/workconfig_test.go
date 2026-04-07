@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package repos
 
 import (
@@ -48,7 +50,7 @@ func TestWorkConfig_LoadSave_Good(t *testing.T) {
 	assert.True(t, loaded.Sync.AutoPull)
 }
 
-func TestWorkConfig_Load_Good_NoFile(t *testing.T) {
+func TestWorkConfig_Load_Good_NoFile_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	_ = m.EnsureDir("/workspace/.core")
 
@@ -57,7 +59,7 @@ func TestWorkConfig_Load_Good_NoFile(t *testing.T) {
 	assert.Equal(t, DefaultWorkConfig().Sync.Interval, wc.Sync.Interval)
 }
 
-func TestWorkConfig_Load_Good_PartialOverride(t *testing.T) {
+func TestWorkConfig_Load_Good_PartialOverride_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	_ = m.Write("/workspace/.core/work.yaml", `
 version: 1
@@ -76,7 +78,7 @@ sync:
 	assert.True(t, wc.Sync.CloneMissing)
 }
 
-func TestWorkConfig_Load_Bad_InvalidYAML(t *testing.T) {
+func TestWorkConfig_Load_Bad_InvalidYAML_Bad(t *testing.T) {
 	m := io.NewMockMedium()
 	_ = m.Write("/workspace/.core/work.yaml", "{{{{broken")
 
@@ -94,12 +96,12 @@ func TestWorkConfig_HasTrigger_Good(t *testing.T) {
 	assert.True(t, wc.HasTrigger("scheduled"))
 }
 
-func TestWorkConfig_HasTrigger_Bad_NotFound(t *testing.T) {
+func TestWorkConfig_HasTrigger_NotFound_Bad(t *testing.T) {
 	wc := DefaultWorkConfig()
 	assert.False(t, wc.HasTrigger("on_deploy"))
 }
 
-func TestWorkConfig_HasTrigger_Good_CustomTriggers(t *testing.T) {
+func TestWorkConfig_HasTrigger_Good_CustomTriggers_Good(t *testing.T) {
 	wc := &WorkConfig{
 		Version:  1,
 		Triggers: []string{"on_pr", "manual"},

@@ -1,19 +1,24 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package forge
 
 import (
-	"os"
+	os "dappco.re/go/core/scm/internal/ax/osx"
 
-	"forge.lthn.ai/core/config"
 	"dappco.re/go/core/log"
+	"dappco.re/go/core/config"
 )
 
 const (
 	// ConfigKeyURL is the config key for the Forgejo instance URL.
+	//
 	ConfigKeyURL = "forge.url"
 	// ConfigKeyToken is the config key for the Forgejo API token.
+	//
 	ConfigKeyToken = "forge.token"
 
 	// DefaultURL is the default Forgejo instance URL.
+	//
 	DefaultURL = "http://localhost:4000"
 )
 
@@ -22,6 +27,8 @@ const (
 //  1. ~/.core/config.yaml keys: forge.token, forge.url
 //  2. FORGE_TOKEN + FORGE_URL environment variables (override config file)
 //  3. Provided flag overrides (highest priority; pass empty to skip)
+//
+// Usage: NewFromConfig(...)
 func NewFromConfig(flagURL, flagToken string) (*Client, error) {
 	url, token, err := ResolveConfig(flagURL, flagToken)
 	if err != nil {
@@ -37,6 +44,7 @@ func NewFromConfig(flagURL, flagToken string) (*Client, error) {
 
 // ResolveConfig resolves the Forgejo URL and token from all config sources.
 // Flag values take highest priority, then env vars, then config file.
+// Usage: ResolveConfig(...)
 func ResolveConfig(flagURL, flagToken string) (url, token string, err error) {
 	// Start with config file values
 	cfg, cfgErr := config.New()
@@ -70,6 +78,7 @@ func ResolveConfig(flagURL, flagToken string) (url, token string, err error) {
 }
 
 // SaveConfig persists the Forgejo URL and/or token to the config file.
+// Usage: SaveConfig(...)
 func SaveConfig(url, token string) error {
 	cfg, err := config.New()
 	if err != nil {

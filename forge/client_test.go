@@ -1,8 +1,10 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package forge
 
 import (
-	"encoding/json"
-	"fmt"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
+	json "dappco.re/go/core/scm/internal/ax/jsonx"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -25,7 +27,7 @@ func TestNew_Good(t *testing.T) {
 	assert.Equal(t, "test-token-123", client.Token())
 }
 
-func TestNew_Bad_InvalidURL(t *testing.T) {
+func TestNew_Bad_InvalidURL_Good(t *testing.T) {
 	// The Forgejo SDK may reject certain URL formats.
 	_, err := New("://invalid-url", "token")
 	assert.Error(t, err)
@@ -61,7 +63,7 @@ func TestClient_GetCurrentUser_Good(t *testing.T) {
 	assert.Equal(t, "test-user", user.UserName)
 }
 
-func TestClient_GetCurrentUser_Bad_ServerError(t *testing.T) {
+func TestClient_GetCurrentUser_Bad_ServerError_Good(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/v1/version", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -89,7 +91,7 @@ func TestClient_SetPRDraft_Good(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestClient_SetPRDraft_Good_Undraft(t *testing.T) {
+func TestClient_SetPRDraft_Good_Undraft_Good(t *testing.T) {
 	client, srv := newTestClient(t)
 	defer srv.Close()
 
@@ -97,7 +99,7 @@ func TestClient_SetPRDraft_Good_Undraft(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestClient_SetPRDraft_Bad_ServerError(t *testing.T) {
+func TestClient_SetPRDraft_Bad_ServerError_Good(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/v1/version", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -121,7 +123,7 @@ func TestClient_SetPRDraft_Bad_ServerError(t *testing.T) {
 	assert.Contains(t, err.Error(), "unexpected status 403")
 }
 
-func TestClient_SetPRDraft_Bad_ConnectionRefused(t *testing.T) {
+func TestClient_SetPRDraft_Bad_ConnectionRefused_Good(t *testing.T) {
 	// Use a closed server to simulate connection errors.
 	srv := newMockForgejoServer(t)
 	client, err := New(srv.URL, "token")
@@ -132,7 +134,7 @@ func TestClient_SetPRDraft_Bad_ConnectionRefused(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestClient_SetPRDraft_URLConstruction(t *testing.T) {
+func TestClient_SetPRDraft_Good_URLConstruction_Good(t *testing.T) {
 	// Verify the URL is constructed correctly by checking the request path.
 	var capturedPath string
 	mux := http.NewServeMux()
@@ -156,7 +158,7 @@ func TestClient_SetPRDraft_URLConstruction(t *testing.T) {
 	assert.Equal(t, "/api/v1/repos/my-org/my-repo/pulls/42", capturedPath)
 }
 
-func TestClient_SetPRDraft_AuthHeader(t *testing.T) {
+func TestClient_SetPRDraft_Good_AuthHeader_Good(t *testing.T) {
 	// Verify the authorisation header is set correctly.
 	var capturedAuth string
 	mux := http.NewServeMux()
@@ -182,7 +184,7 @@ func TestClient_SetPRDraft_AuthHeader(t *testing.T) {
 
 // --- PRMeta and Comment struct tests ---
 
-func TestPRMeta_Fields(t *testing.T) {
+func TestPRMeta_Good_Fields_Good(t *testing.T) {
 	meta := &PRMeta{
 		Number:       42,
 		Title:        "Test PR",
@@ -208,7 +210,7 @@ func TestPRMeta_Fields(t *testing.T) {
 	assert.Equal(t, 5, meta.CommentCount)
 }
 
-func TestComment_Fields(t *testing.T) {
+func TestComment_Good_Fields_Good(t *testing.T) {
 	comment := Comment{
 		ID:     123,
 		Author: "reviewer",
@@ -222,7 +224,7 @@ func TestComment_Fields(t *testing.T) {
 
 // --- MergePullRequest merge style mapping ---
 
-func TestMergePullRequest_StyleMapping(t *testing.T) {
+func TestMergePullRequest_Good_StyleMapping_Good(t *testing.T) {
 	// We can't easily test the SDK call, but we can verify the method
 	// errors when the server returns failure. This exercises the style mapping code.
 	tests := []struct {
@@ -260,7 +262,7 @@ func TestMergePullRequest_StyleMapping(t *testing.T) {
 
 // --- ListIssuesOpts defaulting ---
 
-func TestListIssuesOpts_Defaults(t *testing.T) {
+func TestListIssuesOpts_Good_Defaults_Good(t *testing.T) {
 	tests := []struct {
 		name          string
 		opts          ListIssuesOpts
@@ -323,7 +325,7 @@ func TestListIssuesOpts_Defaults(t *testing.T) {
 
 // --- ForkRepo error handling ---
 
-func TestClient_ForkRepo_Good_WithOrg(t *testing.T) {
+func TestClient_ForkRepo_Good_WithOrg_Good(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/v1/version", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -353,7 +355,7 @@ func TestClient_ForkRepo_Good_WithOrg(t *testing.T) {
 	assert.Equal(t, "target-org", capturedBody["organization"])
 }
 
-func TestClient_ForkRepo_Good_WithoutOrg(t *testing.T) {
+func TestClient_ForkRepo_Good_WithoutOrg_Good(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/v1/version", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -384,7 +386,7 @@ func TestClient_ForkRepo_Good_WithoutOrg(t *testing.T) {
 	// The SDK may or may not include it in the JSON; just verify the fork succeeded.
 }
 
-func TestClient_ForkRepo_Bad_ServerError(t *testing.T) {
+func TestClient_ForkRepo_Bad_ServerError_Good(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/v1/version", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -406,7 +408,7 @@ func TestClient_ForkRepo_Bad_ServerError(t *testing.T) {
 
 // --- CreatePullRequest error handling ---
 
-func TestClient_CreatePullRequest_Bad_ServerError(t *testing.T) {
+func TestClient_CreatePullRequest_Bad_ServerError_Good(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/v1/version", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -432,13 +434,13 @@ func TestClient_CreatePullRequest_Bad_ServerError(t *testing.T) {
 
 // --- commentPageSize constant test ---
 
-func TestCommentPageSize(t *testing.T) {
+func TestCommentPageSize_Good(t *testing.T) {
 	assert.Equal(t, 50, commentPageSize, "comment page size should be 50")
 }
 
 // --- ListPullRequests state mapping ---
 
-func TestListPullRequests_StateMapping(t *testing.T) {
+func TestListPullRequests_Good_StateMapping_Good(t *testing.T) {
 	// Verify state mapping via error path (server returns error).
 	tests := []struct {
 		name  string

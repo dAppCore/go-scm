@@ -1,10 +1,12 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package plugin
 
 import (
-	"path/filepath"
+	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
 
-	coreerr "dappco.re/go/core/log"
 	"dappco.re/go/core/io"
+	coreerr "dappco.re/go/core/log"
 )
 
 // Loader loads plugins from the filesystem.
@@ -14,6 +16,7 @@ type Loader struct {
 }
 
 // NewLoader creates a new plugin loader.
+// Usage: NewLoader(...)
 func NewLoader(m io.Medium, baseDir string) *Loader {
 	return &Loader{
 		medium:  m,
@@ -23,6 +26,7 @@ func NewLoader(m io.Medium, baseDir string) *Loader {
 
 // Discover finds all plugin directories under baseDir and returns their manifests.
 // Directories without a valid plugin.json are silently skipped.
+// Usage: Discover(...)
 func (l *Loader) Discover() ([]*Manifest, error) {
 	entries, err := l.medium.List(l.baseDir)
 	if err != nil {
@@ -48,6 +52,7 @@ func (l *Loader) Discover() ([]*Manifest, error) {
 }
 
 // LoadPlugin loads a single plugin's manifest by name.
+// Usage: LoadPlugin(...)
 func (l *Loader) LoadPlugin(name string) (*Manifest, error) {
 	manifestPath := filepath.Join(l.baseDir, name, "plugin.json")
 	manifest, err := LoadManifest(l.medium, manifestPath)

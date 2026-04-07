@@ -122,17 +122,17 @@ Full signal-to-result flow tested for all five handlers via a mock Forgejo serve
 
 The Forgejo SDK v2 and Gitea SDK do not accept `context.Context`. All Forgejo/Gitea API calls are blocking with no cancellation path. When the SDK is updated to support context (v3 or later), a follow-up task should thread `ctx` through all forge/ and gitea/ wrapper signatures.
 
-**Clotho Weave — byte-equal only**
+**Clotho Weave — thresholded token overlap**
 
-`Spinner.Weave(ctx, primary, signed)` currently returns `string(primaryOutput) == string(signedOutput)`. This is a placeholder. Meaningful dual-run verification requires semantic diff logic (e.g., normalised AST comparison, embedding cosine similarity, or LLM-assisted diffing). The interface signature is stable; the implementation is not production-ready for divergent outputs.
+`Spinner.Weave(ctx, primary, signed)` now uses the configured `validation_threshold` to decide convergence from a deterministic token-overlap score. This is still a lightweight approximation rather than full semantic diffing, but it now honours the config knob already exposed by `ClothoConfig`.
 
 **collect/ HTTP collectors — no retry**
 
 None of the HTTP-dependent collectors (`bitcointalk.go`, `github.go`, `market.go`, `papers.go`) implement retry on transient failures. A single HTTP error causes the collector to return an error and increment the `Errors` count in the result. The `Excavator` continues to the next collector. For long-running collection runs, transient network errors cause silent data gaps.
 
-**Journal replay — no public API**
+**Journal replay**
 
-The journal can be replayed by scanning the JSONL files directly, but there is no exported `Query` or `Filter` function. Replay filtering patterns exist only in tests. A future phase should export a query interface.
+The journal now exposes `Journal.Query(...)` for replay and filtering over the JSONL archive. It supports repo, action, and time-range filters while preserving the date-partitioned storage layout used by `Append(...)`.
 
 **git.Service framework integration**
 

@@ -1,19 +1,21 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package gitea
 
 import (
-	"fmt"
-	"net/url"
-	"os"
-	"os/exec"
-	"path/filepath"
-	"strings"
+	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
+	os "dappco.re/go/core/scm/internal/ax/osx"
+	strings "dappco.re/go/core/scm/internal/ax/stringsx"
 
+	"forge.lthn.ai/core/cli/pkg/cli"
 	coreerr "dappco.re/go/core/log"
 	"dappco.re/go/core/scm/agentci"
+	"dappco.re/go/core/scm/cmd/internal/syncutil"
 	gt "dappco.re/go/core/scm/gitea"
 
 	"code.gitea.io/sdk/gitea"
-	"forge.lthn.ai/core/cli/pkg/cli"
+	exec "golang.org/x/sys/execabs"
 )
 
 // Sync command flags.
@@ -98,7 +100,7 @@ func buildRepoList(client *gt.Client, args []string, basePath string) ([]repoEnt
 	if len(args) > 0 {
 		// Specific repos from args
 		for _, arg := range args {
-			name, err := repoNameFromArg(arg)
+			name, err := syncutil.ParseRepoName(arg)
 			if err != nil {
 				return nil, coreerr.E("gitea.buildRepoList", "invalid repo argument", err)
 			}
@@ -364,26 +366,3 @@ func createMainFromUpstream(client *gt.Client, org, repo string) error {
 
 func strPtr(s string) *string { return &s }
 
-func repoNameFromArg(arg string) (string, error) {
-	decoded, err := url.PathUnescape(arg)
-	if err != nil {
-		return "", coreerr.E("gitea.repoNameFromArg", "decode repo argument", err)
-	}
-
-	parts := strings.Split(decoded, "/")
-	switch len(parts) {
-	case 1:
-		return agentci.ValidatePathElement(parts[0])
-	case 2:
-		if _, err := agentci.ValidatePathElement(parts[0]); err != nil {
-			return "", coreerr.E("gitea.repoNameFromArg", "invalid repo owner", err)
-		}
-		name, err := agentci.ValidatePathElement(parts[1])
-		if err != nil {
-			return "", coreerr.E("gitea.repoNameFromArg", "invalid repo name", err)
-		}
-		return name, nil
-	default:
-		return "", coreerr.E("gitea.repoNameFromArg", "repo argument must be repo or owner/repo", nil)
-	}
-}

@@ -1,12 +1,14 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package handlers
 
 import (
 	"bytes"
 	"context"
-	"encoding/json"
-	"fmt"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
+	json "dappco.re/go/core/scm/internal/ax/jsonx"
+	strings "dappco.re/go/core/scm/internal/ax/stringsx"
 	"path"
-	"strings"
 	"time"
 
 	coreerr "dappco.re/go/core/log"
@@ -16,12 +18,18 @@ import (
 )
 
 const (
-	LabelAgentReady    = "agent-ready"
-	LabelInProgress    = "in-progress"
-	LabelAgentFailed   = "agent-failed"
+	//
+	LabelAgentReady = "agent-ready"
+	//
+	LabelInProgress = "in-progress"
+	//
+	LabelAgentFailed = "agent-failed"
+	//
 	LabelAgentComplete = "agent-completed"
 
-	ColorInProgress  = "#1d76db" // Blue
+	//
+	ColorInProgress = "#1d76db" // Blue
+	//
 	ColorAgentFailed = "#c0392b" // Red
 )
 
@@ -54,6 +62,7 @@ type DispatchHandler struct {
 }
 
 // NewDispatchHandler creates a handler that dispatches tickets to agent machines.
+// Usage: NewDispatchHandler(...)
 func NewDispatchHandler(client *forge.Client, forgeURL, token string, spinner *agentci.Spinner) *DispatchHandler {
 	return &DispatchHandler{
 		forge:    client,
@@ -64,12 +73,14 @@ func NewDispatchHandler(client *forge.Client, forgeURL, token string, spinner *a
 }
 
 // Name returns the handler identifier.
+// Usage: Name(...)
 func (h *DispatchHandler) Name() string {
 	return "dispatch"
 }
 
 // Match returns true for signals where a child issue needs coding (no PR yet)
 // and the assignee is a known agent (by config key or Forgejo username).
+// Usage: Match(...)
 func (h *DispatchHandler) Match(signal *jobrunner.PipelineSignal) bool {
 	if !signal.NeedsCoding {
 		return false
@@ -79,6 +90,7 @@ func (h *DispatchHandler) Match(signal *jobrunner.PipelineSignal) bool {
 }
 
 // Execute creates a ticket JSON and transfers it securely to the agent's queue directory.
+// Usage: Execute(...)
 func (h *DispatchHandler) Execute(ctx context.Context, signal *jobrunner.PipelineSignal) (*jobrunner.ActionResult, error) {
 	start := time.Now()
 
@@ -145,7 +157,7 @@ func (h *DispatchHandler) Execute(ctx context.Context, signal *jobrunner.Pipelin
 	}
 
 	// Build ticket.
-	targetBranch := "new" // TODO: resolve from epic or repo default
+	targetBranch := h.resolveTargetBranch(safeOwner, safeRepo)
 	ticketID := fmt.Sprintf("%s-%s-%d-%d", safeOwner, safeRepo, signal.ChildNumber, time.Now().Unix())
 
 	ticket := DispatchTicket{
@@ -251,6 +263,21 @@ func (h *DispatchHandler) Execute(ctx context.Context, signal *jobrunner.Pipelin
 	}, nil
 }
 
+func (h *DispatchHandler) resolveTargetBranch(owner, repo string) string {
+	const fallbackBranch = "main"
+
+	if h.forge == nil {
+		return fallbackBranch
+	}
+
+	repoInfo, err := h.forge.GetRepo(owner, repo)
+	if err != nil || repoInfo == nil || repoInfo.DefaultBranch == "" {
+		return fallbackBranch
+	}
+
+	return repoInfo.DefaultBranch
+}
+
 // failDispatch handles cleanup when dispatch fails (adds failed label, removes in-progress).
 func (h *DispatchHandler) failDispatch(signal *jobrunner.PipelineSignal, reason string) {
 	if failedLabel, err := h.forge.EnsureLabel(signal.RepoOwner, signal.RepoName, LabelAgentFailed, ColorAgentFailed); err == nil {
@@ -269,7 +296,7 @@ func (h *DispatchHandler) secureTransfer(ctx context.Context, agent agentci.Agen
 	safePath := agentci.EscapeShellArg(remotePath)
 	remoteCmd := fmt.Sprintf("cat > %s && chmod %o %s", safePath, mode, safePath)
 
-	cmd := agentci.SecureSSHCommand(agent.Host, remoteCmd)
+	cmd := agentci.SecureSSHCommandContext(ctx, agent.Host, remoteCmd)
 	cmd.Stdin = bytes.NewReader(data)
 
 	output, err := cmd.CombinedOutput()
@@ -291,7 +318,7 @@ func (h *DispatchHandler) runRemote(ctx context.Context, agent agentci.AgentConf
 		remoteCmd = strings.Join(escaped, " ")
 	}
 
-	cmd := agentci.SecureSSHCommand(agent.Host, remoteCmd)
+	cmd := agentci.SecureSSHCommandContext(ctx, agent.Host, remoteCmd)
 	return cmd.Run()
 }
 
@@ -330,6 +357,6 @@ func (h *DispatchHandler) ticketExists(ctx context.Context, agent agentci.AgentC
 		"test -f %s || test -f %s || test -f %s",
 		queuePath, activePath, donePath,
 	)
-	cmd := agentci.SecureSSHCommand(agent.Host, checkCmd)
+	cmd := agentci.SecureSSHCommandContext(ctx, agent.Host, checkCmd)
 	return cmd.Run() == nil
 }

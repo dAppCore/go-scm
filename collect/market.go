@@ -1,12 +1,14 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package collect
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
+	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
+	json "dappco.re/go/core/scm/internal/ax/jsonx"
+	strings "dappco.re/go/core/scm/internal/ax/stringsx"
 	"net/http"
-	"path/filepath"
-	"strings"
 	"time"
 
 	core "dappco.re/go/core/log"
@@ -29,6 +31,7 @@ type MarketCollector struct {
 }
 
 // Name returns the collector name.
+// Usage: Name(...)
 func (m *MarketCollector) Name() string {
 	return fmt.Sprintf("market:%s", m.CoinID)
 }
@@ -63,6 +66,7 @@ type historicalData struct {
 }
 
 // Collect gathers market data from CoinGecko.
+// Usage: Collect(...)
 func (m *MarketCollector) Collect(ctx context.Context, cfg *Config) (*Result, error) {
 	result := &Result{Source: m.Name()}
 
@@ -272,6 +276,7 @@ func formatMarketSummary(data *coinData) string {
 }
 
 // FormatMarketSummary is exported for testing.
+// Usage: FormatMarketSummary(...)
 func FormatMarketSummary(data *coinData) string {
 	return formatMarketSummary(data)
 }

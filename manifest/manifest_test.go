@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package manifest
 
 import (
@@ -64,7 +66,7 @@ func TestManifest_SlotNames_Good(t *testing.T) {
 	assert.Len(t, names, 2)
 }
 
-func TestParse_Good_WithDaemons(t *testing.T) {
+func TestParse_Good_WithDaemons_Good(t *testing.T) {
 	raw := `
 code: my-service
 name: My Service
@@ -124,7 +126,7 @@ func TestManifest_DefaultDaemon_Good(t *testing.T) {
 	assert.True(t, spec.Default)
 }
 
-func TestManifest_DefaultDaemon_Bad_NoDaemons(t *testing.T) {
+func TestManifest_DefaultDaemon_Bad_NoDaemons_Good(t *testing.T) {
 	m := Manifest{}
 	name, spec, ok := m.DefaultDaemon()
 	assert.False(t, ok)
@@ -132,7 +134,7 @@ func TestManifest_DefaultDaemon_Bad_NoDaemons(t *testing.T) {
 	assert.Empty(t, spec.Binary)
 }
 
-func TestManifest_DefaultDaemon_Bad_MultipleDefaults(t *testing.T) {
+func TestManifest_DefaultDaemon_Bad_MultipleDefaults_Good(t *testing.T) {
 	m := Manifest{
 		Daemons: map[string]DaemonSpec{
 			"api":    {Binary: "./bin/api", Default: true},
@@ -143,7 +145,7 @@ func TestManifest_DefaultDaemon_Bad_MultipleDefaults(t *testing.T) {
 	assert.False(t, ok)
 }
 
-func TestManifest_DefaultDaemon_Bad_MultipleNoneDefault(t *testing.T) {
+func TestManifest_DefaultDaemon_Bad_MultipleNoneDefault_Good(t *testing.T) {
 	m := Manifest{
 		Daemons: map[string]DaemonSpec{
 			"api":    {Binary: "./bin/api"},
@@ -154,7 +156,7 @@ func TestManifest_DefaultDaemon_Bad_MultipleNoneDefault(t *testing.T) {
 	assert.False(t, ok)
 }
 
-func TestParse_Good_WithProviderFields(t *testing.T) {
+func TestParse_Good_WithProviderFields_Good(t *testing.T) {
 	raw := `
 code: cool-widget
 name: Cool Widget Dashboard
@@ -202,22 +204,22 @@ func TestManifest_IsProvider_Good(t *testing.T) {
 	assert.True(t, m.IsProvider())
 }
 
-func TestManifest_IsProvider_Bad_NoNamespace(t *testing.T) {
+func TestManifest_IsProvider_Bad_NoNamespace_Good(t *testing.T) {
 	m := Manifest{Binary: "./test"}
 	assert.False(t, m.IsProvider())
 }
 
-func TestManifest_IsProvider_Bad_NoBinary(t *testing.T) {
+func TestManifest_IsProvider_Bad_NoBinary_Good(t *testing.T) {
 	m := Manifest{Namespace: "/api/v1/test"}
 	assert.False(t, m.IsProvider())
 }
 
-func TestManifest_IsProvider_Bad_Empty(t *testing.T) {
+func TestManifest_IsProvider_Bad_Empty_Good(t *testing.T) {
 	m := Manifest{}
 	assert.False(t, m.IsProvider())
 }
 
-func TestManifest_DefaultDaemon_Good_SingleImplicit(t *testing.T) {
+func TestManifest_DefaultDaemon_Good_SingleImplicit_Good(t *testing.T) {
 	m := Manifest{
 		Daemons: map[string]DaemonSpec{
 			"server": {

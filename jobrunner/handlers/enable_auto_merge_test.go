@@ -1,8 +1,10 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package handlers
 
 import (
 	"context"
-	"encoding/json"
+	json "dappco.re/go/core/scm/internal/ax/jsonx"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -26,7 +28,7 @@ func TestEnableAutoMerge_Match_Good(t *testing.T) {
 	assert.True(t, h.Match(sig))
 }
 
-func TestEnableAutoMerge_Match_Bad_Draft(t *testing.T) {
+func TestEnableAutoMerge_Match_Bad_Draft_Good(t *testing.T) {
 	h := NewEnableAutoMergeHandler(nil)
 	sig := &jobrunner.PipelineSignal{
 		PRState:         "OPEN",
@@ -39,7 +41,7 @@ func TestEnableAutoMerge_Match_Bad_Draft(t *testing.T) {
 	assert.False(t, h.Match(sig))
 }
 
-func TestEnableAutoMerge_Match_Bad_UnresolvedThreads(t *testing.T) {
+func TestEnableAutoMerge_Match_Bad_UnresolvedThreads_Good(t *testing.T) {
 	h := NewEnableAutoMergeHandler(nil)
 	sig := &jobrunner.PipelineSignal{
 		PRState:         "OPEN",
@@ -81,7 +83,7 @@ func TestEnableAutoMerge_Execute_Good(t *testing.T) {
 	assert.Equal(t, "/api/v1/repos/host-uk/core-php/pulls/55/merge", capturedPath)
 }
 
-func TestEnableAutoMerge_Execute_Bad_MergeFailed(t *testing.T) {
+func TestEnableAutoMerge_Execute_Bad_MergeFailed_Good(t *testing.T) {
 	srv := httptest.NewServer(withVersion(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusConflict)
 		_ = json.NewEncoder(w).Encode(map[string]string{"message": "merge conflict"})

@@ -1,7 +1,9 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package gitea
 
 import (
-	"encoding/json"
+	json "dappco.re/go/core/scm/internal/ax/jsonx"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -12,7 +14,7 @@ import (
 
 // --- SaveConfig tests ---
 
-func TestSaveConfig_Good_URLAndToken(t *testing.T) {
+func TestSaveConfig_Good_URLAndToken_Good(t *testing.T) {
 	isolateConfigEnv(t)
 
 	err := SaveConfig("https://gitea.example.com", "test-token-123")
@@ -23,7 +25,7 @@ func TestSaveConfig_Good_URLAndToken(t *testing.T) {
 	}
 }
 
-func TestSaveConfig_Good_URLOnly(t *testing.T) {
+func TestSaveConfig_Good_URLOnly_Good(t *testing.T) {
 	isolateConfigEnv(t)
 
 	err := SaveConfig("https://gitea.example.com", "")
@@ -32,7 +34,7 @@ func TestSaveConfig_Good_URLOnly(t *testing.T) {
 	}
 }
 
-func TestSaveConfig_Good_TokenOnly(t *testing.T) {
+func TestSaveConfig_Good_TokenOnly_Good(t *testing.T) {
 	isolateConfigEnv(t)
 
 	err := SaveConfig("", "some-token")
@@ -41,7 +43,7 @@ func TestSaveConfig_Good_TokenOnly(t *testing.T) {
 	}
 }
 
-func TestSaveConfig_Good_Empty(t *testing.T) {
+func TestSaveConfig_Good_Empty_Good(t *testing.T) {
 	isolateConfigEnv(t)
 
 	err := SaveConfig("", "")
@@ -87,7 +89,7 @@ func newPaginatedOrgReposServer(t *testing.T) *httptest.Server {
 	return httptest.NewServer(mux)
 }
 
-func TestClient_ListOrgRepos_Good_Pagination(t *testing.T) {
+func TestClient_ListOrgRepos_Good_Pagination_Good(t *testing.T) {
 	srv := newPaginatedOrgReposServer(t)
 	defer srv.Close()
 
@@ -121,7 +123,7 @@ func newPaginatedUserReposServer(t *testing.T) *httptest.Server {
 	return httptest.NewServer(mux)
 }
 
-func TestClient_ListUserRepos_Good_SinglePage(t *testing.T) {
+func TestClient_ListUserRepos_Good_SinglePage_Good(t *testing.T) {
 	srv := newPaginatedUserReposServer(t)
 	defer srv.Close()
 
@@ -146,12 +148,12 @@ func newPRMetaWithManyCommentsServer(t *testing.T) *httptest.Server {
 	mux.HandleFunc("/api/v1/repos/test-org/test-repo/pulls/1", func(w http.ResponseWriter, r *http.Request) {
 		jsonResponse(w, map[string]any{
 			"id": 1, "number": 1, "title": "Many Comments PR", "state": "open",
-			"merged": false,
-			"head":   map[string]any{"ref": "feature", "label": "feature"},
-			"base":   map[string]any{"ref": "main", "label": "main"},
-			"user":   map[string]any{"login": "author"},
-			"labels": []map[string]any{},
-			"assignees": []map[string]any{},
+			"merged":     false,
+			"head":       map[string]any{"ref": "feature", "label": "feature"},
+			"base":       map[string]any{"ref": "main", "label": "main"},
+			"user":       map[string]any{"login": "author"},
+			"labels":     []map[string]any{},
+			"assignees":  []map[string]any{},
 			"created_at": "2026-01-15T10:00:00Z",
 			"updated_at": "2026-01-16T12:00:00Z",
 		})
@@ -173,7 +175,7 @@ func newPRMetaWithManyCommentsServer(t *testing.T) *httptest.Server {
 	return httptest.NewServer(mux)
 }
 
-func TestClient_GetPRMeta_Good_CommentCount(t *testing.T) {
+func TestClient_GetPRMeta_Good_CommentCount_Good(t *testing.T) {
 	srv := newPRMetaWithManyCommentsServer(t)
 	defer srv.Close()
 
@@ -217,7 +219,7 @@ func newPRMetaWithNilDatesServer(t *testing.T) *httptest.Server {
 	return httptest.NewServer(mux)
 }
 
-func TestClient_GetPRMeta_Good_MinimalFields(t *testing.T) {
+func TestClient_GetPRMeta_Good_MinimalFields_Good(t *testing.T) {
 	srv := newPRMetaWithNilDatesServer(t)
 	defer srv.Close()
 
@@ -236,7 +238,7 @@ func TestClient_GetPRMeta_Good_MinimalFields(t *testing.T) {
 
 // --- GetCommentBodies: empty result ---
 
-func TestClient_GetCommentBodies_Good_Empty(t *testing.T) {
+func TestClient_GetCommentBodies_Good_Empty_Good(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/v1/version", func(w http.ResponseWriter, r *http.Request) {
 		jsonResponse(w, map[string]string{"version": "1.21.0"})
@@ -261,7 +263,7 @@ func TestClient_GetCommentBodies_Good_Empty(t *testing.T) {
 
 // --- GetCommentBodies: poster is nil ---
 
-func TestClient_GetCommentBodies_Good_NilPoster(t *testing.T) {
+func TestClient_GetCommentBodies_Good_NilPoster_Good(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/v1/version", func(w http.ResponseWriter, r *http.Request) {
 		jsonResponse(w, map[string]string{"version": "1.21.0"})
@@ -291,7 +293,7 @@ func TestClient_GetCommentBodies_Good_NilPoster(t *testing.T) {
 
 // --- ListPullRequests: state mapping ---
 
-func TestClient_ListPullRequests_Good_AllStates(t *testing.T) {
+func TestClient_ListPullRequests_Good_AllStates_Good(t *testing.T) {
 	client, srv := newTestClient(t)
 	defer srv.Close()
 
@@ -303,7 +305,7 @@ func TestClient_ListPullRequests_Good_AllStates(t *testing.T) {
 
 // --- NewFromConfig: additional paths ---
 
-func TestNewFromConfig_Good_FlagOverridesEnv(t *testing.T) {
+func TestNewFromConfig_Good_FlagOverridesEnv_Good(t *testing.T) {
 	isolateConfigEnv(t)
 
 	srv := newMockGiteaServer(t)

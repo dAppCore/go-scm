@@ -1,12 +1,14 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package collect
 
 import (
 	"context"
-	"strings"
+	strings "dappco.re/go/core/scm/internal/ax/stringsx"
 
-	"forge.lthn.ai/core/cli/pkg/cli"
-	"dappco.re/go/core/scm/collect"
 	"dappco.re/go/core/i18n"
+	"dappco.re/go/core/scm/collect"
+	"forge.lthn.ai/core/cli/pkg/cli"
 )
 
 // GitHub command flags

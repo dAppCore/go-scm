@@ -1,4 +1,4 @@
-// SPDX-Licence-Identifier: EUPL-1.2
+// SPDX-License-Identifier: EUPL-1.2
 
 import { LitElement, html, css, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
@@ -22,23 +22,64 @@ export class ScmRegistry extends LitElement {
   static styles = css`
     :host {
       display: block;
-      font-family: system-ui, -apple-system, sans-serif;
+      font-family:
+        Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+        sans-serif;
+      color: #111827;
+    }
+
+    .shell {
+      background: rgba(255, 255, 255, 0.84);
+      border: 1px solid rgba(226, 232, 240, 0.95);
+      border-radius: 1rem;
+      padding: 1rem;
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
+      backdrop-filter: blur(12px);
+    }
+
+    .summary {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .summary-copy {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .summary-title {
+      font-size: 1rem;
+      font-weight: 800;
+      color: #0f172a;
+    }
+
+    .summary-subtitle {
+      font-size: 0.8125rem;
+      color: #64748b;
     }
 
     .list {
       display: flex;
       flex-direction: column;
-      gap: 0.375rem;
+      gap: 0.625rem;
     }
 
     .repo {
-      border: 1px solid #e5e7eb;
-      border-radius: 0.5rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 1rem;
       padding: 0.75rem 1rem;
-      background: #fff;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.98));
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 1rem;
     }
 
     .repo-info {
@@ -46,14 +87,15 @@ export class ScmRegistry extends LitElement {
     }
 
     .repo-name {
-      font-weight: 600;
-      font-size: 0.9375rem;
+      font-weight: 800;
+      font-size: 0.95rem;
       font-family: monospace;
+      color: #0f172a;
     }
 
     .repo-desc {
       font-size: 0.8125rem;
-      colour: #6b7280;
+      color: #64748b;
       margin-top: 0.125rem;
     }
 
@@ -62,38 +104,48 @@ export class ScmRegistry extends LitElement {
       gap: 0.5rem;
       align-items: center;
       margin-top: 0.25rem;
+      flex-wrap: wrap;
     }
 
     .type-badge {
       font-size: 0.6875rem;
-      padding: 0.0625rem 0.5rem;
-      border-radius: 1rem;
-      font-weight: 600;
+      padding: 0.2rem 0.5rem;
+      border-radius: 999px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
     }
 
     .type-badge.foundation {
       background: #dbeafe;
-      colour: #1e40af;
+      color: #1e40af;
     }
 
     .type-badge.module {
       background: #f3e8ff;
-      colour: #6b21a8;
+      color: #6b21a8;
     }
 
     .type-badge.product {
       background: #dcfce7;
-      colour: #166534;
+      color: #166534;
     }
 
     .type-badge.template {
       background: #fef3c7;
-      colour: #92400e;
+      color: #92400e;
     }
 
     .deps {
       font-size: 0.75rem;
-      colour: #9ca3af;
+      color: #64748b;
+    }
+
+    .path {
+      font-size: 0.75rem;
+      font-family: monospace;
+      color: #475569;
+      word-break: break-word;
     }
 
     .status {
@@ -110,37 +162,53 @@ export class ScmRegistry extends LitElement {
 
     .status-dot.present {
       background: #22c55e;
+      box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.15);
     }
 
     .status-dot.missing {
       background: #ef4444;
+      box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.14);
     }
 
     .status-label {
       font-size: 0.75rem;
-      colour: #6b7280;
+      color: #64748b;
+      font-weight: 700;
     }
 
     .empty {
       text-align: center;
       padding: 2rem;
-      colour: #9ca3af;
+      color: #64748b;
       font-size: 0.875rem;
     }
 
     .loading {
       text-align: center;
       padding: 2rem;
-      colour: #6b7280;
+      color: #64748b;
     }
 
     .error {
-      colour: #dc2626;
+      color: #dc2626;
       padding: 0.75rem;
       background: #fef2f2;
-      border-radius: 0.375rem;
+      border: 1px solid #fecaca;
+      border-radius: 0.75rem;
       font-size: 0.875rem;
       margin-bottom: 1rem;
+    }
+
+    @media (max-width: 720px) {
+      .shell {
+        padding: 0.875rem;
+      }
+
+      .summary,
+      .repo {
+        flex-direction: column;
+        align-items: flex-start;
+      }
     }
   `;
 
@@ -170,41 +238,61 @@ export class ScmRegistry extends LitElement {
     }
   }
 
+  async refresh() {
+    await this.loadRegistry();
+  }
+
   render() {
     if (this.loading) {
       return html`<div class="loading">Loading registry\u2026</div>`;
     }
 
     return html`
-      ${this.error ? html`<div class="error">${this.error}</div>` : nothing}
-      ${this.repos.length === 0
-        ? html`<div class="empty">No repositories in registry.</div>`
-        : html`
-            <div class="list">
-              ${this.repos.map(
-                (repo) => html`
-                  <div class="repo">
-                    <div class="repo-info">
-                      <div class="repo-name">${repo.name}</div>
-                      ${repo.description
-                        ? html`<div class="repo-desc">${repo.description}</div>`
-                        : nothing}
-                      <div class="repo-meta">
-                        <span class="type-badge ${repo.type}">${repo.type}</span>
-                        ${repo.depends_on && repo.depends_on.length > 0
-                          ? html`<span class="deps">depends: ${repo.depends_on.join(', ')}</span>`
+      <div class="shell">
+        <div class="summary">
+          <div class="summary-copy">
+            <span class="summary-title">Registry</span>
+            <span class="summary-subtitle">
+              Workspace repositories and dependency order from repos.yaml.
+            </span>
+          </div>
+          <div class="summary-copy" style="text-align:right">
+            <span class="summary-title">${this.repos.length}</span>
+            <span class="summary-subtitle">Entries</span>
+          </div>
+        </div>
+
+        ${this.error ? html`<div class="error">${this.error}</div>` : nothing}
+        ${this.repos.length === 0
+          ? html`<div class="empty">No repositories in registry.</div>`
+          : html`
+              <div class="list">
+                ${this.repos.map(
+                  (repo) => html`
+                    <div class="repo">
+                      <div class="repo-info">
+                        <div class="repo-name">${repo.name}</div>
+                        ${repo.description
+                          ? html`<div class="repo-desc">${repo.description}</div>`
                           : nothing}
+                        <div class="repo-meta">
+                          <span class="type-badge ${repo.type}">${repo.type}</span>
+                          ${repo.depends_on && repo.depends_on.length > 0
+                            ? html`<span class="deps">depends: ${repo.depends_on.join(', ')}</span>`
+                            : nothing}
+                        </div>
+                        ${repo.path ? html`<div class="path">${repo.path}</div>` : nothing}
+                      </div>
+                      <div class="status">
+                        <span class="status-dot ${repo.exists ? 'present' : 'missing'}"></span>
+                        <span class="status-label">${repo.exists ? 'Present' : 'Missing'}</span>
                       </div>
                     </div>
-                    <div class="status">
-                      <span class="status-dot ${repo.exists ? 'present' : 'missing'}"></span>
-                      <span class="status-label">${repo.exists ? 'Present' : 'Missing'}</span>
-                    </div>
-                  </div>
-                `,
-              )}
-            </div>
-          `}
+                  `,
+                )}
+              </div>
+            `}
+      </div>
     `;
   }
 }

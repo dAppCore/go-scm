@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package manifest
 
 import (
@@ -25,9 +27,9 @@ type Manifest struct {
 	Element   *ElementSpec `yaml:"element,omitempty" json:"element,omitempty"`     // Custom element for GUI rendering
 	Spec      string       `yaml:"spec,omitempty" json:"spec,omitempty"`           // Path to OpenAPI spec file
 
-	Permissions Permissions            `yaml:"permissions,omitempty" json:"permissions,omitempty"`
-	Modules     []string               `yaml:"modules,omitempty" json:"modules,omitempty"`
-	Daemons     map[string]DaemonSpec  `yaml:"daemons,omitempty" json:"daemons,omitempty"`
+	Permissions Permissions           `yaml:"permissions,omitempty" json:"permissions,omitempty"`
+	Modules     []string              `yaml:"modules,omitempty" json:"modules,omitempty"`
+	Daemons     map[string]DaemonSpec `yaml:"daemons,omitempty" json:"daemons,omitempty"`
 }
 
 // ElementSpec describes a web component for GUI rendering.
@@ -41,6 +43,7 @@ type ElementSpec struct {
 
 // IsProvider returns true if this manifest declares provider fields
 // (namespace and binary), indicating it is a runtime provider.
+// Usage: IsProvider(...)
 func (m *Manifest) IsProvider() bool {
 	return m.Namespace != "" && m.Binary != ""
 }
@@ -62,6 +65,10 @@ type DaemonSpec struct {
 }
 
 // Parse decodes YAML bytes into a Manifest.
+//
+//	m, err := manifest.Parse(yamlBytes)
+//
+// Usage: Parse(...)
 func Parse(data []byte) (*Manifest, error) {
 	var m Manifest
 	if err := yaml.Unmarshal(data, &m); err != nil {
@@ -71,6 +78,7 @@ func Parse(data []byte) (*Manifest, error) {
 }
 
 // SlotNames returns a deduplicated list of component names from slots.
+// Usage: SlotNames(...)
 func (m *Manifest) SlotNames() []string {
 	seen := make(map[string]bool)
 	var names []string
@@ -87,6 +95,7 @@ func (m *Manifest) SlotNames() []string {
 // A daemon is the default if it has Default:true, or if it is the only daemon
 // in the map. If multiple daemons have Default:true, returns false (ambiguous).
 // Returns empty values and false if no default can be determined.
+// Usage: DefaultDaemon(...)
 func (m *Manifest) DefaultDaemon() (string, DaemonSpec, bool) {
 	if len(m.Daemons) == 0 {
 		return "", DaemonSpec{}, false

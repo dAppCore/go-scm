@@ -1,13 +1,15 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package gitea
 
 import (
-	"fmt"
-	"strings"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
+	strings "dappco.re/go/core/scm/internal/ax/stringsx"
 
 	sdk "code.gitea.io/sdk/gitea"
 
-	"forge.lthn.ai/core/cli/pkg/cli"
 	gt "dappco.re/go/core/scm/gitea"
+	"forge.lthn.ai/core/cli/pkg/cli"
 )
 
 // PRs command flags.

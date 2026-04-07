@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package plugin
 
 import (
@@ -22,7 +24,7 @@ func TestBasePlugin_Good(t *testing.T) {
 	assert.NoError(t, p.Stop(ctx))
 }
 
-func TestBasePlugin_Good_EmptyFields(t *testing.T) {
+func TestBasePlugin_EmptyFields_Good(t *testing.T) {
 	p := &BasePlugin{}
 
 	assert.Equal(t, "", p.Name())
@@ -34,6 +36,6 @@ func TestBasePlugin_Good_EmptyFields(t *testing.T) {
 	assert.NoError(t, p.Stop(ctx))
 }
 
-func TestBasePlugin_Good_ImplementsPlugin(t *testing.T) {
+func TestBasePlugin_ImplementsPlugin_Good(t *testing.T) {
 	var _ Plugin = &BasePlugin{}
 }

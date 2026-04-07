@@ -1,11 +1,13 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package jobrunner
 
 import (
 	"bufio"
-	"encoding/json"
-	"os"
-	"path/filepath"
-	"strings"
+	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
+	json "dappco.re/go/core/scm/internal/ax/jsonx"
+	os "dappco.re/go/core/scm/internal/ax/osx"
+	strings "dappco.re/go/core/scm/internal/ax/stringsx"
 	"testing"
 	"time"
 
@@ -113,7 +115,7 @@ func TestJournal_Append_Good(t *testing.T) {
 	assert.Equal(t, 2, lines, "expected two JSONL lines after two appends")
 }
 
-func TestJournal_Append_Bad_PathTraversal(t *testing.T) {
+func TestJournal_Append_Bad_PathTraversal_Good(t *testing.T) {
 	dir := t.TempDir()
 
 	j, err := NewJournal(dir)
@@ -195,7 +197,7 @@ func TestJournal_Append_Bad_PathTraversal(t *testing.T) {
 	}
 }
 
-func TestJournal_Append_Good_ValidNames(t *testing.T) {
+func TestJournal_Append_Good_ValidNames_Good(t *testing.T) {
 	dir := t.TempDir()
 
 	j, err := NewJournal(dir)
@@ -230,7 +232,7 @@ func TestJournal_Append_Good_ValidNames(t *testing.T) {
 	}
 }
 
-func TestJournal_Append_Bad_NilSignal(t *testing.T) {
+func TestJournal_Append_Bad_NilSignal_Good(t *testing.T) {
 	dir := t.TempDir()
 
 	j, err := NewJournal(dir)
@@ -246,7 +248,7 @@ func TestJournal_Append_Bad_NilSignal(t *testing.T) {
 	assert.Contains(t, err.Error(), "signal is required")
 }
 
-func TestJournal_Append_Bad_NilResult(t *testing.T) {
+func TestJournal_Append_Bad_NilResult_Good(t *testing.T) {
 	dir := t.TempDir()
 
 	j, err := NewJournal(dir)
@@ -260,4 +262,122 @@ func TestJournal_Append_Bad_NilResult(t *testing.T) {
 	err = j.Append(signal, nil)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "result is required")
+}
+
+func TestJournal_Query_Good(t *testing.T) {
+	dir := t.TempDir()
+
+	j, err := NewJournal(dir)
+	require.NoError(t, err)
+
+	base := time.Date(2026, 2, 5, 14, 30, 0, 0, time.UTC)
+
+	firstSignal := &PipelineSignal{
+		EpicNumber:  10,
+		ChildNumber: 3,
+		PRNumber:    55,
+		RepoOwner:   "host-uk",
+		RepoName:    "core-tenant",
+		PRState:     "OPEN",
+	}
+	firstResult := &ActionResult{
+		Action:    "merge",
+		RepoOwner: "host-uk",
+		RepoName:  "core-tenant",
+		Timestamp: base,
+		Duration:  10 * time.Second,
+	}
+	require.NoError(t, j.Append(firstSignal, firstResult))
+
+	secondSignal := &PipelineSignal{
+		EpicNumber:  10,
+		ChildNumber: 4,
+		PRNumber:    56,
+		RepoOwner:   "host-uk",
+		RepoName:    "core-tenant",
+		PRState:     "OPEN",
+	}
+	secondResult := &ActionResult{
+		Action:    "comment",
+		RepoOwner: "host-uk",
+		RepoName:  "core-tenant",
+		Timestamp: base.Add(1 * time.Hour),
+		Duration:  5 * time.Second,
+	}
+	require.NoError(t, j.Append(secondSignal, secondResult))
+
+	thirdSignal := &PipelineSignal{
+		EpicNumber:  11,
+		ChildNumber: 1,
+		PRNumber:    57,
+		RepoOwner:   "host-uk",
+		RepoName:    "core-api",
+		PRState:     "MERGED",
+	}
+	thirdResult := &ActionResult{
+		Action:    "merge",
+		RepoOwner: "host-uk",
+		RepoName:  "core-api",
+		Timestamp: base.Add(2 * time.Hour),
+		Duration:  15 * time.Second,
+	}
+	require.NoError(t, j.Append(thirdSignal, thirdResult))
+
+	all, err := j.Query(JournalQueryOptions{})
+	require.NoError(t, err)
+	require.Len(t, all, 3)
+	assert.Equal(t, "merge", all[0].Action)
+	assert.Equal(t, "comment", all[1].Action)
+	assert.Equal(t, "merge", all[2].Action)
+
+	byAction, err := j.Query(JournalQueryOptions{Action: "merge"})
+	require.NoError(t, err)
+	require.Len(t, byAction, 2)
+	assert.Equal(t, "host-uk/core-tenant", byAction[0].Repo)
+	assert.Equal(t, "host-uk/core-api", byAction[1].Repo)
+
+	byRepo, err := j.Query(JournalQueryOptions{RepoFullName: "host-uk/core-tenant"})
+	require.NoError(t, err)
+	require.Len(t, byRepo, 2)
+	assert.Equal(t, 10, byRepo[0].Epic)
+	assert.Equal(t, 10, byRepo[1].Epic)
+
+	byRange, err := j.Query(JournalQueryOptions{
+		Since: base.Add(30 * time.Minute),
+		Until: base.Add(90 * time.Minute),
+	})
+	require.NoError(t, err)
+	require.Len(t, byRange, 1)
+	assert.Equal(t, "comment", byRange[0].Action)
+
+	combined, err := j.Query(JournalQueryOptions{
+		RepoFullName: "host-uk/core-tenant",
+		Action:       "comment",
+		Since:        base.Add(30 * time.Minute),
+	})
+	require.NoError(t, err)
+	require.Len(t, combined, 1)
+	assert.Equal(t, 4, combined[0].Child)
+}
+
+func TestJournal_Query_Good_Empty_Good(t *testing.T) {
+	dir := t.TempDir()
+
+	j, err := NewJournal(dir)
+	require.NoError(t, err)
+
+	entries, err := j.Query(JournalQueryOptions{})
+	require.NoError(t, err)
+	assert.Empty(t, entries)
+}
+
+func TestJournal_Query_Bad_InvalidRepoFullName_Good(t *testing.T) {
+	dir := t.TempDir()
+
+	j, err := NewJournal(dir)
+	require.NoError(t, err)
+
+	_, err = j.Query(JournalQueryOptions{RepoFullName: "broken"})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "repo full name")
 }

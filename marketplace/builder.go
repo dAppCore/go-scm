@@ -1,14 +1,18 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package marketplace
 
 import (
-	"encoding/json"
-	"log"
-	"os"
-	"path/filepath"
+	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
+	json "dappco.re/go/core/scm/internal/ax/jsonx"
+	os "dappco.re/go/core/scm/internal/ax/osx"
 	"sort"
+	"strings"
 
-	coreerr "dappco.re/go/core/log"
+	core "dappco.re/go/core"
+
 	coreio "dappco.re/go/core/io"
+	coreerr "dappco.re/go/core/log"
 	"dappco.re/go/core/scm/manifest"
 )
 
@@ -18,23 +22,32 @@ const IndexVersion = 1
 // Builder constructs a marketplace Index by crawling directories for
 // core.json (compiled manifests) or .core/manifest.yaml files.
 type Builder struct {
+	// Medium is the filesystem abstraction used for manifest reads.
+	// If nil, io.Local is used.
+	Medium coreio.Medium
+
 	// BaseURL is the prefix for constructing repository URLs, e.g.
 	// "https://forge.lthn.ai". When set, module Repo is derived as
-	// BaseURL + "/" + org + "/" + code.
+	// BaseURL + "/" + org + "/" + code + ".git".
 	BaseURL string
 
 	// Org is the default organisation used when constructing Repo URLs.
 	Org string
 }
 
-// BuildFromDirs scans each directory for subdirectories containing either
-// core.json (preferred) or .core/manifest.yaml. Each valid manifest is
-// added to the resulting Index as a Module.
+// BuildFromDirs scans each directory, then its immediate subdirectories, for
+// core.json (preferred) or .core/manifest.yaml. Each valid manifest is added
+// to the resulting Index as a Module.
+// Usage: BuildFromDirs(...)
 func (b *Builder) BuildFromDirs(dirs ...string) (*Index, error) {
 	var modules []Module
 	seen := make(map[string]bool)
 
 	for _, dir := range dirs {
+		if err := b.loadInto(&modules, seen, dir); err != nil {
+			core.Warn(core.Sprintf("marketplace: skipping %s: %v", filepath.Base(dir), err))
+		}
+
 		entries, err := os.ReadDir(dir)
 		if err != nil {
 			if os.IsNotExist(err) {
@@ -48,25 +61,10 @@ func (b *Builder) BuildFromDirs(dirs ...string) (*Index, error) {
 				continue
 			}
 
-			m, err := b.loadFromDir(filepath.Join(dir, e.Name()))
-			if err != nil {
-				log.Printf("marketplace: skipping %s: %v", e.Name(), err)
-				continue
+			child := filepath.Join(dir, e.Name())
+			if err := b.loadInto(&modules, seen, child); err != nil {
+				core.Warn(core.Sprintf("marketplace: skipping %s: %v", e.Name(), err))
 			}
-			if m == nil {
-				continue
-			}
-			if seen[m.Code] {
-				continue
-			}
-			seen[m.Code] = true
-
-			mod := Module{
-				Code: m.Code,
-				Name: m.Name,
-				Repo: b.repoURL(m.Code),
-			}
-			modules = append(modules, mod)
 		}
 	}
 
@@ -80,9 +78,33 @@ func (b *Builder) BuildFromDirs(dirs ...string) (*Index, error) {
 	}, nil
 }
 
+func (b *Builder) loadInto(modules *[]Module, seen map[string]bool, dir string) error {
+	m, err := b.loadFromDir(dir)
+	if err != nil {
+		return err
+	}
+	if m == nil {
+		return nil
+	}
+	if seen[m.Code] {
+		return nil
+	}
+	seen[m.Code] = true
+
+	mod := Module{
+		Code:    m.Code,
+		Name:    m.Name,
+		Repo:    b.repoURL(m.Code),
+		SignKey: m.Sign,
+	}
+	*modules = append(*modules, mod)
+	return nil
+}
+
 // BuildFromManifests constructs an Index from pre-loaded manifests.
 // This is useful when manifests have already been collected (e.g. from
 // a Forge API crawl).
+// Usage: BuildFromManifests(...)
 func BuildFromManifests(manifests []*manifest.Manifest) *Index {
 	var modules []Module
 	seen := make(map[string]bool)
@@ -97,8 +119,9 @@ func BuildFromManifests(manifests []*manifest.Manifest) *Index {
 		seen[m.Code] = true
 
 		modules = append(modules, Module{
-			Code: m.Code,
-			Name: m.Name,
+			Code:    m.Code,
+			Name:    m.Name,
+			SignKey: m.Sign,
 		})
 	}
 
@@ -112,23 +135,30 @@ func BuildFromManifests(manifests []*manifest.Manifest) *Index {
 	}
 }
 
-// WriteIndex serialises an Index to JSON and writes it to the given path.
-func WriteIndex(path string, idx *Index) error {
-	if err := coreio.Local.EnsureDir(filepath.Dir(path)); err != nil {
+// WriteIndex serialises an Index to JSON and writes it to the given path
+// using the provided filesystem medium.
+// Usage: WriteIndex(...)
+func WriteIndex(m coreio.Medium, path string, idx *Index) error {
+	if err := m.EnsureDir(filepath.Dir(path)); err != nil {
 		return coreerr.E("marketplace.WriteIndex", "mkdir failed", err)
 	}
 	data, err := json.MarshalIndent(idx, "", "  ")
 	if err != nil {
 		return coreerr.E("marketplace.WriteIndex", "marshal failed", err)
 	}
-	return coreio.Local.Write(path, string(data))
+	return m.Write(path, string(data))
 }
 
 // loadFromDir tries core.json first, then falls back to .core/manifest.yaml.
 func (b *Builder) loadFromDir(dir string) (*manifest.Manifest, error) {
+	medium := b.Medium
+	if medium == nil {
+		medium = coreio.Local
+	}
+
 	// Prefer compiled manifest (core.json).
 	coreJSON := filepath.Join(dir, "core.json")
-	if raw, err := coreio.Local.Read(coreJSON); err == nil {
+	if raw, err := medium.Read(coreJSON); err == nil {
 		cm, err := manifest.ParseCompiled([]byte(raw))
 		if err != nil {
 			return nil, coreerr.E("marketplace.Builder.loadFromDir", "parse core.json", err)
@@ -138,7 +168,7 @@ func (b *Builder) loadFromDir(dir string) (*manifest.Manifest, error) {
 
 	// Fall back to source manifest.
 	manifestYAML := filepath.Join(dir, ".core", "manifest.yaml")
-	raw, err := coreio.Local.Read(manifestYAML)
+	raw, err := medium.Read(manifestYAML)
 	if err != nil {
 		return nil, nil // No manifest — skip silently.
 	}
@@ -152,8 +182,13 @@ func (b *Builder) loadFromDir(dir string) (*manifest.Manifest, error) {
 
 // repoURL constructs a module repository URL from the builder config.
 func (b *Builder) repoURL(code string) string {
-	if b.BaseURL == "" || b.Org == "" {
+	if b.Org == "" {
 		return ""
 	}
-	return b.BaseURL + "/" + b.Org + "/" + code
+	baseURL := b.BaseURL
+	if baseURL == "" {
+		baseURL = defaultForgeURL
+	}
+	baseURL = strings.TrimSuffix(baseURL, "/")
+	return baseURL + "/" + b.Org + "/" + code + ".git"
 }

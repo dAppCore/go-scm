@@ -1,12 +1,14 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package plugin
 
 import (
 	"context"
-	"fmt"
+	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
+	strings "dappco.re/go/core/scm/internal/ax/stringsx"
+	exec "golang.org/x/sys/execabs"
 	"net/url"
-	"os/exec"
-	"path/filepath"
-	"strings"
 	"time"
 
 	"dappco.re/go/core/io"
@@ -21,6 +23,7 @@ type Installer struct {
 }
 
 // NewInstaller creates a new plugin installer.
+// Usage: NewInstaller(...)
 func NewInstaller(m io.Medium, registry *Registry) *Installer {
 	return &Installer{
 		medium:   m,
@@ -30,6 +33,7 @@ func NewInstaller(m io.Medium, registry *Registry) *Installer {
 
 // Install downloads and installs a plugin from GitHub.
 // The source format is "org/repo" or "org/repo@version".
+// Usage: Install(...)
 func (i *Installer) Install(ctx context.Context, source string) error {
 	org, repo, version, err := ParseSource(source)
 	if err != nil {
@@ -94,6 +98,7 @@ func (i *Installer) Install(ctx context.Context, source string) error {
 }
 
 // Update updates a plugin to the latest version.
+// Usage: Update(...)
 func (i *Installer) Update(ctx context.Context, name string) error {
 	safeName, pluginDir, err := i.resolvePluginPath(name)
 	if err != nil {
@@ -128,6 +133,7 @@ func (i *Installer) Update(ctx context.Context, name string) error {
 }
 
 // Remove uninstalls a plugin by removing its files and registry entry.
+// Usage: Remove(...)
 func (i *Installer) Remove(name string) error {
 	safeName, pluginDir, err := i.resolvePluginPath(name)
 	if err != nil {
@@ -178,6 +184,8 @@ func (i *Installer) cloneRepo(ctx context.Context, org, repo, version, dest stri
 // Accepted formats:
 //   - "org/repo" -> org="org", repo="repo", version=""
 //   - "org/repo@v1.0" -> org="org", repo="repo", version="v1.0"
+//
+// Usage: ParseSource(...)
 func ParseSource(source string) (org, repo, version string, err error) {
 	source, err = url.PathUnescape(source)
 	if err != nil {

@@ -1,13 +1,16 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package manifest
 
 import (
 	"crypto/ed25519"
-	"encoding/json"
-	"path/filepath"
 	"time"
 
-	coreerr "dappco.re/go/core/log"
+	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
+	json "dappco.re/go/core/scm/internal/ax/jsonx"
+
 	"dappco.re/go/core/io"
+	coreerr "dappco.re/go/core/log"
 )
 
 // CompiledManifest is the distribution-ready form of a manifest, written as
@@ -25,14 +28,16 @@ type CompiledManifest struct {
 
 // CompileOptions controls how Compile populates the build metadata.
 type CompileOptions struct {
-	Commit  string            // Git commit hash
-	Tag     string            // Git tag (e.g. v1.0.0)
-	BuiltBy string            // Builder identity (e.g. "core build")
+	Version string             // Optional override for the manifest version
+	Commit  string             // Git commit hash
+	Tag     string             // Git tag (e.g. v1.0.0)
+	BuiltBy string             // Builder identity (e.g. "core build")
 	SignKey ed25519.PrivateKey // Optional — signs before compiling
 }
 
 // Compile produces a CompiledManifest from a source manifest and build
 // options. If opts.SignKey is provided the manifest is signed first.
+// Usage: Compile(...)
 func Compile(m *Manifest, opts CompileOptions) (*CompiledManifest, error) {
 	if m == nil {
 		return nil, coreerr.E("manifest.Compile", "nil manifest", nil)
@@ -40,6 +45,13 @@ func Compile(m *Manifest, opts CompileOptions) (*CompiledManifest, error) {
 	if m.Code == "" {
 		return nil, coreerr.E("manifest.Compile", "missing code", nil)
 	}
+	// Work on a copy to avoid mutating the caller's manifest.
+	mCopy := *m
+	if opts.Version != "" {
+		mCopy.Version = opts.Version
+	}
+	m = &mCopy
+
 	if m.Version == "" {
 		return nil, coreerr.E("manifest.Compile", "missing version", nil)
 	}
@@ -61,11 +73,13 @@ func Compile(m *Manifest, opts CompileOptions) (*CompiledManifest, error) {
 }
 
 // MarshalJSON serialises a CompiledManifest to JSON bytes.
+// Usage: MarshalJSON(...)
 func MarshalJSON(cm *CompiledManifest) ([]byte, error) {
 	return json.MarshalIndent(cm, "", "  ")
 }
 
 // ParseCompiled decodes a core.json into a CompiledManifest.
+// Usage: ParseCompiled(...)
 func ParseCompiled(data []byte) (*CompiledManifest, error) {
 	var cm CompiledManifest
 	if err := json.Unmarshal(data, &cm); err != nil {
@@ -78,6 +92,7 @@ const compiledPath = "core.json"
 
 // WriteCompiled writes a CompiledManifest as core.json to the given root
 // directory. The file lives at the distribution root, not inside .core/.
+// Usage: WriteCompiled(...)
 func WriteCompiled(medium io.Medium, root string, cm *CompiledManifest) error {
 	data, err := MarshalJSON(cm)
 	if err != nil {
@@ -88,6 +103,7 @@ func WriteCompiled(medium io.Medium, root string, cm *CompiledManifest) error {
 }
 
 // LoadCompiled reads and parses a core.json from the given root directory.
+// Usage: LoadCompiled(...)
 func LoadCompiled(medium io.Medium, root string) (*CompiledManifest, error) {
 	path := filepath.Join(root, compiledPath)
 	data, err := medium.Read(path)

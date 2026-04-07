@@ -1,9 +1,9 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package gitea
 
 import (
 	"time"
-
-	"code.gitea.io/sdk/gitea"
 
 	"dappco.re/go/core/log"
 )
@@ -38,6 +38,7 @@ const commentPageSize = 50
 
 // GetPRMeta returns structural signals for a pull request.
 // This is the Gitea side of the dual MetaReader described in the pipeline design.
+// Usage: GetPRMeta(...)
 func (c *Client) GetPRMeta(owner, repo string, pr int64) (*PRMeta, error) {
 	pull, _, err := c.api.GetPullRequest(owner, repo, pr)
 	if err != nil {
@@ -75,19 +76,11 @@ func (c *Client) GetPRMeta(owner, repo string, pr int64) (*PRMeta, error) {
 	// Fetch comment count from the issue side (PRs are issues in Gitea).
 	// Paginate to get an accurate count.
 	count := 0
-	page := 1
-	for {
-		comments, _, listErr := c.api.ListIssueComments(owner, repo, pr, gitea.ListIssueCommentOptions{
-			ListOptions: gitea.ListOptions{Page: page, PageSize: commentPageSize},
-		})
-		if listErr != nil {
-			break
+	for _, err := range c.ListIssueCommentsIter(owner, repo, pr) {
+		if err != nil {
+			return nil, log.E("gitea.GetPRMeta", "list issue comments", err)
 		}
-		count += len(comments)
-		if len(comments) < commentPageSize {
-			break
-		}
-		page++
+		count++
 	}
 	meta.CommentCount = count
 
@@ -96,39 +89,24 @@ func (c *Client) GetPRMeta(owner, repo string, pr int64) (*PRMeta, error) {
 
 // GetCommentBodies returns all comment bodies for a pull request.
 // This reads full content, which is safe on the home lab Gitea instance.
+// Usage: GetCommentBodies(...)
 func (c *Client) GetCommentBodies(owner, repo string, pr int64) ([]Comment, error) {
 	var comments []Comment
-	page := 1
-
-	for {
-		raw, _, err := c.api.ListIssueComments(owner, repo, pr, gitea.ListIssueCommentOptions{
-			ListOptions: gitea.ListOptions{Page: page, PageSize: commentPageSize},
-		})
+	for raw, err := range c.ListIssueCommentsIter(owner, repo, pr) {
 		if err != nil {
 			return nil, log.E("gitea.GetCommentBodies", "failed to get PR comments", err)
 		}
 
-		if len(raw) == 0 {
-			break
+		comment := Comment{
+			ID:        raw.ID,
+			Body:      raw.Body,
+			CreatedAt: raw.Created,
+			UpdatedAt: raw.Updated,
 		}
-
-		for _, rc := range raw {
-			comment := Comment{
-				ID:        rc.ID,
-				Body:      rc.Body,
-				CreatedAt: rc.Created,
-				UpdatedAt: rc.Updated,
-			}
-			if rc.Poster != nil {
-				comment.Author = rc.Poster.UserName
-			}
-			comments = append(comments, comment)
+		if raw.Poster != nil {
+			comment.Author = raw.Poster.UserName
 		}
-
-		if len(raw) < commentPageSize {
-			break
-		}
-		page++
+		comments = append(comments, comment)
 	}
 
 	return comments, nil
@@ -136,6 +114,7 @@ func (c *Client) GetCommentBodies(owner, repo string, pr int64) ([]Comment, erro
 
 // GetIssueBody returns the body text of an issue.
 // This reads full content, which is safe on the home lab Gitea instance.
+// Usage: GetIssueBody(...)
 func (c *Client) GetIssueBody(owner, repo string, issue int64) (string, error) {
 	iss, _, err := c.api.GetIssue(owner, repo, issue)
 	if err != nil {

@@ -1,10 +1,12 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package gitea
 
 import (
-	"encoding/json"
+	json "dappco.re/go/core/scm/internal/ax/jsonx"
+	strings "dappco.re/go/core/scm/internal/ax/stringsx"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 )
 
@@ -23,6 +25,17 @@ func newGiteaMux() *http.ServeMux {
 	// The Gitea SDK calls /api/v1/version during NewClient().
 	mux.HandleFunc("/api/v1/version", func(w http.ResponseWriter, r *http.Request) {
 		jsonResponse(w, map[string]string{"version": "1.21.0"})
+	})
+
+	// User info endpoint for GetCurrentUser / GetMyUserInfo.
+	mux.HandleFunc("/api/v1/user", func(w http.ResponseWriter, r *http.Request) {
+		jsonResponse(w, map[string]any{
+			"id":         1,
+			"login":      "test-user",
+			"full_name":  "Test User",
+			"email":      "test@example.com",
+			"login_name": "test-user",
+		})
 	})
 
 	// User repos listing.
@@ -83,18 +96,57 @@ func newGiteaMux() *http.ServeMux {
 
 	// Single issue.
 	mux.HandleFunc("/api/v1/repos/test-org/org-repo/issues/1", func(w http.ResponseWriter, r *http.Request) {
-		jsonResponse(w, map[string]any{
-			"id": 1, "number": 1, "title": "Issue 1", "state": "open",
-			"body": "First issue body",
-		})
+		switch r.Method {
+		case http.MethodPatch:
+			jsonResponse(w, map[string]any{
+				"id": 1, "number": 1, "title": "Issue 1", "state": "closed",
+				"body": "First issue body",
+			})
+		default:
+			jsonResponse(w, map[string]any{
+				"id": 1, "number": 1, "title": "Issue 1", "state": "open",
+				"body": "First issue body",
+			})
+		}
 	})
 
 	// Issue comments.
 	mux.HandleFunc("/api/v1/repos/test-org/org-repo/issues/1/comments", func(w http.ResponseWriter, r *http.Request) {
-		jsonResponse(w, []map[string]any{
-			{"id": 100, "body": "comment 1", "user": map[string]any{"login": "user1"}, "created_at": "2026-01-01T00:00:00Z", "updated_at": "2026-01-01T00:00:00Z"},
-			{"id": 101, "body": "comment 2", "user": map[string]any{"login": "user2"}, "created_at": "2026-01-02T00:00:00Z", "updated_at": "2026-01-02T00:00:00Z"},
-		})
+		switch r.Method {
+		case http.MethodPost:
+			w.WriteHeader(http.StatusCreated)
+			jsonResponse(w, map[string]any{
+				"id": 100, "body": "test comment",
+				"user": map[string]any{"login": "test-user"},
+			})
+		default:
+			jsonResponse(w, []map[string]any{
+				{"id": 100, "body": "comment 1", "user": map[string]any{"login": "user1"}, "created_at": "2026-01-01T00:00:00Z", "updated_at": "2026-01-01T00:00:00Z"},
+				{"id": 101, "body": "comment 2", "user": map[string]any{"login": "user2"}, "created_at": "2026-01-02T00:00:00Z", "updated_at": "2026-01-02T00:00:00Z"},
+			})
+		}
+	})
+
+	// Issue labels.
+	mux.HandleFunc("/api/v1/repos/test-org/org-repo/issues/1/labels", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodPost:
+			jsonResponse(w, []map[string]any{
+				{"id": 1, "name": "bug", "color": "#ff0000"},
+			})
+		default:
+			jsonResponse(w, []map[string]any{
+				{"id": 1, "name": "bug", "color": "#ff0000"},
+			})
+		}
+	})
+
+	// Remove issue label.
+	mux.HandleFunc("/api/v1/repos/test-org/org-repo/issues/1/labels/1", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodDelete {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
 	})
 
 	// Pull requests.
@@ -130,7 +182,7 @@ func newGiteaMux() *http.ServeMux {
 		w.WriteHeader(http.StatusCreated)
 		jsonResponse(w, map[string]any{
 			"id": 40, "name": "mirrored-repo", "full_name": "test-org/mirrored-repo",
-			"owner": map[string]any{"login": "test-org"},
+			"owner":  map[string]any{"login": "test-org"},
 			"mirror": true,
 		})
 	})
@@ -158,6 +210,7 @@ func jsonResponse(w http.ResponseWriter, data any) {
 // newTestClient creates a Client backed by the mock server.
 func newTestClient(t *testing.T) (*Client, *httptest.Server) {
 	t.Helper()
+	t.Setenv("HOME", t.TempDir())
 	srv := newMockGiteaServer(t)
 
 	client, err := New(srv.URL, "test-token")
@@ -172,6 +225,7 @@ func newTestClient(t *testing.T) (*Client, *httptest.Server) {
 // newErrorServer creates a mock server that returns errors for all API calls.
 func newErrorServer(t *testing.T) (*Client, *httptest.Server) {
 	t.Helper()
+	t.Setenv("HOME", t.TempDir())
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/api/v1/version", func(w http.ResponseWriter, r *http.Request) {

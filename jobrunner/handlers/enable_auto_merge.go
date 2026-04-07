@@ -1,8 +1,10 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package handlers
 
 import (
 	"context"
-	"fmt"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
 	"time"
 
 	"dappco.re/go/core/scm/forge"
@@ -15,17 +17,20 @@ type EnableAutoMergeHandler struct {
 }
 
 // NewEnableAutoMergeHandler creates a handler that merges ready PRs.
+// Usage: NewEnableAutoMergeHandler(...)
 func NewEnableAutoMergeHandler(f *forge.Client) *EnableAutoMergeHandler {
 	return &EnableAutoMergeHandler{forge: f}
 }
 
 // Name returns the handler identifier.
+// Usage: Name(...)
 func (h *EnableAutoMergeHandler) Name() string {
 	return "enable_auto_merge"
 }
 
 // Match returns true when the PR is open, not a draft, mergeable, checks
 // are passing, and there are no unresolved review threads.
+// Usage: Match(...)
 func (h *EnableAutoMergeHandler) Match(signal *jobrunner.PipelineSignal) bool {
 	return signal.PRState == "OPEN" &&
 		!signal.IsDraft &&
@@ -35,6 +40,7 @@ func (h *EnableAutoMergeHandler) Match(signal *jobrunner.PipelineSignal) bool {
 }
 
 // Execute merges the pull request with squash strategy.
+// Usage: Execute(...)
 func (h *EnableAutoMergeHandler) Execute(ctx context.Context, signal *jobrunner.PipelineSignal) (*jobrunner.ActionResult, error) {
 	start := time.Now()
 

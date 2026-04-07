@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package collect
 
 import (
@@ -13,17 +15,17 @@ func TestPapersCollector_Name_Good(t *testing.T) {
 	assert.Equal(t, "papers:iacr", p.Name())
 }
 
-func TestPapersCollector_Name_Good_ArXiv(t *testing.T) {
+func TestPapersCollector_Name_Good_ArXiv_Good(t *testing.T) {
 	p := &PapersCollector{Source: PaperSourceArXiv}
 	assert.Equal(t, "papers:arxiv", p.Name())
 }
 
-func TestPapersCollector_Name_Good_All(t *testing.T) {
+func TestPapersCollector_Name_Good_All_Good(t *testing.T) {
 	p := &PapersCollector{Source: PaperSourceAll}
 	assert.Equal(t, "papers:all", p.Name())
 }
 
-func TestPapersCollector_Collect_Bad_NoQuery(t *testing.T) {
+func TestPapersCollector_Collect_Bad_NoQuery_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	cfg := NewConfigWithMedium(m, "/output")
 
@@ -32,7 +34,7 @@ func TestPapersCollector_Collect_Bad_NoQuery(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestPapersCollector_Collect_Bad_UnknownSource(t *testing.T) {
+func TestPapersCollector_Collect_Bad_UnknownSource_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	cfg := NewConfigWithMedium(m, "/output")
 
@@ -41,7 +43,7 @@ func TestPapersCollector_Collect_Bad_UnknownSource(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestPapersCollector_Collect_Good_DryRun(t *testing.T) {
+func TestPapersCollector_Collect_Good_DryRun_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	cfg := NewConfigWithMedium(m, "/output")
 	cfg.DryRun = true
@@ -72,7 +74,7 @@ func TestFormatPaperMarkdown_Good(t *testing.T) {
 	assert.Contains(t, md, "zero-knowledge proofs")
 }
 
-func TestFormatPaperMarkdown_Good_Minimal(t *testing.T) {
+func TestFormatPaperMarkdown_Good_Minimal_Good(t *testing.T) {
 	md := FormatPaperMarkdown("Title Only", nil, "", "", "", "")
 
 	assert.Contains(t, md, "# Title Only")

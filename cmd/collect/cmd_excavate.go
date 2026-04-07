@@ -1,12 +1,15 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package collect
 
 import (
 	"context"
-	"fmt"
 
 	"forge.lthn.ai/core/cli/pkg/cli"
-	"dappco.re/go/core/scm/collect"
+
 	"dappco.re/go/core/i18n"
+	"dappco.re/go/core/scm/collect"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
 )
 
 // Excavate command flags

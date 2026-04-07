@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package marketplace
 
 import (
@@ -58,7 +60,7 @@ func TestFind_Good(t *testing.T) {
 	assert.Equal(t, "XMRig", m.Name)
 }
 
-func TestFind_Bad_NotFound(t *testing.T) {
+func TestFind_NotFound_Good(t *testing.T) {
 	idx := &Index{}
 	_, ok := idx.Find("nope")
 	assert.False(t, ok)

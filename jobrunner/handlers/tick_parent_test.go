@@ -1,12 +1,14 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package handlers
 
 import (
 	"context"
-	"encoding/json"
+	json "dappco.re/go/core/scm/internal/ax/jsonx"
+	strings "dappco.re/go/core/scm/internal/ax/stringsx"
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -23,7 +25,7 @@ func TestTickParent_Match_Good(t *testing.T) {
 	assert.True(t, h.Match(sig))
 }
 
-func TestTickParent_Match_Bad_Open(t *testing.T) {
+func TestTickParent_Match_Bad_Open_Good(t *testing.T) {
 	h := NewTickParentHandler(nil)
 	sig := &jobrunner.PipelineSignal{
 		PRState: "OPEN",

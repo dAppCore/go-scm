@@ -1,4 +1,4 @@
-// SPDX-Licence-Identifier: EUPL-1.2
+// SPDX-License-Identifier: EUPL-1.2
 
 // Package api provides a service provider that wraps go-scm marketplace,
 // manifest, and registry functionality as REST endpoints with WebSocket
@@ -11,6 +11,9 @@ import (
 	"encoding/hex"
 	"net/http"
 	"net/url"
+	"reflect"
+	"strings"
+	"sync"
 
 	"dappco.re/go/core/api"
 	"dappco.re/go/core/api/pkg/provider"
@@ -27,11 +30,19 @@ import (
 // as a service provider. It implements Provider, Streamable, Describable,
 // and Renderable.
 type ScmProvider struct {
+	mu        sync.RWMutex
 	index     *marketplace.Index
-	installer *marketplace.Installer
+	installer marketplaceInstaller
 	registry  *repos.Registry
 	hub       *ws.Hub
 	medium    io.Medium
+}
+
+type marketplaceInstaller interface {
+	Install(context.Context, marketplace.Module) error
+	Remove(string) error
+	Update(context.Context, string) error
+	Installed() ([]marketplace.InstalledModule, error)
 }
 
 // compile-time interface checks
@@ -42,13 +53,28 @@ var (
 	_ provider.Renderable  = (*ScmProvider)(nil)
 )
 
+// normaliseInstaller returns nil when inst is a typed nil — e.g. a nil
+// *marketplace.Installer wrapped in the interface — so that downstream nil
+// checks on p.installer behave correctly.
+func normaliseInstaller(inst marketplaceInstaller) marketplaceInstaller {
+	if inst == nil {
+		return nil
+	}
+	v := reflect.ValueOf(inst)
+	if v.Kind() == reflect.Ptr && v.IsNil() {
+		return nil
+	}
+	return inst
+}
+
 // NewProvider creates an SCM provider backed by the given marketplace index,
 // installer, and registry. The WS hub is used to emit real-time events.
 // Pass nil for any dependency that is not available.
-func NewProvider(idx *marketplace.Index, inst *marketplace.Installer, reg *repos.Registry, hub *ws.Hub) *ScmProvider {
+// Usage: NewProvider(...)
+func NewProvider(idx *marketplace.Index, inst marketplaceInstaller, reg *repos.Registry, hub *ws.Hub) *ScmProvider {
 	return &ScmProvider{
 		index:     idx,
-		installer: inst,
+		installer: normaliseInstaller(inst),
 		registry:  reg,
 		hub:       hub,
 		medium:    io.Local,
@@ -56,12 +82,15 @@ func NewProvider(idx *marketplace.Index, inst *marketplace.Installer, reg *repos
 }
 
 // Name implements api.RouteGroup.
+// Usage: Name(...)
 func (p *ScmProvider) Name() string { return "scm" }
 
 // BasePath implements api.RouteGroup.
+// Usage: BasePath(...)
 func (p *ScmProvider) BasePath() string { return "/api/v1/scm" }
 
 // Element implements provider.Renderable.
+// Usage: Element(...)
 func (p *ScmProvider) Element() provider.ElementSpec {
 	return provider.ElementSpec{
 		Tag:    "core-scm-panel",
@@ -70,23 +99,27 @@ func (p *ScmProvider) Element() provider.ElementSpec {
 }
 
 // Channels implements provider.Streamable.
+// Usage: Channels(...)
 func (p *ScmProvider) Channels() []string {
 	return []string{
 		"scm.marketplace.refreshed",
 		"scm.marketplace.installed",
 		"scm.marketplace.removed",
+		"scm.installed.changed",
 		"scm.manifest.verified",
 		"scm.registry.changed",
 	}
 }
 
 // RegisterRoutes implements api.RouteGroup.
+// Usage: RegisterRoutes(...)
 func (p *ScmProvider) RegisterRoutes(rg *gin.RouterGroup) {
 	// Marketplace
 	rg.GET("/marketplace", p.listMarketplace)
 	rg.GET("/marketplace/:code", p.getMarketplaceItem)
 	rg.POST("/marketplace/:code/install", p.installItem)
 	rg.DELETE("/marketplace/:code", p.removeItem)
+	rg.POST("/marketplace/refresh", p.refreshMarketplace)
 
 	// Manifest
 	rg.GET("/manifest", p.getManifest)
@@ -103,13 +136,14 @@ func (p *ScmProvider) RegisterRoutes(rg *gin.RouterGroup) {
 }
 
 // Describe implements api.DescribableGroup.
+// Usage: Describe(...)
 func (p *ScmProvider) Describe() []api.RouteDescription {
 	return []api.RouteDescription{
 		{
 			Method:      "GET",
 			Path:        "/marketplace",
 			Summary:     "List available providers",
-			Description: "Returns all providers from the marketplace index, optionally filtered by query or category.",
+			Description: "Returns all providers from the marketplace index, optionally filtered by query and category.",
 			Tags:        []string{"scm", "marketplace"},
 		},
 		{
@@ -132,6 +166,19 @@ func (p *ScmProvider) Describe() []api.RouteDescription {
 			Summary:     "Remove an installed provider",
 			Description: "Uninstalls a provider by removing its files and store entry.",
 			Tags:        []string{"scm", "marketplace"},
+		},
+		{
+			Method:      "POST",
+			Path:        "/marketplace/refresh",
+			Summary:     "Refresh marketplace index",
+			Description: "Reloads an index.json file and replaces the in-memory marketplace catalogue.",
+			Tags:        []string{"scm", "marketplace"},
+			RequestBody: map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"index_path": map[string]any{"type": "string", "description": "Path to an index.json file", "default": "index.json"},
+				},
+			},
 		},
 		{
 			Method:      "GET",
@@ -200,7 +247,11 @@ func (p *ScmProvider) Describe() []api.RouteDescription {
 // -- Marketplace Handlers -----------------------------------------------------
 
 func (p *ScmProvider) listMarketplace(c *gin.Context) {
-	if p.index == nil {
+	p.mu.RLock()
+	idx := p.index
+	p.mu.RUnlock()
+
+	if idx == nil {
 		c.JSON(http.StatusOK, api.OK([]marketplace.Module{}))
 		return
 	}
@@ -208,14 +259,18 @@ func (p *ScmProvider) listMarketplace(c *gin.Context) {
 	query := c.Query("q")
 	category := c.Query("category")
 
-	var modules []marketplace.Module
-	switch {
-	case query != "":
-		modules = p.index.Search(query)
-	case category != "":
-		modules = p.index.ByCategory(category)
-	default:
-		modules = p.index.Modules
+	modules := idx.Modules
+	if category != "" {
+		modules = idx.ByCategory(category)
+	}
+	if query != "" {
+		filtered := make([]marketplace.Module, 0, len(modules))
+		for _, mod := range modules {
+			if moduleMatchesQuery(mod, query) {
+				filtered = append(filtered, mod)
+			}
+		}
+		modules = filtered
 	}
 
 	if modules == nil {
@@ -225,7 +280,11 @@ func (p *ScmProvider) listMarketplace(c *gin.Context) {
 }
 
 func (p *ScmProvider) getMarketplaceItem(c *gin.Context) {
-	if p.index == nil {
+	p.mu.RLock()
+	idx := p.index
+	p.mu.RUnlock()
+
+	if idx == nil {
 		c.JSON(http.StatusNotFound, api.Fail("not_found", "marketplace index not loaded"))
 		return
 	}
@@ -234,7 +293,7 @@ func (p *ScmProvider) getMarketplaceItem(c *gin.Context) {
 	if !ok {
 		return
 	}
-	mod, ok := p.index.Find(code)
+	mod, ok := idx.Find(code)
 	if !ok {
 		c.JSON(http.StatusNotFound, api.Fail("not_found", "provider not found in marketplace"))
 		return
@@ -243,7 +302,12 @@ func (p *ScmProvider) getMarketplaceItem(c *gin.Context) {
 }
 
 func (p *ScmProvider) installItem(c *gin.Context) {
-	if p.index == nil || p.installer == nil {
+	p.mu.RLock()
+	idx := p.index
+	inst := p.installer
+	p.mu.RUnlock()
+
+	if idx == nil || inst == nil {
 		c.JSON(http.StatusServiceUnavailable, api.Fail("unavailable", "marketplace not configured"))
 		return
 	}
@@ -252,13 +316,13 @@ func (p *ScmProvider) installItem(c *gin.Context) {
 	if !ok {
 		return
 	}
-	mod, ok := p.index.Find(code)
+	mod, ok := idx.Find(code)
 	if !ok {
 		c.JSON(http.StatusNotFound, api.Fail("not_found", "provider not found in marketplace"))
 		return
 	}
 
-	if err := p.installer.Install(context.Background(), mod); err != nil {
+	if err := inst.Install(c.Request.Context(), mod); err != nil {
 		c.JSON(http.StatusInternalServerError, api.Fail("install_failed", err.Error()))
 		return
 	}
@@ -266,6 +330,11 @@ func (p *ScmProvider) installItem(c *gin.Context) {
 	p.emitEvent("scm.marketplace.installed", map[string]any{
 		"code": mod.Code,
 		"name": mod.Name,
+	})
+	p.emitEvent("scm.installed.changed", map[string]any{
+		"action": "installed",
+		"code":   mod.Code,
+		"name":   mod.Name,
 	})
 
 	c.JSON(http.StatusOK, api.OK(map[string]any{"installed": true, "code": mod.Code}))
@@ -287,8 +356,42 @@ func (p *ScmProvider) removeItem(c *gin.Context) {
 	}
 
 	p.emitEvent("scm.marketplace.removed", map[string]any{"code": code})
+	p.emitEvent("scm.installed.changed", map[string]any{
+		"action": "removed",
+		"code":   code,
+	})
 
 	c.JSON(http.StatusOK, api.OK(map[string]any{"removed": true, "code": code}))
+}
+
+// marketplaceIndexPath is the canonical server-side path for the marketplace
+// index file. The refresh endpoint always loads this path — the caller has no
+// influence over which file is read.
+const marketplaceIndexPath = "index.json"
+
+func (p *ScmProvider) refreshMarketplace(c *gin.Context) {
+	// Always use the server-side canonical path. Client-supplied paths are
+	// intentionally ignored to prevent path traversal / arbitrary file reads.
+	idx, err := marketplace.LoadIndex(p.medium, marketplaceIndexPath)
+	if err != nil {
+		// Do not expose raw filesystem errors to the caller.
+		c.JSON(http.StatusNotFound, api.Fail("index_not_found", "index not found"))
+		return
+	}
+
+	p.mu.Lock()
+	p.index = idx
+	p.mu.Unlock()
+	p.emitEvent("scm.marketplace.refreshed", map[string]any{
+		"index_path": marketplaceIndexPath,
+		"modules":    len(idx.Modules),
+	})
+
+	c.JSON(http.StatusOK, api.OK(map[string]any{
+		"refreshed":  true,
+		"index_path": marketplaceIndexPath,
+		"modules":    len(idx.Modules),
+	}))
 }
 
 // -- Manifest Handlers --------------------------------------------------------
@@ -408,10 +511,15 @@ func (p *ScmProvider) updateInstalled(c *gin.Context) {
 	if !ok {
 		return
 	}
-	if err := p.installer.Update(context.Background(), code); err != nil {
+	if err := p.installer.Update(c.Request.Context(), code); err != nil {
 		c.JSON(http.StatusInternalServerError, api.Fail("update_failed", err.Error()))
 		return
 	}
+
+	p.emitEvent("scm.installed.changed", map[string]any{
+		"action": "updated",
+		"code":   code,
+	})
 
 	c.JSON(http.StatusOK, api.OK(map[string]any{"updated": true, "code": code}))
 }
@@ -434,7 +542,12 @@ func (p *ScmProvider) listRegistry(c *gin.Context) {
 		return
 	}
 
-	repoList := p.registry.List()
+	repoList, err := p.registry.TopologicalOrder()
+	if err != nil {
+		// Keep the endpoint usable if the registry is malformed.
+		repoList = p.registry.List()
+	}
+
 	summaries := make([]repoSummary, 0, len(repoList))
 	for _, r := range repoList {
 		summaries = append(summaries, repoSummary{
@@ -479,4 +592,11 @@ func normaliseMarketplaceCode(raw string) (string, error) {
 	}
 
 	return agentci.ValidatePathElement(decoded)
+}
+
+func moduleMatchesQuery(mod marketplace.Module, query string) bool {
+	q := strings.ToLower(query)
+	return strings.Contains(strings.ToLower(mod.Code), q) ||
+		strings.Contains(strings.ToLower(mod.Name), q) ||
+		strings.Contains(strings.ToLower(mod.Category), q)
 }

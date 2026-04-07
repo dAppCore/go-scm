@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package jobrunner
 
 import (
@@ -33,11 +35,13 @@ type PipelineSignal struct {
 }
 
 // RepoFullName returns "owner/repo".
+// Usage: RepoFullName(...)
 func (s *PipelineSignal) RepoFullName() string {
 	return s.RepoOwner + "/" + s.RepoName
 }
 
 // HasUnresolvedThreads returns true if there are unresolved review threads.
+// Usage: HasUnresolvedThreads(...)
 func (s *PipelineSignal) HasUnresolvedThreads() bool {
 	return s.ThreadsTotal > s.ThreadsResolved
 }

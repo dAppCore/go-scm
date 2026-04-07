@@ -1,7 +1,9 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package jobrunner
 
 import (
-	"encoding/json"
+	json "dappco.re/go/core/scm/internal/ax/jsonx"
 	"testing"
 	"time"
 
@@ -25,19 +27,32 @@ func TestPipelineSignal_HasUnresolvedThreads_Good(t *testing.T) {
 	assert.True(t, sig.HasUnresolvedThreads())
 }
 
-func TestPipelineSignal_HasUnresolvedThreads_Bad_AllResolved(t *testing.T) {
-	sig := &PipelineSignal{
-		ThreadsTotal:    4,
-		ThreadsResolved: 4,
+func TestPipelineSignal_HasUnresolvedThreads_Bad(t *testing.T) {
+	tests := []struct {
+		name string
+		sig  *PipelineSignal
+	}{
+		{
+			name: "AllResolved",
+			sig: &PipelineSignal{
+				ThreadsTotal:    4,
+				ThreadsResolved: 4,
+			},
+		},
+		{
+			name: "ZeroThreads",
+			sig: &PipelineSignal{
+				ThreadsTotal:    0,
+				ThreadsResolved: 0,
+			},
+		},
 	}
-	assert.False(t, sig.HasUnresolvedThreads())
 
-	// Also verify zero threads is not unresolved.
-	sigZero := &PipelineSignal{
-		ThreadsTotal:    0,
-		ThreadsResolved: 0,
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.False(t, tt.sig.HasUnresolvedThreads())
+		})
 	}
-	assert.False(t, sigZero.HasUnresolvedThreads())
 }
 
 func TestActionResult_JSON_Good(t *testing.T) {

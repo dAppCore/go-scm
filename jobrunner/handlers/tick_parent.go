@@ -1,9 +1,11 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package handlers
 
 import (
 	"context"
-	"fmt"
-	"strings"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
+	strings "dappco.re/go/core/scm/internal/ax/stringsx"
 	"time"
 
 	forgejosdk "codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2"
@@ -20,22 +22,26 @@ type TickParentHandler struct {
 }
 
 // NewTickParentHandler creates a handler that ticks parent epic checkboxes.
+// Usage: NewTickParentHandler(...)
 func NewTickParentHandler(f *forge.Client) *TickParentHandler {
 	return &TickParentHandler{forge: f}
 }
 
 // Name returns the handler identifier.
+// Usage: Name(...)
 func (h *TickParentHandler) Name() string {
 	return "tick_parent"
 }
 
 // Match returns true when the child PR has been merged.
+// Usage: Match(...)
 func (h *TickParentHandler) Match(signal *jobrunner.PipelineSignal) bool {
 	return signal.PRState == "MERGED"
 }
 
 // Execute fetches the epic body, replaces the unchecked checkbox for the
 // child issue with a checked one, updates the epic, and closes the child issue.
+// Usage: Execute(...)
 func (h *TickParentHandler) Execute(ctx context.Context, signal *jobrunner.PipelineSignal) (*jobrunner.ActionResult, error) {
 	start := time.Now()
 

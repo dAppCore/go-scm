@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 // Package scm provides CLI commands for manifest compilation and marketplace
 // index generation.
 //
@@ -5,6 +7,8 @@
 //   - compile: Compile .core/manifest.yaml into core.json
 //   - index:   Build marketplace index from repository directories
 //   - export:  Export a compiled manifest as JSON to stdout
+//   - sign:    Sign .core/manifest.yaml with an ed25519 private key
+//   - verify:  Verify a manifest signature with an ed25519 public key
 package scm
 
 import (
@@ -25,6 +29,7 @@ var (
 )
 
 // AddScmCommands registers the 'scm' command and all subcommands.
+// Usage: AddScmCommands(...)
 func AddScmCommands(root *cli.Command) {
 	scmCmd := &cli.Command{
 		Use:   "scm",
@@ -36,4 +41,6 @@ func AddScmCommands(root *cli.Command) {
 	addCompileCommand(scmCmd)
 	addIndexCommand(scmCmd)
 	addExportCommand(scmCmd)
+	addSignCommand(scmCmd)
+	addVerifyCommand(scmCmd)
 }

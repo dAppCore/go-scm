@@ -1,10 +1,12 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package forge
 
 import (
-	"encoding/json"
+	json "dappco.re/go/core/scm/internal/ax/jsonx"
+	strings "dappco.re/go/core/scm/internal/ax/stringsx"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 )
 
@@ -56,6 +58,7 @@ func newForgejoMux() *http.ServeMux {
 		}
 		jsonResponse(w, []map[string]any{
 			{"id": 10, "name": "org-repo", "full_name": "test-org/org-repo", "owner": map[string]any{"login": "test-org", "id": 100}},
+			{"id": 11, "name": "second-repo", "full_name": "test-org/second-repo", "owner": map[string]any{"login": "test-org", "id": 100}},
 		})
 	})
 
@@ -80,7 +83,8 @@ func newForgejoMux() *http.ServeMux {
 		}
 		jsonResponse(w, map[string]any{
 			"id": 10, "name": "org-repo", "full_name": "test-org/org-repo",
-			"owner": map[string]any{"login": "test-org"},
+			"owner":          map[string]any{"login": "test-org"},
+			"default_branch": "main",
 		})
 	})
 
@@ -226,6 +230,13 @@ func newForgejoMux() *http.ServeMux {
 		})
 	})
 
+	mux.HandleFunc("/api/v1/repos/test-org/second-repo/labels", func(w http.ResponseWriter, r *http.Request) {
+		jsonResponse(w, []map[string]any{
+			{"id": 2, "name": "feature", "color": "#0000ff"},
+			{"id": 3, "name": "documentation", "color": "#00aa00"},
+		})
+	})
+
 	// Webhooks.
 	mux.HandleFunc("/api/v1/repos/test-org/org-repo/hooks", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
@@ -290,6 +301,13 @@ func newForgejoMux() *http.ServeMux {
 	mux.HandleFunc("/api/v1/repos/test-org/org-repo/pulls/1/reviews/1/dismissals", func(w http.ResponseWriter, r *http.Request) {
 		jsonResponse(w, map[string]any{
 			"id": 1, "state": "dismissed",
+		})
+	})
+
+	// Undismiss review.
+	mux.HandleFunc("/api/v1/repos/test-org/org-repo/pulls/1/reviews/1/undismissals", func(w http.ResponseWriter, r *http.Request) {
+		jsonResponse(w, map[string]any{
+			"id": 1, "state": "open",
 		})
 	})
 

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package collect
 
 import (
@@ -8,18 +10,23 @@ import (
 // Event types used by the collection subsystem.
 const (
 	// EventStart is emitted when a collector begins its run.
+	//
 	EventStart = "start"
 
 	// EventProgress is emitted to report incremental progress.
+	//
 	EventProgress = "progress"
 
 	// EventItem is emitted when a single item is collected.
+	//
 	EventItem = "item"
 
 	// EventError is emitted when an error occurs during collection.
+	//
 	EventError = "error"
 
 	// EventComplete is emitted when a collector finishes its run.
+	//
 	EventComplete = "complete"
 )
 
@@ -52,6 +59,7 @@ type Dispatcher struct {
 }
 
 // NewDispatcher creates a new event dispatcher.
+// Usage: NewDispatcher(...)
 func NewDispatcher() *Dispatcher {
 	return &Dispatcher{
 		handlers: make(map[string][]EventHandler),
@@ -60,6 +68,7 @@ func NewDispatcher() *Dispatcher {
 
 // On registers a handler for an event type. Multiple handlers can be
 // registered for the same event type and will be called in order.
+// Usage: On(...)
 func (d *Dispatcher) On(eventType string, handler EventHandler) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -69,6 +78,7 @@ func (d *Dispatcher) On(eventType string, handler EventHandler) {
 // Emit dispatches an event to all registered handlers for that event type.
 // If no handlers are registered for the event type, the event is silently dropped.
 // The event's Time field is set to now if it is zero.
+// Usage: Emit(...)
 func (d *Dispatcher) Emit(event Event) {
 	if event.Time.IsZero() {
 		event.Time = time.Now()
@@ -84,6 +94,7 @@ func (d *Dispatcher) Emit(event Event) {
 }
 
 // EmitStart emits a start event for the given source.
+// Usage: EmitStart(...)
 func (d *Dispatcher) EmitStart(source, message string) {
 	d.Emit(Event{
 		Type:    EventStart,
@@ -93,6 +104,7 @@ func (d *Dispatcher) EmitStart(source, message string) {
 }
 
 // EmitProgress emits a progress event.
+// Usage: EmitProgress(...)
 func (d *Dispatcher) EmitProgress(source, message string, data any) {
 	d.Emit(Event{
 		Type:    EventProgress,
@@ -103,6 +115,7 @@ func (d *Dispatcher) EmitProgress(source, message string, data any) {
 }
 
 // EmitItem emits an item event.
+// Usage: EmitItem(...)
 func (d *Dispatcher) EmitItem(source, message string, data any) {
 	d.Emit(Event{
 		Type:    EventItem,
@@ -113,6 +126,7 @@ func (d *Dispatcher) EmitItem(source, message string, data any) {
 }
 
 // EmitError emits an error event.
+// Usage: EmitError(...)
 func (d *Dispatcher) EmitError(source, message string, data any) {
 	d.Emit(Event{
 		Type:    EventError,
@@ -123,6 +137,7 @@ func (d *Dispatcher) EmitError(source, message string, data any) {
 }
 
 // EmitComplete emits a complete event.
+// Usage: EmitComplete(...)
 func (d *Dispatcher) EmitComplete(source, message string, data any) {
 	d.Emit(Event{
 		Type:    EventComplete,

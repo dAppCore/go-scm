@@ -1,8 +1,10 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package handlers
 
 import (
 	"context"
-	"encoding/json"
+	json "dappco.re/go/core/scm/internal/ax/jsonx"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -23,7 +25,7 @@ func TestDismissReviews_Match_Good(t *testing.T) {
 	assert.True(t, h.Match(sig))
 }
 
-func TestDismissReviews_Match_Bad_AllResolved(t *testing.T) {
+func TestDismissReviews_Match_Bad_AllResolved_Good(t *testing.T) {
 	h := NewDismissReviewsHandler(nil)
 	sig := &jobrunner.PipelineSignal{
 		PRState:         "OPEN",

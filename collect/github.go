@@ -1,12 +1,14 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package collect
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"os/exec"
-	"path/filepath"
-	"strings"
+	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
+	json "dappco.re/go/core/scm/internal/ax/jsonx"
+	strings "dappco.re/go/core/scm/internal/ax/stringsx"
+	exec "golang.org/x/sys/execabs"
 	"time"
 
 	core "dappco.re/go/core/log"
@@ -53,6 +55,7 @@ type GitHubCollector struct {
 }
 
 // Name returns the collector name.
+// Usage: Name(...)
 func (g *GitHubCollector) Name() string {
 	if g.Repo != "" {
 		return fmt.Sprintf("github:%s/%s", g.Org, g.Repo)
@@ -61,6 +64,7 @@ func (g *GitHubCollector) Name() string {
 }
 
 // Collect gathers issues and/or PRs from GitHub repositories.
+// Usage: Collect(...)
 func (g *GitHubCollector) Collect(ctx context.Context, cfg *Config) (*Result, error) {
 	result := &Result{Source: g.Name()}
 

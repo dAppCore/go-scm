@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package jobrunner
 
 import (
@@ -29,6 +31,7 @@ type Poller struct {
 }
 
 // NewPoller creates a Poller from the given config.
+// Usage: NewPoller(...)
 func NewPoller(cfg PollerConfig) *Poller {
 	interval := cfg.PollInterval
 	if interval <= 0 {
@@ -45,6 +48,7 @@ func NewPoller(cfg PollerConfig) *Poller {
 }
 
 // Cycle returns the number of completed poll-dispatch cycles.
+// Usage: Cycle(...)
 func (p *Poller) Cycle() int {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
@@ -52,6 +56,7 @@ func (p *Poller) Cycle() int {
 }
 
 // DryRun returns whether dry-run mode is enabled.
+// Usage: DryRun(...)
 func (p *Poller) DryRun() bool {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
@@ -59,6 +64,7 @@ func (p *Poller) DryRun() bool {
 }
 
 // SetDryRun enables or disables dry-run mode.
+// Usage: SetDryRun(...)
 func (p *Poller) SetDryRun(v bool) {
 	p.mu.Lock()
 	p.dryRun = v
@@ -66,6 +72,7 @@ func (p *Poller) SetDryRun(v bool) {
 }
 
 // AddSource appends a source to the poller.
+// Usage: AddSource(...)
 func (p *Poller) AddSource(s JobSource) {
 	p.mu.Lock()
 	p.sources = append(p.sources, s)
@@ -73,6 +80,7 @@ func (p *Poller) AddSource(s JobSource) {
 }
 
 // AddHandler appends a handler to the poller.
+// Usage: AddHandler(...)
 func (p *Poller) AddHandler(h JobHandler) {
 	p.mu.Lock()
 	p.handlers = append(p.handlers, h)
@@ -82,6 +90,7 @@ func (p *Poller) AddHandler(h JobHandler) {
 // Run starts a blocking poll-dispatch loop. It runs one cycle immediately,
 // then repeats on each tick of the configured interval until the context
 // is cancelled.
+// Usage: Run(...)
 func (p *Poller) Run(ctx context.Context) error {
 	if err := p.RunOnce(ctx); err != nil {
 		return err
@@ -104,6 +113,7 @@ func (p *Poller) Run(ctx context.Context) error {
 
 // RunOnce performs a single poll-dispatch cycle: iterate sources, poll each,
 // find the first matching handler for each signal, and execute it.
+// Usage: RunOnce(...)
 func (p *Poller) RunOnce(ctx context.Context) error {
 	p.mu.Lock()
 	p.cycle++

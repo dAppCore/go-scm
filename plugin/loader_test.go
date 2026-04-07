@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package plugin
 
 import (
@@ -43,7 +45,7 @@ func TestLoader_Discover_Good(t *testing.T) {
 	assert.True(t, names["plugin-b"])
 }
 
-func TestLoader_Discover_Good_SkipsInvalidPlugins(t *testing.T) {
+func TestLoader_Discover_Good_SkipsInvalidPlugins_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	baseDir := "/home/user/.core/plugins"
 
@@ -68,7 +70,7 @@ func TestLoader_Discover_Good_SkipsInvalidPlugins(t *testing.T) {
 	assert.Equal(t, "good-plugin", manifests[0].Name)
 }
 
-func TestLoader_Discover_Good_SkipsFiles(t *testing.T) {
+func TestLoader_Discover_Good_SkipsFiles_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	baseDir := "/home/user/.core/plugins"
 
@@ -89,7 +91,7 @@ func TestLoader_Discover_Good_SkipsFiles(t *testing.T) {
 	assert.Equal(t, "real-plugin", manifests[0].Name)
 }
 
-func TestLoader_Discover_Good_EmptyDirectory(t *testing.T) {
+func TestLoader_Discover_Good_EmptyDirectory_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	baseDir := "/home/user/.core/plugins"
 	m.Dirs[baseDir] = true
@@ -120,7 +122,7 @@ func TestLoader_LoadPlugin_Good(t *testing.T) {
 	assert.Equal(t, "1.0.0", manifest.Version)
 }
 
-func TestLoader_LoadPlugin_Bad_NotFound(t *testing.T) {
+func TestLoader_LoadPlugin_Bad_NotFound_Bad(t *testing.T) {
 	m := io.NewMockMedium()
 	loader := NewLoader(m, "/home/user/.core/plugins")
 
@@ -129,7 +131,7 @@ func TestLoader_LoadPlugin_Bad_NotFound(t *testing.T) {
 	assert.Contains(t, err.Error(), "failed to load plugin")
 }
 
-func TestLoader_LoadPlugin_Bad_InvalidManifest(t *testing.T) {
+func TestLoader_LoadPlugin_Bad_InvalidManifest_Bad(t *testing.T) {
 	m := io.NewMockMedium()
 	baseDir := "/home/user/.core/plugins"
 

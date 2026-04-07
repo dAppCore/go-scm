@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package gitea
 
 import (
@@ -18,7 +20,7 @@ func TestNew_Good(t *testing.T) {
 	assert.Equal(t, srv.URL, client.URL())
 }
 
-func TestNew_Bad_InvalidURL(t *testing.T) {
+func TestNew_Bad_InvalidURL_Good(t *testing.T) {
 	_, err := New("://invalid-url", "token")
 	assert.Error(t, err)
 }
@@ -35,4 +37,23 @@ func TestClient_URL_Good(t *testing.T) {
 	defer srv.Close()
 
 	assert.Equal(t, srv.URL, client.URL())
+}
+
+func TestClient_GetCurrentUser_Good(t *testing.T) {
+	client, srv := newTestClient(t)
+	defer srv.Close()
+
+	user, err := client.GetCurrentUser()
+	require.NoError(t, err)
+	require.NotNil(t, user)
+	assert.Equal(t, "test-user", user.UserName)
+}
+
+func TestClient_GetCurrentUser_Bad_ServerError_Good(t *testing.T) {
+	client, srv := newErrorServer(t)
+	defer srv.Close()
+
+	_, err := client.GetCurrentUser()
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to get current user")
 }

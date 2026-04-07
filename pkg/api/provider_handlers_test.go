@@ -1,9 +1,9 @@
-// SPDX-Licence-Identifier: EUPL-1.2
+// SPDX-License-Identifier: EUPL-1.2
 
 package api_test
 
 import (
-	"encoding/json"
+	json "dappco.re/go/core/scm/internal/ax/jsonx"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -40,6 +40,33 @@ func TestScmProvider_ListMarketplace_Category_Good(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, resp.Data, 1)
 	assert.Equal(t, "lint", resp.Data[0].Code)
+}
+
+func TestScmProvider_ListMarketplace_QueryAndCategory_Good(t *testing.T) {
+	idx := &marketplace.Index{
+		Version: 1,
+		Modules: []marketplace.Module{
+			{Code: "analytics", Name: "Analytics", Category: "product"},
+			{Code: "toolkit", Name: "Tool Kit", Category: "tool"},
+			{Code: "toolbox", Name: "Tool Box", Category: "tool"},
+		},
+		Categories: []string{"product", "tool"},
+	}
+	p := scmapi.NewProvider(idx, nil, nil, nil)
+
+	r := setupRouter(p)
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/api/v1/scm/marketplace?q=tool&category=tool", nil)
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	var resp goapi.Response[[]marketplace.Module]
+	err := json.Unmarshal(w.Body.Bytes(), &resp)
+	require.NoError(t, err)
+	assert.Len(t, resp.Data, 2)
+	assert.Equal(t, "toolkit", resp.Data[0].Code)
+	assert.Equal(t, "toolbox", resp.Data[1].Code)
 }
 
 // -- Marketplace: nil search results ------------------------------------------
@@ -196,6 +223,7 @@ func TestScmProvider_Describe_RouteCount_Good(t *testing.T) {
 		"/installed",
 		"/installed/:code/update",
 		"/registry",
+		"/marketplace/refresh",
 	}
 	paths := make(map[string]bool)
 	for _, d := range descs {

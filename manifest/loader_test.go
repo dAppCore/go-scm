@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package manifest
 
 import (
@@ -25,7 +27,7 @@ slots:
 	assert.Equal(t, "main-content", m.Slots["C"])
 }
 
-func TestLoad_Bad_NoManifest(t *testing.T) {
+func TestLoad_Bad_NoManifest_Good(t *testing.T) {
 	fs := io.NewMockMedium()
 	_, err := Load(fs, ".")
 	assert.Error(t, err)
@@ -48,7 +50,7 @@ func TestLoadVerified_Good(t *testing.T) {
 	assert.Equal(t, "signed-app", loaded.Code)
 }
 
-func TestLoadVerified_Bad_Tampered(t *testing.T) {
+func TestLoadVerified_Bad_Tampered_Good(t *testing.T) {
 	pub, priv, _ := ed25519.GenerateKey(nil)
 	m := &Manifest{Code: "app", Version: "1.0.0"}
 	_ = Sign(m, priv)
@@ -60,4 +62,18 @@ func TestLoadVerified_Bad_Tampered(t *testing.T) {
 
 	_, err := LoadVerified(fs, ".", pub)
 	assert.Error(t, err)
+}
+
+func TestLoadVerified_Bad_InvalidPublicKey_Good(t *testing.T) {
+	fs := io.NewMockMedium()
+	fs.Files[".core/manifest.yaml"] = `
+code: signed-app
+name: Signed
+version: 1.0.0
+sign: c2ln
+`
+
+	_, err := LoadVerified(fs, ".", ed25519.PublicKey([]byte("short")))
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid public key length")
 }

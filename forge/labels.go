@@ -1,19 +1,23 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package forge
 
 import (
-	"strings"
+	"iter"
 
-	forgejo "codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2"
+	strings "dappco.re/go/core/scm/internal/ax/stringsx"
 
 	"dappco.re/go/core/log"
+
+	forgejo "codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2"
 )
 
-// ListOrgLabels returns all labels for repos in the given organisation.
+// ListOrgLabels returns all unique labels across repos in the given organisation.
 // Note: The Forgejo SDK does not have a dedicated org-level labels endpoint.
-// This lists labels from the first repo found, which works when orgs use shared label sets.
-// For org-wide label management, use ListRepoLabels with a specific repo.
+// We aggregate labels from each repo and deduplicate them by name, preserving
+// the first seen label metadata.
+// Usage: ListOrgLabels(...)
 func (c *Client) ListOrgLabels(org string) ([]*forgejo.Label, error) {
-	// Forgejo doesn't expose org-level labels via SDK — list repos and aggregate unique labels.
 	repos, err := c.ListOrgRepos(org)
 	if err != nil {
 		return nil, err
@@ -23,11 +27,63 @@ func (c *Client) ListOrgLabels(org string) ([]*forgejo.Label, error) {
 		return nil, nil
 	}
 
-	// Use the first repo's labels as representative of the org's label set.
-	return c.ListRepoLabels(repos[0].Owner.UserName, repos[0].Name)
+	seen := make(map[string]struct{}, len(repos))
+	var all []*forgejo.Label
+
+	for _, repo := range repos {
+		labels, err := c.ListRepoLabels(repo.Owner.UserName, repo.Name)
+		if err != nil {
+			return nil, err
+		}
+		for _, label := range labels {
+			key := strings.ToLower(label.Name)
+			if _, ok := seen[key]; ok {
+				continue
+			}
+			seen[key] = struct{}{}
+			all = append(all, label)
+		}
+	}
+
+	return all, nil
+}
+
+// ListOrgLabelsIter returns an iterator over unique labels across repos in the given organisation.
+// Note: The Forgejo SDK does not have a dedicated org-level labels endpoint.
+// Labels are yielded in first-seen order across repositories and deduplicated by name.
+// Usage: ListOrgLabelsIter(...)
+func (c *Client) ListOrgLabelsIter(org string) iter.Seq2[*forgejo.Label, error] {
+	return func(yield func(*forgejo.Label, error) bool) {
+		seen := make(map[string]struct{})
+
+		for repo, err := range c.ListOrgReposIter(org) {
+			if err != nil {
+				yield(nil, log.E("forge.ListOrgLabelsIter", "failed to list org repos", err))
+				return
+			}
+
+			for label, err := range c.ListRepoLabelsIter(repo.Owner.UserName, repo.Name) {
+				if err != nil {
+					yield(nil, log.E("forge.ListOrgLabelsIter", "failed to list repo labels", err))
+					return
+				}
+
+				key := strings.ToLower(label.Name)
+				if _, ok := seen[key]; ok {
+					continue
+				}
+				seen[key] = struct{}{}
+
+				if !yield(label, nil) {
+					return
+				}
+			}
+		}
+	}
 }
 
 // ListRepoLabels returns all labels for a repository.
+// Usage: ListRepoLabels(...)
 func (c *Client) ListRepoLabels(owner, repo string) ([]*forgejo.Label, error) {
 	var all []*forgejo.Label
 	page := 1
@@ -51,7 +107,37 @@ func (c *Client) ListRepoLabels(owner, repo string) ([]*forgejo.Label, error) {
 	return all, nil
 }
 
+// ListRepoLabelsIter returns an iterator over labels for a repository.
+// Usage: ListRepoLabelsIter(...)
+func (c *Client) ListRepoLabelsIter(owner, repo string) iter.Seq2[*forgejo.Label, error] {
+	return func(yield func(*forgejo.Label, error) bool) {
+		page := 1
+
+		for {
+			labels, resp, err := c.api.ListRepoLabels(owner, repo, forgejo.ListLabelsOptions{
+				ListOptions: forgejo.ListOptions{Page: page, PageSize: 50},
+			})
+			if err != nil {
+				yield(nil, log.E("forge.ListRepoLabelsIter", "failed to list repo labels", err))
+				return
+			}
+
+			for _, label := range labels {
+				if !yield(label, nil) {
+					return
+				}
+			}
+
+			if resp == nil || page >= resp.LastPage {
+				break
+			}
+			page++
+		}
+	}
+}
+
 // CreateRepoLabel creates a label on a repository.
+// Usage: CreateRepoLabel(...)
 func (c *Client) CreateRepoLabel(owner, repo string, opts forgejo.CreateLabelOption) (*forgejo.Label, error) {
 	label, _, err := c.api.CreateLabel(owner, repo, opts)
 	if err != nil {
@@ -62,6 +148,7 @@ func (c *Client) CreateRepoLabel(owner, repo string, opts forgejo.CreateLabelOpt
 }
 
 // GetLabelByName retrieves a specific label by name from a repository.
+// Usage: GetLabelByName(...)
 func (c *Client) GetLabelByName(owner, repo, name string) (*forgejo.Label, error) {
 	labels, err := c.ListRepoLabels(owner, repo)
 	if err != nil {
@@ -78,6 +165,7 @@ func (c *Client) GetLabelByName(owner, repo, name string) (*forgejo.Label, error
 }
 
 // EnsureLabel checks if a label exists, and creates it if it doesn't.
+// Usage: EnsureLabel(...)
 func (c *Client) EnsureLabel(owner, repo, name, color string) (*forgejo.Label, error) {
 	label, err := c.GetLabelByName(owner, repo, name)
 	if err == nil {
@@ -91,6 +179,7 @@ func (c *Client) EnsureLabel(owner, repo, name, color string) (*forgejo.Label, e
 }
 
 // AddIssueLabels adds labels to an issue.
+// Usage: AddIssueLabels(...)
 func (c *Client) AddIssueLabels(owner, repo string, number int64, labelIDs []int64) error {
 	_, _, err := c.api.AddIssueLabels(owner, repo, number, forgejo.IssueLabelsOption{
 		Labels: labelIDs,
@@ -102,6 +191,7 @@ func (c *Client) AddIssueLabels(owner, repo string, number int64, labelIDs []int
 }
 
 // RemoveIssueLabel removes a label from an issue.
+// Usage: RemoveIssueLabel(...)
 func (c *Client) RemoveIssueLabel(owner, repo string, number int64, labelID int64) error {
 	_, err := c.api.DeleteIssueLabel(owner, repo, number, labelID)
 	if err != nil {

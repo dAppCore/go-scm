@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package collect
 
 import (
@@ -14,12 +16,12 @@ func TestGitHubCollector_Name_Good(t *testing.T) {
 	assert.Equal(t, "github:host-uk/core", g.Name())
 }
 
-func TestGitHubCollector_Name_Good_OrgOnly(t *testing.T) {
+func TestGitHubCollector_Name_Good_OrgOnly_Good(t *testing.T) {
 	g := &GitHubCollector{Org: "host-uk"}
 	assert.Equal(t, "github:host-uk", g.Name())
 }
 
-func TestGitHubCollector_Collect_Good_DryRun(t *testing.T) {
+func TestGitHubCollector_Collect_Good_DryRun_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	cfg := NewConfigWithMedium(m, "/output")
 	cfg.DryRun = true
@@ -38,7 +40,7 @@ func TestGitHubCollector_Collect_Good_DryRun(t *testing.T) {
 	assert.True(t, progressEmitted, "Should emit progress event in dry-run mode")
 }
 
-func TestGitHubCollector_Collect_Good_DryRun_IssuesOnly(t *testing.T) {
+func TestGitHubCollector_Collect_Good_DryRun_IssuesOnly_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	cfg := NewConfigWithMedium(m, "/output")
 	cfg.DryRun = true
@@ -50,7 +52,7 @@ func TestGitHubCollector_Collect_Good_DryRun_IssuesOnly(t *testing.T) {
 	assert.Equal(t, 0, result.Items)
 }
 
-func TestGitHubCollector_Collect_Good_DryRun_PRsOnly(t *testing.T) {
+func TestGitHubCollector_Collect_Good_DryRun_PRsOnly_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	cfg := NewConfigWithMedium(m, "/output")
 	cfg.DryRun = true
@@ -88,7 +90,7 @@ func TestFormatIssueMarkdown_Good(t *testing.T) {
 	assert.Contains(t, md, "**URL:** https://github.com/test/repo/issues/42")
 }
 
-func TestFormatIssueMarkdown_Good_NoLabels(t *testing.T) {
+func TestFormatIssueMarkdown_Good_NoLabels_Good(t *testing.T) {
 	issue := ghIssue{
 		Number: 1,
 		Title:  "Simple",

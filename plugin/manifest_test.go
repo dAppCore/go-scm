@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package plugin
 
 import (
@@ -30,7 +32,7 @@ func TestLoadManifest_Good(t *testing.T) {
 	assert.Equal(t, "0.5.0", manifest.MinVersion)
 }
 
-func TestLoadManifest_Good_MinimalFields(t *testing.T) {
+func TestLoadManifest_Good_MinimalFields_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	m.Files["plugin.json"] = `{
 		"name": "minimal",
@@ -47,7 +49,7 @@ func TestLoadManifest_Good_MinimalFields(t *testing.T) {
 	assert.Empty(t, manifest.MinVersion)
 }
 
-func TestLoadManifest_Bad_FileNotFound(t *testing.T) {
+func TestLoadManifest_Bad_FileNotFound_Good(t *testing.T) {
 	m := io.NewMockMedium()
 
 	_, err := LoadManifest(m, "nonexistent/plugin.json")
@@ -55,7 +57,7 @@ func TestLoadManifest_Bad_FileNotFound(t *testing.T) {
 	assert.Contains(t, err.Error(), "failed to read manifest")
 }
 
-func TestLoadManifest_Bad_InvalidJSON(t *testing.T) {
+func TestLoadManifest_Bad_InvalidJSON_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	m.Files["plugin.json"] = `{invalid json}`
 
@@ -75,7 +77,7 @@ func TestManifest_Validate_Good(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestManifest_Validate_Bad_MissingName(t *testing.T) {
+func TestManifest_Validate_Bad_MissingName_Good(t *testing.T) {
 	manifest := &Manifest{
 		Version:    "1.0.0",
 		Entrypoint: "main.go",
@@ -86,7 +88,7 @@ func TestManifest_Validate_Bad_MissingName(t *testing.T) {
 	assert.Contains(t, err.Error(), "name is required")
 }
 
-func TestManifest_Validate_Bad_MissingVersion(t *testing.T) {
+func TestManifest_Validate_Bad_MissingVersion_Good(t *testing.T) {
 	manifest := &Manifest{
 		Name:       "test-plugin",
 		Entrypoint: "main.go",
@@ -97,7 +99,7 @@ func TestManifest_Validate_Bad_MissingVersion(t *testing.T) {
 	assert.Contains(t, err.Error(), "version is required")
 }
 
-func TestManifest_Validate_Bad_MissingEntrypoint(t *testing.T) {
+func TestManifest_Validate_Bad_MissingEntrypoint_Good(t *testing.T) {
 	manifest := &Manifest{
 		Name:    "test-plugin",
 		Version: "1.0.0",

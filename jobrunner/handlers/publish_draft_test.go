@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package handlers
 
 import (
@@ -23,7 +25,7 @@ func TestPublishDraft_Match_Good(t *testing.T) {
 	assert.True(t, h.Match(sig))
 }
 
-func TestPublishDraft_Match_Bad_NotDraft(t *testing.T) {
+func TestPublishDraft_Match_Bad_NotDraft_Good(t *testing.T) {
 	h := NewPublishDraftHandler(nil)
 	sig := &jobrunner.PipelineSignal{
 		IsDraft:     false,
@@ -33,7 +35,7 @@ func TestPublishDraft_Match_Bad_NotDraft(t *testing.T) {
 	assert.False(t, h.Match(sig))
 }
 
-func TestPublishDraft_Match_Bad_ChecksFailing(t *testing.T) {
+func TestPublishDraft_Match_Bad_ChecksFailing_Good(t *testing.T) {
 	h := NewPublishDraftHandler(nil)
 	sig := &jobrunner.PipelineSignal{
 		IsDraft:     true,

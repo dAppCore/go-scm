@@ -11,20 +11,23 @@ require (
 	dappco.re/go/core/io v0.2.0
 	dappco.re/go/core/log v0.1.0
 	dappco.re/go/core/ws v0.3.0
-	forge.lthn.ai/core/cli v0.3.7
-	forge.lthn.ai/core/config v0.1.8
+	dappco.re/go/core/cli v0.3.7
+	dappco.re/go/core/config v0.1.8
 	github.com/gin-gonic/gin v1.12.0
+	github.com/goccy/go-json v0.10.6
+	github.com/gorilla/websocket v1.5.3
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/net v0.52.0
+	golang.org/x/sys v0.42.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
-	forge.lthn.ai/core/go v0.3.3 // indirect
-	forge.lthn.ai/core/go-i18n v0.1.7 // indirect
-	forge.lthn.ai/core/go-inference v0.1.7 // indirect
-	forge.lthn.ai/core/go-io v0.1.7 // indirect
-	forge.lthn.ai/core/go-log v0.0.4 // indirect
+	dappco.re/go/core v0.3.3 // indirect
+	dappco.re/go/core/i18n v0.1.7 // indirect
+	dappco.re/go/core/inference v0.1.7 // indirect
+	dappco.re/go/core/io v0.1.7 // indirect
+	dappco.re/go/core/log v0.0.4 // indirect
 	github.com/42wim/httpsig v1.2.3 // indirect
 	github.com/99designs/gqlgen v0.17.88 // indirect
 	github.com/KyleBanks/depth v1.2.1 // indirect
@@ -86,13 +89,11 @@ require (
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.30.1 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
-	github.com/goccy/go-json v0.10.6 // indirect
 	github.com/goccy/go-yaml v1.19.2 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/context v1.1.2 // indirect
 	github.com/gorilla/securecookie v1.1.2 // indirect
 	github.com/gorilla/sessions v1.4.0 // indirect
-	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/hashicorp/go-version v1.8.0 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
@@ -145,7 +146,6 @@ require (
 	golang.org/x/mod v0.34.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
-	golang.org/x/sys v0.42.0 // indirect
 	golang.org/x/term v0.41.0 // indirect
 	golang.org/x/text v0.35.0 // indirect
 	golang.org/x/tools v0.43.0 // indirect

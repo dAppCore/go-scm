@@ -1,40 +1,47 @@
+// SPDX-License-Identifier: EUPL-1.2
+
 package scm
 
 import (
 	"crypto/ed25519"
+	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
+	strings "dappco.re/go/core/scm/internal/ax/stringsx"
 	"encoding/hex"
-	"os/exec"
-	"strings"
+	exec "golang.org/x/sys/execabs"
 
-	"forge.lthn.ai/core/cli/pkg/cli"
 	"dappco.re/go/core/io"
 	"dappco.re/go/core/scm/manifest"
+	"forge.lthn.ai/core/cli/pkg/cli"
 )
 
 func addCompileCommand(parent *cli.Command) {
 	var (
+		version string
 		dir     string
 		signKey string
 		builtBy string
+		output  string
 	)
 
 	cmd := &cli.Command{
 		Use:   "compile",
 		Short: "Compile manifest.yaml into core.json",
-		Long:  "Read .core/manifest.yaml, attach build metadata (commit, tag), and write core.json to the project root.",
+		Long:  "Read .core/manifest.yaml, attach build metadata (commit, tag), and write core.json to the project root or a custom output path.",
 		RunE: func(cmd *cli.Command, args []string) error {
-			return runCompile(dir, signKey, builtBy)
+			return runCompile(dir, version, signKey, builtBy, output)
 		},
 	}
 
 	cmd.Flags().StringVarP(&dir, "dir", "d", ".", "Project root directory")
+	cmd.Flags().StringVar(&version, "version", "", "Override the manifest version")
 	cmd.Flags().StringVar(&signKey, "sign-key", "", "Hex-encoded ed25519 private key for signing")
 	cmd.Flags().StringVar(&builtBy, "built-by", "core scm compile", "Builder identity")
+	cmd.Flags().StringVarP(&output, "output", "o", "core.json", "Output path for the compiled manifest")
 
 	parent.AddCommand(cmd)
 }
 
-func runCompile(dir, signKeyHex, builtBy string) error {
+func runCompile(dir, version, signKeyHex, builtBy, output string) error {
 	medium, err := io.NewSandboxed(dir)
 	if err != nil {
 		return cli.WrapVerb(err, "open", dir)
@@ -46,6 +53,7 @@ func runCompile(dir, signKeyHex, builtBy string) error {
 	}
 
 	opts := manifest.CompileOptions{
+		Version: version,
 		Commit:  gitCommit(dir),
 		Tag:     gitTag(dir),
 		BuiltBy: builtBy,
@@ -64,20 +72,28 @@ func runCompile(dir, signKeyHex, builtBy string) error {
 		return err
 	}
 
-	if err := manifest.WriteCompiled(medium, ".", cm); err != nil {
-		return err
+	data, err := manifest.MarshalJSON(cm)
+	if err != nil {
+		return cli.WrapVerb(err, "marshal", "manifest")
+	}
+
+	if err := medium.EnsureDir(filepath.Dir(output)); err != nil {
+		return cli.WrapVerb(err, "create", filepath.Dir(output))
+	}
+	if err := medium.Write(output, string(data)); err != nil {
+		return cli.WrapVerb(err, "write", output)
 	}
 
 	cli.Blank()
 	cli.Print("  %s %s\n", successStyle.Render("compiled"), valueStyle.Render(m.Code))
-	cli.Print("  %s %s\n", dimStyle.Render("version:"), valueStyle.Render(m.Version))
+	cli.Print("  %s %s\n", dimStyle.Render("version:"), valueStyle.Render(cm.Version))
 	if opts.Commit != "" {
 		cli.Print("  %s %s\n", dimStyle.Render("commit:"), valueStyle.Render(opts.Commit))
 	}
 	if opts.Tag != "" {
 		cli.Print("  %s %s\n", dimStyle.Render("tag:"), valueStyle.Render(opts.Tag))
 	}
-	cli.Print("  %s %s\n", dimStyle.Render("output:"), valueStyle.Render("core.json"))
+	cli.Print("  %s %s\n", dimStyle.Render("output:"), valueStyle.Render(output))
 	cli.Blank()
 
 	return nil
