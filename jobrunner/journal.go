@@ -4,14 +4,16 @@ package jobrunner
 
 import (
 	"bufio"
-	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
-	json "dappco.re/go/core/scm/internal/ax/jsonx"
-	os "dappco.re/go/core/scm/internal/ax/osx"
-	strings "dappco.re/go/core/scm/internal/ax/stringsx"
+	"bytes"
 	"regexp"
 	"sort"
 	"sync"
 	"time"
+
+	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
+	json "dappco.re/go/core/scm/internal/ax/jsonx"
+	os "dappco.re/go/core/scm/internal/ax/osx"
+	strings "dappco.re/go/core/scm/internal/ax/stringsx"
 
 	coreio "dappco.re/go/core/io"
 	coreerr "dappco.re/go/core/log"
@@ -68,7 +70,7 @@ type JournalQueryOptions struct {
 // Journal writes ActionResult entries to date-partitioned JSONL files.
 type Journal struct {
 	baseDir string
-	mu      sync.Mutex
+	mu      sync.RWMutex
 }
 
 // NewJournal creates a new Journal rooted at baseDir.
@@ -206,8 +208,8 @@ func (j *Journal) Query(opts JournalQueryOptions) ([]JournalEntry, error) {
 		return nil, coreerr.E("jobrunner.Journal.Query", "journal is required", nil)
 	}
 
-	j.mu.Lock()
-	defer j.mu.Unlock()
+	j.mu.RLock()
+	defer j.mu.RUnlock()
 
 	ownerFilter, repoFilter, err := normaliseJournalQueryRepo(opts)
 	if err != nil {
@@ -315,7 +317,7 @@ func (j *Journal) readQueryFile(path string, opts JournalQueryOptions, repo stri
 		return nil, coreerr.E("jobrunner.Journal.Query", "read journal file", err)
 	}
 
-	scanner := bufio.NewScanner(strings.NewReader(string(data)))
+	scanner := bufio.NewScanner(bytes.NewReader(data))
 	var hits []journalQueryHit
 	for scanner.Scan() {
 		var entry JournalEntry

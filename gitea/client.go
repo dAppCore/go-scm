@@ -11,9 +11,9 @@
 package gitea
 
 import (
-	"code.gitea.io/sdk/gitea"
-
 	"dappco.re/go/core/log"
+
+	"code.gitea.io/sdk/gitea"
 )
 
 // Client wraps the Gitea SDK client with config-based auth.

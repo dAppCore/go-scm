@@ -24,6 +24,7 @@ func TestClient_ListMyOrgs_Good(t *testing.T) {
 }
 
 func TestClient_ListMyOrgsIter_Good_Paginates_Good(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/v1/version", func(w http.ResponseWriter, r *http.Request) {
 		jsonResponse(w, map[string]string{"version": "1.21.0"})
@@ -58,7 +59,7 @@ func TestClient_ListMyOrgsIter_Good_Paginates_Good(t *testing.T) {
 	assert.Equal(t, []string{"test-org", "second-org"}, names)
 }
 
-func TestClient_ListMyOrgs_Bad_ServerError_Good(t *testing.T) {
+func TestClient_ListMyOrgs_Bad_ServerError(t *testing.T) {
 	client, srv := newErrorServer(t)
 	defer srv.Close()
 
@@ -67,7 +68,7 @@ func TestClient_ListMyOrgs_Bad_ServerError_Good(t *testing.T) {
 	assert.Contains(t, err.Error(), "failed to list orgs")
 }
 
-func TestClient_ListMyOrgsIter_Bad_ServerError_Good(t *testing.T) {
+func TestClient_ListMyOrgsIter_Bad_ServerError(t *testing.T) {
 	client, srv := newErrorServer(t)
 	defer srv.Close()
 
@@ -90,7 +91,7 @@ func TestClient_GetOrg_Good(t *testing.T) {
 	assert.Equal(t, "test-org", org.UserName)
 }
 
-func TestClient_GetOrg_Bad_ServerError_Good(t *testing.T) {
+func TestClient_GetOrg_Bad_ServerError(t *testing.T) {
 	client, srv := newErrorServer(t)
 	defer srv.Close()
 
@@ -112,7 +113,7 @@ func TestClient_CreateOrg_Good(t *testing.T) {
 	assert.NotNil(t, org)
 }
 
-func TestClient_CreateOrg_Bad_ServerError_Good(t *testing.T) {
+func TestClient_CreateOrg_Bad_ServerError(t *testing.T) {
 	client, srv := newErrorServer(t)
 	defer srv.Close()
 

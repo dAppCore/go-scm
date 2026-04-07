@@ -101,6 +101,7 @@ func TestClient_CreateMirror_ServerError_Bad(t *testing.T) {
 }
 
 func TestClient_CreateMirrorFromService_Good_Gitea_Good(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/v1/version", func(w http.ResponseWriter, r *http.Request) {
 		jsonResponse(w, map[string]string{"version": "1.21.0"})

@@ -7,9 +7,9 @@ import (
 
 	strings "dappco.re/go/core/scm/internal/ax/stringsx"
 
-	forgejo "codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2"
-
 	"dappco.re/go/core/log"
+
+	forgejo "codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2"
 )
 
 // ListOrgLabels returns all unique labels across repos in the given organisation.

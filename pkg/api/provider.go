@@ -11,6 +11,8 @@ import (
 	"encoding/hex"
 	"net/http"
 	"net/url"
+	"path/filepath"
+	"reflect"
 	"strings"
 	"sync"
 
@@ -52,6 +54,20 @@ var (
 	_ provider.Renderable  = (*ScmProvider)(nil)
 )
 
+// normaliseInstaller returns nil when inst is a typed nil — e.g. a nil
+// *marketplace.Installer wrapped in the interface — so that downstream nil
+// checks on p.installer behave correctly.
+func normaliseInstaller(inst marketplaceInstaller) marketplaceInstaller {
+	if inst == nil {
+		return nil
+	}
+	v := reflect.ValueOf(inst)
+	if v.Kind() == reflect.Ptr && v.IsNil() {
+		return nil
+	}
+	return inst
+}
+
 // NewProvider creates an SCM provider backed by the given marketplace index,
 // installer, and registry. The WS hub is used to emit real-time events.
 // Pass nil for any dependency that is not available.
@@ -59,7 +75,7 @@ var (
 func NewProvider(idx *marketplace.Index, inst marketplaceInstaller, reg *repos.Registry, hub *ws.Hub) *ScmProvider {
 	return &ScmProvider{
 		index:     idx,
-		installer: inst,
+		installer: normaliseInstaller(inst),
 		registry:  reg,
 		hub:       hub,
 		medium:    io.Local,
@@ -307,7 +323,7 @@ func (p *ScmProvider) installItem(c *gin.Context) {
 		return
 	}
 
-	if err := inst.Install(context.Background(), mod); err != nil {
+	if err := inst.Install(c.Request.Context(), mod); err != nil {
 		c.JSON(http.StatusInternalServerError, api.Fail("install_failed", err.Error()))
 		return
 	}
@@ -365,9 +381,17 @@ func (p *ScmProvider) refreshMarketplace(c *gin.Context) {
 		req.IndexPath = "index.json"
 	}
 
-	idx, err := marketplace.LoadIndex(p.medium, req.IndexPath)
+	// Sanitise the path: reject relative traversal attempts.
+	clean := filepath.Clean(req.IndexPath)
+	if !filepath.IsAbs(clean) && strings.HasPrefix(clean, "..") {
+		c.JSON(http.StatusBadRequest, api.Fail("invalid_request", "index_path is invalid"))
+		return
+	}
+
+	idx, err := marketplace.LoadIndex(p.medium, clean)
 	if err != nil {
-		c.JSON(http.StatusNotFound, api.Fail("index_not_found", err.Error()))
+		// Do not expose raw filesystem errors to the caller.
+		c.JSON(http.StatusNotFound, api.Fail("index_not_found", "index not found"))
 		return
 	}
 
@@ -503,7 +527,7 @@ func (p *ScmProvider) updateInstalled(c *gin.Context) {
 	if !ok {
 		return
 	}
-	if err := p.installer.Update(context.Background(), code); err != nil {
+	if err := p.installer.Update(c.Request.Context(), code); err != nil {
 		c.JSON(http.StatusInternalServerError, api.Fail("update_failed", err.Error()))
 		return
 	}

@@ -10,11 +10,11 @@ import (
 	"strconv"
 	"time"
 
-	"code.gitea.io/sdk/gitea"
-
 	"dappco.re/go/core/log"
 	"dappco.re/go/core/scm/agentci"
 	"dappco.re/go/core/scm/internal/ax/jsonx"
+
+	"code.gitea.io/sdk/gitea"
 )
 
 // httpClient is a package-level client with a timeout to avoid hanging indefinitely.

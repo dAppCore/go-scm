@@ -7,16 +7,15 @@ import (
 	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
 	os "dappco.re/go/core/scm/internal/ax/osx"
 	strings "dappco.re/go/core/scm/internal/ax/stringsx"
-	exec "golang.org/x/sys/execabs"
 
+	"forge.lthn.ai/core/cli/pkg/cli"
 	coreerr "dappco.re/go/core/log"
 	"dappco.re/go/core/scm/agentci"
 	"dappco.re/go/core/scm/cmd/internal/syncutil"
 	gt "dappco.re/go/core/scm/gitea"
 
-
 	"code.gitea.io/sdk/gitea"
-	"forge.lthn.ai/core/cli/pkg/cli"
+	exec "golang.org/x/sys/execabs"
 )
 
 // Sync command flags.

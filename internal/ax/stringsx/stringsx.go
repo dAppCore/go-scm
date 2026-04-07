@@ -3,15 +3,14 @@
 package stringsx
 
 import (
-	"bytes"
 	"iter"
 	"strings"
 
 	core "dappco.re/go/core"
 )
 
-// Builder provides a strings.Builder-like type without importing strings.
-type Builder = bytes.Buffer
+// Builder is an alias for strings.Builder for use without importing strings directly.
+type Builder = strings.Builder
 
 // Contains mirrors strings.Contains.
 // Usage: Contains(...)
@@ -22,13 +21,13 @@ func Contains(s, substr string) bool {
 // ContainsAny mirrors strings.ContainsAny.
 // Usage: ContainsAny(...)
 func ContainsAny(s, chars string) bool {
-	return bytes.IndexAny([]byte(s), chars) >= 0
+	return strings.ContainsAny(s, chars)
 }
 
 // EqualFold mirrors strings.EqualFold.
 // Usage: EqualFold(...)
 func EqualFold(s, t string) bool {
-	return bytes.EqualFold([]byte(s), []byte(t))
+	return strings.EqualFold(s, t)
 }
 
 // Fields mirrors strings.Fields.
@@ -58,13 +57,13 @@ func Join(elems []string, sep string) string {
 // LastIndex mirrors strings.LastIndex.
 // Usage: LastIndex(...)
 func LastIndex(s, substr string) int {
-	return bytes.LastIndex([]byte(s), []byte(substr))
+	return strings.LastIndex(s, substr)
 }
 
 // NewReader mirrors strings.NewReader.
 // Usage: NewReader(...)
-func NewReader(s string) *bytes.Reader {
-	return bytes.NewReader([]byte(s))
+func NewReader(s string) *strings.Reader {
+	return strings.NewReader(s)
 }
 
 // Repeat mirrors strings.Repeat.
@@ -97,15 +96,29 @@ func SplitN(s, sep string, n int) []string {
 	return core.SplitN(s, sep, n)
 }
 
-// SplitSeq mirrors strings.SplitSeq.
+// SplitSeq mirrors strings.SplitSeq, lazily yielding substrings without
+// pre-allocating the full slice so early iteration termination is cheap.
 // Usage: SplitSeq(...)
 func SplitSeq(s, sep string) iter.Seq[string] {
-	parts := Split(s, sep)
 	return func(yield func(string) bool) {
-		for _, part := range parts {
-			if !yield(part) {
+		if sep == "" {
+			for _, r := range s {
+				if !yield(string(r)) {
+					return
+				}
+			}
+			return
+		}
+		for {
+			idx := strings.Index(s, sep)
+			if idx < 0 {
+				yield(s)
 				return
 			}
+			if !yield(s[:idx]) {
+				return
+			}
+			s = s[idx+len(sep):]
 		}
 	}
 }

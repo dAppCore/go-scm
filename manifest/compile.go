@@ -4,9 +4,10 @@ package manifest
 
 import (
 	"crypto/ed25519"
+	"time"
+
 	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
 	json "dappco.re/go/core/scm/internal/ax/jsonx"
-	"time"
 
 	"dappco.re/go/core/io"
 	coreerr "dappco.re/go/core/log"
@@ -44,16 +45,16 @@ func Compile(m *Manifest, opts CompileOptions) (*CompiledManifest, error) {
 	if m.Code == "" {
 		return nil, coreerr.E("manifest.Compile", "missing code", nil)
 	}
-	if m.Version == "" {
-		return nil, coreerr.E("manifest.Compile", "missing version", nil)
-	}
-
 	// Work on a copy to avoid mutating the caller's manifest.
 	mCopy := *m
 	if opts.Version != "" {
 		mCopy.Version = opts.Version
 	}
 	m = &mCopy
+
+	if m.Version == "" {
+		return nil, coreerr.E("manifest.Compile", "missing version", nil)
+	}
 
 	// Sign if a key is supplied.
 	if opts.SignKey != nil {
