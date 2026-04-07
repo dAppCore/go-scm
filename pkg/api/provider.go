@@ -11,7 +11,6 @@ import (
 	"encoding/hex"
 	"net/http"
 	"net/url"
-	"path/filepath"
 	"reflect"
 	"strings"
 	"sync"
@@ -365,30 +364,15 @@ func (p *ScmProvider) removeItem(c *gin.Context) {
 	c.JSON(http.StatusOK, api.OK(map[string]any{"removed": true, "code": code}))
 }
 
-type refreshRequest struct {
-	IndexPath string `json:"index_path"`
-}
+// marketplaceIndexPath is the canonical server-side path for the marketplace
+// index file. The refresh endpoint always loads this path — the caller has no
+// influence over which file is read.
+const marketplaceIndexPath = "index.json"
 
 func (p *ScmProvider) refreshMarketplace(c *gin.Context) {
-	var req refreshRequest
-	if c.Request.ContentLength != 0 {
-		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, api.Fail("invalid_request", "index_path is invalid"))
-			return
-		}
-	}
-	if req.IndexPath == "" {
-		req.IndexPath = "index.json"
-	}
-
-	// Sanitise the path: reject relative traversal attempts.
-	clean := filepath.Clean(req.IndexPath)
-	if !filepath.IsAbs(clean) && strings.HasPrefix(clean, "..") {
-		c.JSON(http.StatusBadRequest, api.Fail("invalid_request", "index_path is invalid"))
-		return
-	}
-
-	idx, err := marketplace.LoadIndex(p.medium, clean)
+	// Always use the server-side canonical path. Client-supplied paths are
+	// intentionally ignored to prevent path traversal / arbitrary file reads.
+	idx, err := marketplace.LoadIndex(p.medium, marketplaceIndexPath)
 	if err != nil {
 		// Do not expose raw filesystem errors to the caller.
 		c.JSON(http.StatusNotFound, api.Fail("index_not_found", "index not found"))
@@ -399,13 +383,13 @@ func (p *ScmProvider) refreshMarketplace(c *gin.Context) {
 	p.index = idx
 	p.mu.Unlock()
 	p.emitEvent("scm.marketplace.refreshed", map[string]any{
-		"index_path": req.IndexPath,
+		"index_path": marketplaceIndexPath,
 		"modules":    len(idx.Modules),
 	})
 
 	c.JSON(http.StatusOK, api.OK(map[string]any{
 		"refreshed":  true,
-		"index_path": req.IndexPath,
+		"index_path": marketplaceIndexPath,
 		"modules":    len(idx.Modules),
 	}))
 }

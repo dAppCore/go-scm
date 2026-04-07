@@ -69,6 +69,7 @@ func TestClient_ListMyOrgs_Bad_ServerError(t *testing.T) {
 }
 
 func TestClient_ListMyOrgsIter_Bad_ServerError(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
 	client, srv := newErrorServer(t)
 	defer srv.Close()
 
