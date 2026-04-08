@@ -31,7 +31,13 @@ type IndexOptions struct {
 // BuildIndex reads .core/manifest.yaml from each repository root and produces
 // a marketplace index. Repositories without a manifest are skipped silently.
 // Categories are deduplicated and sorted.
-// Usage: BuildIndex(...)
+//
+// Example:
+//   idx, err := marketplace.BuildIndex(
+//     io.Local,
+//     []string{"/tmp/core-scm", "/tmp/core-ui"},
+//     marketplace.IndexOptions{Org: "core", ForgeURL: "https://forge.lthn.ai"},
+//   )
 func BuildIndex(medium io.Medium, repoPaths []string, opts IndexOptions) (*Index, error) {
 	if opts.ForgeURL == "" {
 		opts.ForgeURL = defaultForgeURL
