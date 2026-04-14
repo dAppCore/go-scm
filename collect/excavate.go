@@ -61,6 +61,9 @@ func (e *Excavator) Run(ctx context.Context, cfg *Config) (*Result, error) {
 			}
 			verboseProgress(cfg, e.Name(), fmt.Sprintf("scan-only collector: %s", c.Name()))
 		}
+		if cfg.Dispatcher != nil {
+			cfg.Dispatcher.EmitComplete(e.Name(), "Scan-only excavation complete", result)
+		}
 		return result, nil
 	}
 

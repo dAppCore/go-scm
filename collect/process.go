@@ -47,17 +47,24 @@ func (p *Processor) Process(ctx context.Context, cfg *Config) (*Result, error) {
 	if cfg.DryRun {
 		if cfg.Dispatcher != nil {
 			cfg.Dispatcher.EmitProgress(p.Name(), fmt.Sprintf("[dry-run] Would process files in %s", p.Dir), nil)
+			cfg.Dispatcher.EmitComplete(p.Name(), "Dry-run complete", result)
 		}
 		return result, nil
 	}
 
 	entries, err := cfg.Output.List(p.Dir)
 	if err != nil {
+		if cfg.Dispatcher != nil {
+			cfg.Dispatcher.EmitError(p.Name(), fmt.Sprintf("Failed to list %s: %v", p.Dir, err), nil)
+		}
 		return result, core.E("collect.Processor.Process", "failed to list directory", err)
 	}
 
 	outputDir := filepath.Join(cfg.OutputDir, "processed", p.Source)
 	if err := cfg.Output.EnsureDir(outputDir); err != nil {
+		if cfg.Dispatcher != nil {
+			cfg.Dispatcher.EmitError(p.Name(), fmt.Sprintf("Failed to create output directory %s: %v", outputDir, err), nil)
+		}
 		return result, core.E("collect.Processor.Process", "failed to create output directory", err)
 	}
 
@@ -76,6 +83,9 @@ func (p *Processor) Process(ctx context.Context, cfg *Config) (*Result, error) {
 		content, err := cfg.Output.Read(srcPath)
 		if err != nil {
 			result.Errors++
+			if cfg.Dispatcher != nil {
+				cfg.Dispatcher.EmitError(p.Name(), fmt.Sprintf("Failed to read %s: %v", name, err), nil)
+			}
 			continue
 		}
 
@@ -115,6 +125,9 @@ func (p *Processor) Process(ctx context.Context, cfg *Config) (*Result, error) {
 
 		if err := cfg.Output.Write(outPath, processed); err != nil {
 			result.Errors++
+			if cfg.Dispatcher != nil {
+				cfg.Dispatcher.EmitError(p.Name(), fmt.Sprintf("Failed to write %s: %v", outName, err), nil)
+			}
 			continue
 		}
 

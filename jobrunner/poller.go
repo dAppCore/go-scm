@@ -167,6 +167,9 @@ func (p *Poller) RunOnce(ctx context.Context) error {
 				continue
 			}
 
+			if result.Timestamp.IsZero() {
+				result.Timestamp = time.Now()
+			}
 			result.Cycle = cycle
 			result.EpicNumber = sig.EpicNumber
 			result.ChildNumber = sig.ChildNumber

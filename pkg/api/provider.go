@@ -19,6 +19,7 @@ import (
 	"dappco.re/go/core/api/pkg/provider"
 	"dappco.re/go/core/io"
 	"dappco.re/go/core/scm/agentci"
+	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
 	"dappco.re/go/core/scm/manifest"
 	"dappco.re/go/core/scm/marketplace"
 	"dappco.re/go/core/scm/repos"
@@ -490,6 +491,10 @@ func (p *ScmProvider) signManifest(c *gin.Context) {
 
 	data, err := manifest.MarshalYAML(m)
 	if err != nil {
+		c.JSON(http.StatusInternalServerError, api.Fail("sign_failed", err.Error()))
+		return
+	}
+	if err := p.medium.EnsureDir(filepath.Dir(".core/manifest.yaml")); err != nil {
 		c.JSON(http.StatusInternalServerError, api.Fail("sign_failed", err.Error()))
 		return
 	}
