@@ -75,11 +75,13 @@ func (s *CoreService) OnStartup(context.Context) core.Result {
 func (s *CoreService) HandleIPCEvents(c *core.Core, msg core.Message) core.Result {
 	switch ev := msg.(type) {
 	case WorkspacePushed:
+		s.invalidateRegistries()
 		return s.handleWorkspacePushed(c, ev)
 	case *WorkspacePushed:
 		if ev == nil {
 			return core.Result{OK: true}
 		}
+		s.invalidateRegistries()
 		return s.handleWorkspacePushed(c, *ev)
 	default:
 		return core.Result{OK: true}
@@ -242,6 +244,10 @@ func (s *CoreService) loadRegistries() ([]*repos.Registry, error) {
 	}
 	s.registries = regs
 	return regs, nil
+}
+
+func (s *CoreService) invalidateRegistries() {
+	s.registries = nil
 }
 
 func (s *CoreService) resolveRepo(name, org, root string) (*repos.Repo, *repos.Registry, string, error) {

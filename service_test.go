@@ -69,6 +69,65 @@ func TestCoreService_HandleIPCEvents_Good_PointerWorkspacePushed_Good(t *testing
 	assert.True(t, called)
 }
 
+func TestCoreService_HandleIPCEvents_Good_WorkspacePushed_InvalidatesRegistryCache_Good(t *testing.T) {
+	m := io.NewMockMedium()
+	require.NoError(t, m.Write("/tmp/repos.yaml", `
+version: 1
+org: core
+base_path: /tmp/code
+repos:
+  go-scm:
+    type: module
+`))
+
+	c := core.New()
+	factory := NewCoreService(ServiceOptions{
+		Medium:       m,
+		RegistryPath: "/tmp/repos.yaml",
+	})
+
+	svcAny, err := factory(c)
+	require.NoError(t, err)
+	svc := svcAny.(*CoreService)
+
+	// Prime the cache with the initial registry contents.
+	regs, err := svc.loadRegistries()
+	require.NoError(t, err)
+	require.Len(t, regs, 1)
+
+	require.NoError(t, m.Write("/tmp/repos.yaml", `
+version: 1
+org: core
+base_path: /tmp/code
+repos:
+  go-scm:
+    type: module
+  go-io:
+    type: module
+`))
+
+	c.Action("repo.sync.all", func(ctx context.Context, opts core.Options) core.Result {
+		regs, err := svc.loadRegistries()
+		if err != nil {
+			return core.Result{Value: err, OK: false}
+		}
+		merged := repos.MergeRegistries(regs...)
+		return core.Result{Value: len(merged.List()), OK: true}
+	})
+
+	result := svc.HandleIPCEvents(c, &WorkspacePushed{
+		Org:    "core",
+		Repo:   "",
+		Branch: "dev",
+		Root:   "/tmp/code",
+	})
+
+	require.True(t, result.OK)
+	count, ok := result.Value.(int)
+	require.True(t, ok)
+	assert.Equal(t, 2, count)
+}
+
 func TestCoreService_ResolveRepo_FallsBackToWorkspaceRoot_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	require.NoError(t, m.Write("/tmp/empty-repos.yaml", `
