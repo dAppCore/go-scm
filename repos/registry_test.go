@@ -524,7 +524,15 @@ func TestDetectOrg_Bad_NonGitHubRemote_Good(t *testing.T) {
 	_ = m.Write("/repo/.git/config", `[remote "origin"]
 	url = ssh://git@forge.lthn.ai:2223/core/go.git
 `)
-	assert.Equal(t, "", detectOrg(m, "/repo"))
+	assert.Equal(t, "core", detectOrg(m, "/repo"))
+}
+
+func TestDetectOrg_Good_SCPStyleRemote_Good(t *testing.T) {
+	m := io.NewMockMedium()
+	_ = m.Write("/repo/.git/config", `[remote "origin"]
+	url = git@forge.lthn.ai:core/go.git
+`)
+	assert.Equal(t, "core", detectOrg(m, "/repo"))
 }
 
 // ── expandPath ─────────────────────────────────────────────────────
@@ -690,4 +698,48 @@ repos: {}
 	paths, err := FindRegistries(m)
 	require.NoError(t, err)
 	assert.Contains(t, paths, path)
+}
+
+func TestMergeRegistries_Good_FirstOccurrenceWins_Good(t *testing.T) {
+	m := io.NewMockMedium()
+	require.NoError(t, m.Write("/tmp/one.yaml", `
+version: 1
+org: core
+base_path: /tmp/one
+repos:
+  shared:
+    type: module
+  alpha:
+    type: module
+`))
+	require.NoError(t, m.Write("/tmp/two.yaml", `
+version: 1
+org: other
+base_path: /tmp/two
+repos:
+  shared:
+    type: module
+    path: elsewhere/shared
+  beta:
+    type: module
+`))
+
+	first, err := LoadRegistry(m, "/tmp/one.yaml")
+	require.NoError(t, err)
+	second, err := LoadRegistry(m, "/tmp/two.yaml")
+	require.NoError(t, err)
+
+	merged := MergeRegistries(first, second)
+	repos := merged.List()
+	require.Len(t, repos, 3)
+
+	shared, ok := merged.Get("shared")
+	require.True(t, ok)
+	assert.Equal(t, "/tmp/one/shared", shared.Path)
+	assert.Equal(t, "core", shared.Org)
+
+	beta, ok := merged.Get("beta")
+	require.True(t, ok)
+	assert.Equal(t, "/tmp/two/beta", beta.Path)
+	assert.Equal(t, "other", beta.Org)
 }

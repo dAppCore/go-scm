@@ -104,6 +104,43 @@ repos:
 	assert.Equal(t, "/tmp/repos/core", repo.Path)
 }
 
+func TestLoadWorkspaceRepos_Good_DeduplicatesByNameAcrossRegistries_Good(t *testing.T) {
+	firstPath := filepath.Join(t.TempDir(), "first.yaml")
+	secondPath := filepath.Join(t.TempDir(), "second.yaml")
+
+	require.NoError(t, os.WriteFile(firstPath, []byte(`
+version: 1
+org: core
+base_path: /tmp/one
+repos:
+  shared:
+    type: foundation
+  alpha:
+    type: module
+`), 0644))
+	require.NoError(t, os.WriteFile(secondPath, []byte(`
+version: 1
+org: core
+base_path: /tmp/two
+repos:
+  shared:
+    type: foundation
+    path: elsewhere/shared
+  beta:
+    type: module
+`), 0644))
+
+	repoList, err := loadWorkspaceRepos([]string{firstPath, secondPath})
+	require.NoError(t, err)
+	require.Len(t, repoList, 3)
+	assert.Equal(t, "alpha", repoList[0].Name)
+	assert.Equal(t, "/tmp/one/alpha", repoList[0].Path)
+	assert.Equal(t, "beta", repoList[1].Name)
+	assert.Equal(t, "/tmp/two/beta", repoList[1].Path)
+	assert.Equal(t, "shared", repoList[2].Name)
+	assert.Equal(t, "/tmp/one/shared", repoList[2].Path)
+}
+
 type moduleVersion struct {
 	Version string
 	Tag     string

@@ -20,19 +20,19 @@ func TestBuildIndex_Good_CategoriesAndRepoURLs_Good(t *testing.T) {
 code: a
 name: Alpha
 version: 1.0.0
-sign: key-a
+sign_key: key-a
 `))
 	require.NoError(t, medium.Write("/repos/b/.core/manifest.yaml", `
 code: b
 name: Beta
 version: 1.0.0
-sign: key-b
+sign_key: key-b
 `))
 	require.NoError(t, medium.Write("/repos/c/.core/manifest.yaml", `
 code: c
 name: Gamma
 version: 1.0.0
-sign: key-c
+sign_key: key-c
 `))
 
 	idx, err := BuildIndex(medium, []string{"/repos/a", "/repos/b", "/repos/c"}, IndexOptions{
@@ -87,7 +87,7 @@ func TestBuildIndex_Good_PrefersCompiledManifest_Good(t *testing.T) {
 			Code:    "compiled",
 			Name:    "Compiled Module",
 			Version: "2.0.0",
-			Sign:    "key-compiled",
+			SignKey: "key-compiled",
 		},
 		Commit: "abc123",
 	}
@@ -126,4 +126,35 @@ sign_key: public-key-preferred
 
 	require.Len(t, idx.Modules, 1)
 	assert.Equal(t, "public-key-preferred", idx.Modules[0].SignKey)
+}
+
+func TestBuildIndex_Good_DoesNotUseSignatureAsSignKey_Good(t *testing.T) {
+	medium := io.NewMockMedium()
+
+	require.NoError(t, medium.Write("/repos/signed/.core/manifest.yaml", `
+code: signed
+name: Signed Module
+version: 1.0.0
+sign: signature-only
+`))
+
+	idx, err := BuildIndex(medium, []string{"/repos/signed"}, IndexOptions{})
+	require.NoError(t, err)
+
+	require.Len(t, idx.Modules, 1)
+	assert.Empty(t, idx.Modules[0].SignKey)
+}
+
+func TestBuildIndex_Good_UsesLatestTaggedVersion_Good(t *testing.T) {
+	repo := createTaggedTestRepo(t, "tagged-index",
+		taggedRepoVersion{Version: "1.0.0", Tag: "v1.0.0"},
+		taggedRepoVersion{Version: "2.0.0", Tag: "v2.0.0"},
+		taggedRepoVersion{Version: "9.9.9"},
+	)
+
+	idx, err := BuildIndex(io.Local, []string{repo}, IndexOptions{})
+	require.NoError(t, err)
+
+	require.Len(t, idx.Modules, 1)
+	assert.Equal(t, "2.0.0", idx.Modules[0].Version)
 }

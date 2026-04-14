@@ -8,10 +8,10 @@ import (
 	os "dappco.re/go/core/scm/internal/ax/osx"
 	"testing"
 
+	"dappco.re/go/core/cli/pkg/cli"
 	"dappco.re/go/core/io"
 	"dappco.re/go/core/scm/manifest"
 	"dappco.re/go/core/scm/marketplace"
-	"dappco.re/go/core/cli/pkg/cli"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -25,7 +25,7 @@ func TestRunIndex_Good_WritesIndex_Good(t *testing.T) {
 code: mod-a
 name: Module A
 version: 1.0.0
-sign: key-a
+sign_key: key-a
 `), 0644))
 
 	output := filepath.Join(root, "index.json")
@@ -50,7 +50,7 @@ func TestRunIndex_Good_PrefersCompiledManifest_Good(t *testing.T) {
 			Code:    "compiled-mod",
 			Name:    "Compiled Module",
 			Version: "2.0.0",
-			Sign:    "compiled-key",
+			SignKey: "compiled-key",
 		},
 		Commit: "abc123",
 	}
@@ -61,7 +61,7 @@ func TestRunIndex_Good_PrefersCompiledManifest_Good(t *testing.T) {
 code: source-mod
 name: Source Module
 version: 1.0.0
-sign: source-key
+sign_key: source-key
 `), 0644))
 
 	output := filepath.Join(root, "index.json")

@@ -9,7 +9,9 @@ import (
 	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
 	os "dappco.re/go/core/scm/internal/ax/osx"
 	strings "dappco.re/go/core/scm/internal/ax/stringsx"
+	"net/url"
 	"sort"
+	stdstrings "strings"
 
 	"dappco.re/go/core/io"
 	coreerr "dappco.re/go/core/log"
@@ -84,6 +86,7 @@ const (
 type Repo struct {
 	Name        string   `yaml:"-"` // Set from map key
 	Type        string   `yaml:"type"`
+	Org         string   `yaml:"org,omitempty"` // Computed from registry metadata
 	Remote      string   `yaml:"remote,omitempty"`
 	Branch      string   `yaml:"branch,omitempty"`
 	DependsOn   []string `yaml:"depends_on"`
@@ -256,7 +259,7 @@ func FindRegistries(m io.Medium) ([]string, error) {
 }
 
 // LoadRegistries discovers and loads all registry files found via FindRegistries.
-// Duplicate repository names are resolved by first occurrence.
+// Use MergeRegistries when a first-occurrence view across multiple files is needed.
 // Usage: LoadRegistries(...)
 func LoadRegistries(m io.Medium) ([]*Registry, error) {
 	paths, err := FindRegistries(m)
@@ -273,6 +276,41 @@ func LoadRegistries(m io.Medium) ([]*Registry, error) {
 		regs = append(regs, reg)
 	}
 	return regs, nil
+}
+
+// MergeRegistries combines registries into a single read-only view.
+// Repositories are deduplicated by name in first-occurrence order.
+// Usage: MergeRegistries(...)
+func MergeRegistries(regs ...*Registry) *Registry {
+	merged := NewRegistry()
+	merged.Repos = make(map[string]*Repo)
+
+	for _, reg := range regs {
+		if reg == nil {
+			continue
+		}
+		if merged.medium == nil {
+			merged.medium = reg.medium
+		}
+		if merged.Org == "" {
+			merged.Org = reg.Org
+		}
+		if merged.BasePath == "" {
+			merged.BasePath = reg.BasePath
+		}
+
+		for _, repo := range reg.List() {
+			if repo == nil || strings.TrimSpace(repo.Name) == "" {
+				continue
+			}
+			if _, exists := merged.Repos[repo.Name]; exists {
+				continue
+			}
+			merged.Repos[repo.Name] = repo
+		}
+	}
+
+	return merged
 }
 
 // ScanDirectory creates a Registry by scanning a directory for git repos.
@@ -317,6 +355,7 @@ func ScanDirectory(m io.Medium, dir string) (*Registry, error) {
 
 		repo := &Repo{
 			Name:     entry.Name(),
+			Org:      reg.Org,
 			Path:     repoPath,
 			Type:     "module", // Default type
 			registry: reg,
@@ -326,14 +365,21 @@ func ScanDirectory(m io.Medium, dir string) (*Registry, error) {
 
 		// Try to detect org from first repo's remote
 		if reg.Org == "" {
-			reg.Org = detectOrg(m, repoPath)
+			if detected := detectOrg(m, repoPath); detected != "" {
+				reg.Org = detected
+				for _, existing := range reg.Repos {
+					if existing != nil && strings.TrimSpace(existing.Org) == "" {
+						existing.Org = detected
+					}
+				}
+			}
 		}
 	}
 
 	return reg, nil
 }
 
-// detectOrg tries to extract the GitHub org from a repo's origin remote.
+// detectOrg tries to extract the organisation from a repo's origin remote.
 func detectOrg(m io.Medium, repoPath string) string {
 	// Try to read git remote
 	configPath := filepath.Join(repoPath, ".git", "config")
@@ -349,28 +395,8 @@ func detectOrg(m io.Medium, repoPath string) string {
 		}
 		url := strings.TrimPrefix(line, "url = ")
 
-		// git@github.com:org/repo.git
-		if strings.Contains(url, "github.com:") {
-			parts := strings.Split(url, ":")
-			if len(parts) >= 2 {
-				orgRepo := strings.TrimSuffix(parts[1], ".git")
-				orgParts := strings.Split(orgRepo, "/")
-				if len(orgParts) >= 1 {
-					return orgParts[0]
-				}
-			}
-		}
-
-		// https://github.com/org/repo.git
-		if strings.Contains(url, "github.com/") {
-			parts := strings.Split(url, "github.com/")
-			if len(parts) >= 2 {
-				orgRepo := strings.TrimSuffix(parts[1], ".git")
-				orgParts := strings.Split(orgRepo, "/")
-				if len(orgParts) >= 1 {
-					return orgParts[0]
-				}
-			}
+		if org := remoteOrg(url); org != "" {
+			return org
 		}
 	}
 
@@ -654,6 +680,9 @@ func finaliseRepo(reg *Registry, name string, repo *Repo) {
 	if repo.Name == "" {
 		repo.Name = name
 	}
+	if repo.Org == "" {
+		repo.Org = reg.Org
+	}
 	repo.Path = normaliseRepoPath(reg.BasePath, repo.Path, repo.Name)
 	repo.registry = reg
 	if repo.CI == "" {
@@ -678,19 +707,11 @@ func normaliseRepoPath(basePath, rawPath, fallbackName string) string {
 }
 
 func repoNameFromRemote(remote string) string {
-	remote = strings.TrimSpace(remote)
-	if remote == "" {
+	parts := remotePathParts(remote)
+	if len(parts) == 0 {
 		return ""
 	}
-
-	remote = strings.TrimSuffix(remote, ".git")
-	if idx := strings.LastIndex(remote, "/"); idx >= 0 && idx < len(remote)-1 {
-		return remote[idx+1:]
-	}
-	if idx := strings.LastIndex(remote, ":"); idx >= 0 && idx < len(remote)-1 {
-		return remote[idx+1:]
-	}
-	return filepath.Base(remote)
+	return parts[len(parts)-1]
 }
 
 // expandPath expands ~ to home directory.
@@ -725,4 +746,53 @@ func registryCandidatesFromEnv() []string {
 		}
 	}
 	return candidates
+}
+
+func remoteOrg(remote string) string {
+	parts := remotePathParts(remote)
+	if len(parts) < 2 {
+		return ""
+	}
+	return parts[0]
+}
+
+func remotePathParts(remote string) []string {
+	remote = strings.TrimSpace(remote)
+	if remote == "" {
+		return nil
+	}
+
+	remote = strings.TrimSuffix(remote, ".git")
+
+	// SCP-style remotes: git@host:org/repo
+	if !strings.Contains(remote, "://") {
+		if idx := stdstrings.Index(remote, ":"); idx >= 0 && strings.Contains(remote[:idx], "@") {
+			return splitRemotePath(remote[idx+1:])
+		}
+	}
+
+	if parsed, err := url.Parse(remote); err == nil {
+		if path := stdstrings.Trim(parsed.Path, "/"); path != "" {
+			return splitRemotePath(path)
+		}
+	}
+
+	return splitRemotePath(remote)
+}
+
+func splitRemotePath(path string) []string {
+	path = stdstrings.Trim(path, "/")
+	if path == "" {
+		return nil
+	}
+
+	raw := strings.Split(path, "/")
+	parts := make([]string, 0, len(raw))
+	for _, part := range raw {
+		part = strings.TrimSpace(part)
+		if part != "" {
+			parts = append(parts, part)
+		}
+	}
+	return parts
 }

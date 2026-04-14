@@ -23,12 +23,12 @@ func writeManifestYAML(t *testing.T, dir, code, name, version string) {
 	require.NoError(t, os.WriteFile(filepath.Join(coreDir, "manifest.yaml"), []byte(yaml), 0644))
 }
 
-// writeManifestYAMLWithSign writes a .core/manifest.yaml with a signing key.
-func writeManifestYAMLWithSign(t *testing.T, dir, code, name, version, sign string) {
+// writeManifestYAMLWithSignKey writes a .core/manifest.yaml with a signing key.
+func writeManifestYAMLWithSignKey(t *testing.T, dir, code, name, version, signKey string) {
 	t.Helper()
 	coreDir := filepath.Join(dir, ".core")
 	require.NoError(t, os.MkdirAll(coreDir, 0755))
-	yaml := "code: " + code + "\nname: " + name + "\nversion: " + version + "\nsign: " + sign + "\n"
+	yaml := "code: " + code + "\nname: " + name + "\nversion: " + version + "\nsign_key: " + signKey + "\n"
 	require.NoError(t, os.WriteFile(filepath.Join(coreDir, "manifest.yaml"), []byte(yaml), 0644))
 }
 
@@ -84,7 +84,7 @@ func TestBuildFromDirs_Good_CarriesSignKey_Good(t *testing.T) {
 	root := t.TempDir()
 	modDir := filepath.Join(root, "signed-mod")
 	require.NoError(t, os.MkdirAll(modDir, 0755))
-	writeManifestYAMLWithSign(t, modDir, "signed-mod", "Signed Module", "1.0.0", "abc123")
+	writeManifestYAMLWithSignKey(t, modDir, "signed-mod", "Signed Module", "1.0.0", "abc123")
 
 	b := &Builder{}
 	idx, err := b.BuildFromDirs(root)
@@ -121,7 +121,7 @@ func TestBuildFromDirs_Good_UsesInjectedMedium_Good(t *testing.T) {
 			Code:    "virtual-mod",
 			Name:    "Virtual Module",
 			Version: "9.9.9",
-			Sign:    "sig-virtual",
+			SignKey: "pub-virtual",
 		},
 		Commit: "commit-virtual",
 	}
@@ -135,7 +135,7 @@ func TestBuildFromDirs_Good_UsesInjectedMedium_Good(t *testing.T) {
 
 	require.Len(t, idx.Modules, 1)
 	assert.Equal(t, "virtual-mod", idx.Modules[0].Code)
-	assert.Equal(t, "sig-virtual", idx.Modules[0].SignKey)
+	assert.Equal(t, "pub-virtual", idx.Modules[0].SignKey)
 }
 
 func TestBuildFromDirs_Good_PrefersCompiledOverSource_Good(t *testing.T) {
@@ -247,10 +247,25 @@ func TestBuildFromDirs_Good_DefaultForgeURL_Good(t *testing.T) {
 	assert.Equal(t, "https://forge.lthn.ai/core/mod.git", idx.Modules[0].Repo)
 }
 
+func TestBuildFromDirs_Good_UsesLatestTaggedVersion_Good(t *testing.T) {
+	repo := createTaggedTestRepo(t, "tagged-build",
+		taggedRepoVersion{Version: "1.0.0", Tag: "v1.0.0"},
+		taggedRepoVersion{Version: "2.0.0", Tag: "v2.0.0"},
+		taggedRepoVersion{Version: "9.9.9"},
+	)
+
+	b := &Builder{}
+	idx, err := b.BuildFromDirs(repo)
+	require.NoError(t, err)
+
+	require.Len(t, idx.Modules, 1)
+	assert.Equal(t, "2.0.0", idx.Modules[0].Version)
+}
+
 func TestBuildFromManifests_Good(t *testing.T) {
 	manifests := []*manifest.Manifest{
-		{Code: "bravo", Name: "Bravo", Version: "2.0.0", Sign: "key-bravo"},
-		{Code: "alpha", Name: "Alpha", Version: "1.0.0", Sign: "key-alpha"},
+		{Code: "bravo", Name: "Bravo", Version: "2.0.0", SignKey: "key-bravo"},
+		{Code: "alpha", Name: "Alpha", Version: "1.0.0", SignKey: "key-alpha"},
 	}
 	idx := BuildFromManifests(manifests)
 	require.Len(t, idx.Modules, 2)

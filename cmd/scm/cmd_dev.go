@@ -300,17 +300,7 @@ func workspaceImpact(registryPaths []string, target string) ([]*repos.Repo, erro
 		return nil, err
 	}
 
-	merged := repos.NewRegistry(repos.WithMedium(coreio.Local))
-	merged.Repos = make(map[string]*repos.Repo)
-	for _, reg := range regs {
-		for name, repo := range reg.Repos {
-			if _, exists := merged.Repos[name]; exists {
-				continue
-			}
-			merged.Repos[name] = repo
-		}
-	}
-
+	merged := repos.MergeRegistries(regs...)
 	return merged.Impact(target)
 }
 
@@ -320,18 +310,8 @@ func loadWorkspaceRepos(registryPaths []string) ([]*repos.Repo, error) {
 		return nil, err
 	}
 
-	seen := make(map[string]bool)
-	var repoList []*repos.Repo
-	for _, reg := range regs {
-		for _, repo := range reg.List() {
-			if repo == nil || repo.Path == "" || seen[repo.Path] {
-				continue
-			}
-			seen[repo.Path] = true
-			repoList = append(repoList, repo)
-		}
-	}
-	return repoList, nil
+	merged := repos.MergeRegistries(regs...)
+	return merged.List(), nil
 }
 
 func loadWorkspaceRegistries(registryPaths []string) ([]*repos.Registry, error) {

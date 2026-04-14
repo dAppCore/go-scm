@@ -64,7 +64,7 @@ func BuildIndex(medium io.Medium, repoPaths []string, opts IndexOptions) (*Index
 		module := Module{
 			Code:    m.Code,
 			Name:    m.Name,
-			Version: m.Version,
+			Version: moduleVersionForRepo(repoPath, m.Version),
 			SignKey: manifestSignKey(m),
 		}
 		if opts.Org != "" {
@@ -97,10 +97,7 @@ func manifestSignKey(m *manifest.Manifest) string {
 	if m == nil {
 		return ""
 	}
-	if key := strings.TrimSpace(m.SignKey); key != "" {
-		return key
-	}
-	return strings.TrimSpace(m.Sign)
+	return strings.TrimSpace(m.SignKey)
 }
 
 func loadIndexManifest(medium io.Medium, repoPath string) (*manifest.Manifest, error) {

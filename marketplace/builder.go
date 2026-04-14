@@ -95,7 +95,7 @@ func (b *Builder) loadInto(modules *[]Module, seen map[string]bool, dir string) 
 		Code:    m.Code,
 		Name:    m.Name,
 		Repo:    b.repoURL(m.Code),
-		Version: m.Version,
+		Version: moduleVersionForRepo(dir, m.Version),
 		SignKey: manifestSignKey(m),
 	}
 	*modules = append(*modules, mod)

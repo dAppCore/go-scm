@@ -139,50 +139,53 @@ func (s *CoreService) handleRepoSyncAll(ctx context.Context, opts core.Options) 
 		return core.Result{Value: err, OK: false}
 	}
 
+	merged := repos.MergeRegistries(regs...)
 	root := firstOption(opts, "root")
 	var synced, skipped int
 	var failures []string
 	results := make([]map[string]any, 0)
 
-	for _, reg := range regs {
-		order, orderErr := reg.TopologicalOrder()
-		if orderErr != nil {
-			order = reg.List()
+	order, orderErr := merged.TopologicalOrder()
+	if orderErr != nil {
+		order = merged.List()
+	}
+
+	for _, repo := range order {
+		if repo != nil && repo.Clone != nil && !*repo.Clone {
+			skipped++
+			continue
 		}
 
-		for _, repo := range order {
-			if repo != nil && repo.Clone != nil && !*repo.Clone {
-				skipped++
-				continue
-			}
+		branch := repoBranch(repo, nil, s.Options().DefaultBranch)
+		if branch == "" {
+			branch = "main"
+		}
+		org := repo.Org
+		if org == "" {
+			org = s.Options().DefaultOrg
+		}
 
-			branch := repoBranch(repo, reg, s.Options().DefaultBranch)
-			if branch == "" {
-				branch = "main"
-			}
-
-			syncOpts := core.NewOptions(
-				core.Option{Key: "repo", Value: repo.Name},
-				core.Option{Key: "org", Value: reg.Org},
-				core.Option{Key: "branch", Value: branch},
-				core.Option{Key: "root", Value: root},
-			)
-			r := s.handleRepoSync(ctx, syncOpts)
-			if !r.OK {
-				skipped++
-				if r.Value != nil {
-					if syncErr, ok := r.Value.(error); ok {
-						failures = append(failures, syncErr.Error())
-					}
+		syncOpts := core.NewOptions(
+			core.Option{Key: "repo", Value: repo.Name},
+			core.Option{Key: "org", Value: org},
+			core.Option{Key: "branch", Value: branch},
+			core.Option{Key: "root", Value: root},
+		)
+		r := s.handleRepoSync(ctx, syncOpts)
+		if !r.OK {
+			skipped++
+			if r.Value != nil {
+				if syncErr, ok := r.Value.(error); ok {
+					failures = append(failures, syncErr.Error())
 				}
-				continue
 			}
-
-			if value, ok := r.Value.(map[string]any); ok {
-				results = append(results, value)
-			}
-			synced++
+			continue
 		}
+
+		if value, ok := r.Value.(map[string]any); ok {
+			results = append(results, value)
+		}
+		synced++
 	}
 
 	return core.Result{
