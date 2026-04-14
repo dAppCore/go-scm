@@ -19,6 +19,9 @@ import (
 type CompiledManifest struct {
 	Manifest `json:",inline" yaml:",inline"`
 
+	// Build metadata mirrored from the RFC core.json artifact.
+	Build *BuildSpec `json:"build,omitempty" yaml:"build,omitempty"`
+
 	// Build metadata — populated by Compile.
 	Commit  string `json:"commit,omitempty" yaml:"commit,omitempty"`
 	Tag     string `json:"tag,omitempty" yaml:"tag,omitempty"`
@@ -26,13 +29,21 @@ type CompiledManifest struct {
 	BuiltBy string `json:"built_by,omitempty" yaml:"built_by,omitempty"`
 }
 
+// BuildSpec describes build outputs stapled into core.json.
+type BuildSpec struct {
+	Targets   []string `json:"targets,omitempty" yaml:"targets,omitempty"`
+	Checksums string   `json:"checksums,omitempty" yaml:"checksums,omitempty"`
+}
+
 // CompileOptions controls how Compile populates the build metadata.
 type CompileOptions struct {
-	Version string             // Optional override for the manifest version
-	Commit  string             // Git commit hash
-	Tag     string             // Git tag (e.g. v1.0.0)
-	BuiltBy string             // Builder identity (e.g. "core build")
-	SignKey ed25519.PrivateKey // Optional — signs before compiling
+	Version   string             // Optional override for the manifest version
+	Commit    string             // Git commit hash
+	Tag       string             // Git tag (e.g. v1.0.0)
+	BuiltBy   string             // Builder identity (e.g. "core build")
+	Targets   []string           // Build targets, e.g. linux/amd64
+	Checksums string             // Checksum algorithm for emitted artefacts
+	SignKey   ed25519.PrivateKey // Optional — signs before compiling
 }
 
 // Compile produces a CompiledManifest from a source manifest and build
@@ -70,8 +81,17 @@ func Compile(m *Manifest, opts CompileOptions) (*CompiledManifest, error) {
 		}
 	}
 
+	var build *BuildSpec
+	if len(opts.Targets) > 0 || opts.Checksums != "" {
+		build = &BuildSpec{
+			Targets:   append([]string(nil), opts.Targets...),
+			Checksums: opts.Checksums,
+		}
+	}
+
 	return &CompiledManifest{
 		Manifest: *m,
+		Build:    build,
 		Commit:   opts.Commit,
 		Tag:      opts.Tag,
 		BuiltAt:  time.Now().UTC().Format(time.RFC3339),

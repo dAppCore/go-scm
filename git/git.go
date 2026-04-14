@@ -9,9 +9,11 @@ import (
 	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
 	os "dappco.re/go/core/scm/internal/ax/osx"
 	strings "dappco.re/go/core/scm/internal/ax/stringsx"
+	"errors"
 	exec "golang.org/x/sys/execabs"
 	"io"
 	"iter"
+	stdos "os"
 	"slices"
 	"strconv"
 	"sync"
@@ -176,6 +178,29 @@ func Pull(ctx context.Context, path string) error {
 	return gitInteractive(ctx, path, "pull", "--rebase")
 }
 
+// PushWithSSH pushes commits using an explicit SSH configuration.
+// Usage: PushWithSSH(...)
+func PushWithSSH(ctx context.Context, path string, opts SSHOptions) error {
+	return gitInteractiveEnv(ctx, path, gitEnvWithSSH(opts), "push")
+}
+
+// PullWithSSH pulls changes using an explicit SSH configuration.
+// Usage: PullWithSSH(...)
+func PullWithSSH(ctx context.Context, path string, opts SSHOptions) error {
+	return gitInteractiveEnv(ctx, path, gitEnvWithSSH(opts), "pull", "--rebase")
+}
+
+// CreateBranch creates and checks out a new branch from the current HEAD or an
+// optional start point.
+// Usage: CreateBranch(...)
+func CreateBranch(ctx context.Context, path, branch, startPoint string) error {
+	args := []string{"checkout", "-b", branch}
+	if strings.TrimSpace(startPoint) != "" {
+		args = append(args, startPoint)
+	}
+	return gitInteractive(ctx, path, args...)
+}
+
 // Clone clones a repository into dest. When ref is non-empty it is checked out
 // during clone, which supports both branches and tags.
 // Usage: Clone(...)
@@ -188,6 +213,17 @@ func Clone(ctx context.Context, repo, dest, ref string) error {
 	return gitInteractive(ctx, "", args...)
 }
 
+// CloneWithSSH clones a repository using an explicit SSH configuration.
+// Usage: CloneWithSSH(...)
+func CloneWithSSH(ctx context.Context, repo, dest, ref string, opts SSHOptions) error {
+	args := []string{"clone", "--depth=1"}
+	if ref != "" {
+		args = append(args, "--branch", ref)
+	}
+	args = append(args, repo, dest)
+	return gitInteractiveEnv(ctx, "", gitEnvWithSSH(opts), args...)
+}
+
 // Fetch fetches refs from the given remote.
 // When branch is non-empty, it is fetched explicitly from origin.
 // Usage: Fetch(...)
@@ -197,6 +233,16 @@ func Fetch(ctx context.Context, path, branch string) error {
 		args = append(args, branch)
 	}
 	return gitInteractive(ctx, path, args...)
+}
+
+// FetchWithSSH fetches refs using an explicit SSH configuration.
+// Usage: FetchWithSSH(...)
+func FetchWithSSH(ctx context.Context, path, branch string, opts SSHOptions) error {
+	args := []string{"fetch", "origin"}
+	if branch != "" {
+		args = append(args, branch)
+	}
+	return gitInteractiveEnv(ctx, path, gitEnvWithSSH(opts), args...)
 }
 
 // ResetHard resets the working tree to the given ref.
@@ -216,6 +262,12 @@ func FetchTags(ctx context.Context, path string) error {
 // Usage: Checkout(...)
 func Checkout(ctx context.Context, path, ref string) error {
 	return gitInteractive(ctx, path, "checkout", ref)
+}
+
+// SwitchBranch switches the repository to the named branch.
+// Usage: SwitchBranch(...)
+func SwitchBranch(ctx context.Context, path, branch string) error {
+	return Checkout(ctx, path, branch)
 }
 
 // Commit creates a git commit with the supplied message.
@@ -271,6 +323,67 @@ func ListRemoteTags(ctx context.Context, repo string) ([]string, error) {
 	return tags, nil
 }
 
+// VerifyCommitSignature verifies the commit signature at ref.
+// Unsigned or invalid commits return (false, nil).
+// Usage: VerifyCommitSignature(...)
+func VerifyCommitSignature(ctx context.Context, path, ref string) (bool, error) {
+	return verifySignature(ctx, path, "verify-commit", ref)
+}
+
+// VerifyTagSignature verifies the tag signature for tag.
+// Unsigned or invalid tags return (false, nil).
+// Usage: VerifyTagSignature(...)
+func VerifyTagSignature(ctx context.Context, path, tag string) (bool, error) {
+	return verifySignature(ctx, path, "verify-tag", tag)
+}
+
+// SSHOptions configures git operations that authenticate over SSH.
+type SSHOptions struct {
+	KeyPath                      string
+	KnownHostsPath               string
+	DisableStrictHostKeyChecking bool
+}
+
+// SSHCommand renders a safe GIT_SSH_COMMAND string for git child processes.
+// Usage: SSHCommand(...)
+func SSHCommand(opts SSHOptions) string {
+	parts := []string{
+		"ssh",
+		"-o", "BatchMode=yes",
+		"-o", "IdentitiesOnly=yes",
+	}
+
+	strict := "yes"
+	if opts.DisableStrictHostKeyChecking {
+		strict = "no"
+	}
+	parts = append(parts, "-o", "StrictHostKeyChecking="+strict)
+
+	if keyPath := strings.TrimSpace(opts.KeyPath); keyPath != "" {
+		parts = append(parts, "-i", keyPath)
+	}
+
+	knownHosts := strings.TrimSpace(opts.KnownHostsPath)
+	switch {
+	case knownHosts != "":
+		parts = append(parts, "-o", "UserKnownHostsFile="+knownHosts)
+	case opts.DisableStrictHostKeyChecking:
+		parts = append(parts, "-o", "UserKnownHostsFile=/dev/null")
+	}
+
+	return shellJoin(parts)
+}
+
+// ConfigureSSH sets GIT_SSH_COMMAND on cmd using the supplied SSH options.
+// Usage: ConfigureSSH(...)
+func ConfigureSSH(cmd *exec.Cmd, opts SSHOptions) {
+	if cmd == nil {
+		return
+	}
+
+	cmd.Env = gitEnvWithSSH(opts)
+}
+
 // IsNonFastForward checks if an error is a non-fast-forward rejection.
 // Usage: IsNonFastForward(...)
 func IsNonFastForward(err error) bool {
@@ -285,8 +398,15 @@ func IsNonFastForward(err error) bool {
 
 // gitInteractive runs a git command with terminal attached for user interaction.
 func gitInteractive(ctx context.Context, dir string, args ...string) error {
+	return gitInteractiveEnv(ctx, dir, nil, args...)
+}
+
+func gitInteractiveEnv(ctx context.Context, dir string, env []string, args ...string) error {
 	cmd := exec.CommandContext(ctx, "git", args...)
 	cmd.Dir = dir
+	if len(env) > 0 {
+		cmd.Env = env
+	}
 
 	// Connect to terminal for SSH passphrase prompts
 	cmd.Stdin = os.Stdin
@@ -352,8 +472,15 @@ func PushMultipleIter(ctx context.Context, paths []string, names map[string]stri
 
 // gitCommand runs a git command and returns stdout.
 func gitCommand(ctx context.Context, dir string, args ...string) (string, error) {
+	return gitCommandEnv(ctx, dir, nil, args...)
+}
+
+func gitCommandEnv(ctx context.Context, dir string, env []string, args ...string) (string, error) {
 	cmd := exec.CommandContext(ctx, "git", args...)
 	cmd.Dir = dir
+	if len(env) > 0 {
+		cmd.Env = env
+	}
 
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
@@ -368,6 +495,93 @@ func gitCommand(ctx context.Context, dir string, args ...string) (string, error)
 	}
 
 	return stdout.String(), nil
+}
+
+func verifySignature(ctx context.Context, path string, args ...string) (bool, error) {
+	cmd := exec.CommandContext(ctx, "git", args...)
+	cmd.Dir = path
+
+	output, err := cmd.CombinedOutput()
+	if err == nil {
+		return true, nil
+	}
+
+	msg := strings.TrimSpace(string(output))
+	if signatureVerificationFailure(msg) {
+		return false, nil
+	}
+
+	var exitErr *exec.ExitError
+	if errors.As(err, &exitErr) && exitErr.ExitCode() == 1 {
+		return false, nil
+	}
+	if msg != "" {
+		return false, &GitError{Err: err, Stderr: msg}
+	}
+
+	return false, err
+}
+
+func signatureVerificationFailure(msg string) bool {
+	if msg == "" {
+		return false
+	}
+
+	msg = strings.ToLower(msg)
+	for _, needle := range []string{
+		"does not have a gpg signature",
+		"does not have a good signature",
+		"bad signature",
+		"no signature",
+		"can't check signature",
+		"cannot check signature",
+		"missing object referenced by",
+		"cannot verify a non-tag object",
+	} {
+		if strings.Contains(msg, needle) {
+			return true
+		}
+	}
+	return false
+}
+
+func gitEnvWithSSH(opts SSHOptions) []string {
+	return append(stdos.Environ(), "GIT_SSH_COMMAND="+SSHCommand(opts))
+}
+
+func shellJoin(parts []string) string {
+	quoted := make([]string, 0, len(parts))
+	for _, part := range parts {
+		quoted = append(quoted, shellQuote(part))
+	}
+	return strings.Join(quoted, " ")
+}
+
+func shellQuote(part string) string {
+	if part == "" {
+		return "''"
+	}
+
+	safe := true
+	for _, r := range part {
+		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') {
+			continue
+		}
+		switch r {
+		case '/', '.', '-', '_', ':', '=', '@':
+			continue
+		default:
+			safe = false
+		}
+		if !safe {
+			break
+		}
+	}
+	if safe {
+		return part
+	}
+
+	return "'" + strings.ReplaceAll(part, "'", `'\''`) + "'"
 }
 
 // GitError wraps a git command error with stderr output.

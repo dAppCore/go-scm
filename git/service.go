@@ -24,6 +24,18 @@ type QueryDirtyRepos struct{}
 // QueryAheadRepos requests repos with unpushed commits.
 type QueryAheadRepos struct{}
 
+// QueryVerifyCommitSignature requests signature verification for a commit ref.
+type QueryVerifyCommitSignature struct {
+	Path string
+	Ref  string
+}
+
+// QueryVerifyTagSignature requests signature verification for a tag.
+type QueryVerifyTagSignature struct {
+	Path string
+	Tag  string
+}
+
 // Tasks for git service
 
 // TaskPush requests git push for a path.
@@ -42,6 +54,19 @@ type TaskPull struct {
 type TaskPushMultiple struct {
 	Paths []string
 	Names map[string]string
+}
+
+// TaskCreateBranch requests branch creation for a repository.
+type TaskCreateBranch struct {
+	Path       string
+	Branch     string
+	StartPoint string
+}
+
+// TaskSwitchBranch requests a branch checkout for a repository.
+type TaskSwitchBranch struct {
+	Path   string
+	Branch string
 }
 
 // ServiceOptions for configuring the git service.
@@ -85,6 +110,14 @@ func (s *Service) handleQuery(c *core.Core, q core.Query) core.Result {
 
 	case QueryAheadRepos:
 		return core.Result{Value: s.AheadRepos(), OK: true}
+
+	case QueryVerifyCommitSignature:
+		valid, err := VerifyCommitSignature(context.Background(), m.Path, m.Ref)
+		return core.Result{}.Result(valid, err)
+
+	case QueryVerifyTagSignature:
+		valid, err := VerifyTagSignature(context.Background(), m.Path, m.Tag)
+		return core.Result{}.Result(valid, err)
 	}
 	return core.Result{}
 }
@@ -100,6 +133,12 @@ func (s *Service) handleAction(c *core.Core, msg core.Message) core.Result {
 	case TaskPushMultiple:
 		results := PushMultiple(context.Background(), m.Paths, m.Names)
 		return core.Result{Value: results, OK: true}
+
+	case TaskCreateBranch:
+		return core.Result{}.Result(nil, CreateBranch(context.Background(), m.Path, m.Branch, m.StartPoint))
+
+	case TaskSwitchBranch:
+		return core.Result{}.Result(nil, SwitchBranch(context.Background(), m.Path, m.Branch))
 	}
 	return core.Result{}
 }

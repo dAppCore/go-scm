@@ -36,6 +36,25 @@ func TestCompile_Good(t *testing.T) {
 	assert.Equal(t, "v1.2.3", cm.Tag)
 	assert.Equal(t, "core build", cm.BuiltBy)
 	assert.NotEmpty(t, cm.BuiltAt)
+	assert.Nil(t, cm.Build)
+}
+
+func TestCompile_Good_WithBuildSpec_Good(t *testing.T) {
+	m := &Manifest{
+		Code:    "buildy",
+		Name:    "Buildy",
+		Version: "1.0.0",
+	}
+
+	cm, err := Compile(m, CompileOptions{
+		Targets:   []string{"linux/amd64", "darwin/arm64"},
+		Checksums: "SHA-256",
+	})
+	require.NoError(t, err)
+
+	require.NotNil(t, cm.Build)
+	assert.Equal(t, []string{"linux/amd64", "darwin/arm64"}, cm.Build.Targets)
+	assert.Equal(t, "SHA-256", cm.Build.Checksums)
 }
 
 func TestCompile_Good_WithSigning_Good(t *testing.T) {
@@ -88,6 +107,10 @@ func TestMarshalJSON_Good(t *testing.T) {
 			Name:    "Test Module",
 			Version: "1.0.0",
 		},
+		Build: &BuildSpec{
+			Targets:   []string{"linux/amd64"},
+			Checksums: "SHA-256",
+		},
 		Commit:  "abc123",
 		Tag:     "v1.0.0",
 		BuiltAt: "2026-03-15T10:00:00Z",
@@ -104,6 +127,9 @@ func TestMarshalJSON_Good(t *testing.T) {
 	assert.Equal(t, "abc123", parsed.Commit)
 	assert.Equal(t, "v1.0.0", parsed.Tag)
 	assert.Equal(t, "2026-03-15T10:00:00Z", parsed.BuiltAt)
+	require.NotNil(t, parsed.Build)
+	assert.Equal(t, []string{"linux/amd64"}, parsed.Build.Targets)
+	assert.Equal(t, "SHA-256", parsed.Build.Checksums)
 }
 
 func TestParseCompiled_Good(t *testing.T) {
@@ -111,6 +137,10 @@ func TestParseCompiled_Good(t *testing.T) {
 		"code": "demo",
 		"name": "Demo",
 		"version": "0.5.0",
+		"build": {
+			"targets": ["linux/amd64", "darwin/arm64"],
+			"checksums": "SHA-256"
+		},
 		"commit": "aaa111",
 		"tag": "v0.5.0",
 		"built_at": "2026-03-15T12:00:00Z",
@@ -121,6 +151,9 @@ func TestParseCompiled_Good(t *testing.T) {
 	assert.Equal(t, "demo", cm.Code)
 	assert.Equal(t, "aaa111", cm.Commit)
 	assert.Equal(t, "ci", cm.BuiltBy)
+	require.NotNil(t, cm.Build)
+	assert.Equal(t, []string{"linux/amd64", "darwin/arm64"}, cm.Build.Targets)
+	assert.Equal(t, "SHA-256", cm.Build.Checksums)
 }
 
 func TestParseCompiled_Bad(t *testing.T) {

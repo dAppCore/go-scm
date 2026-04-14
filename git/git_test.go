@@ -7,6 +7,7 @@ import (
 	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
 	os "dappco.re/go/core/scm/internal/ax/osx"
 	exec "golang.org/x/sys/execabs"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -54,6 +55,32 @@ func TestCheckout_Good_SwitchTag_Good(t *testing.T) {
 	assert.Equal(t, "v2.0.0", tag)
 }
 
+func TestCreateBranch_Good(t *testing.T) {
+	repo := createTaggedRepo(t, "branch-repo",
+		repoVersion{Version: "1.0.0"},
+	)
+
+	require.NoError(t, CreateBranch(context.Background(), repo, "feature/rfc", ""))
+
+	current, err := exec.Command("git", "-C", repo, "rev-parse", "--abbrev-ref", "HEAD").CombinedOutput()
+	require.NoError(t, err, string(current))
+	assert.Equal(t, "feature/rfc\n", string(current))
+}
+
+func TestSwitchBranch_Good(t *testing.T) {
+	repo := createTaggedRepo(t, "switch-branch-repo",
+		repoVersion{Version: "1.0.0"},
+	)
+	runGit(t, repo, "checkout", "-b", "feature/switch")
+	runGit(t, repo, "checkout", "-")
+
+	require.NoError(t, SwitchBranch(context.Background(), repo, "feature/switch"))
+
+	current, err := exec.Command("git", "-C", repo, "rev-parse", "--abbrev-ref", "HEAD").CombinedOutput()
+	require.NoError(t, err, string(current))
+	assert.Equal(t, "feature/switch\n", string(current))
+}
+
 func TestAddAllCommit_Good(t *testing.T) {
 	repo := createTaggedRepo(t, "commit-repo",
 		repoVersion{Version: "1.0.0"},
@@ -69,6 +96,54 @@ func TestAddAllCommit_Good(t *testing.T) {
 	})
 	require.Len(t, statuses, 1)
 	assert.False(t, statuses[0].IsDirty())
+}
+
+func TestVerifyCommitSignature_Good_UnsignedCommit_Good(t *testing.T) {
+	repo := createTaggedRepo(t, "unsigned-commit-repo",
+		repoVersion{Version: "1.0.0"},
+	)
+
+	valid, err := VerifyCommitSignature(context.Background(), repo, "HEAD")
+	require.NoError(t, err)
+	assert.False(t, valid)
+}
+
+func TestVerifyTagSignature_Good_UnsignedTag_Good(t *testing.T) {
+	repo := createTaggedRepo(t, "unsigned-tag-repo",
+		repoVersion{Version: "1.0.0", Tag: "v1.0.0"},
+	)
+
+	valid, err := VerifyTagSignature(context.Background(), repo, "v1.0.0")
+	require.NoError(t, err)
+	assert.False(t, valid)
+}
+
+func TestSSHCommand_Good(t *testing.T) {
+	cmd := SSHCommand(SSHOptions{
+		KeyPath:        "/tmp/test key",
+		KnownHostsPath: "/tmp/known_hosts",
+	})
+
+	assert.Contains(t, cmd, "BatchMode=yes")
+	assert.Contains(t, cmd, "IdentitiesOnly=yes")
+	assert.Contains(t, cmd, "StrictHostKeyChecking=yes")
+	assert.Contains(t, cmd, "'/tmp/test key'")
+	assert.Contains(t, cmd, "UserKnownHostsFile=/tmp/known_hosts")
+}
+
+func TestConfigureSSH_Good(t *testing.T) {
+	cmd := exec.Command("git", "status")
+
+	ConfigureSSH(cmd, SSHOptions{KeyPath: "/tmp/id_ed25519"})
+
+	found := false
+	for _, entry := range cmd.Env {
+		if strings.HasPrefix(entry, "GIT_SSH_COMMAND=") {
+			found = true
+			assert.Contains(t, entry, "/tmp/id_ed25519")
+		}
+	}
+	assert.True(t, found)
 }
 
 type repoVersion struct {

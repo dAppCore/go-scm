@@ -9,18 +9,20 @@ import (
 	"encoding/hex"
 	exec "golang.org/x/sys/execabs"
 
+	"dappco.re/go/core/cli/pkg/cli"
 	"dappco.re/go/core/io"
 	"dappco.re/go/core/scm/manifest"
-	"dappco.re/go/core/cli/pkg/cli"
 )
 
 func addCompileCommand(parent *cli.Command) {
 	var (
-		version string
-		dir     string
-		signKey string
-		builtBy string
-		output  string
+		version   string
+		dir       string
+		signKey   string
+		builtBy   string
+		output    string
+		targets   []string
+		checksums string
 	)
 
 	cmd := &cli.Command{
@@ -28,7 +30,7 @@ func addCompileCommand(parent *cli.Command) {
 		Short: "Compile manifest.yaml into core.json",
 		Long:  "Read .core/manifest.yaml, attach build metadata (commit, tag), and write core.json to the project root or a custom output path.",
 		RunE: func(cmd *cli.Command, args []string) error {
-			return runCompile(dir, version, signKey, builtBy, output)
+			return runCompile(dir, version, signKey, builtBy, output, targets, checksums)
 		},
 	}
 
@@ -37,11 +39,13 @@ func addCompileCommand(parent *cli.Command) {
 	cmd.Flags().StringVar(&signKey, "sign-key", "", "Hex-encoded ed25519 private key for signing")
 	cmd.Flags().StringVar(&builtBy, "built-by", "core scm compile", "Builder identity")
 	cmd.Flags().StringVarP(&output, "output", "o", "core.json", "Output path for the compiled manifest")
+	cmd.Flags().StringArrayVar(&targets, "target", nil, "Build target to record in core.json (repeatable)")
+	cmd.Flags().StringVar(&checksums, "checksums", "", "Checksum algorithm to record in core.json")
 
 	parent.AddCommand(cmd)
 }
 
-func runCompile(dir, version, signKeyHex, builtBy, output string) error {
+func runCompile(dir, version, signKeyHex, builtBy, output string, targets []string, checksums string) error {
 	medium, err := io.NewSandboxed(dir)
 	if err != nil {
 		return cli.WrapVerb(err, "open", dir)
@@ -53,10 +57,12 @@ func runCompile(dir, version, signKeyHex, builtBy, output string) error {
 	}
 
 	opts := manifest.CompileOptions{
-		Version: version,
-		Commit:  gitCommit(dir),
-		Tag:     gitTag(dir),
-		BuiltBy: builtBy,
+		Version:   version,
+		Commit:    gitCommit(dir),
+		Tag:       gitTag(dir),
+		BuiltBy:   builtBy,
+		Targets:   targets,
+		Checksums: checksums,
 	}
 
 	if signKeyHex != "" {
@@ -92,6 +98,12 @@ func runCompile(dir, version, signKeyHex, builtBy, output string) error {
 	}
 	if opts.Tag != "" {
 		cli.Print("  %s %s\n", dimStyle.Render("tag:"), valueStyle.Render(opts.Tag))
+	}
+	if cm.Build != nil && len(cm.Build.Targets) > 0 {
+		cli.Print("  %s %s\n", dimStyle.Render("targets:"), valueStyle.Render(strings.Join(cm.Build.Targets, ", ")))
+	}
+	if cm.Build != nil && cm.Build.Checksums != "" {
+		cli.Print("  %s %s\n", dimStyle.Render("checksums:"), valueStyle.Render(cm.Build.Checksums))
 	}
 	cli.Print("  %s %s\n", dimStyle.Render("output:"), valueStyle.Render(output))
 	cli.Blank()

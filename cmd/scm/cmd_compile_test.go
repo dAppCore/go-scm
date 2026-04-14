@@ -8,9 +8,9 @@ import (
 	"encoding/hex"
 	"testing"
 
+	"dappco.re/go/core/cli/pkg/cli"
 	"dappco.re/go/core/io"
 	"dappco.re/go/core/scm/manifest"
-	"dappco.re/go/core/cli/pkg/cli"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -25,7 +25,7 @@ name: Compile Default
 version: 1.0.0
 `), 0644))
 
-	err := runCompile(dir, "", "", "core scm compile", "core.json")
+	err := runCompile(dir, "", "", "core scm compile", "core.json", nil, "")
 	require.NoError(t, err)
 
 	raw, err := io.Local.Read(filepath.Join(dir, "core.json"))
@@ -48,7 +48,7 @@ version: 2.0.0
 `), 0644))
 
 	output := filepath.Join("dist", "core.json")
-	err := runCompile(dir, "", "", "custom builder", output)
+	err := runCompile(dir, "", "", "custom builder", output, nil, "")
 	require.NoError(t, err)
 
 	raw, err := io.Local.Read(filepath.Join(dir, output))
@@ -70,7 +70,7 @@ name: Compile Invalid Key
 version: 1.0.0
 `), 0644))
 
-	err := runCompile(dir, "", hex.EncodeToString([]byte("short")), "core scm compile", "core.json")
+	err := runCompile(dir, "", hex.EncodeToString([]byte("short")), "core scm compile", "core.json", nil, "")
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "invalid private key length")
 }
@@ -85,7 +85,7 @@ name: Compile Version
 version: 1.0.0
 `), 0644))
 
-	err := runCompile(dir, "3.2.1", "", "core scm compile", "core.json")
+	err := runCompile(dir, "3.2.1", "", "core scm compile", "core.json", nil, "")
 	require.NoError(t, err)
 
 	raw, err := io.Local.Read(filepath.Join(dir, "core.json"))
@@ -94,6 +94,29 @@ version: 1.0.0
 	cm, err := manifest.ParseCompiled([]byte(raw))
 	require.NoError(t, err)
 	assert.Equal(t, "3.2.1", cm.Version)
+}
+
+func TestRunCompile_Good_BuildMetadata_Good(t *testing.T) {
+	dir := t.TempDir()
+	coreDir := filepath.Join(dir, ".core")
+	require.NoError(t, os.MkdirAll(coreDir, 0755))
+	require.NoError(t, os.WriteFile(filepath.Join(coreDir, "manifest.yaml"), []byte(`
+code: compile-build
+name: Compile Build
+version: 1.0.0
+`), 0644))
+
+	err := runCompile(dir, "", "", "core scm compile", "core.json", []string{"linux/amd64", "darwin/arm64"}, "SHA-256")
+	require.NoError(t, err)
+
+	raw, err := io.Local.Read(filepath.Join(dir, "core.json"))
+	require.NoError(t, err)
+
+	cm, err := manifest.ParseCompiled([]byte(raw))
+	require.NoError(t, err)
+	require.NotNil(t, cm.Build)
+	assert.Equal(t, []string{"linux/amd64", "darwin/arm64"}, cm.Build.Targets)
+	assert.Equal(t, "SHA-256", cm.Build.Checksums)
 }
 
 func TestAddScmCommands_Good_CompileVersionFlagRegistered_Good(t *testing.T) {
@@ -119,4 +142,6 @@ func TestAddScmCommands_Good_CompileVersionFlagRegistered_Good(t *testing.T) {
 	}
 	require.NotNil(t, compileCmd)
 	assert.NotNil(t, compileCmd.Flags().Lookup("version"))
+	assert.NotNil(t, compileCmd.Flags().Lookup("target"))
+	assert.NotNil(t, compileCmd.Flags().Lookup("checksums"))
 }
