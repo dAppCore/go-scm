@@ -116,5 +116,10 @@ func (s *State) Get(source string) (*StateEntry, bool) {
 func (s *State) Set(source string, entry *StateEntry) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.entries[source] = entry
+	if entry == nil {
+		delete(s.entries, source)
+		return
+	}
+	cp := *entry
+	s.entries[source] = &cp
 }

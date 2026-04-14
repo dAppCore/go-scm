@@ -39,6 +39,9 @@ func NewSpinner(cfg ClothoConfig, agents map[string]AgentConfig) *Spinner {
 // the global strategy, agent configuration, and repository criticality.
 // Usage: DeterminePlan(...)
 func (s *Spinner) DeterminePlan(signal *jobrunner.PipelineSignal, agentName string) RunMode {
+	if signal == nil {
+		return ModeStandard
+	}
 	if s.Config.Strategy != "clotho-verified" {
 		return ModeStandard
 	}

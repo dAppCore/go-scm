@@ -71,7 +71,7 @@ type Result struct {
 // sets up a rate limiter, state tracker, and event dispatcher.
 // Usage: NewConfig(...)
 func NewConfig(outputDir string) *Config {
-	m := io.NewMemoryMedium()
+	m := io.NewMockMedium()
 	return &Config{
 		Output:     m,
 		OutputDir:  outputDir,
@@ -84,6 +84,9 @@ func NewConfig(outputDir string) *Config {
 // NewConfigWithMedium creates a Config using the specified storage medium.
 // Usage: NewConfigWithMedium(...)
 func NewConfigWithMedium(m io.Medium, outputDir string) *Config {
+	if m == nil {
+		m = io.NewMockMedium()
+	}
 	return &Config{
 		Output:     m,
 		OutputDir:  outputDir,
