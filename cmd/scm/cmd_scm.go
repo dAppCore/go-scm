@@ -5,8 +5,10 @@
 //
 // Commands:
 //   - compile: Compile .core/manifest.yaml into core.json
+//   - dev:     Workspace registry operations (health, pull, push, impact)
 //   - index:   Build marketplace index from repository directories
 //   - export:  Export a compiled manifest as JSON to stdout
+//   - pkg:     Marketplace search/install/update/list/publish
 //   - sign:    Sign .core/manifest.yaml with an ed25519 private key
 //   - verify:  Verify a manifest signature with an ed25519 public key
 package scm
@@ -39,8 +41,10 @@ func AddScmCommands(root *cli.Command) {
 	root.AddCommand(scmCmd)
 
 	addCompileCommand(scmCmd)
+	addDevCommand(scmCmd)
 	addIndexCommand(scmCmd)
 	addExportCommand(scmCmd)
+	addPackageCommand(scmCmd)
 	addSignCommand(scmCmd)
 	addVerifyCommand(scmCmd)
 }

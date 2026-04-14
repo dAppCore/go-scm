@@ -70,6 +70,54 @@ func createSignedTestRepo(t *testing.T, code, version string) (string, string) {
 	return dir, hex.EncodeToString(pub)
 }
 
+type taggedRepoVersion struct {
+	Version string
+	Name    string
+	Tag     string
+}
+
+func createTaggedTestRepo(t *testing.T, code string, versions ...taggedRepoVersion) string {
+	t.Helper()
+
+	dir := filepath.Join(t.TempDir(), code)
+	require.NoError(t, os.MkdirAll(filepath.Join(dir, ".core"), 0755))
+	require.NoError(t, os.WriteFile(
+		filepath.Join(dir, "main.ts"),
+		[]byte("export async function init(core: any) {}\n"), 0644,
+	))
+
+	runGit(t, dir, "init")
+
+	for idx, version := range versions {
+		name := version.Name
+		if name == "" {
+			name = "Test " + code
+		}
+
+		manifestYAML := "code: " + code + "\nname: " + name + "\nversion: \"" + version.Version + "\"\n"
+		require.NoError(t, os.WriteFile(
+			filepath.Join(dir, ".core", "manifest.yaml"),
+			[]byte(manifestYAML), 0644,
+		))
+		require.NoError(t, os.WriteFile(
+			filepath.Join(dir, "version.txt"),
+			[]byte(version.Version+"\n"), 0644,
+		))
+
+		runGit(t, dir, "add", "--force", ".")
+		runGit(t, dir, "commit", "-m", "version-"+version.Version)
+		if version.Tag != "" {
+			runGit(t, dir, "tag", version.Tag)
+		}
+
+		if idx == len(versions)-1 {
+			break
+		}
+	}
+
+	return dir
+}
+
 func runGit(t *testing.T, dir string, args ...string) {
 	t.Helper()
 	cmd := exec.Command("git", append([]string{"-C", dir, "-c", "user.email=test@test.com", "-c", "user.name=test"}, args...)...)
@@ -101,6 +149,55 @@ func TestInstall_Good(t *testing.T) {
 	require.NoError(t, err)
 	assert.Contains(t, raw, `"code":"hello-mod"`)
 	assert.Contains(t, raw, `"version":"1.0"`)
+}
+
+func TestInstall_Good_UsesLatestTaggedVersion_Good(t *testing.T) {
+	repo := createTaggedTestRepo(t, "tagged-mod",
+		taggedRepoVersion{Version: "1.0.0", Tag: "v1.0.0"},
+		taggedRepoVersion{Version: "2.0.0", Tag: "v2.0.0"},
+		taggedRepoVersion{Version: "9.9.9"},
+	)
+	modulesDir := filepath.Join(t.TempDir(), "modules")
+
+	st, err := store.New(store.Options{Path: ":memory:"})
+	require.NoError(t, err)
+	defer st.Close()
+
+	inst := NewInstaller(io.Local, modulesDir, st)
+	require.NoError(t, inst.Install(context.Background(), Module{
+		Code: "tagged-mod",
+		Repo: repo,
+	}))
+
+	installed, err := inst.Installed()
+	require.NoError(t, err)
+	require.Len(t, installed, 1)
+	assert.Equal(t, "2.0.0", installed[0].Version)
+	assert.Equal(t, "Test tagged-mod", installed[0].Name)
+}
+
+func TestInstall_Good_ExplicitTaggedVersion_Good(t *testing.T) {
+	repo := createTaggedTestRepo(t, "pinned-mod",
+		taggedRepoVersion{Version: "1.0.0", Tag: "v1.0.0"},
+		taggedRepoVersion{Version: "2.0.0", Tag: "v2.0.0"},
+	)
+	modulesDir := filepath.Join(t.TempDir(), "modules")
+
+	st, err := store.New(store.Options{Path: ":memory:"})
+	require.NoError(t, err)
+	defer st.Close()
+
+	inst := NewInstaller(io.Local, modulesDir, st)
+	require.NoError(t, inst.Install(context.Background(), Module{
+		Code:    "pinned-mod",
+		Repo:    repo,
+		Version: "1.0.0",
+	}))
+
+	installed, err := inst.Installed()
+	require.NoError(t, err)
+	require.Len(t, installed, 1)
+	assert.Equal(t, "1.0.0", installed[0].Version)
 }
 
 func TestInstall_Good_Signed_Good(t *testing.T) {
@@ -306,6 +403,38 @@ func TestUpdate_Good(t *testing.T) {
 	require.Len(t, installed, 1)
 	assert.Equal(t, "2.0", installed[0].Version)
 	assert.Equal(t, "Updated Module", installed[0].Name)
+}
+
+func TestUpdate_Good_AdvancesToLatestTag_Good(t *testing.T) {
+	repo := createTaggedTestRepo(t, "upd-tagged-mod",
+		taggedRepoVersion{Version: "1.0.0", Name: "Tagged Module", Tag: "v1.0.0"},
+	)
+	modulesDir := filepath.Join(t.TempDir(), "modules")
+
+	st, err := store.New(store.Options{Path: ":memory:"})
+	require.NoError(t, err)
+	defer st.Close()
+
+	inst := NewInstaller(io.Local, modulesDir, st)
+	require.NoError(t, inst.Install(context.Background(), Module{
+		Code: "upd-tagged-mod",
+		Repo: repo,
+	}))
+
+	manifestYAML := "code: upd-tagged-mod\nname: Tagged Module Updated\nversion: \"2.0.0\"\n"
+	require.NoError(t, os.WriteFile(filepath.Join(repo, ".core", "manifest.yaml"), []byte(manifestYAML), 0644))
+	require.NoError(t, os.WriteFile(filepath.Join(repo, "version.txt"), []byte("2.0.0\n"), 0644))
+	runGit(t, repo, "add", "--force", ".")
+	runGit(t, repo, "commit", "-m", "version-2.0.0")
+	runGit(t, repo, "tag", "v2.0.0")
+
+	require.NoError(t, inst.Update(context.Background(), "upd-tagged-mod"))
+
+	installed, err := inst.Installed()
+	require.NoError(t, err)
+	require.Len(t, installed, 1)
+	assert.Equal(t, "2.0.0", installed[0].Version)
+	assert.Equal(t, "Tagged Module Updated", installed[0].Name)
 }
 
 func TestUpdate_Bad_PathTraversalCode_Good(t *testing.T) {

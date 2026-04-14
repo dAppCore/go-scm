@@ -62,6 +62,7 @@ func TestBuildFromDirs_Good_ManifestYAML_Good(t *testing.T) {
 	assert.Equal(t, "my-widget", idx.Modules[0].Code)
 	assert.Equal(t, "My Widget", idx.Modules[0].Name)
 	assert.Equal(t, "https://forge.lthn.ai/core/my-widget.git", idx.Modules[0].Repo)
+	assert.Equal(t, "1.0.0", idx.Modules[0].Version)
 	assert.Equal(t, IndexVersion, idx.Version)
 }
 
@@ -106,6 +107,7 @@ func TestBuildFromDirs_Good_CoreJSON_Good(t *testing.T) {
 	require.Len(t, idx.Modules, 1)
 	assert.Equal(t, "compiled-mod", idx.Modules[0].Code)
 	assert.Equal(t, "Compiled Module", idx.Modules[0].Name)
+	assert.Equal(t, "2.0.0", idx.Modules[0].Version)
 }
 
 func TestBuildFromDirs_Good_UsesInjectedMedium_Good(t *testing.T) {
@@ -247,8 +249,8 @@ func TestBuildFromDirs_Good_DefaultForgeURL_Good(t *testing.T) {
 
 func TestBuildFromManifests_Good(t *testing.T) {
 	manifests := []*manifest.Manifest{
-		{Code: "bravo", Name: "Bravo", Sign: "key-bravo"},
-		{Code: "alpha", Name: "Alpha", Sign: "key-alpha"},
+		{Code: "bravo", Name: "Bravo", Version: "2.0.0", Sign: "key-bravo"},
+		{Code: "alpha", Name: "Alpha", Version: "1.0.0", Sign: "key-alpha"},
 	}
 	idx := BuildFromManifests(manifests)
 	require.Len(t, idx.Modules, 2)
@@ -257,6 +259,7 @@ func TestBuildFromManifests_Good(t *testing.T) {
 	assert.Equal(t, IndexVersion, idx.Version)
 	assert.Equal(t, "key-alpha", idx.Modules[0].SignKey)
 	assert.Equal(t, "key-bravo", idx.Modules[1].SignKey)
+	assert.Equal(t, "1.0.0", idx.Modules[0].Version)
 }
 
 func TestBuildFromManifests_Good_SkipsNil_Good(t *testing.T) {

@@ -15,6 +15,7 @@ type Module struct {
 	Code     string `json:"code"`
 	Name     string `json:"name"`
 	Repo     string `json:"repo"`
+	Version  string `json:"version,omitempty"`
 	SignKey  string `json:"sign_key"`
 	Category string `json:"category"`
 }
@@ -54,6 +55,7 @@ func (idx *Index) Search(query string) []Module {
 	for _, m := range idx.Modules {
 		if strings.Contains(strings.ToLower(m.Code), q) ||
 			strings.Contains(strings.ToLower(m.Name), q) ||
+			strings.Contains(strings.ToLower(m.Version), q) ||
 			strings.Contains(strings.ToLower(m.Category), q) {
 			results = append(results, m)
 		}

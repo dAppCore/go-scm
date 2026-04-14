@@ -64,6 +64,7 @@ func BuildIndex(medium io.Medium, repoPaths []string, opts IndexOptions) (*Index
 		module := Module{
 			Code:    m.Code,
 			Name:    m.Name,
+			Version: m.Version,
 			SignKey: manifestSignKey(m),
 		}
 		if opts.Org != "" {

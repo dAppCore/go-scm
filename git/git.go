@@ -6,6 +6,7 @@ package git
 import (
 	"bytes"
 	"context"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
 	os "dappco.re/go/core/scm/internal/ax/osx"
 	strings "dappco.re/go/core/scm/internal/ax/stringsx"
 	exec "golang.org/x/sys/execabs"
@@ -175,6 +176,18 @@ func Pull(ctx context.Context, path string) error {
 	return gitInteractive(ctx, path, "pull", "--rebase")
 }
 
+// Clone clones a repository into dest. When ref is non-empty it is checked out
+// during clone, which supports both branches and tags.
+// Usage: Clone(...)
+func Clone(ctx context.Context, repo, dest, ref string) error {
+	args := []string{"clone", "--depth=1"}
+	if ref != "" {
+		args = append(args, "--branch", ref)
+	}
+	args = append(args, repo, dest)
+	return gitInteractive(ctx, "", args...)
+}
+
 // Fetch fetches refs from the given remote.
 // When branch is non-empty, it is fetched explicitly from origin.
 // Usage: Fetch(...)
@@ -191,6 +204,71 @@ func Fetch(ctx context.Context, path, branch string) error {
 func ResetHard(ctx context.Context, path, ref string) error {
 	_, err := gitCommand(ctx, path, "reset", "--hard", ref)
 	return err
+}
+
+// FetchTags fetches all tags from origin.
+// Usage: FetchTags(...)
+func FetchTags(ctx context.Context, path string) error {
+	return gitInteractive(ctx, path, "fetch", "--tags", "origin")
+}
+
+// Checkout switches the repository to the given ref.
+// Usage: Checkout(...)
+func Checkout(ctx context.Context, path, ref string) error {
+	return gitInteractive(ctx, path, "checkout", ref)
+}
+
+// Commit creates a git commit with the supplied message.
+// Usage: Commit(...)
+func Commit(ctx context.Context, path, message string) error {
+	_, err := gitCommand(ctx, path, "commit", "-m", message)
+	return err
+}
+
+// AddAll stages all tracked and untracked changes.
+// Usage: AddAll(...)
+func AddAll(ctx context.Context, path string) error {
+	_, err := gitCommand(ctx, path, "add", "-A")
+	return err
+}
+
+// CurrentTag returns the tag pointing at HEAD, or empty if HEAD is not tagged.
+// Usage: CurrentTag(...)
+func CurrentTag(ctx context.Context, path string) (string, error) {
+	out, err := gitCommand(ctx, path, "describe", "--tags", "--exact-match", "HEAD")
+	if err != nil {
+		return "", nil
+	}
+	return strings.TrimSpace(out), nil
+}
+
+// ListRemoteTags lists tag names advertised by a remote repository.
+// Usage: ListRemoteTags(...)
+func ListRemoteTags(ctx context.Context, repo string) ([]string, error) {
+	out, err := gitCommand(ctx, "", "ls-remote", "--tags", "--refs", repo)
+	if err != nil {
+		return nil, err
+	}
+
+	var tags []string
+	for line := range strings.SplitSeq(out, "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+
+		parts := strings.Fields(line)
+		if len(parts) < 2 {
+			return nil, &GitError{Err: nil, Stderr: fmt.Sprintf("invalid ls-remote output: %s", line)}
+		}
+
+		ref := strings.TrimSpace(parts[1])
+		if strings.HasPrefix(ref, "refs/tags/") {
+			tags = append(tags, strings.TrimPrefix(ref, "refs/tags/"))
+		}
+	}
+
+	return tags, nil
 }
 
 // IsNonFastForward checks if an error is a non-fast-forward rejection.

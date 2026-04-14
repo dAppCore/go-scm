@@ -53,6 +53,7 @@ sign: key-c
 	assert.Equal(t, "a", idx.Modules[0].Code)
 	assert.Equal(t, "https://forge.example.com/core/a.git", idx.Modules[0].Repo)
 	assert.Equal(t, "tools", idx.Modules[0].Category)
+	assert.Equal(t, "1.0.0", idx.Modules[0].Version)
 	assert.Equal(t, "key-a", idx.Modules[0].SignKey)
 	assert.Equal(t, []string{"products", "tools"}, idx.Categories)
 }
@@ -105,6 +106,7 @@ sign: key-source
 
 	require.Len(t, idx.Modules, 1)
 	assert.Equal(t, "compiled", idx.Modules[0].Code)
+	assert.Equal(t, "2.0.0", idx.Modules[0].Version)
 	assert.Equal(t, "key-compiled", idx.Modules[0].SignKey)
 }
 

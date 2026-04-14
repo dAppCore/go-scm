@@ -15,7 +15,9 @@ import (
 	"dappco.re/go/core/io/store"
 	coreerr "dappco.re/go/core/log"
 	"dappco.re/go/core/scm/agentci"
+	"dappco.re/go/core/scm/git"
 	"dappco.re/go/core/scm/manifest"
+	"golang.org/x/mod/semver"
 )
 
 const storeGroup = "_modules"
@@ -65,7 +67,11 @@ func (i *Installer) Install(ctx context.Context, mod Module) error {
 	if err := i.medium.EnsureDir(i.modulesDir); err != nil {
 		return coreerr.E("marketplace.Installer.Install", "mkdir", err)
 	}
-	if err := gitClone(ctx, mod.Repo, dest); err != nil {
+	ref, err := resolveModuleRef(ctx, mod)
+	if err != nil {
+		return coreerr.E("marketplace.Installer.Install", "resolve version", err)
+	}
+	if err := git.Clone(ctx, mod.Repo, dest, ref); err != nil {
 		return coreerr.E("marketplace.Installer.Install", "clone "+mod.Repo, err)
 	}
 
@@ -150,8 +156,25 @@ func (i *Installer) Update(ctx context.Context, code string) error {
 	}
 
 	cmd := exec.CommandContext(ctx, "git", "-C", dest, "pull", "--ff-only")
-	if output, err := cmd.CombinedOutput(); err != nil {
-		return coreerr.E("marketplace.Installer.Update", "pull: "+strings.TrimSpace(string(output)), err)
+	latestRef, refErr := resolveModuleRef(ctx, Module{Repo: installed.Repo})
+	if refErr == nil && latestRef != "" {
+		currentRef, tagErr := git.CurrentTag(ctx, dest)
+		if tagErr != nil {
+			return coreerr.E("marketplace.Installer.Update", "current tag", tagErr)
+		}
+
+		if currentRef != latestRef {
+			if err := git.FetchTags(ctx, dest); err != nil {
+				return coreerr.E("marketplace.Installer.Update", "fetch tags", err)
+			}
+			if err := git.Checkout(ctx, dest, latestRef); err != nil {
+				return coreerr.E("marketplace.Installer.Update", "checkout "+latestRef, err)
+			}
+		}
+	} else {
+		if output, err := cmd.CombinedOutput(); err != nil {
+			return coreerr.E("marketplace.Installer.Update", "pull: "+strings.TrimSpace(string(output)), err)
+		}
 	}
 
 	// Reload and re-verify manifest with the same key used at install time
@@ -209,19 +232,86 @@ func loadManifest(medium io.Medium, signKey string) (*manifest.Manifest, error) 
 	return manifest.Load(medium, ".")
 }
 
-// gitClone clones a repository with --depth=1.
-func gitClone(ctx context.Context, repo, dest string) error {
-	cmd := exec.CommandContext(ctx, "git", "clone", "--depth=1", repo, dest)
-	if output, err := cmd.CombinedOutput(); err != nil {
-		return coreerr.E("marketplace.gitClone", strings.TrimSpace(string(output)), err)
-	}
-	return nil
-}
-
 func (i *Installer) resolveModulePath(code string) (string, string, error) {
 	safeCode, dest, err := agentci.ResolvePathWithinRoot(i.modulesDir, code)
 	if err != nil {
 		return "", "", coreerr.E("marketplace.Installer.resolveModulePath", "resolve module path", err)
 	}
 	return safeCode, dest, nil
+}
+
+func resolveModuleRef(ctx context.Context, mod Module) (string, error) {
+	tags, err := git.ListRemoteTags(ctx, mod.Repo)
+	if err != nil {
+		if mod.Version != "" {
+			return "", nil
+		}
+		return "", err
+	}
+
+	if len(tags) == 0 {
+		return "", nil
+	}
+
+	if mod.Version != "" {
+		return matchRequestedTag(tags, mod.Version)
+	}
+
+	return latestSemverTag(tags), nil
+}
+
+func matchRequestedTag(tags []string, requested string) (string, error) {
+	requested = strings.TrimSpace(requested)
+	if requested == "" {
+		return "", nil
+	}
+
+	candidates := []string{requested}
+	if !strings.HasPrefix(requested, "v") {
+		candidates = append([]string{"v" + requested}, candidates...)
+	}
+
+	for _, candidate := range candidates {
+		for _, tag := range tags {
+			if tag == candidate {
+				return tag, nil
+			}
+		}
+	}
+
+	return "", coreerr.E("marketplace.matchRequestedTag", "tag not found: "+requested, nil)
+}
+
+func latestSemverTag(tags []string) string {
+	type semverTag struct {
+		raw       string
+		canonical string
+	}
+
+	var versions []semverTag
+	for _, tag := range tags {
+		canonical := tag
+		if !semver.IsValid(canonical) && semver.IsValid("v"+canonical) {
+			canonical = "v" + canonical
+		}
+		if !semver.IsValid(canonical) {
+			continue
+		}
+		versions = append(versions, semverTag{
+			raw:       tag,
+			canonical: canonical,
+		})
+	}
+
+	if len(versions) == 0 {
+		return ""
+	}
+
+	best := versions[0]
+	for _, version := range versions[1:] {
+		if semver.Compare(version.canonical, best.canonical) > 0 {
+			best = version
+		}
+	}
+	return best.raw
 }

@@ -421,6 +421,51 @@ func (r *Registry) ByType(t string) []*Repo {
 	return repos
 }
 
+// Dependents returns repos that directly depend on the named repo.
+// Usage: Dependents(...)
+func (r *Registry) Dependents(name string) []*Repo {
+	var dependents []*Repo
+	for _, repo := range r.Repos {
+		for _, dep := range repo.DependsOn {
+			if dep == name {
+				dependents = append(dependents, repo)
+				break
+			}
+		}
+	}
+	sort.Slice(dependents, func(i, j int) bool {
+		return dependents[i].Name < dependents[j].Name
+	})
+	return dependents
+}
+
+// Impact returns the transitive set of repos affected by changes to the named
+// repo, ordered from nearest dependents outward.
+// Usage: Impact(...)
+func (r *Registry) Impact(name string) ([]*Repo, error) {
+	if _, ok := r.Repos[name]; !ok {
+		return nil, coreerr.E("repos.Registry.Impact", "unknown repo: "+name, nil)
+	}
+
+	visited := make(map[string]bool)
+	var impacted []*Repo
+
+	var visit func(target string)
+	visit = func(target string) {
+		for _, repo := range r.Dependents(target) {
+			if repo == nil || visited[repo.Name] {
+				continue
+			}
+			visited[repo.Name] = true
+			impacted = append(impacted, repo)
+			visit(repo.Name)
+		}
+	}
+
+	visit(name)
+	return impacted, nil
+}
+
 // TopologicalOrder returns repos sorted by dependency order.
 // Foundation repos come first, then modules, then products.
 //

@@ -259,6 +259,35 @@ func TestRegistry_ByType_Good_NoMatch_Good(t *testing.T) {
 	assert.Empty(t, templates)
 }
 
+func TestRegistry_Dependents_Good(t *testing.T) {
+	reg := newTestRegistry(t)
+
+	dependents := reg.Dependents("core-php")
+	require.Len(t, dependents, 3)
+	assert.Equal(t, "core-admin", dependents[0].Name)
+	assert.Equal(t, "core-bio", dependents[1].Name)
+	assert.Equal(t, "core-tenant", dependents[2].Name)
+}
+
+func TestRegistry_Impact_Good(t *testing.T) {
+	reg := newTestRegistry(t)
+
+	impacted, err := reg.Impact("core-php")
+	require.NoError(t, err)
+	require.Len(t, impacted, 3)
+	assert.Equal(t, "core-admin", impacted[0].Name)
+	assert.Equal(t, "core-bio", impacted[1].Name)
+	assert.Equal(t, "core-tenant", impacted[2].Name)
+}
+
+func TestRegistry_Impact_Bad_UnknownRepo_Good(t *testing.T) {
+	reg := newTestRegistry(t)
+
+	_, err := reg.Impact("missing")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "unknown repo")
+}
+
 // ── TopologicalOrder ───────────────────────────────────────────────
 
 func TestTopologicalOrder_Good(t *testing.T) {

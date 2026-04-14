@@ -28,13 +28,25 @@ func TestParseIndex_Good(t *testing.T) {
 func TestSearch_Good(t *testing.T) {
 	idx := &Index{
 		Modules: []Module{
-			{Code: "mining-xmrig", Name: "XMRig Miner", Category: "miner"},
+			{Code: "mining-xmrig", Name: "XMRig Miner", Version: "1.2.3", Category: "miner"},
 			{Code: "utils-cyberchef", Name: "CyberChef", Category: "utils"},
 		},
 	}
 	results := idx.Search("miner")
 	assert.Len(t, results, 1)
 	assert.Equal(t, "mining-xmrig", results[0].Code)
+}
+
+func TestSearch_Good_ByVersion_Good(t *testing.T) {
+	idx := &Index{
+		Modules: []Module{
+			{Code: "mining-xmrig", Name: "XMRig Miner", Version: "1.2.3", Category: "miner"},
+			{Code: "utils-cyberchef", Name: "CyberChef", Version: "9.9.9", Category: "utils"},
+		},
+	}
+	results := idx.Search("9.9.9")
+	assert.Len(t, results, 1)
+	assert.Equal(t, "utils-cyberchef", results[0].Code)
 }
 
 func TestByCategory_Good(t *testing.T) {
