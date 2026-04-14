@@ -63,6 +63,31 @@ type RegistryDefaults struct {
 	Branch  string `yaml:"branch"`
 }
 
+// UnmarshalYAML accepts both the historical "license" key and the UK-spelled
+// "licence" key so existing registries continue to load regardless of which
+// spelling they use.
+func (d *RegistryDefaults) UnmarshalYAML(value *yaml.Node) error {
+	type registryDefaultsYAML struct {
+		CI      string `yaml:"ci"`
+		License string `yaml:"license"`
+		Licence string `yaml:"licence"`
+		Branch  string `yaml:"branch"`
+	}
+
+	var raw registryDefaultsYAML
+	if err := value.Decode(&raw); err != nil {
+		return err
+	}
+
+	d.CI = raw.CI
+	d.Branch = raw.Branch
+	d.License = raw.License
+	if d.License == "" {
+		d.License = raw.Licence
+	}
+	return nil
+}
+
 // RepoType indicates the role of a repository in the ecosystem.
 type RepoType string
 
@@ -756,7 +781,7 @@ func registryCandidatesFromEnv() []string {
 	for _, field := range fields {
 		field = strings.TrimSpace(field)
 		if field != "" {
-			candidates = append(candidates, field)
+			candidates = append(candidates, expandPath(field))
 		}
 	}
 	return candidates

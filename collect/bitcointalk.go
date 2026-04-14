@@ -9,6 +9,8 @@ import (
 	strings "dappco.re/go/core/scm/internal/ax/stringsx"
 	"iter"
 	"net/http"
+	"net/url"
+	"regexp"
 	"time"
 
 	core "dappco.re/go/core/log"
@@ -20,6 +22,8 @@ import (
 var httpClient = &http.Client{
 	Timeout: 30 * time.Second,
 }
+
+var bitcointalkTopicIDRe = regexp.MustCompile(`(?i)(?:topic=|topic,)(\d+)`)
 
 // BitcoinTalkCollector collects forum posts from BitcoinTalk.
 type BitcoinTalkCollector struct {
@@ -53,7 +57,7 @@ func (b *BitcoinTalkCollector) Collect(ctx context.Context, cfg *Config) (*Resul
 		cfg.Dispatcher.EmitStart(b.Name(), "Starting BitcoinTalk collection")
 	}
 
-	topicID := b.TopicID
+	topicID := b.resolveTopicID()
 	if topicID == "" {
 		return result, core.E("collect.BitcoinTalk.Collect", "topic ID is required", nil)
 	}
@@ -137,6 +141,40 @@ func (b *BitcoinTalkCollector) Collect(ctx context.Context, cfg *Config) (*Resul
 	}
 
 	return result, nil
+}
+
+func (b *BitcoinTalkCollector) resolveTopicID() string {
+	if topicID := strings.TrimSpace(b.TopicID); topicID != "" {
+		return topicID
+	}
+	return topicIDFromURL(b.URL)
+}
+
+func topicIDFromURL(raw string) string {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return ""
+	}
+
+	if parsed, err := url.Parse(raw); err == nil {
+		if topic := strings.TrimSpace(parsed.Query().Get("topic")); topic != "" {
+			if parts := strings.SplitN(topic, ".", 2); len(parts) > 0 {
+				topic = parts[0]
+			}
+			if parts := strings.SplitN(topic, ";", 2); len(parts) > 0 {
+				topic = parts[0]
+			}
+			if topic != "" {
+				return topic
+			}
+		}
+	}
+
+	if matches := bitcointalkTopicIDRe.FindStringSubmatch(raw); len(matches) == 2 {
+		return matches[1]
+	}
+
+	return ""
 }
 
 // btPost represents a parsed BitcoinTalk forum post.

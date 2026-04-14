@@ -102,6 +102,15 @@ func TestLoader_Discover_Good_EmptyDirectory_Good(t *testing.T) {
 	assert.Empty(t, manifests)
 }
 
+func TestLoader_Discover_Good_MissingDirectory_Good(t *testing.T) {
+	m := io.NewMockMedium()
+	loader := NewLoader(m, "/home/user/.core/plugins")
+
+	manifests, err := loader.Discover()
+	assert.NoError(t, err)
+	assert.Empty(t, manifests)
+}
+
 func TestLoader_LoadPlugin_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	baseDir := "/home/user/.core/plugins"

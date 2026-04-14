@@ -4,6 +4,8 @@ package collect
 
 import (
 	"context"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"dappco.re/go/core/io"
@@ -39,6 +41,34 @@ func TestBitcoinTalkCollector_Collect_Good_DryRun_Good(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, 0, result.Items)
+}
+
+func TestBitcoinTalkCollector_Collect_Good_URL_Good(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		_, _ = w.Write([]byte(sampleBTCTalkPage(1)))
+	}))
+	defer srv.Close()
+
+	transport := &rewriteTransport{base: srv.Client().Transport, target: srv.URL}
+	old := httpClient
+	httpClient = &http.Client{Transport: transport}
+	defer func() { httpClient = old }()
+
+	m := io.NewMockMedium()
+	cfg := NewConfigWithMedium(m, "/output")
+	cfg.Limiter = nil
+
+	b := &BitcoinTalkCollector{URL: "https://bitcointalk.org/index.php?topic=12345.0"}
+	result, err := b.Collect(context.Background(), cfg)
+
+	assert.NoError(t, err)
+	assert.Equal(t, 1, result.Items)
+	assert.Equal(t, "bitcointalk:url", result.Source)
+
+	content, err := m.Read("/output/bitcointalk/12345/posts/1.md")
+	assert.NoError(t, err)
+	assert.Contains(t, content, "Post 1 by")
 }
 
 func TestParsePostsFromHTML_Good(t *testing.T) {

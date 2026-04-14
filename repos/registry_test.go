@@ -73,6 +73,32 @@ repos:
 	assert.Equal(t, "github-actions", admin.CI)
 }
 
+func TestLoadRegistry_Good_WithDefaults_Licence_Good(t *testing.T) {
+	m := io.NewMockMedium()
+	yaml := `
+version: 1
+org: host-uk
+base_path: /tmp/repos
+defaults:
+  ci: github-actions
+  licence: EUPL-1.2
+  branch: main
+repos:
+  core-php:
+    type: foundation
+`
+	_ = m.Write("/tmp/repos.yaml", yaml)
+
+	reg, err := LoadRegistry(m, "/tmp/repos.yaml")
+	require.NoError(t, err)
+
+	repo, ok := reg.Get("core-php")
+	require.True(t, ok)
+	assert.Equal(t, "github-actions", repo.CI)
+	assert.Equal(t, "main", repo.Branch)
+	assert.Equal(t, "EUPL-1.2", reg.Defaults.License)
+}
+
 func TestLoadRegistry_Good_CustomRepoPath_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	yaml := `
@@ -657,6 +683,24 @@ repos: {}
 	path, err := FindRegistry(m)
 	require.NoError(t, err)
 	assert.Equal(t, "/custom/repos.yaml", path)
+}
+
+func TestFindRegistry_Good_CORE_REPOSEnv_Tilde_Good(t *testing.T) {
+	m := io.NewMockMedium()
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	path := filepath.Join(home, "repos.yaml")
+	_ = m.Write(path, `
+version: 1
+org: test
+base_path: /tmp/repos
+repos: {}
+`)
+	t.Setenv("CORE_REPOS", "~/repos.yaml")
+
+	found, err := FindRegistry(m)
+	require.NoError(t, err)
+	assert.Equal(t, path, found)
 }
 
 func TestLoadRegistry_Good_RelativePathAndBranch_Good(t *testing.T) {

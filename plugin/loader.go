@@ -28,6 +28,10 @@ func NewLoader(m io.Medium, baseDir string) *Loader {
 // Directories without a valid plugin.json are silently skipped.
 // Usage: Discover(...)
 func (l *Loader) Discover() ([]*Manifest, error) {
+	if !l.medium.Exists(l.baseDir) {
+		return []*Manifest{}, nil
+	}
+
 	entries, err := l.medium.List(l.baseDir)
 	if err != nil {
 		return nil, coreerr.E("plugin.Loader.Discover", "failed to list plugin directory", err)
