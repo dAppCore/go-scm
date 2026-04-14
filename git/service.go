@@ -99,9 +99,11 @@ func (s *Service) OnStartup(ctx context.Context) core.Result {
 }
 
 func (s *Service) handleQuery(c *core.Core, q core.Query) core.Result {
+	ctx := serviceContext(c)
+
 	switch m := q.(type) {
 	case QueryStatus:
-		statuses := Status(context.Background(), StatusOptions(m))
+		statuses := Status(ctx, StatusOptions(m))
 		s.lastStatus = statuses
 		return core.Result{Value: statuses, OK: true}
 
@@ -112,33 +114,35 @@ func (s *Service) handleQuery(c *core.Core, q core.Query) core.Result {
 		return core.Result{Value: s.AheadRepos(), OK: true}
 
 	case QueryVerifyCommitSignature:
-		valid, err := VerifyCommitSignature(context.Background(), m.Path, m.Ref)
+		valid, err := VerifyCommitSignature(ctx, m.Path, m.Ref)
 		return core.Result{}.Result(valid, err)
 
 	case QueryVerifyTagSignature:
-		valid, err := VerifyTagSignature(context.Background(), m.Path, m.Tag)
+		valid, err := VerifyTagSignature(ctx, m.Path, m.Tag)
 		return core.Result{}.Result(valid, err)
 	}
 	return core.Result{}
 }
 
 func (s *Service) handleAction(c *core.Core, msg core.Message) core.Result {
+	ctx := serviceContext(c)
+
 	switch m := msg.(type) {
 	case TaskPush:
-		return core.Result{}.Result(nil, Push(context.Background(), m.Path))
+		return core.Result{}.Result(nil, Push(ctx, m.Path))
 
 	case TaskPull:
-		return core.Result{}.Result(nil, Pull(context.Background(), m.Path))
+		return core.Result{}.Result(nil, Pull(ctx, m.Path))
 
 	case TaskPushMultiple:
-		results := PushMultiple(context.Background(), m.Paths, m.Names)
+		results := PushMultiple(ctx, m.Paths, m.Names)
 		return core.Result{Value: results, OK: true}
 
 	case TaskCreateBranch:
-		return core.Result{}.Result(nil, CreateBranch(context.Background(), m.Path, m.Branch, m.StartPoint))
+		return core.Result{}.Result(nil, CreateBranch(ctx, m.Path, m.Branch, m.StartPoint))
 
 	case TaskSwitchBranch:
-		return core.Result{}.Result(nil, SwitchBranch(context.Background(), m.Path, m.Branch))
+		return core.Result{}.Result(nil, SwitchBranch(ctx, m.Path, m.Branch))
 	}
 	return core.Result{}
 }
@@ -203,4 +207,13 @@ func (s *Service) AheadReposIter() iter.Seq[RepoStatus] {
 			}
 		}
 	}
+}
+
+func serviceContext(c *core.Core) context.Context {
+	if c != nil {
+		if ctx := c.Context(); ctx != nil {
+			return ctx
+		}
+	}
+	return context.Background()
 }
