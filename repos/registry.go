@@ -26,6 +26,34 @@ type Registry struct {
 	medium   io.Medium        `yaml:"-"`
 }
 
+// RegistryOption configures a Registry created with NewRegistry.
+type RegistryOption func(*Registry)
+
+// WithMedium sets the filesystem medium used by repo helpers.
+// Usage: WithMedium(...)
+func WithMedium(m io.Medium) RegistryOption {
+	return func(r *Registry) {
+		if m != nil {
+			r.medium = m
+		}
+	}
+}
+
+// NewRegistry creates an empty registry configured by the supplied options.
+// Usage: NewRegistry(...)
+func NewRegistry(opts ...RegistryOption) *Registry {
+	reg := &Registry{
+		Version: 1,
+		Repos:   make(map[string]*Repo),
+	}
+	for _, opt := range opts {
+		if opt != nil {
+			opt(reg)
+		}
+	}
+	return reg
+}
+
 // RegistryDefaults contains default values applied to all repos.
 type RegistryDefaults struct {
 	CI      string `yaml:"ci"`
@@ -56,6 +84,8 @@ const (
 type Repo struct {
 	Name        string   `yaml:"-"` // Set from map key
 	Type        string   `yaml:"type"`
+	Remote      string   `yaml:"remote,omitempty"`
+	Branch      string   `yaml:"branch,omitempty"`
 	DependsOn   []string `yaml:"depends_on"`
 	Description string   `yaml:"description"`
 	Docs        bool     `yaml:"docs"`
@@ -81,8 +111,8 @@ func LoadRegistry(m io.Medium, path string) (*Registry, error) {
 	}
 	data := []byte(content)
 
-	var reg Registry
-	if err := yaml.Unmarshal(data, &reg); err != nil {
+	reg, err := decodeRegistry(data)
+	if err != nil {
 		return nil, coreerr.E("repos.LoadRegistry", "failed to parse registry file", err)
 	}
 
@@ -93,21 +123,10 @@ func LoadRegistry(m io.Medium, path string) (*Registry, error) {
 
 	// Set computed fields on each repo
 	for name, repo := range reg.Repos {
-		repo.Name = name
-		if repo.Path == "" {
-			repo.Path = filepath.Join(reg.BasePath, name)
-		} else {
-			repo.Path = expandPath(repo.Path)
-		}
-		repo.registry = &reg
-
-		// Apply defaults if not set
-		if repo.CI == "" {
-			repo.CI = reg.Defaults.CI
-		}
+		finaliseRepo(reg, name, repo)
 	}
 
-	return &reg, nil
+	return reg, nil
 }
 
 // FindRegistry searches for repos.yaml in common locations.
@@ -156,6 +175,8 @@ func FindRegistry(m io.Medium) (string, error) {
 	}
 
 	commonPaths := []string{
+		filepath.Join(home, ".core", "repos.yaml"),
+		filepath.Join(home, "Code", ".core", "repos.yaml"),
 		filepath.Join(home, "Code", "host-uk", ".core", "repos.yaml"),
 		filepath.Join(home, "Code", "host-uk", "repos.yaml"),
 		filepath.Join(home, ".config", "core", "repos.yaml"),
@@ -217,6 +238,8 @@ func FindRegistries(m io.Medium) ([]string, error) {
 		return paths, nil
 	}
 	for _, candidate := range []string{
+		filepath.Join(home, ".core", "repos.yaml"),
+		filepath.Join(home, "Code", ".core", "repos.yaml"),
 		filepath.Join(home, "Code", "host-uk", ".core", "repos.yaml"),
 		filepath.Join(home, "Code", "host-uk", "repos.yaml"),
 		filepath.Join(home, ".config", "core", "repos.yaml"),
@@ -469,6 +492,160 @@ func (repo *Repo) getMedium() io.Medium {
 		return repo.registry.medium
 	}
 	return io.Local
+}
+
+type registryMapFile struct {
+	Version  int              `yaml:"version"`
+	Org      string           `yaml:"org"`
+	BasePath string           `yaml:"base_path"`
+	Repos    map[string]*Repo `yaml:"repos"`
+	Defaults RegistryDefaults `yaml:"defaults"`
+}
+
+type registryListFile struct {
+	Version  int                 `yaml:"version"`
+	Org      string              `yaml:"org"`
+	BasePath string              `yaml:"base_path"`
+	Repos    []registryListEntry `yaml:"repos"`
+	Defaults RegistryDefaults    `yaml:"defaults"`
+}
+
+type registryListEntry struct {
+	Name        string   `yaml:"name"`
+	Path        string   `yaml:"path"`
+	Remote      string   `yaml:"remote,omitempty"`
+	Branch      string   `yaml:"branch,omitempty"`
+	Type        string   `yaml:"type"`
+	DependsOn   []string `yaml:"depends_on"`
+	Description string   `yaml:"description"`
+	Docs        bool     `yaml:"docs"`
+	CI          string   `yaml:"ci"`
+	Domain      string   `yaml:"domain,omitempty"`
+	Clone       *bool    `yaml:"clone,omitempty"`
+}
+
+func decodeRegistry(data []byte) (*Registry, error) {
+	var mapFile registryMapFile
+	if err := yaml.Unmarshal(data, &mapFile); err == nil {
+		return mapRegistryFile(mapFile), nil
+	}
+
+	var listFile registryListFile
+	if err := yaml.Unmarshal(data, &listFile); err != nil {
+		return nil, err
+	}
+
+	return listRegistryFile(listFile)
+}
+
+func mapRegistryFile(file registryMapFile) *Registry {
+	repos := file.Repos
+	if repos == nil {
+		repos = make(map[string]*Repo)
+	}
+	return &Registry{
+		Version:  file.Version,
+		Org:      file.Org,
+		BasePath: file.BasePath,
+		Repos:    repos,
+		Defaults: file.Defaults,
+	}
+}
+
+func listRegistryFile(file registryListFile) (*Registry, error) {
+	reg := &Registry{
+		Version:  file.Version,
+		Org:      file.Org,
+		BasePath: file.BasePath,
+		Repos:    make(map[string]*Repo, len(file.Repos)),
+		Defaults: file.Defaults,
+	}
+
+	for _, entry := range file.Repos {
+		repo, name, err := entry.toRepo(reg.BasePath)
+		if err != nil {
+			return nil, err
+		}
+		reg.Repos[name] = repo
+	}
+
+	return reg, nil
+}
+
+func (entry registryListEntry) toRepo(basePath string) (*Repo, string, error) {
+	name := strings.TrimSpace(entry.Name)
+	if name == "" {
+		switch {
+		case entry.Path != "":
+			name = filepath.Base(entry.Path)
+		case entry.Remote != "":
+			name = repoNameFromRemote(entry.Remote)
+		}
+	}
+	if name == "" {
+		return nil, "", coreerr.E("repos.LoadRegistry", "repo name is required", nil)
+	}
+
+	repo := &Repo{
+		Name:        name,
+		Type:        entry.Type,
+		Remote:      entry.Remote,
+		Branch:      entry.Branch,
+		DependsOn:   entry.DependsOn,
+		Description: entry.Description,
+		Docs:        entry.Docs,
+		CI:          entry.CI,
+		Domain:      entry.Domain,
+		Clone:       entry.Clone,
+	}
+	repo.Path = normaliseRepoPath(basePath, entry.Path, name)
+	return repo, name, nil
+}
+
+func finaliseRepo(reg *Registry, name string, repo *Repo) {
+	if repo == nil {
+		return
+	}
+	if repo.Name == "" {
+		repo.Name = name
+	}
+	repo.Path = normaliseRepoPath(reg.BasePath, repo.Path, repo.Name)
+	repo.registry = reg
+	if repo.CI == "" {
+		repo.CI = reg.Defaults.CI
+	}
+	if repo.Branch == "" {
+		repo.Branch = reg.Defaults.Branch
+	}
+}
+
+func normaliseRepoPath(basePath, rawPath, fallbackName string) string {
+	pathValue := strings.TrimSpace(rawPath)
+	if pathValue == "" {
+		return filepath.Join(basePath, fallbackName)
+	}
+
+	pathValue = expandPath(pathValue)
+	if strings.HasPrefix(pathValue, "/") {
+		return pathValue
+	}
+	return filepath.Join(basePath, pathValue)
+}
+
+func repoNameFromRemote(remote string) string {
+	remote = strings.TrimSpace(remote)
+	if remote == "" {
+		return ""
+	}
+
+	remote = strings.TrimSuffix(remote, ".git")
+	if idx := strings.LastIndex(remote, "/"); idx >= 0 && idx < len(remote)-1 {
+		return remote[idx+1:]
+	}
+	if idx := strings.LastIndex(remote, ":"); idx >= 0 && idx < len(remote)-1 {
+		return remote[idx+1:]
+	}
+	return filepath.Base(remote)
 }
 
 // expandPath expands ~ to home directory.

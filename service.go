@@ -269,6 +269,9 @@ func repoBranch(repo *repos.Repo, reg *repos.Registry, fallback string) string {
 	if fallback != "" {
 		return fallback
 	}
+	if repo != nil && repo.Branch != "" {
+		return repo.Branch
+	}
 	if reg != nil && reg.Defaults.Branch != "" {
 		return reg.Defaults.Branch
 	}

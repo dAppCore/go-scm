@@ -18,6 +18,7 @@ type Manifest struct {
 	Sign        string            `yaml:"sign,omitempty" json:"sign,omitempty"`
 	Layout      string            `yaml:"layout,omitempty" json:"layout,omitempty"`
 	Slots       map[string]string `yaml:"slots,omitempty" json:"slots,omitempty"`
+	SignKey     string            `yaml:"sign_key,omitempty" json:"sign_key,omitempty"`
 
 	// Provider fields — used by runtime provider loading.
 	Namespace string       `yaml:"namespace,omitempty" json:"namespace,omitempty"` // API route prefix, e.g. /api/v1/cool-widget

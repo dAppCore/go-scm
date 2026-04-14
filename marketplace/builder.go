@@ -95,7 +95,7 @@ func (b *Builder) loadInto(modules *[]Module, seen map[string]bool, dir string) 
 		Code:    m.Code,
 		Name:    m.Name,
 		Repo:    b.repoURL(m.Code),
-		SignKey: m.Sign,
+		SignKey: manifestSignKey(m),
 	}
 	*modules = append(*modules, mod)
 	return nil
@@ -121,7 +121,7 @@ func BuildFromManifests(manifests []*manifest.Manifest) *Index {
 		modules = append(modules, Module{
 			Code:    m.Code,
 			Name:    m.Name,
-			SignKey: m.Sign,
+			SignKey: manifestSignKey(m),
 		})
 	}
 

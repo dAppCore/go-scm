@@ -48,6 +48,22 @@ modules:
 	assert.Len(t, m.Modules, 2)
 }
 
+func TestParse_Good_WithSignKey_Good(t *testing.T) {
+	raw := `
+code: signed-module
+name: Signed Module
+version: 1.0.0
+sign: dGVzdHNpZw==
+sign_key: 302a300506032b6570032100f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3
+`
+
+	m, err := Parse([]byte(raw))
+	require.NoError(t, err)
+	assert.Equal(t, "signed-module", m.Code)
+	assert.Equal(t, "dGVzdHNpZw==", m.Sign)
+	assert.Equal(t, "302a300506032b6570032100f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3", m.SignKey)
+}
+
 func TestParse_Bad(t *testing.T) {
 	_, err := Parse([]byte("not: valid: yaml: ["))
 	assert.Error(t, err)

@@ -8,6 +8,7 @@ import (
 
 	"dappco.re/go/core"
 	"dappco.re/go/core/io"
+	"dappco.re/go/core/scm/repos"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -66,4 +67,14 @@ repos: {}
 	require.NotNil(t, repo)
 	assert.Equal(t, "go-scm", repo.Name)
 	assert.Equal(t, "/tmp/code/core/go-scm", path)
+}
+
+func TestRepoBranch_Good_PrefersRepoBranch_Good(t *testing.T) {
+	repo := &repos.Repo{Branch: "dev"}
+	reg := &repos.Registry{
+		Defaults: repos.RegistryDefaults{Branch: "main"},
+	}
+
+	assert.Equal(t, "dev", repoBranch(repo, reg, ""))
+	assert.Equal(t, "fallback", repoBranch(repo, reg, "fallback"))
 }

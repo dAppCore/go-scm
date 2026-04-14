@@ -107,3 +107,21 @@ sign: key-source
 	assert.Equal(t, "compiled", idx.Modules[0].Code)
 	assert.Equal(t, "key-compiled", idx.Modules[0].SignKey)
 }
+
+func TestBuildIndex_Good_PrefersSignKeyField_Good(t *testing.T) {
+	medium := io.NewMockMedium()
+
+	require.NoError(t, medium.Write("/repos/signed/.core/manifest.yaml", `
+code: signed
+name: Signed Module
+version: 1.0.0
+sign: signature-fallback
+sign_key: public-key-preferred
+`))
+
+	idx, err := BuildIndex(medium, []string{"/repos/signed"}, IndexOptions{})
+	require.NoError(t, err)
+
+	require.Len(t, idx.Modules, 1)
+	assert.Equal(t, "public-key-preferred", idx.Modules[0].SignKey)
+}

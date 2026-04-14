@@ -14,6 +14,7 @@ import (
 func signable(m *Manifest) ([]byte, error) {
 	tmp := *m
 	tmp.Sign = ""
+	tmp.SignKey = ""
 	return yaml.Marshal(&tmp)
 }
 

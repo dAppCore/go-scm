@@ -33,11 +33,12 @@ type IndexOptions struct {
 // Categories are deduplicated and sorted.
 //
 // Example:
-//   idx, err := marketplace.BuildIndex(
-//     io.Local,
-//     []string{"/tmp/core-scm", "/tmp/core-ui"},
-//     marketplace.IndexOptions{Org: "core", ForgeURL: "https://forge.lthn.ai"},
-//   )
+//
+//	idx, err := marketplace.BuildIndex(
+//	  io.Local,
+//	  []string{"/tmp/core-scm", "/tmp/core-ui"},
+//	  marketplace.IndexOptions{Org: "core", ForgeURL: "https://forge.lthn.ai"},
+//	)
 func BuildIndex(medium io.Medium, repoPaths []string, opts IndexOptions) (*Index, error) {
 	if opts.ForgeURL == "" {
 		opts.ForgeURL = defaultForgeURL
@@ -63,7 +64,7 @@ func BuildIndex(medium io.Medium, repoPaths []string, opts IndexOptions) (*Index
 		module := Module{
 			Code:    m.Code,
 			Name:    m.Name,
-			SignKey: m.Sign,
+			SignKey: manifestSignKey(m),
 		}
 		if opts.Org != "" {
 			baseURL := strings.TrimSuffix(opts.ForgeURL, "/")
@@ -89,6 +90,16 @@ func BuildIndex(medium io.Medium, repoPaths []string, opts IndexOptions) (*Index
 	sort.Strings(idx.Categories)
 
 	return idx, nil
+}
+
+func manifestSignKey(m *manifest.Manifest) string {
+	if m == nil {
+		return ""
+	}
+	if key := strings.TrimSpace(m.SignKey); key != "" {
+		return key
+	}
+	return strings.TrimSpace(m.Sign)
 }
 
 func loadIndexManifest(medium io.Medium, repoPath string) (*manifest.Manifest, error) {

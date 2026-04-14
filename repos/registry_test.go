@@ -3,6 +3,8 @@
 package repos
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"dappco.re/go/core/io"
@@ -580,4 +582,83 @@ repos: {}
 	path, err := FindRegistry(m)
 	require.NoError(t, err)
 	assert.Equal(t, "/custom/repos.yaml", path)
+}
+
+func TestLoadRegistry_Good_RelativePathAndBranch_Good(t *testing.T) {
+	m := io.NewMockMedium()
+	yaml := `
+version: 1
+org: host-uk
+base_path: /tmp/repos
+defaults:
+  branch: main
+repos:
+  go:
+    type: module
+    path: core/go
+    branch: dev
+`
+	_ = m.Write("/tmp/repos.yaml", yaml)
+
+	reg, err := LoadRegistry(m, "/tmp/repos.yaml")
+	require.NoError(t, err)
+
+	repo, ok := reg.Get("go")
+	require.True(t, ok)
+	assert.Equal(t, "go", repo.Name)
+	assert.Equal(t, "/tmp/repos/core/go", repo.Path)
+	assert.Equal(t, "dev", repo.Branch)
+}
+
+func TestLoadRegistry_Good_ListForm_Good(t *testing.T) {
+	m := io.NewMockMedium()
+	yaml := `
+version: 1
+org: host-uk
+base_path: /tmp/repos
+repos:
+  - path: core/go
+    remote: ssh://git@forge.lthn.ai:2223/core/go.git
+    branch: dev
+    type: module
+    description: Go packages
+`
+	_ = m.Write("/tmp/repos.yaml", yaml)
+
+	reg, err := LoadRegistry(m, "/tmp/repos.yaml")
+	require.NoError(t, err)
+
+	repo, ok := reg.Get("go")
+	require.True(t, ok)
+	assert.Equal(t, "go", repo.Name)
+	assert.Equal(t, "/tmp/repos/core/go", repo.Path)
+	assert.Equal(t, "ssh://git@forge.lthn.ai:2223/core/go.git", repo.Remote)
+	assert.Equal(t, "dev", repo.Branch)
+	assert.Equal(t, "Go packages", repo.Description)
+}
+
+func TestFindRegistries_Good_HomeCoreRepos_Good(t *testing.T) {
+	oldWD, err := os.Getwd()
+	require.NoError(t, err)
+	cwd := t.TempDir()
+	require.NoError(t, os.Chdir(cwd))
+	t.Cleanup(func() {
+		_ = os.Chdir(oldWD)
+	})
+
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+
+	m := io.NewMockMedium()
+	path := filepath.Join(home, ".core", "repos.yaml")
+	_ = m.Write(path, `
+version: 1
+org: test
+base_path: /tmp/repos
+repos: {}
+`)
+
+	paths, err := FindRegistries(m)
+	require.NoError(t, err)
+	assert.Contains(t, paths, path)
 }
