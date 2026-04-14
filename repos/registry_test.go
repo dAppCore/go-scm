@@ -385,10 +385,14 @@ repos:
 func TestScanDirectory_Good(t *testing.T) {
 	m := io.NewMockMedium()
 
-	// Create mock repos with .git dirs.
+	// Create mock repos with .git dirs. MockMedium surfaces directories
+	// via files beneath them, so seed a marker file in each .git dir.
 	_ = m.EnsureDir("/workspace/repo-a/.git")
+	_ = m.Write("/workspace/repo-a/.git/HEAD", "ref: refs/heads/main\n")
 	_ = m.EnsureDir("/workspace/repo-b/.git")
+	_ = m.Write("/workspace/repo-b/.git/HEAD", "ref: refs/heads/main\n")
 	_ = m.EnsureDir("/workspace/not-a-repo") // No .git
+	_ = m.Write("/workspace/not-a-repo/README.md", "hello")
 
 	// Write a file (not a dir) at top level.
 	_ = m.Write("/workspace/README.md", "hello")
@@ -559,4 +563,21 @@ func TestGetMedium_Good_NilMediumFallback_Good(t *testing.T) {
 	repo := &Repo{Name: "test", registry: reg}
 	m := repo.getMedium()
 	assert.Equal(t, io.Local, m)
+}
+
+// ── Registry discovery ────────────────────────────────────────────
+
+func TestFindRegistry_Good_CORE_REPOSEnv_Good(t *testing.T) {
+	m := io.NewMockMedium()
+	_ = m.Write("/custom/repos.yaml", `
+version: 1
+org: test
+base_path: /tmp/repos
+repos: {}
+`)
+	t.Setenv("CORE_REPOS", "/custom/repos.yaml")
+
+	path, err := FindRegistry(m)
+	require.NoError(t, err)
+	assert.Equal(t, "/custom/repos.yaml", path)
 }

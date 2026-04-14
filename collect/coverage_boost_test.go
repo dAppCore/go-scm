@@ -385,7 +385,7 @@ func TestProcessor_Process_Good_DryRunEmitsProgress_Good(t *testing.T) {
 
 func TestProcessor_Process_Good_SkipsUnsupportedExtension_Good(t *testing.T) {
 	m := io.NewMockMedium()
-	m.Dirs["/input"] = true
+	_ = m.EnsureDir("/input")
 	m.Files["/input/data.csv"] = `a,b,c`
 
 	cfg := NewConfigWithMedium(m, "/output")
@@ -401,7 +401,7 @@ func TestProcessor_Process_Good_SkipsUnsupportedExtension_Good(t *testing.T) {
 
 func TestProcessor_Process_Good_MarkdownPassthroughTrimmed_Good(t *testing.T) {
 	m := io.NewMockMedium()
-	m.Dirs["/input"] = true
+	_ = m.EnsureDir("/input")
 	m.Files["/input/readme.md"] = `# Hello World  `
 
 	cfg := NewConfigWithMedium(m, "/output")
@@ -420,7 +420,7 @@ func TestProcessor_Process_Good_MarkdownPassthroughTrimmed_Good(t *testing.T) {
 
 func TestProcessor_Process_Good_HTMExtensionHandled_Good(t *testing.T) {
 	m := io.NewMockMedium()
-	m.Dirs["/input"] = true
+	_ = m.EnsureDir("/input")
 	m.Files["/input/page.htm"] = `<h1>HTM File</h1>`
 
 	cfg := NewConfigWithMedium(m, "/output")
@@ -435,7 +435,7 @@ func TestProcessor_Process_Good_HTMExtensionHandled_Good(t *testing.T) {
 
 func TestProcessor_Process_Good_NilDispatcherHandled_Good(t *testing.T) {
 	m := io.NewMockMedium()
-	m.Dirs["/input"] = true
+	_ = m.EnsureDir("/input")
 	m.Files["/input/test.html"] = `<p>Text</p>`
 
 	cfg := NewConfigWithMedium(m, "/output")

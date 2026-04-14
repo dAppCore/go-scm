@@ -194,6 +194,8 @@ func TestCompile_Good_WithVersionOverride_Good(t *testing.T) {
 		Version: "9.9.9",
 	})
 	require.NoError(t, err)
+	// Compiled manifest carries the override.
 	assert.Equal(t, "9.9.9", cm.Version)
-	assert.Equal(t, "9.9.9", m.Version)
+	// Caller's manifest is not mutated by Compile.
+	assert.Equal(t, "0.0.1", m.Version)
 }

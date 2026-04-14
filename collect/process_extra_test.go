@@ -119,7 +119,7 @@ func TestJSONToMarkdown_Good_ArrayOfObjects_Good(t *testing.T) {
 
 func TestProcessor_Process_Good_CancelledContext_Good(t *testing.T) {
 	m := io.NewMockMedium()
-	m.Dirs["/input"] = true
+	_ = m.EnsureDir("/input")
 	m.Files["/input/file.html"] = `<h1>Test</h1>`
 
 	cfg := NewConfigWithMedium(m, "/output")
@@ -135,7 +135,7 @@ func TestProcessor_Process_Good_CancelledContext_Good(t *testing.T) {
 
 func TestProcessor_Process_Good_EmitsEvents_Good(t *testing.T) {
 	m := io.NewMockMedium()
-	m.Dirs["/input"] = true
+	_ = m.EnsureDir("/input")
 	m.Files["/input/a.html"] = `<h1>Title</h1>`
 	m.Files["/input/b.json"] = `{"key": "value"}`
 
@@ -159,7 +159,7 @@ func TestProcessor_Process_Good_EmitsEvents_Good(t *testing.T) {
 
 func TestProcessor_Process_Good_BadHTML_Good(t *testing.T) {
 	m := io.NewMockMedium()
-	m.Dirs["/input"] = true
+	_ = m.EnsureDir("/input")
 	// html.Parse is very tolerant, so even bad HTML will parse. But we test
 	// that the pipeline handles it gracefully.
 	m.Files["/input/bad.html"] = `<html><body><p>Still valid enough</p>`
@@ -176,7 +176,7 @@ func TestProcessor_Process_Good_BadHTML_Good(t *testing.T) {
 
 func TestProcessor_Process_Good_BadJSON_Good(t *testing.T) {
 	m := io.NewMockMedium()
-	m.Dirs["/input"] = true
+	_ = m.EnsureDir("/input")
 	m.Files["/input/bad.json"] = `not valid json`
 
 	cfg := NewConfigWithMedium(m, "/output")

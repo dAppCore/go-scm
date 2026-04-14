@@ -111,13 +111,19 @@ func LoadRegistry(m io.Medium, path string) (*Registry, error) {
 }
 
 // FindRegistry searches for repos.yaml in common locations.
-// It checks: current directory, parent directories, and home directory.
+// It checks: CORE_REPOS, current directory, parent directories, and home directory.
 // This function is primarily intended for use with io.Local or other local-like filesystems.
 //
 //	path, err := repos.FindRegistry(io.Local)
 //
 // Usage: FindRegistry(...)
 func FindRegistry(m io.Medium) (string, error) {
+	for _, candidate := range registryCandidatesFromEnv() {
+		if m.Exists(candidate) {
+			return candidate, nil
+		}
+	}
+
 	// Check current directory and parents
 	dir, err := os.Getwd()
 	if err != nil {
@@ -164,6 +170,88 @@ func FindRegistry(m io.Medium) (string, error) {
 	return "", coreerr.E("repos.FindRegistry", "repos.yaml not found", nil)
 }
 
+// FindRegistries returns every discovered registry file path in priority order.
+// CORE_REPOS entries are returned first, followed by conventional discovery.
+// Usage: FindRegistries(...)
+func FindRegistries(m io.Medium) ([]string, error) {
+	seen := make(map[string]bool)
+	var paths []string
+
+	add := func(path string) {
+		if path == "" || seen[path] {
+			return
+		}
+		seen[path] = true
+		paths = append(paths, path)
+	}
+
+	for _, candidate := range registryCandidatesFromEnv() {
+		if m.Exists(candidate) {
+			add(candidate)
+		}
+	}
+
+	dir, err := os.Getwd()
+	if err != nil {
+		return nil, err
+	}
+	for {
+		for _, candidate := range []string{
+			filepath.Join(dir, "repos.yaml"),
+			filepath.Join(dir, ".core", "repos.yaml"),
+		} {
+			if m.Exists(candidate) {
+				add(candidate)
+			}
+		}
+
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			break
+		}
+		dir = parent
+	}
+
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return paths, nil
+	}
+	for _, candidate := range []string{
+		filepath.Join(home, "Code", "host-uk", ".core", "repos.yaml"),
+		filepath.Join(home, "Code", "host-uk", "repos.yaml"),
+		filepath.Join(home, ".config", "core", "repos.yaml"),
+	} {
+		if m.Exists(candidate) {
+			add(candidate)
+		}
+	}
+
+	if len(paths) == 0 {
+		return nil, coreerr.E("repos.FindRegistries", "repos.yaml not found", nil)
+	}
+	return paths, nil
+}
+
+// LoadRegistries discovers and loads all registry files found via FindRegistries.
+// Duplicate repository names are resolved by first occurrence.
+// Usage: LoadRegistries(...)
+func LoadRegistries(m io.Medium) ([]*Registry, error) {
+	paths, err := FindRegistries(m)
+	if err != nil {
+		return nil, err
+	}
+
+	regs := make([]*Registry, 0, len(paths))
+	for _, path := range paths {
+		reg, loadErr := LoadRegistry(m, path)
+		if loadErr != nil {
+			return nil, loadErr
+		}
+		regs = append(regs, reg)
+	}
+	return regs, nil
+}
+
 // ScanDirectory creates a Registry by scanning a directory for git repos.
 // This is used as a fallback when no repos.yaml is found.
 // The dir should be a valid path for the provided medium.
@@ -175,6 +263,13 @@ func ScanDirectory(m io.Medium, dir string) (*Registry, error) {
 	entries, err := m.List(dir)
 	if err != nil {
 		return nil, coreerr.E("repos.ScanDirectory", "failed to read directory", err)
+	}
+
+	// Some Medium implementations return an empty slice with no error
+	// for nonexistent paths. Surface that as an error for parity with
+	// local filesystem semantics.
+	if len(entries) == 0 && !m.IsDir(dir) && !m.Exists(dir) {
+		return nil, coreerr.E("repos.ScanDirectory", "failed to read directory", nil)
 	}
 
 	reg := &Registry{
@@ -386,4 +481,26 @@ func expandPath(path string) string {
 		return filepath.Join(home, path[2:])
 	}
 	return path
+}
+
+func registryCandidatesFromEnv() []string {
+	raw := os.Getenv("CORE_REPOS")
+	if raw == "" {
+		return nil
+	}
+
+	raw = strings.ReplaceAll(raw, ",", ":")
+	fields := strings.Split(raw, ":")
+	if len(fields) == 0 {
+		return nil
+	}
+
+	var candidates []string
+	for _, field := range fields {
+		field = strings.TrimSpace(field)
+		if field != "" {
+			candidates = append(candidates, field)
+		}
+	}
+	return candidates
 }

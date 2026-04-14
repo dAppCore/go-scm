@@ -61,8 +61,6 @@ func (e *errorMedium) Read(path string) (string, error) {
 	}
 	return e.MockMedium.Read(path)
 }
-func (e *errorMedium) FileGet(path string) (string, error)          { return e.MockMedium.FileGet(path) }
-func (e *errorMedium) FileSet(path, content string) error           { return e.MockMedium.FileSet(path, content) }
 func (e *errorMedium) Delete(path string) error                     { return e.MockMedium.Delete(path) }
 func (e *errorMedium) DeleteAll(path string) error                  { return e.MockMedium.DeleteAll(path) }
 func (e *errorMedium) Rename(old, new string) error                 { return e.MockMedium.Rename(old, new) }
@@ -101,7 +99,7 @@ func TestProcessor_Process_Bad_ListError_Good(t *testing.T) {
 func TestProcessor_Process_Bad_EnsureDirError_Good(t *testing.T) {
 	em := &errorMedium{MockMedium: io.NewMockMedium(), ensureDirErr: testErr("mkdir denied")}
 	// Need to ensure List returns entries
-	em.MockMedium.Dirs["/input"] = true
+	_ = em.MockMedium.EnsureDir("/input")
 	em.MockMedium.Files["/input/test.html"] = "<h1>Test</h1>"
 
 	cfg := &Config{Output: em, OutputDir: "/output", Dispatcher: NewDispatcher()}
@@ -116,7 +114,7 @@ func TestProcessor_Process_Bad_EnsureDirError_Good(t *testing.T) {
 
 func TestProcessor_Process_Bad_ContextCancelledDuringLoop_Good(t *testing.T) {
 	m := io.NewMockMedium()
-	m.Dirs["/input"] = true
+	_ = m.EnsureDir("/input")
 	m.Files["/input/a.html"] = "<h1>Test</h1>"
 	m.Files["/input/b.html"] = "<h1>Test</h1>"
 
@@ -135,7 +133,7 @@ func TestProcessor_Process_Bad_ContextCancelledDuringLoop_Good(t *testing.T) {
 
 func TestProcessor_Process_Bad_ReadError_Good(t *testing.T) {
 	em := &errorMedium{MockMedium: io.NewMockMedium(), readErr: testErr("read denied")}
-	em.MockMedium.Dirs["/input"] = true
+	_ = em.MockMedium.EnsureDir("/input")
 	em.MockMedium.Files["/input/test.html"] = "<h1>Test</h1>"
 
 	cfg := &Config{Output: em, OutputDir: "/output", Dispatcher: NewDispatcher()}
@@ -150,7 +148,7 @@ func TestProcessor_Process_Bad_ReadError_Good(t *testing.T) {
 
 func TestProcessor_Process_Bad_InvalidJSONFile_Good(t *testing.T) {
 	m := io.NewMockMedium()
-	m.Dirs["/input"] = true
+	_ = m.EnsureDir("/input")
 	m.Files["/input/bad.json"] = "not valid json {"
 
 	cfg := NewConfigWithMedium(m, "/output")
@@ -168,7 +166,7 @@ func TestProcessor_Process_Bad_InvalidJSONFile_Good(t *testing.T) {
 
 func TestProcessor_Process_Bad_WriteError_Good(t *testing.T) {
 	em := &errorMedium{MockMedium: io.NewMockMedium(), writeErr: testErr("disk full")}
-	em.MockMedium.Dirs["/input"] = true
+	_ = em.MockMedium.EnsureDir("/input")
 	em.MockMedium.Files["/input/page.html"] = "<h1>Title</h1>"
 
 	cfg := &Config{Output: em, OutputDir: "/output", Dispatcher: NewDispatcher()}
@@ -183,7 +181,7 @@ func TestProcessor_Process_Bad_WriteError_Good(t *testing.T) {
 
 func TestProcessor_Process_Good_EmitsItemAndComplete_Good(t *testing.T) {
 	m := io.NewMockMedium()
-	m.Dirs["/input"] = true
+	_ = m.EnsureDir("/input")
 	m.Files["/input/page.html"] = "<h1>Title</h1><p>Body</p>"
 
 	cfg := NewConfigWithMedium(m, "/output")
@@ -996,10 +994,6 @@ func (w *writeCountMedium) EnsureDir(path string) error             { return w.M
 func (w *writeCountMedium) Read(path string) (string, error)        { return w.MockMedium.Read(path) }
 func (w *writeCountMedium) List(path string) ([]fs.DirEntry, error) { return w.MockMedium.List(path) }
 func (w *writeCountMedium) IsFile(path string) bool                 { return w.MockMedium.IsFile(path) }
-func (w *writeCountMedium) FileGet(path string) (string, error)     { return w.MockMedium.FileGet(path) }
-func (w *writeCountMedium) FileSet(path, content string) error {
-	return w.MockMedium.FileSet(path, content)
-}
 func (w *writeCountMedium) Delete(path string) error              { return w.MockMedium.Delete(path) }
 func (w *writeCountMedium) DeleteAll(path string) error           { return w.MockMedium.DeleteAll(path) }
 func (w *writeCountMedium) Rename(old, new string) error          { return w.MockMedium.Rename(old, new) }

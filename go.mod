@@ -10,7 +10,7 @@ require (
 	dappco.re/go/core/cli v0.5.2
 	dappco.re/go/core/config v0.2.3
 	dappco.re/go/core/i18n v0.2.3
-	dappco.re/go/core/io v0.4.1
+	dappco.re/go/core/io v0.4.2
 	dappco.re/go/core/log v0.1.2
 	dappco.re/go/core/ws v0.3.0
 	github.com/gin-gonic/gin v1.12.0

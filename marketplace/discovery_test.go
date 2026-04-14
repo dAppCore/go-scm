@@ -166,9 +166,9 @@ binary: ./test-prov
 
 func TestDiscoverProvidersWithMedium_Good(t *testing.T) {
 	medium := io.NewMockMedium()
-	medium.Dirs["/providers"] = true
-	medium.Dirs["/providers/cool-widget"] = true
-	medium.Dirs["/providers/data-viz"] = true
+	_ = medium.EnsureDir("/providers")
+	_ = medium.EnsureDir("/providers/cool-widget")
+	_ = medium.EnsureDir("/providers/data-viz")
 	medium.Files["/providers/cool-widget/.core/manifest.yaml"] = `
 code: cool-widget
 name: Cool Widget

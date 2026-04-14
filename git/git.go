@@ -175,6 +175,24 @@ func Pull(ctx context.Context, path string) error {
 	return gitInteractive(ctx, path, "pull", "--rebase")
 }
 
+// Fetch fetches refs from the given remote.
+// When branch is non-empty, it is fetched explicitly from origin.
+// Usage: Fetch(...)
+func Fetch(ctx context.Context, path, branch string) error {
+	args := []string{"fetch", "origin"}
+	if branch != "" {
+		args = append(args, branch)
+	}
+	return gitInteractive(ctx, path, args...)
+}
+
+// ResetHard resets the working tree to the given ref.
+// Usage: ResetHard(...)
+func ResetHard(ctx context.Context, path, ref string) error {
+	_, err := gitCommand(ctx, path, "reset", "--hard", ref)
+	return err
+}
+
 // IsNonFastForward checks if an error is a non-fast-forward rejection.
 // Usage: IsNonFastForward(...)
 func IsNonFastForward(err error) bool {

@@ -81,7 +81,7 @@ func TestInstall_Good(t *testing.T) {
 	repo := createTestRepo(t, "hello-mod", "1.0")
 	modulesDir := filepath.Join(t.TempDir(), "modules")
 
-	st, err := store.New(":memory:")
+	st, err := store.New(store.Options{Path: ":memory:"})
 	require.NoError(t, err)
 	defer st.Close()
 
@@ -107,7 +107,7 @@ func TestInstall_Good_Signed_Good(t *testing.T) {
 	repo, signKey := createSignedTestRepo(t, "signed-mod", "2.0")
 	modulesDir := filepath.Join(t.TempDir(), "modules")
 
-	st, err := store.New(":memory:")
+	st, err := store.New(store.Options{Path: ":memory:"})
 	require.NoError(t, err)
 	defer st.Close()
 
@@ -128,7 +128,7 @@ func TestInstall_Bad_AlreadyInstalled_Good(t *testing.T) {
 	repo := createTestRepo(t, "dup-mod", "1.0")
 	modulesDir := filepath.Join(t.TempDir(), "modules")
 
-	st, err := store.New(":memory:")
+	st, err := store.New(store.Options{Path: ":memory:"})
 	require.NoError(t, err)
 	defer st.Close()
 
@@ -148,7 +148,7 @@ func TestInstall_Bad_InvalidSignature_Good(t *testing.T) {
 
 	modulesDir := filepath.Join(t.TempDir(), "modules")
 
-	st, err := store.New(":memory:")
+	st, err := store.New(store.Options{Path: ":memory:"})
 	require.NoError(t, err)
 	defer st.Close()
 
@@ -169,7 +169,7 @@ func TestInstall_Bad_PathTraversalCode_Good(t *testing.T) {
 	repo := createTestRepo(t, "safe-mod", "1.0")
 	modulesDir := filepath.Join(t.TempDir(), "modules")
 
-	st, err := store.New(":memory:")
+	st, err := store.New(store.Options{Path: ":memory:"})
 	require.NoError(t, err)
 	defer st.Close()
 
@@ -192,7 +192,7 @@ func TestRemove_Good(t *testing.T) {
 	repo := createTestRepo(t, "rm-mod", "1.0")
 	modulesDir := filepath.Join(t.TempDir(), "modules")
 
-	st, err := store.New(":memory:")
+	st, err := store.New(store.Options{Path: ":memory:"})
 	require.NoError(t, err)
 	defer st.Close()
 
@@ -212,7 +212,7 @@ func TestRemove_Good(t *testing.T) {
 }
 
 func TestRemove_Bad_NotInstalled_Good(t *testing.T) {
-	st, err := store.New(":memory:")
+	st, err := store.New(store.Options{Path: ":memory:"})
 	require.NoError(t, err)
 	defer st.Close()
 
@@ -228,7 +228,7 @@ func TestRemove_Bad_PathTraversalCode_Good(t *testing.T) {
 	escapeDir := filepath.Join(baseDir, "escape")
 	require.NoError(t, os.MkdirAll(escapeDir, 0755))
 
-	st, err := store.New(":memory:")
+	st, err := store.New(store.Options{Path: ":memory:"})
 	require.NoError(t, err)
 	defer st.Close()
 
@@ -245,7 +245,7 @@ func TestRemove_Bad_PathTraversalCode_Good(t *testing.T) {
 func TestInstalled_Good(t *testing.T) {
 	modulesDir := filepath.Join(t.TempDir(), "modules")
 
-	st, err := store.New(":memory:")
+	st, err := store.New(store.Options{Path: ":memory:"})
 	require.NoError(t, err)
 	defer st.Close()
 
@@ -270,7 +270,7 @@ func TestInstalled_Good(t *testing.T) {
 }
 
 func TestInstalled_Good_Empty_Good(t *testing.T) {
-	st, err := store.New(":memory:")
+	st, err := store.New(store.Options{Path: ":memory:"})
 	require.NoError(t, err)
 	defer st.Close()
 
@@ -284,7 +284,7 @@ func TestUpdate_Good(t *testing.T) {
 	repo := createTestRepo(t, "upd-mod", "1.0")
 	modulesDir := filepath.Join(t.TempDir(), "modules")
 
-	st, err := store.New(":memory:")
+	st, err := store.New(store.Options{Path: ":memory:"})
 	require.NoError(t, err)
 	defer st.Close()
 
@@ -311,7 +311,7 @@ func TestUpdate_Good(t *testing.T) {
 func TestUpdate_Bad_PathTraversalCode_Good(t *testing.T) {
 	modulesDir := filepath.Join(t.TempDir(), "modules")
 
-	st, err := store.New(":memory:")
+	st, err := store.New(store.Options{Path: ":memory:"})
 	require.NoError(t, err)
 	defer st.Close()
 

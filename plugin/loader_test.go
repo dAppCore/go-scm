@@ -14,9 +14,9 @@ func TestLoader_Discover_Good(t *testing.T) {
 	baseDir := "/home/user/.core/plugins"
 
 	// Set up mock filesystem with two plugins
-	m.Dirs[baseDir] = true
-	m.Dirs[baseDir+"/plugin-a"] = true
-	m.Dirs[baseDir+"/plugin-b"] = true
+	_ = m.EnsureDir(baseDir)
+	_ = m.EnsureDir(baseDir + "/plugin-a")
+	_ = m.EnsureDir(baseDir + "/plugin-b")
 
 	m.Files[baseDir+"/plugin-a/plugin.json"] = `{
 		"name": "plugin-a",
@@ -49,9 +49,9 @@ func TestLoader_Discover_Good_SkipsInvalidPlugins_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	baseDir := "/home/user/.core/plugins"
 
-	m.Dirs[baseDir] = true
-	m.Dirs[baseDir+"/good-plugin"] = true
-	m.Dirs[baseDir+"/bad-plugin"] = true
+	_ = m.EnsureDir(baseDir)
+	_ = m.EnsureDir(baseDir + "/good-plugin")
+	_ = m.EnsureDir(baseDir + "/bad-plugin")
 
 	// Valid plugin
 	m.Files[baseDir+"/good-plugin/plugin.json"] = `{
@@ -74,8 +74,8 @@ func TestLoader_Discover_Good_SkipsFiles_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	baseDir := "/home/user/.core/plugins"
 
-	m.Dirs[baseDir] = true
-	m.Dirs[baseDir+"/real-plugin"] = true
+	_ = m.EnsureDir(baseDir)
+	_ = m.EnsureDir(baseDir + "/real-plugin")
 	m.Files[baseDir+"/registry.json"] = `{}` // A file, not a directory
 
 	m.Files[baseDir+"/real-plugin/plugin.json"] = `{
@@ -94,7 +94,7 @@ func TestLoader_Discover_Good_SkipsFiles_Good(t *testing.T) {
 func TestLoader_Discover_Good_EmptyDirectory_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	baseDir := "/home/user/.core/plugins"
-	m.Dirs[baseDir] = true
+	_ = m.EnsureDir(baseDir)
 
 	loader := NewLoader(m, baseDir)
 	manifests, err := loader.Discover()
@@ -106,7 +106,7 @@ func TestLoader_LoadPlugin_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	baseDir := "/home/user/.core/plugins"
 
-	m.Dirs[baseDir+"/my-plugin"] = true
+	_ = m.EnsureDir(baseDir + "/my-plugin")
 	m.Files[baseDir+"/my-plugin/plugin.json"] = `{
 		"name": "my-plugin",
 		"version": "1.0.0",
@@ -135,7 +135,7 @@ func TestLoader_LoadPlugin_Bad_InvalidManifest_Bad(t *testing.T) {
 	m := io.NewMockMedium()
 	baseDir := "/home/user/.core/plugins"
 
-	m.Dirs[baseDir+"/bad-plugin"] = true
+	_ = m.EnsureDir(baseDir + "/bad-plugin")
 	m.Files[baseDir+"/bad-plugin/plugin.json"] = `{
 		"name": "bad-plugin",
 		"version": "1.0.0"

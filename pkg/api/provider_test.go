@@ -253,8 +253,11 @@ repos:
 }
 
 func TestScmProvider_RefreshMarketplace_Good(t *testing.T) {
+	// refreshMarketplace always reads the canonical "index.json" relative
+	// to the provider's medium root. Point io.Local's working dir at a tmp
+	// dir and seed the file there so the handler finds it.
 	dir := t.TempDir()
-	indexPath := filepath.Join(dir, "index.json")
+	t.Setenv("CORE_WORKING_DIRECTORY", dir)
 
 	idx := &marketplace.Index{
 		Version: 1,
@@ -262,12 +265,15 @@ func TestScmProvider_RefreshMarketplace_Good(t *testing.T) {
 			{Code: "refreshed", Name: "Refreshed Module"},
 		},
 	}
+	indexPath := filepath.Join(dir, "index.json")
 	require.NoError(t, marketplace.WriteIndex(io.Local, indexPath, idx))
 
 	p := scmapi.NewProvider(nil, nil, nil, nil)
 	r := setupRouter(p)
 
 	w := httptest.NewRecorder()
+	// Client-supplied paths are ignored by the locked handler, but we still
+	// send a body to exercise the content-type path.
 	body, err := json.Marshal(map[string]string{"index_path": indexPath})
 	require.NoError(t, err)
 	req, _ := http.NewRequest("POST", "/api/v1/scm/marketplace/refresh", bytes.NewReader(body))

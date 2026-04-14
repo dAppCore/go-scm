@@ -38,7 +38,7 @@ func TestProcessor_Process_DryRun_Good(t *testing.T) {
 
 func TestProcessor_Process_HTMLFiles_Good(t *testing.T) {
 	m := io.NewMockMedium()
-	m.Dirs["/input"] = true
+	_ = m.EnsureDir("/input")
 	m.Files["/input/page.html"] = `<html><body><h1>Hello</h1><p>World</p></body></html>`
 
 	cfg := NewConfigWithMedium(m, "/output")
@@ -59,7 +59,7 @@ func TestProcessor_Process_HTMLFiles_Good(t *testing.T) {
 
 func TestProcessor_Process_JSONFiles_Good(t *testing.T) {
 	m := io.NewMockMedium()
-	m.Dirs["/input"] = true
+	_ = m.EnsureDir("/input")
 	m.Files["/input/data.json"] = `{"name": "Bitcoin", "price": 42000}`
 
 	cfg := NewConfigWithMedium(m, "/output")
@@ -79,7 +79,7 @@ func TestProcessor_Process_JSONFiles_Good(t *testing.T) {
 
 func TestProcessor_Process_MarkdownPassthrough_Good(t *testing.T) {
 	m := io.NewMockMedium()
-	m.Dirs["/input"] = true
+	_ = m.EnsureDir("/input")
 	m.Files["/input/readme.md"] = "# Already Markdown\n\nThis is already formatted."
 
 	cfg := NewConfigWithMedium(m, "/output")
@@ -98,7 +98,7 @@ func TestProcessor_Process_MarkdownPassthrough_Good(t *testing.T) {
 
 func TestProcessor_Process_SkipUnknownTypes_Good(t *testing.T) {
 	m := io.NewMockMedium()
-	m.Dirs["/input"] = true
+	_ = m.EnsureDir("/input")
 	m.Files["/input/image.png"] = "binary data"
 	m.Files["/input/doc.html"] = "<h1>Heading</h1>"
 
