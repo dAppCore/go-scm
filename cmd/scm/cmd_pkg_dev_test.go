@@ -7,6 +7,8 @@ import (
 	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
 	os "dappco.re/go/core/scm/internal/ax/osx"
 	exec "golang.org/x/sys/execabs"
+	stdos "os"
+	stdpath "path/filepath"
 	"testing"
 
 	"dappco.re/go/core/cli/pkg/cli"
@@ -148,6 +150,31 @@ repos:
 	repo, ok := regs[0].Get("core")
 	require.True(t, ok)
 	assert.Equal(t, "/tmp/repos/core", repo.Path)
+}
+
+func TestLoadWorkspaceRegistries_Good_ScansCurrentDirectory_WhenNoRegistry_Good(t *testing.T) {
+	root := t.TempDir()
+	repoDir := filepath.Join(root, "go-scm")
+	require.NoError(t, os.MkdirAll(filepath.Join(repoDir, ".git"), 0755))
+	t.Setenv("CORE_REPOS", "")
+	t.Setenv("HOME", root)
+
+	wd, err := stdos.Getwd()
+	require.NoError(t, err)
+	require.NoError(t, stdos.Chdir(root))
+	t.Cleanup(func() {
+		_ = stdos.Chdir(wd)
+	})
+
+	regs, err := loadWorkspaceRegistries(nil)
+	require.NoError(t, err)
+	require.Len(t, regs, 1)
+
+	repo, ok := regs[0].Get("go-scm")
+	require.True(t, ok)
+	expected, err := stdpath.EvalSymlinks(repoDir)
+	require.NoError(t, err)
+	assert.Equal(t, expected, repo.Path)
 }
 
 func TestLoadWorkspaceRepos_Good_DeduplicatesByNameAcrossRegistries_Good(t *testing.T) {

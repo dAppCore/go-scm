@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
+	os "dappco.re/go/core/scm/internal/ax/osx"
 	strings "dappco.re/go/core/scm/internal/ax/stringsx"
 
 	"dappco.re/go/core/cli/pkg/cli"
@@ -314,7 +315,24 @@ func loadWorkspaceRepos(registryPaths []string) ([]*repos.Repo, error) {
 
 func loadWorkspaceRegistries(registryPaths []string) ([]*repos.Registry, error) {
 	if len(registryPaths) == 0 {
-		return repos.LoadRegistries(coreio.Local)
+		regs, err := repos.LoadRegistries(coreio.Local)
+		if err != nil {
+			return nil, err
+		}
+		if len(regs) > 0 {
+			return regs, nil
+		}
+
+		cwd, err := os.Getwd()
+		if err != nil {
+			return nil, err
+		}
+
+		scanned, err := repos.ScanDirectory(coreio.Local, cwd)
+		if err != nil {
+			return nil, err
+		}
+		return []*repos.Registry{scanned}, nil
 	}
 
 	regs := make([]*repos.Registry, 0, len(registryPaths))

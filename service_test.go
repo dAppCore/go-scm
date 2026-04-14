@@ -97,6 +97,32 @@ repos: {}
 	assert.Equal(t, "/tmp/code/core/go-scm", path)
 }
 
+func TestCoreService_LoadRegistries_Good_ScansWorkspaceRoot_WhenNoRegistry_Good(t *testing.T) {
+	root := t.TempDir()
+	repoDir := filepath.Join(root, "go-scm")
+	require.NoError(t, os.MkdirAll(filepath.Join(repoDir, ".git"), 0755))
+	t.Setenv("CORE_REPOS", "")
+	t.Setenv("HOME", root)
+
+	c := core.New()
+	factory := NewCoreService(ServiceOptions{
+		Medium:        io.Local,
+		WorkspaceRoot: root,
+	})
+
+	svcAny, err := factory(c)
+	require.NoError(t, err)
+	svc := svcAny.(*CoreService)
+
+	regs, err := svc.loadRegistries()
+	require.NoError(t, err)
+	require.Len(t, regs, 1)
+
+	repo, ok := regs[0].Get("go-scm")
+	require.True(t, ok)
+	assert.Equal(t, "go-scm", filepath.Base(repo.Path))
+}
+
 func TestRepoBranch_Good_PrefersRepoBranch_Good(t *testing.T) {
 	repo := &repos.Repo{Branch: "dev"}
 	reg := &repos.Registry{

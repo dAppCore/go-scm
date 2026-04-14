@@ -228,6 +228,18 @@ func (s *CoreService) loadRegistries() ([]*repos.Registry, error) {
 	if err != nil {
 		return nil, err
 	}
+	if len(regs) == 0 {
+		root, rootErr := expandHome(s.Options().WorkspaceRoot)
+		if rootErr != nil {
+			return nil, rootErr
+		}
+
+		scanned, scanErr := repos.ScanDirectory(s.medium, root)
+		if scanErr != nil {
+			return nil, scanErr
+		}
+		regs = []*repos.Registry{scanned}
+	}
 	s.registries = regs
 	return regs, nil
 }
