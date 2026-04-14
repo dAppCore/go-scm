@@ -4,14 +4,18 @@ package api_test
 
 import (
 	"bytes"
+	"crypto/ed25519"
 	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
 	json "dappco.re/go/core/scm/internal/ax/jsonx"
+	os "dappco.re/go/core/scm/internal/ax/osx"
+	"encoding/hex"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	goapi "dappco.re/go/core/api"
 	"dappco.re/go/core/io"
+	"dappco.re/go/core/scm/manifest"
 	"dappco.re/go/core/scm/marketplace"
 	scmapi "dappco.re/go/core/scm/pkg/api"
 	"dappco.re/go/core/scm/repos"
@@ -298,6 +302,75 @@ func TestScmProvider_RefreshMarketplace_Good(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, listed.Data, 1)
 	assert.Equal(t, "refreshed", listed.Data[0].Code)
+}
+
+func TestScmProvider_SignManifest_Good_PersistsSignedManifest_Good(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("CORE_WORKING_DIRECTORY", dir)
+	require.NoError(t, os.MkdirAll(filepath.Join(dir, ".core"), 0755))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, ".core", "manifest.yaml"), []byte(`
+code: signed-app
+name: Signed App
+version: 1.0.0
+`), 0644))
+
+	_, priv, err := ed25519.GenerateKey(nil)
+	require.NoError(t, err)
+
+	p := scmapi.NewProvider(nil, nil, nil, nil)
+	r := setupRouter(p)
+
+	body, err := json.Marshal(map[string]string{
+		"private_key": hex.EncodeToString(priv),
+	})
+	require.NoError(t, err)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/v1/scm/manifest/sign", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	r.ServeHTTP(w, req)
+
+	require.Equal(t, http.StatusOK, w.Code)
+
+	loaded, err := manifest.Load(io.Local, ".")
+	require.NoError(t, err)
+	assert.NotEmpty(t, loaded.Sign)
+	assert.NotEmpty(t, loaded.SignKey)
+}
+
+func TestScmProvider_VerifyManifest_Good_UsesEmbeddedSignKey_Good(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("CORE_WORKING_DIRECTORY", dir)
+	require.NoError(t, os.MkdirAll(filepath.Join(dir, ".core"), 0755))
+
+	_, priv, err := ed25519.GenerateKey(nil)
+	require.NoError(t, err)
+
+	m := &manifest.Manifest{
+		Code:    "verified-app",
+		Name:    "Verified App",
+		Version: "1.0.0",
+	}
+	require.NoError(t, manifest.Sign(m, priv))
+	raw, err := manifest.MarshalYAML(m)
+	require.NoError(t, err)
+	require.NoError(t, os.WriteFile(filepath.Join(dir, ".core", "manifest.yaml"), raw, 0644))
+
+	p := scmapi.NewProvider(nil, nil, nil, nil)
+	r := setupRouter(p)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/v1/scm/manifest/verify", bytes.NewReader([]byte(`{}`)))
+	req.Header.Set("Content-Type", "application/json")
+	r.ServeHTTP(w, req)
+
+	require.Equal(t, http.StatusOK, w.Code)
+
+	var resp goapi.Response[map[string]any]
+	err = json.Unmarshal(w.Body.Bytes(), &resp)
+	require.NoError(t, err)
+	assert.True(t, resp.Success)
+	assert.Equal(t, true, resp.Data["valid"])
 }
 
 // -- Route Registration -------------------------------------------------------

@@ -5,6 +5,8 @@ package manifest
 import (
 	"crypto/ed25519"
 	"encoding/base64"
+	"encoding/hex"
+	"strings"
 
 	coreerr "dappco.re/go/core/log"
 	"gopkg.in/yaml.v3"
@@ -34,6 +36,9 @@ func Sign(m *Manifest, priv ed25519.PrivateKey) error {
 	}
 	sig := ed25519.Sign(priv, msg)
 	m.Sign = base64.StdEncoding.EncodeToString(sig)
+	if pub, ok := priv.Public().(ed25519.PublicKey); ok {
+		m.SignKey = hex.EncodeToString(pub)
+	}
 	return nil
 }
 
@@ -45,6 +50,18 @@ func Verify(m *Manifest, pub ed25519.PublicKey) (bool, error) {
 	}
 	if m.Sign == "" {
 		return false, coreerr.E("manifest.Verify", "no signature present", nil)
+	}
+
+	if len(pub) == 0 {
+		signKey := strings.TrimSpace(m.SignKey)
+		if signKey == "" {
+			return false, coreerr.E("manifest.Verify", "no public key provided", nil)
+		}
+		keyBytes, err := hex.DecodeString(signKey)
+		if err != nil {
+			return false, coreerr.E("manifest.Verify", "decode sign_key failed", err)
+		}
+		pub = ed25519.PublicKey(keyBytes)
 	}
 	if len(pub) != ed25519.PublicKeySize {
 		return false, coreerr.E("manifest.Verify", "invalid public key length", nil)

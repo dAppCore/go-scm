@@ -3,6 +3,8 @@
 package manifest
 
 import (
+	"strings"
+
 	coreerr "dappco.re/go/core/log"
 	"gopkg.in/yaml.v3"
 )
@@ -75,7 +77,56 @@ func Parse(data []byte) (*Manifest, error) {
 	if err := yaml.Unmarshal(data, &m); err != nil {
 		return nil, coreerr.E("manifest.Parse", "unmarshal failed", err)
 	}
+	if err := m.Validate(); err != nil {
+		return nil, coreerr.E("manifest.Parse", "validate failed", err)
+	}
 	return &m, nil
+}
+
+// Validate checks that a manifest has the minimum fields and shape required by
+// the SCM runtime.
+// Usage: Validate(...)
+func (m *Manifest) Validate() error {
+	if m == nil {
+		return coreerr.E("manifest.Manifest.Validate", "nil manifest", nil)
+	}
+	if strings.TrimSpace(m.Code) == "" {
+		return coreerr.E("manifest.Manifest.Validate", "missing code", nil)
+	}
+	if strings.TrimSpace(m.Version) == "" {
+		return coreerr.E("manifest.Manifest.Validate", "missing version", nil)
+	}
+	if strings.TrimSpace(m.Name) == "" {
+		return coreerr.E("manifest.Manifest.Validate", "missing name", nil)
+	}
+
+	if (strings.TrimSpace(m.Namespace) != "" || strings.TrimSpace(m.Binary) != "") && !m.IsProvider() {
+		return coreerr.E("manifest.Manifest.Validate", "provider manifests require both namespace and binary", nil)
+	}
+
+	if m.Element != nil {
+		if strings.TrimSpace(m.Element.Tag) == "" {
+			return coreerr.E("manifest.Manifest.Validate", "element tag is required", nil)
+		}
+		if strings.TrimSpace(m.Element.Source) == "" {
+			return coreerr.E("manifest.Manifest.Validate", "element source is required", nil)
+		}
+	}
+
+	defaults := 0
+	for name, daemon := range m.Daemons {
+		if strings.TrimSpace(daemon.Binary) == "" {
+			return coreerr.E("manifest.Manifest.Validate", "daemon "+name+" is missing binary", nil)
+		}
+		if daemon.Default {
+			defaults++
+		}
+	}
+	if defaults > 1 {
+		return coreerr.E("manifest.Manifest.Validate", "multiple default daemons", nil)
+	}
+
+	return nil
 }
 
 // SlotNames returns a deduplicated list of component names from slots.

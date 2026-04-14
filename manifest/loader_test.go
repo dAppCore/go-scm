@@ -50,6 +50,23 @@ func TestLoadVerified_Good(t *testing.T) {
 	assert.Equal(t, "signed-app", loaded.Code)
 }
 
+func TestLoadVerified_Good_UsesEmbeddedSignKey_Good(t *testing.T) {
+	_, priv, _ := ed25519.GenerateKey(nil)
+	m := &Manifest{
+		Code: "signed-app", Name: "Signed", Version: "1.0.0",
+	}
+	_ = Sign(m, priv)
+
+	raw, _ := MarshalYAML(m)
+	fs := io.NewMockMedium()
+	fs.Files[".core/manifest.yaml"] = string(raw)
+
+	loaded, err := LoadVerified(fs, ".", nil)
+	require.NoError(t, err)
+	assert.Equal(t, "signed-app", loaded.Code)
+	assert.NotEmpty(t, loaded.SignKey)
+}
+
 func TestLoadVerified_Bad_Tampered_Good(t *testing.T) {
 	pub, priv, _ := ed25519.GenerateKey(nil)
 	m := &Manifest{Code: "app", Version: "1.0.0"}

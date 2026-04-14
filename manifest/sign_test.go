@@ -4,6 +4,7 @@ package manifest
 
 import (
 	"crypto/ed25519"
+	"encoding/hex"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -25,8 +26,26 @@ func TestSignAndVerify_Good(t *testing.T) {
 	err = Sign(m, priv)
 	require.NoError(t, err)
 	assert.NotEmpty(t, m.Sign)
+	assert.Equal(t, hex.EncodeToString(pub), m.SignKey)
 
 	ok, err := Verify(m, pub)
+	require.NoError(t, err)
+	assert.True(t, ok)
+}
+
+func TestVerify_Good_UsesEmbeddedSignKey_Good(t *testing.T) {
+	_, priv, err := ed25519.GenerateKey(nil)
+	require.NoError(t, err)
+
+	m := &Manifest{
+		Code:    "test-app",
+		Name:    "Test App",
+		Version: "1.0.0",
+	}
+
+	require.NoError(t, Sign(m, priv))
+
+	ok, err := Verify(m, nil)
 	require.NoError(t, err)
 	assert.True(t, ok)
 }

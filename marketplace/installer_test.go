@@ -221,6 +221,27 @@ func TestInstall_Good_Signed_Good(t *testing.T) {
 	assert.Contains(t, raw, `"version":"2.0"`)
 }
 
+func TestInstall_Good_UsesEmbeddedManifestSignKey_Good(t *testing.T) {
+	repo, _ := createSignedTestRepo(t, "embedded-signed-mod", "2.1")
+	modulesDir := filepath.Join(t.TempDir(), "modules")
+
+	st, err := store.New(store.Options{Path: ":memory:"})
+	require.NoError(t, err)
+	defer st.Close()
+
+	inst := NewInstaller(io.Local, modulesDir, st)
+	err = inst.Install(context.Background(), Module{
+		Code: "embedded-signed-mod",
+		Repo: repo,
+	})
+	require.NoError(t, err)
+
+	raw, err := st.Get("_modules", "embedded-signed-mod")
+	require.NoError(t, err)
+	assert.Contains(t, raw, `"version":"2.1"`)
+	assert.Contains(t, raw, `"sign_key":"`)
+}
+
 func TestInstall_Bad_AlreadyInstalled_Good(t *testing.T) {
 	repo := createTestRepo(t, "dup-mod", "1.0")
 	modulesDir := filepath.Join(t.TempDir(), "modules")

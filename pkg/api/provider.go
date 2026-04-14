@@ -406,7 +406,7 @@ func (p *ScmProvider) getManifest(c *gin.Context) {
 }
 
 type verifyRequest struct {
-	PublicKey string `json:"public_key" binding:"required"`
+	PublicKey string `json:"public_key"`
 }
 
 func (p *ScmProvider) verifyManifest(c *gin.Context) {
@@ -422,13 +422,27 @@ func (p *ScmProvider) verifyManifest(c *gin.Context) {
 		return
 	}
 
-	pubBytes, err := hex.DecodeString(req.PublicKey)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, api.Fail("invalid_key", "public key must be hex-encoded"))
+	var (
+		valid bool
+		pub   ed25519.PublicKey
+	)
+	if key := strings.TrimSpace(req.PublicKey); key != "" {
+		pubBytes, err := hex.DecodeString(key)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, api.Fail("invalid_key", "public key must be hex-encoded"))
+			return
+		}
+		if len(pubBytes) != ed25519.PublicKeySize {
+			c.JSON(http.StatusBadRequest, api.Fail("invalid_key", "public key must be 32 bytes when decoded"))
+			return
+		}
+		pub = ed25519.PublicKey(pubBytes)
+	} else if strings.TrimSpace(m.SignKey) == "" {
+		c.JSON(http.StatusBadRequest, api.Fail("invalid_request", "public_key is required when manifest has no sign_key"))
 		return
 	}
 
-	valid, err := manifest.Verify(m, ed25519.PublicKey(pubBytes))
+	valid, err = manifest.Verify(m, pub)
 	if err != nil {
 		c.JSON(http.StatusUnprocessableEntity, api.Fail("verify_failed", err.Error()))
 		return
@@ -464,13 +478,32 @@ func (p *ScmProvider) signManifest(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, api.Fail("invalid_key", "private key must be hex-encoded"))
 		return
 	}
+	if len(privBytes) != ed25519.PrivateKeySize {
+		c.JSON(http.StatusBadRequest, api.Fail("invalid_key", "private key must be 64 bytes when decoded"))
+		return
+	}
 
 	if err := manifest.Sign(m, ed25519.PrivateKey(privBytes)); err != nil {
 		c.JSON(http.StatusInternalServerError, api.Fail("sign_failed", err.Error()))
 		return
 	}
 
-	c.JSON(http.StatusOK, api.OK(map[string]any{"signed": true, "code": m.Code, "signature": m.Sign}))
+	data, err := manifest.MarshalYAML(m)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, api.Fail("sign_failed", err.Error()))
+		return
+	}
+	if err := p.medium.Write(".core/manifest.yaml", string(data)); err != nil {
+		c.JSON(http.StatusInternalServerError, api.Fail("sign_failed", err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, api.OK(map[string]any{
+		"signed":    true,
+		"code":      m.Code,
+		"signature": m.Sign,
+		"sign_key":  m.SignKey,
+	}))
 }
 
 func (p *ScmProvider) getPermissions(c *gin.Context) {

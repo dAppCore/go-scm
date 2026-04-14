@@ -94,6 +94,10 @@ func (i *Installer) Install(ctx context.Context, mod Module) error {
 	}
 
 	entryPoint := filepath.Join(dest, "main.ts")
+	resolvedSignKey := strings.TrimSpace(mod.SignKey)
+	if resolvedSignKey == "" {
+		resolvedSignKey = strings.TrimSpace(m.SignKey)
+	}
 	installed := InstalledModule{
 		Code:        safeCode,
 		Name:        m.Name,
@@ -101,7 +105,7 @@ func (i *Installer) Install(ctx context.Context, mod Module) error {
 		Repo:        mod.Repo,
 		EntryPoint:  entryPoint,
 		Permissions: m.Permissions,
-		SignKey:     mod.SignKey,
+		SignKey:     resolvedSignKey,
 		InstalledAt: time.Now().UTC().Format(time.RFC3339),
 	}
 
@@ -192,6 +196,9 @@ func (i *Installer) Update(ctx context.Context, code string) error {
 	installed.Name = m.Name
 	installed.Version = m.Version
 	installed.Permissions = m.Permissions
+	if installed.SignKey == "" {
+		installed.SignKey = strings.TrimSpace(m.SignKey)
+	}
 
 	data, err := json.Marshal(installed)
 	if err != nil {
@@ -229,7 +236,23 @@ func loadManifest(medium io.Medium, signKey string) (*manifest.Manifest, error) 
 		}
 		return manifest.LoadVerified(medium, ".", pubBytes)
 	}
-	return manifest.Load(medium, ".")
+
+	m, err := manifest.Load(medium, ".")
+	if err != nil {
+		return nil, err
+	}
+	if strings.TrimSpace(m.SignKey) == "" {
+		return m, nil
+	}
+
+	ok, err := manifest.Verify(m, nil)
+	if err != nil {
+		return nil, coreerr.E("marketplace.loadManifest", "verify embedded sign key", err)
+	}
+	if !ok {
+		return nil, coreerr.E("marketplace.loadManifest", "signature verification failed for "+m.Code, nil)
+	}
+	return m, nil
 }
 
 func (i *Installer) resolveModulePath(code string) (string, string, error) {

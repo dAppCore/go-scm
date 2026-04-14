@@ -250,3 +250,35 @@ func TestManifest_DefaultDaemon_Good_SingleImplicit_Good(t *testing.T) {
 	assert.Equal(t, "./bin/server", spec.Binary)
 	assert.False(t, spec.Default)
 }
+
+func TestParse_Bad_MissingName_Good(t *testing.T) {
+	_, err := Parse([]byte(`
+code: missing-name
+version: 1.0.0
+`))
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "missing name")
+}
+
+func TestParse_Bad_PartialProvider_Good(t *testing.T) {
+	_, err := Parse([]byte(`
+code: partial-provider
+name: Partial Provider
+version: 1.0.0
+namespace: /api/v1/partial
+`))
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "provider manifests require both namespace and binary")
+}
+
+func TestParse_Bad_ElementMissingSource_Good(t *testing.T) {
+	_, err := Parse([]byte(`
+code: broken-element
+name: Broken Element
+version: 1.0.0
+element:
+  tag: core-broken
+`))
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "element source is required")
+}
