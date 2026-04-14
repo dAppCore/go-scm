@@ -334,6 +334,88 @@ repos:
 	assert.Equal(t, 1, value["synced"])
 }
 
+// A cancelled context must halt sync-all between repos rather than letting
+// each remaining fetch grind through its own timeout. We prime the cache with
+// two repos (that don't exist on disk) and pre-cancel the context so the loop
+// exits before any git operation runs.
+func TestCoreService_HandleRepoSyncAll_Bad_ContextCancelled_Good(t *testing.T) {
+	m := io.NewMockMedium()
+	require.NoError(t, m.Write("/tmp/repos.yaml", `
+version: 1
+org: core
+base_path: /tmp/code
+repos:
+  go-scm:
+    type: module
+  go-io:
+    type: module
+`))
+
+	c := core.New()
+	factory := NewCoreService(ServiceOptions{
+		Medium:       m,
+		RegistryPath: "/tmp/repos.yaml",
+	})
+
+	svcAny, err := factory(c)
+	require.NoError(t, err)
+	svc := svcAny.(*CoreService)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	result := svc.handleRepoSyncAll(ctx, core.NewOptions())
+	require.False(t, result.OK)
+
+	value, ok := result.Value.(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, 0, value["synced"])
+
+	failures, ok := value["failures"].([]string)
+	require.True(t, ok)
+	require.Len(t, failures, 1)
+	assert.Contains(t, failures[0], "context canceled")
+}
+
+// Concurrent access to the registry cache from IPC (invalidate) and action
+// handlers (load) must not race. The fix is a sync.Mutex on CoreService;
+// this test pounds both paths together under -race so any reintroduced race
+// fails immediately.
+func TestCoreService_LoadRegistries_Good_ConcurrentInvalidate_Good(t *testing.T) {
+	m := io.NewMockMedium()
+	require.NoError(t, m.Write("/tmp/repos.yaml", `
+version: 1
+org: core
+base_path: /tmp/code
+repos:
+  go-scm:
+    type: module
+`))
+
+	c := core.New()
+	factory := NewCoreService(ServiceOptions{
+		Medium:       m,
+		RegistryPath: "/tmp/repos.yaml",
+	})
+
+	svcAny, err := factory(c)
+	require.NoError(t, err)
+	svc := svcAny.(*CoreService)
+
+	done := make(chan struct{})
+	go func() {
+		for i := 0; i < 200; i++ {
+			svc.invalidateRegistries()
+		}
+		close(done)
+	}()
+	for i := 0; i < 200; i++ {
+		_, loadErr := svc.loadRegistries("")
+		require.NoError(t, loadErr)
+	}
+	<-done
+}
+
 func runGitCommand(t *testing.T, dir string, args ...string) {
 	t.Helper()
 

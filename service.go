@@ -8,6 +8,7 @@ import (
 	"context"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"dappco.re/go/core"
 	"dappco.re/go/core/io"
@@ -37,9 +38,15 @@ type ServiceOptions struct {
 }
 
 // CoreService provides repo.sync actions and IPC handling for SCM workspaces.
+//
+// registryMu guards registries and registryCacheKey because OnStartup,
+// HandleIPCEvents (IPC dispatcher goroutine), and action handlers
+// (repo.sync, repo.sync.all — invoked from any goroutine via c.Action) all
+// read and mutate the cache concurrently.
 type CoreService struct {
 	*core.ServiceRuntime[ServiceOptions]
 	medium           io.Medium
+	registryMu       sync.Mutex
 	registries       []*repos.Registry
 	registryCacheKey string
 }
@@ -163,6 +170,21 @@ func (s *CoreService) handleRepoSyncAll(ctx context.Context, opts core.Options) 
 	}
 
 	for _, repo := range order {
+		// Honour context cancellation between repos so an orchestrator aborting
+		// the workspace can halt a long sync-all run without waiting for every
+		// remaining fetch to time out individually.
+		if err := ctx.Err(); err != nil {
+			return core.Result{
+				Value: map[string]any{
+					"synced":   synced,
+					"skipped":  skipped,
+					"failures": append(failures, err.Error()),
+					"results":  results,
+				},
+				OK: false,
+			}
+		}
+
 		if repo != nil && repo.Clone != nil && !*repo.Clone {
 			skipped++
 			continue
@@ -219,6 +241,9 @@ func (s *CoreService) loadRegistries(root string) ([]*repos.Registry, error) {
 		return nil, err
 	}
 
+	s.registryMu.Lock()
+	defer s.registryMu.Unlock()
+
 	if s.registries != nil && s.registryCacheKey == cacheKey {
 		return s.registries, nil
 	}
@@ -259,6 +284,8 @@ func (s *CoreService) loadRegistries(root string) ([]*repos.Registry, error) {
 }
 
 func (s *CoreService) invalidateRegistries() {
+	s.registryMu.Lock()
+	defer s.registryMu.Unlock()
 	s.registries = nil
 	s.registryCacheKey = ""
 }

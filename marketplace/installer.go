@@ -93,6 +93,14 @@ func (i *Installer) Install(ctx context.Context, mod Module) error {
 		return err
 	}
 
+	// Defence-in-depth: a repo that claims to be module "foo" via the
+	// marketplace index must declare the same code in its manifest. Without
+	// this check a malicious entry could redirect the Code lookup to a repo
+	// whose manifest (and thus signature) belongs to a different module.
+	if manifestCode := strings.TrimSpace(m.Code); manifestCode != "" && manifestCode != mod.Code {
+		return coreerr.E("marketplace.Installer.Install", "manifest code mismatch: expected "+mod.Code+", got "+manifestCode, nil)
+	}
+
 	entryPoint := filepath.Join(dest, "main.ts")
 	resolvedSignKey := strings.TrimSpace(mod.SignKey)
 	if resolvedSignKey == "" {
@@ -190,6 +198,14 @@ func (i *Installer) Update(ctx context.Context, code string) error {
 	if mErr != nil {
 		return coreerr.E("marketplace.Installer.Update", "reload manifest", mErr)
 	}
+
+	// Defence-in-depth: a tag refresh must not silently re-home the module to
+	// a different code. Reject updates that change the manifest's declared
+	// code — the caller will need to uninstall and reinstall explicitly.
+	if manifestCode := strings.TrimSpace(m.Code); manifestCode != "" && manifestCode != safeCode {
+		return coreerr.E("marketplace.Installer.Update", "manifest code changed: expected "+safeCode+", got "+manifestCode, nil)
+	}
+
 	currentTag, tagErr := git.CurrentTag(ctx, dest)
 	if tagErr != nil {
 		return coreerr.E("marketplace.Installer.Update", "current tag", tagErr)

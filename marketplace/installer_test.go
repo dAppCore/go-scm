@@ -588,3 +588,61 @@ func TestUpdate_Bad_PathTraversalCode_Good(t *testing.T) {
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "invalid module code")
 }
+
+// A marketplace entry keyed as "claimed-mod" must not be allowed to redirect
+// to a repo whose manifest declares a different code — that would let an
+// attacker borrow another module's signature for their own payload.
+func TestInstall_Bad_ManifestCodeMismatch_Good(t *testing.T) {
+	repo := createTestRepo(t, "real-code", "1.0")
+	modulesDir := filepath.Join(t.TempDir(), "modules")
+
+	st, err := store.New(store.Options{Path: ":memory:"})
+	require.NoError(t, err)
+	defer st.Close()
+
+	inst := NewInstaller(io.Local, modulesDir, st)
+	err = inst.Install(context.Background(), Module{
+		Code: "claimed-code",
+		Repo: repo,
+	})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "manifest code mismatch")
+
+	// Directory must be cleaned up — the install was rejected.
+	_, statErr := os.Stat(filepath.Join(modulesDir, "claimed-code"))
+	assert.True(t, os.IsNotExist(statErr))
+
+	_, err = st.Get("_modules", "claimed-code")
+	assert.Error(t, err)
+}
+
+// An update that re-homes the manifest to a different code (e.g. an attacker
+// pushes a new tag that changes the code) must be rejected rather than
+// silently replacing the entry.
+func TestUpdate_Bad_ManifestCodeChanged_Good(t *testing.T) {
+	repo := createTestRepo(t, "stable-code", "1.0")
+	modulesDir := filepath.Join(t.TempDir(), "modules")
+
+	st, err := store.New(store.Options{Path: ":memory:"})
+	require.NoError(t, err)
+	defer st.Close()
+
+	inst := NewInstaller(io.Local, modulesDir, st)
+	require.NoError(t, inst.Install(context.Background(), Module{
+		Code: "stable-code",
+		Repo: repo,
+	}))
+
+	// Upstream flips the manifest code mid-flight — reject.
+	swapped := "code: evil-code\nname: Stable Module\nversion: \"1.1\"\n"
+	require.NoError(t, os.WriteFile(
+		filepath.Join(repo, ".core", "manifest.yaml"),
+		[]byte(swapped), 0644,
+	))
+	runGit(t, repo, "add", ".")
+	runGit(t, repo, "commit", "-m", "swap code")
+
+	err = inst.Update(context.Background(), "stable-code")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "manifest code changed")
+}
