@@ -101,7 +101,7 @@ func (i *Installer) Install(ctx context.Context, mod Module) error {
 	installed := InstalledModule{
 		Code:        safeCode,
 		Name:        m.Name,
-		Version:     m.Version,
+		Version:     installedModuleVersion(ref, m.Version),
 		Repo:        mod.Repo,
 		EntryPoint:  entryPoint,
 		Permissions: m.Permissions,
@@ -190,11 +190,15 @@ func (i *Installer) Update(ctx context.Context, code string) error {
 	if mErr != nil {
 		return coreerr.E("marketplace.Installer.Update", "reload manifest", mErr)
 	}
+	currentTag, tagErr := git.CurrentTag(ctx, dest)
+	if tagErr != nil {
+		return coreerr.E("marketplace.Installer.Update", "current tag", tagErr)
+	}
 
 	// Update stored metadata
 	installed.Code = safeCode
 	installed.Name = m.Name
-	installed.Version = m.Version
+	installed.Version = installedModuleVersion(currentTag, m.Version)
 	installed.Permissions = m.Permissions
 	if installed.SignKey == "" {
 		installed.SignKey = strings.TrimSpace(m.SignKey)
@@ -337,4 +341,21 @@ func latestSemverTag(tags []string) string {
 		}
 	}
 	return best.raw
+}
+
+func installedModuleVersion(ref, fallback string) string {
+	ref = strings.TrimSpace(ref)
+	if ref == "" {
+		return fallback
+	}
+
+	canonical := ref
+	if !semver.IsValid(canonical) && semver.IsValid("v"+canonical) {
+		canonical = "v" + canonical
+	}
+	if semver.IsValid(canonical) {
+		return strings.TrimPrefix(canonical, "v")
+	}
+
+	return fallback
 }

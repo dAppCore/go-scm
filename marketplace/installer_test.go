@@ -200,6 +200,28 @@ func TestInstall_Good_ExplicitTaggedVersion_Good(t *testing.T) {
 	assert.Equal(t, "1.0.0", installed[0].Version)
 }
 
+func TestInstall_Good_TagIsSourceOfTruth_Good(t *testing.T) {
+	repo := createTaggedTestRepo(t, "tag-source-mod",
+		taggedRepoVersion{Version: "9.9.9", Tag: "v2.3.4"},
+	)
+	modulesDir := filepath.Join(t.TempDir(), "modules")
+
+	st, err := store.New(store.Options{Path: ":memory:"})
+	require.NoError(t, err)
+	defer st.Close()
+
+	inst := NewInstaller(io.Local, modulesDir, st)
+	require.NoError(t, inst.Install(context.Background(), Module{
+		Code: "tag-source-mod",
+		Repo: repo,
+	}))
+
+	installed, err := inst.Installed()
+	require.NoError(t, err)
+	require.Len(t, installed, 1)
+	assert.Equal(t, "2.3.4", installed[0].Version)
+}
+
 func TestInstall_Good_Signed_Good(t *testing.T) {
 	repo, signKey := createSignedTestRepo(t, "signed-mod", "2.0")
 	modulesDir := filepath.Join(t.TempDir(), "modules")
@@ -456,6 +478,38 @@ func TestUpdate_Good_AdvancesToLatestTag_Good(t *testing.T) {
 	require.Len(t, installed, 1)
 	assert.Equal(t, "2.0.0", installed[0].Version)
 	assert.Equal(t, "Tagged Module Updated", installed[0].Name)
+}
+
+func TestUpdate_Good_TagRemainsSourceOfTruth_Good(t *testing.T) {
+	repo := createTaggedTestRepo(t, "upd-tag-source-mod",
+		taggedRepoVersion{Version: "1.0.0", Name: "Tagged Source Module", Tag: "v1.0.0"},
+	)
+	modulesDir := filepath.Join(t.TempDir(), "modules")
+
+	st, err := store.New(store.Options{Path: ":memory:"})
+	require.NoError(t, err)
+	defer st.Close()
+
+	inst := NewInstaller(io.Local, modulesDir, st)
+	require.NoError(t, inst.Install(context.Background(), Module{
+		Code: "upd-tag-source-mod",
+		Repo: repo,
+	}))
+
+	manifestYAML := "code: upd-tag-source-mod\nname: Tagged Source Module Updated\nversion: \"9.9.9\"\n"
+	require.NoError(t, os.WriteFile(filepath.Join(repo, ".core", "manifest.yaml"), []byte(manifestYAML), 0644))
+	require.NoError(t, os.WriteFile(filepath.Join(repo, "version.txt"), []byte("9.9.9\n"), 0644))
+	runGit(t, repo, "add", "--force", ".")
+	runGit(t, repo, "commit", "-m", "version-9.9.9")
+	runGit(t, repo, "tag", "v2.0.0")
+
+	require.NoError(t, inst.Update(context.Background(), "upd-tag-source-mod"))
+
+	installed, err := inst.Installed()
+	require.NoError(t, err)
+	require.Len(t, installed, 1)
+	assert.Equal(t, "2.0.0", installed[0].Version)
+	assert.Equal(t, "Tagged Source Module Updated", installed[0].Name)
 }
 
 func TestUpdate_Bad_PathTraversalCode_Good(t *testing.T) {

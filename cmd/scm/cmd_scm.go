@@ -47,4 +47,23 @@ func AddScmCommands(root *cli.Command) {
 	addPackageCommand(scmCmd)
 	addSignCommand(scmCmd)
 	addVerifyCommand(scmCmd)
+
+	// RFC-facing aliases live at the root CLI as `core dev ...` and
+	// `core pkg ...`. Preserve the nested `core scm ...` surface for
+	// compatibility, but only add the root aliases when they are unused.
+	if !hasCommand(root, "dev") {
+		addDevCommand(root)
+	}
+	if !hasCommand(root, "pkg") {
+		addPackageCommand(root)
+	}
+}
+
+func hasCommand(parent *cli.Command, name string) bool {
+	for _, cmd := range parent.Commands() {
+		if cmd != nil && cmd.Name() == name {
+			return true
+		}
+	}
+	return false
 }

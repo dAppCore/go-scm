@@ -227,10 +227,16 @@ func (s *CoreService) resolveRepo(name, org, root string) (*repos.Repo, *repos.R
 		return nil, nil, "", err
 	}
 
+	requestedOrg := strings.TrimSpace(org)
 	for _, reg := range regs {
 		if repo, ok := reg.Get(name); ok {
+			repoOrg := strings.TrimSpace(repo.Org)
+			regOrg := strings.TrimSpace(reg.Org)
+			if requestedOrg != "" && requestedOrg != repoOrg && requestedOrg != regOrg {
+				continue
+			}
 			if org == "" {
-				org = reg.Org
+				org = regOrg
 			}
 			return repo, reg, repo.Path, nil
 		}

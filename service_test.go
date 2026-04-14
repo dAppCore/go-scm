@@ -78,3 +78,46 @@ func TestRepoBranch_Good_PrefersRepoBranch_Good(t *testing.T) {
 	assert.Equal(t, "dev", repoBranch(repo, reg, ""))
 	assert.Equal(t, "fallback", repoBranch(repo, reg, "fallback"))
 }
+
+func TestCoreService_ResolveRepo_Good_RespectsRequestedOrg_Good(t *testing.T) {
+	m := io.NewMockMedium()
+	require.NoError(t, m.Write("/tmp/alpha.yaml", `
+version: 1
+org: alpha
+base_path: /tmp/alpha
+repos:
+  go-scm:
+    type: module
+`))
+	require.NoError(t, m.Write("/tmp/beta.yaml", `
+version: 1
+org: beta
+base_path: /tmp/beta
+repos:
+  go-scm:
+    type: module
+`))
+
+	alpha, err := repos.LoadRegistry(m, "/tmp/alpha.yaml")
+	require.NoError(t, err)
+	beta, err := repos.LoadRegistry(m, "/tmp/beta.yaml")
+	require.NoError(t, err)
+
+	c := core.New()
+	factory := NewCoreService(ServiceOptions{
+		Medium:        m,
+		WorkspaceRoot: "/tmp/code",
+	})
+
+	svcAny, err := factory(c)
+	require.NoError(t, err)
+	svc := svcAny.(*CoreService)
+	svc.registries = []*repos.Registry{alpha, beta}
+
+	repo, reg, path, err := svc.resolveRepo("go-scm", "beta", "")
+	require.NoError(t, err)
+	require.NotNil(t, repo)
+	require.NotNil(t, reg)
+	assert.Equal(t, "beta", reg.Org)
+	assert.Equal(t, "/tmp/beta/go-scm", path)
+}

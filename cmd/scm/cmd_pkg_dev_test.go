@@ -43,6 +43,35 @@ func TestAddScmCommands_Good_PackageAndDevCommandsRegistered_Good(t *testing.T) 
 	assert.True(t, foundDev)
 }
 
+func TestAddScmCommands_Good_RootAliasesRegistered_Good(t *testing.T) {
+	root := &cli.Command{Use: "root"}
+
+	AddScmCommands(root)
+
+	assert.True(t, hasCommand(root, "dev"))
+	assert.True(t, hasCommand(root, "pkg"))
+	assert.True(t, hasCommand(root, "scm"))
+}
+
+func TestAddScmCommands_Good_DoesNotOverrideExistingRootAliases_Good(t *testing.T) {
+	root := &cli.Command{Use: "root"}
+	existingDev := &cli.Command{Use: "dev", Short: "existing dev"}
+	existingPkg := &cli.Command{Use: "pkg", Short: "existing pkg"}
+	root.AddCommand(existingDev, existingPkg)
+
+	AddScmCommands(root)
+
+	foundDev, _, err := root.Find([]string{"dev"})
+	require.NoError(t, err)
+	assert.Same(t, existingDev, foundDev)
+
+	foundPkg, _, err := root.Find([]string{"pkg"})
+	require.NoError(t, err)
+	assert.Same(t, existingPkg, foundPkg)
+
+	assert.True(t, hasCommand(root, "scm"))
+}
+
 func TestPackageInstall_Good_ExplicitVersion_Good(t *testing.T) {
 	repo := createTaggedModuleRepo(t, "pkg-a",
 		moduleVersion{Version: "1.0.0", Tag: "v1.0.0"},
@@ -60,6 +89,23 @@ func TestPackageInstall_Good_ExplicitVersion_Good(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "pkg-a", installed.Code)
 	assert.Equal(t, "1.0.0", installed.Version)
+}
+
+func TestPackageInstall_Good_TagVersionWinsOverManifestVersion_Good(t *testing.T) {
+	repo := createTaggedModuleRepo(t, "pkg-tagged",
+		moduleVersion{Version: "9.9.9", Tag: "v1.2.3"},
+	)
+	indexPath := filepath.Join(t.TempDir(), "index.json")
+	require.NoError(t, marketplace.WriteIndex(io.Local, indexPath, &marketplace.Index{
+		Version: 1,
+		Modules: []marketplace.Module{
+			{Code: "pkg-tagged", Name: "Package Tagged", Repo: repo, Version: "1.2.3"},
+		},
+	}))
+
+	installed, err := packageInstall(context.Background(), indexPath, filepath.Join(t.TempDir(), "modules"), ":memory:", "pkg-tagged")
+	require.NoError(t, err)
+	assert.Equal(t, "1.2.3", installed.Version)
 }
 
 func TestWorkspaceImpact_Good(t *testing.T) {
