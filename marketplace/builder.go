@@ -5,7 +5,6 @@ package marketplace
 import (
 	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
 	json "dappco.re/go/core/scm/internal/ax/jsonx"
-	os "dappco.re/go/core/scm/internal/ax/osx"
 	"sort"
 	"strings"
 
@@ -40,6 +39,11 @@ type Builder struct {
 // to the resulting Index as a Module.
 // Usage: BuildFromDirs(...)
 func (b *Builder) BuildFromDirs(dirs ...string) (*Index, error) {
+	medium := b.Medium
+	if medium == nil {
+		medium = coreio.Local
+	}
+
 	var modules []Module
 	seen := make(map[string]bool)
 
@@ -48,12 +52,10 @@ func (b *Builder) BuildFromDirs(dirs ...string) (*Index, error) {
 			core.Warn(core.Sprintf("marketplace: skipping %s: %v", filepath.Base(dir), err))
 		}
 
-		entries, err := os.ReadDir(dir)
+		entries, err := medium.List(dir)
 		if err != nil {
-			if os.IsNotExist(err) {
-				continue
-			}
-			return nil, coreerr.E("marketplace.Builder.BuildFromDirs", "read "+dir, err)
+			core.Warn(core.Sprintf("marketplace: skipping %s: %v", filepath.Base(dir), err))
+			continue
 		}
 
 		for _, e := range entries {
