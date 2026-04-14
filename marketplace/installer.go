@@ -245,8 +245,11 @@ func loadManifest(medium io.Medium, signKey string) (*manifest.Manifest, error) 
 	if err != nil {
 		return nil, err
 	}
-	if strings.TrimSpace(m.SignKey) == "" {
+	if strings.TrimSpace(m.Sign) == "" {
 		return m, nil
+	}
+	if strings.TrimSpace(m.SignKey) == "" {
+		return nil, coreerr.E("marketplace.loadManifest", "signed manifest missing sign_key", nil)
 	}
 
 	ok, err := manifest.Verify(m, nil)

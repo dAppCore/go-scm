@@ -41,6 +41,30 @@ repos:
 	assert.True(t, c.Action("repo.sync.all").Exists())
 }
 
+func TestCoreService_HandleIPCEvents_Good_PointerWorkspacePushed_Good(t *testing.T) {
+	c := core.New()
+
+	called := false
+	c.Action("repo.sync", func(ctx context.Context, opts core.Options) core.Result {
+		called = true
+		assert.Equal(t, "core", opts.String("org"))
+		assert.Equal(t, "go-scm", opts.String("repo"))
+		assert.Equal(t, "dev", opts.String("branch"))
+		return core.Result{OK: true}
+	})
+
+	svc := &CoreService{ServiceRuntime: core.NewServiceRuntime(c, ServiceOptions{})}
+	result := svc.HandleIPCEvents(c, &WorkspacePushed{
+		Org:    "core",
+		Repo:   "go-scm",
+		Branch: "dev",
+		Root:   "/tmp/code",
+	})
+
+	require.True(t, result.OK)
+	assert.True(t, called)
+}
+
 func TestCoreService_ResolveRepo_FallsBackToWorkspaceRoot_Good(t *testing.T) {
 	m := io.NewMockMedium()
 	require.NoError(t, m.Write("/tmp/empty-repos.yaml", `

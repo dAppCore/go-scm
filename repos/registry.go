@@ -264,6 +264,9 @@ func FindRegistries(m io.Medium) ([]string, error) {
 func LoadRegistries(m io.Medium) ([]*Registry, error) {
 	paths, err := FindRegistries(m)
 	if err != nil {
+		if stdstrings.Contains(err.Error(), "not found") {
+			return []*Registry{}, nil
+		}
 		return nil, err
 	}
 
@@ -473,22 +476,24 @@ func (r *Registry) Impact(name string) ([]*Repo, error) {
 		return nil, coreerr.E("repos.Registry.Impact", "unknown repo: "+name, nil)
 	}
 
-	visited := make(map[string]bool)
+	visited := map[string]bool{name: true}
+	queue := []string{name}
 	var impacted []*Repo
 
-	var visit func(target string)
-	visit = func(target string) {
+	for len(queue) > 0 {
+		target := queue[0]
+		queue = queue[1:]
+
 		for _, repo := range r.Dependents(target) {
 			if repo == nil || visited[repo.Name] {
 				continue
 			}
 			visited[repo.Name] = true
 			impacted = append(impacted, repo)
-			visit(repo.Name)
+			queue = append(queue, repo.Name)
 		}
 	}
 
-	visit(name)
 	return impacted, nil
 }
 

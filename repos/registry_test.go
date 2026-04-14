@@ -280,6 +280,44 @@ func TestRegistry_Impact_Good(t *testing.T) {
 	assert.Equal(t, "core-tenant", impacted[2].Name)
 }
 
+func TestRegistry_Impact_Good_BreadthFirstOrder_Good(t *testing.T) {
+	m := io.NewMockMedium()
+	yaml := `
+version: 1
+org: core
+base_path: /tmp/repos
+repos:
+  core:
+    type: foundation
+  alpha:
+    type: module
+    depends_on: [core]
+  beta:
+    type: module
+    depends_on: [core]
+  delta:
+    type: module
+    depends_on: [alpha]
+  gamma:
+    type: module
+    depends_on: [beta]
+`
+	_ = m.Write("/tmp/repos.yaml", yaml)
+
+	reg, err := LoadRegistry(m, "/tmp/repos.yaml")
+	require.NoError(t, err)
+
+	impacted, err := reg.Impact("core")
+	require.NoError(t, err)
+	require.Len(t, impacted, 4)
+	assert.Equal(t, []string{"alpha", "beta", "delta", "gamma"}, []string{
+		impacted[0].Name,
+		impacted[1].Name,
+		impacted[2].Name,
+		impacted[3].Name,
+	})
+}
+
 func TestRegistry_Impact_Bad_UnknownRepo_Good(t *testing.T) {
 	reg := newTestRegistry(t)
 
@@ -698,6 +736,23 @@ repos: {}
 	paths, err := FindRegistries(m)
 	require.NoError(t, err)
 	assert.Contains(t, paths, path)
+}
+
+func TestLoadRegistries_Good_NoRegistriesReturnsEmpty_Good(t *testing.T) {
+	oldWD, err := os.Getwd()
+	require.NoError(t, err)
+	cwd := t.TempDir()
+	require.NoError(t, os.Chdir(cwd))
+	t.Cleanup(func() {
+		_ = os.Chdir(oldWD)
+	})
+
+	t.Setenv("HOME", t.TempDir())
+	t.Setenv("CORE_REPOS", "")
+
+	regs, err := LoadRegistries(io.NewMockMedium())
+	require.NoError(t, err)
+	assert.Empty(t, regs)
 }
 
 func TestMergeRegistries_Good_FirstOccurrenceWins_Good(t *testing.T) {

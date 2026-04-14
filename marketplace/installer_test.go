@@ -264,6 +264,47 @@ func TestInstall_Good_UsesEmbeddedManifestSignKey_Good(t *testing.T) {
 	assert.Contains(t, raw, `"sign_key":"`)
 }
 
+func TestInstall_Bad_SignedManifestMissingSignKey_Good(t *testing.T) {
+	_, priv, err := ed25519.GenerateKey(nil)
+	require.NoError(t, err)
+
+	repo := filepath.Join(t.TempDir(), "missing-sign-key-mod")
+	require.NoError(t, os.MkdirAll(filepath.Join(repo, ".core"), 0755))
+
+	m := &manifest.Manifest{
+		Code:    "missing-sign-key-mod",
+		Name:    "Missing Sign Key Module",
+		Version: "1.0.0",
+	}
+	require.NoError(t, manifest.Sign(m, priv))
+	m.SignKey = ""
+
+	data, err := manifest.MarshalYAML(m)
+	require.NoError(t, err)
+	require.NoError(t, os.WriteFile(filepath.Join(repo, ".core", "manifest.yaml"), data, 0644))
+	require.NoError(t, os.WriteFile(filepath.Join(repo, "main.ts"), []byte("export async function init(core: any) {}\n"), 0644))
+
+	runGit(t, repo, "init")
+	runGit(t, repo, "add", "--force", ".")
+	runGit(t, repo, "commit", "-m", "init")
+
+	modulesDir := filepath.Join(t.TempDir(), "modules")
+	st, err := store.New(store.Options{Path: ":memory:"})
+	require.NoError(t, err)
+	defer st.Close()
+
+	inst := NewInstaller(io.Local, modulesDir, st)
+	err = inst.Install(context.Background(), Module{
+		Code: "missing-sign-key-mod",
+		Repo: repo,
+	})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "missing sign_key")
+
+	_, statErr := os.Stat(filepath.Join(modulesDir, "missing-sign-key-mod"))
+	assert.True(t, os.IsNotExist(statErr))
+}
+
 func TestInstall_Bad_AlreadyInstalled_Good(t *testing.T) {
 	repo := createTestRepo(t, "dup-mod", "1.0")
 	modulesDir := filepath.Join(t.TempDir(), "modules")

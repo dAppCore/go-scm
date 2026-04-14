@@ -75,19 +75,28 @@ func (s *CoreService) OnStartup(context.Context) core.Result {
 func (s *CoreService) HandleIPCEvents(c *core.Core, msg core.Message) core.Result {
 	switch ev := msg.(type) {
 	case WorkspacePushed:
-		opts := core.NewOptions(
-			core.Option{Key: "org", Value: ev.Org},
-			core.Option{Key: "repo", Value: ev.Repo},
-			core.Option{Key: "branch", Value: ev.Branch},
-			core.Option{Key: "root", Value: ev.Root},
-		)
-		if ev.Repo == "" {
-			return c.Action("repo.sync.all").Run(c.Context(), opts)
+		return s.handleWorkspacePushed(c, ev)
+	case *WorkspacePushed:
+		if ev == nil {
+			return core.Result{OK: true}
 		}
-		return c.Action("repo.sync").Run(c.Context(), opts)
+		return s.handleWorkspacePushed(c, *ev)
 	default:
 		return core.Result{OK: true}
 	}
+}
+
+func (s *CoreService) handleWorkspacePushed(c *core.Core, ev WorkspacePushed) core.Result {
+	opts := core.NewOptions(
+		core.Option{Key: "org", Value: ev.Org},
+		core.Option{Key: "repo", Value: ev.Repo},
+		core.Option{Key: "branch", Value: ev.Branch},
+		core.Option{Key: "root", Value: ev.Root},
+	)
+	if ev.Repo == "" {
+		return c.Action("repo.sync.all").Run(c.Context(), opts)
+	}
+	return c.Action("repo.sync").Run(c.Context(), opts)
 }
 
 func (s *CoreService) handleRepoSync(ctx context.Context, opts core.Options) core.Result {
@@ -200,7 +209,7 @@ func (s *CoreService) handleRepoSyncAll(ctx context.Context, opts core.Options) 
 }
 
 func (s *CoreService) loadRegistries() ([]*repos.Registry, error) {
-	if len(s.registries) > 0 {
+	if s.registries != nil {
 		return s.registries, nil
 	}
 
