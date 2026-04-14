@@ -3,6 +3,7 @@
 package manifest
 
 import (
+	"sort"
 	"strings"
 
 	coreerr "dappco.re/go/core/log"
@@ -140,6 +141,7 @@ func (m *Manifest) SlotNames() []string {
 			names = append(names, name)
 		}
 	}
+	sort.Strings(names)
 	return names
 }
 

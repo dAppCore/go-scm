@@ -77,9 +77,7 @@ func TestManifest_SlotNames_Good(t *testing.T) {
 		},
 	}
 	names := m.SlotNames()
-	assert.Contains(t, names, "nav-bar")
-	assert.Contains(t, names, "main-content")
-	assert.Len(t, names, 2)
+	assert.Equal(t, []string{"main-content", "nav-bar"}, names)
 }
 
 func TestParse_Good_WithDaemons_Good(t *testing.T) {
