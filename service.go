@@ -39,8 +39,9 @@ type ServiceOptions struct {
 // CoreService provides repo.sync actions and IPC handling for SCM workspaces.
 type CoreService struct {
 	*core.ServiceRuntime[ServiceOptions]
-	medium     io.Medium
-	registries []*repos.Registry
+	medium           io.Medium
+	registries       []*repos.Registry
+	registryCacheKey string
 }
 
 // NewCoreService creates a Core service factory for use with core.WithService.
@@ -62,7 +63,7 @@ func NewCoreService(opts ServiceOptions) func(*core.Core) (any, error) {
 
 // OnStartup registers the repo sync actions and eagerly loads registries.
 func (s *CoreService) OnStartup(context.Context) core.Result {
-	if _, err := s.loadRegistries(); err != nil && !strings.Contains(err.Error(), "not found") {
+	if _, err := s.loadRegistries(""); err != nil && !strings.Contains(err.Error(), "not found") {
 		return core.Result{Value: err, OK: false}
 	}
 
@@ -145,13 +146,13 @@ func (s *CoreService) handleRepoSync(ctx context.Context, opts core.Options) cor
 }
 
 func (s *CoreService) handleRepoSyncAll(ctx context.Context, opts core.Options) core.Result {
-	regs, err := s.loadRegistries()
+	root := firstOption(opts, "root")
+	regs, err := s.loadRegistries(root)
 	if err != nil {
 		return core.Result{Value: err, OK: false}
 	}
 
 	merged := repos.MergeRegistries(regs...)
-	root := firstOption(opts, "root")
 	var synced, skipped int
 	var failures []string
 	results := make([]map[string]any, 0)
@@ -212,8 +213,13 @@ func (s *CoreService) handleRepoSyncAll(ctx context.Context, opts core.Options) 
 	}
 }
 
-func (s *CoreService) loadRegistries() ([]*repos.Registry, error) {
-	if s.registries != nil {
+func (s *CoreService) loadRegistries(root string) ([]*repos.Registry, error) {
+	cacheKey, err := s.registryDiscoveryKey(root)
+	if err != nil {
+		return nil, err
+	}
+
+	if s.registries != nil && s.registryCacheKey == cacheKey {
 		return s.registries, nil
 	}
 
@@ -223,6 +229,7 @@ func (s *CoreService) loadRegistries() ([]*repos.Registry, error) {
 			return nil, err
 		}
 		s.registries = []*repos.Registry{reg}
+		s.registryCacheKey = "path:" + path
 		return s.registries, nil
 	}
 
@@ -231,27 +238,33 @@ func (s *CoreService) loadRegistries() ([]*repos.Registry, error) {
 		return nil, err
 	}
 	if len(regs) == 0 {
-		root, rootErr := expandHome(s.Options().WorkspaceRoot)
+		scanRoot := root
+		if scanRoot == "" {
+			scanRoot = s.Options().WorkspaceRoot
+		}
+		scanRoot, rootErr := expandHome(scanRoot)
 		if rootErr != nil {
 			return nil, rootErr
 		}
 
-		scanned, scanErr := repos.ScanDirectory(s.medium, root)
+		scanned, scanErr := repos.ScanDirectory(s.medium, scanRoot)
 		if scanErr != nil {
 			return nil, scanErr
 		}
 		regs = []*repos.Registry{scanned}
 	}
 	s.registries = regs
+	s.registryCacheKey = cacheKey
 	return regs, nil
 }
 
 func (s *CoreService) invalidateRegistries() {
 	s.registries = nil
+	s.registryCacheKey = ""
 }
 
 func (s *CoreService) resolveRepo(name, org, root string) (*repos.Repo, *repos.Registry, string, error) {
-	regs, err := s.loadRegistries()
+	regs, err := s.loadRegistries(root)
 	if err != nil && !strings.Contains(err.Error(), "not found") {
 		return nil, nil, "", err
 	}
@@ -301,6 +314,26 @@ func (s *CoreService) resolveRepo(name, org, root string) (*repos.Repo, *repos.R
 	repoPath = filepath.Join(repoPath, name)
 
 	return &repos.Repo{Name: name, Path: repoPath}, nil, repoPath, nil
+}
+
+func (s *CoreService) registryDiscoveryKey(root string) (string, error) {
+	if path := s.Options().RegistryPath; path != "" {
+		return "path:" + path, nil
+	}
+
+	scanRoot := root
+	if scanRoot == "" {
+		scanRoot = s.Options().WorkspaceRoot
+	}
+	if scanRoot == "" {
+		return "discover", nil
+	}
+
+	scanRoot, err := expandHome(scanRoot)
+	if err != nil {
+		return "", err
+	}
+	return "scan:" + scanRoot, nil
 }
 
 func repoBranch(repo *repos.Repo, reg *repos.Registry, fallback string) string {

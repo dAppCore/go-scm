@@ -91,7 +91,7 @@ repos:
 	svc := svcAny.(*CoreService)
 
 	// Prime the cache with the initial registry contents.
-	regs, err := svc.loadRegistries()
+	regs, err := svc.loadRegistries("")
 	require.NoError(t, err)
 	require.Len(t, regs, 1)
 
@@ -107,7 +107,7 @@ repos:
 `))
 
 	c.Action("repo.sync.all", func(ctx context.Context, opts core.Options) core.Result {
-		regs, err := svc.loadRegistries()
+		regs, err := svc.loadRegistries("")
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
@@ -173,13 +173,47 @@ func TestCoreService_LoadRegistries_Good_ScansWorkspaceRoot_WhenNoRegistry_Good(
 	require.NoError(t, err)
 	svc := svcAny.(*CoreService)
 
-	regs, err := svc.loadRegistries()
+	regs, err := svc.loadRegistries("")
 	require.NoError(t, err)
 	require.Len(t, regs, 1)
 
 	repo, ok := regs[0].Get("go-scm")
 	require.True(t, ok)
 	assert.Equal(t, "go-scm", filepath.Base(repo.Path))
+}
+
+func TestCoreService_LoadRegistries_Good_UsesExplicitRootOverride_Good(t *testing.T) {
+	defaultRoot := t.TempDir()
+	scanRoot := t.TempDir()
+	repoDir := filepath.Join(scanRoot, "go-scm")
+	require.NoError(t, os.MkdirAll(filepath.Join(repoDir, ".git"), 0755))
+
+	t.Setenv("CORE_REPOS", "")
+	t.Setenv("HOME", defaultRoot)
+	wd, err := os.Getwd()
+	require.NoError(t, err)
+	require.NoError(t, os.Chdir(scanRoot))
+	t.Cleanup(func() {
+		_ = os.Chdir(wd)
+	})
+
+	c := core.New()
+	factory := NewCoreService(ServiceOptions{
+		Medium:        io.Local,
+		WorkspaceRoot: defaultRoot,
+	})
+
+	svcAny, err := factory(c)
+	require.NoError(t, err)
+	svc := svcAny.(*CoreService)
+
+	regs, err := svc.loadRegistries(scanRoot)
+	require.NoError(t, err)
+	require.Len(t, regs, 1)
+
+	repo, ok := regs[0].Get("go-scm")
+	require.True(t, ok)
+	assert.Equal(t, filepath.Join(scanRoot, "go-scm"), repo.Path)
 }
 
 func TestRepoBranch_Good_PrefersRepoBranch_Good(t *testing.T) {
@@ -239,6 +273,8 @@ repos:
 	require.NoError(t, err)
 	svc := svcAny.(*CoreService)
 	svc.registries = []*repos.Registry{alpha, beta}
+	svc.registryCacheKey, err = svc.registryDiscoveryKey("")
+	require.NoError(t, err)
 
 	repo, reg, path, err := svc.resolveRepo("go-scm", "beta", "")
 	require.NoError(t, err)
