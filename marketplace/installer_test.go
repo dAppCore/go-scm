@@ -200,6 +200,29 @@ func TestInstall_Good_ExplicitTaggedVersion_Good(t *testing.T) {
 	assert.Equal(t, "1.0.0", installed[0].Version)
 }
 
+func TestInstall_Bad_ExplicitVersionMissingTag_Good(t *testing.T) {
+	repo := createTaggedTestRepo(t, "missing-tag-mod",
+		taggedRepoVersion{Version: "1.0.0", Tag: "v1.0.0"},
+	)
+	modulesDir := filepath.Join(t.TempDir(), "modules")
+
+	st, err := store.New(store.Options{Path: ":memory:"})
+	require.NoError(t, err)
+	defer st.Close()
+
+	inst := NewInstaller(io.Local, modulesDir, st)
+	err = inst.Install(context.Background(), Module{
+		Code:    "missing-tag-mod",
+		Repo:    repo,
+		Version: "2.0.0",
+	})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "tag not found")
+
+	_, statErr := os.Stat(filepath.Join(modulesDir, "missing-tag-mod"))
+	assert.True(t, os.IsNotExist(statErr))
+}
+
 func TestInstall_Good_TagIsSourceOfTruth_Good(t *testing.T) {
 	repo := createTaggedTestRepo(t, "tag-source-mod",
 		taggedRepoVersion{Version: "9.9.9", Tag: "v2.3.4"},

@@ -271,29 +271,33 @@ func (i *Installer) resolveModulePath(code string) (string, string, error) {
 }
 
 func resolveModuleRef(ctx context.Context, mod Module) (string, error) {
+	requested := strings.TrimSpace(mod.Version)
 	tags, err := git.ListRemoteTags(ctx, mod.Repo)
 	if err != nil {
-		if mod.Version != "" {
-			return "", nil
+		if requested != "" {
+			return requested, nil
 		}
 		return "", err
+	}
+
+	if requested != "" {
+		if ref, ok := matchRequestedTag(tags, requested); ok {
+			return ref, nil
+		}
+		return "", coreerr.E("marketplace.resolveModuleRef", "tag not found: "+requested, nil)
 	}
 
 	if len(tags) == 0 {
 		return "", nil
 	}
 
-	if mod.Version != "" {
-		return matchRequestedTag(tags, mod.Version)
-	}
-
 	return latestSemverTag(tags), nil
 }
 
-func matchRequestedTag(tags []string, requested string) (string, error) {
+func matchRequestedTag(tags []string, requested string) (string, bool) {
 	requested = strings.TrimSpace(requested)
 	if requested == "" {
-		return "", nil
+		return "", false
 	}
 
 	candidates := []string{requested}
@@ -304,12 +308,12 @@ func matchRequestedTag(tags []string, requested string) (string, error) {
 	for _, candidate := range candidates {
 		for _, tag := range tags {
 			if tag == candidate {
-				return tag, nil
+				return tag, true
 			}
 		}
 	}
 
-	return "", coreerr.E("marketplace.matchRequestedTag", "tag not found: "+requested, nil)
+	return "", false
 }
 
 func latestSemverTag(tags []string) string {
