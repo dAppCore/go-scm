@@ -187,6 +187,38 @@ repos:
 	assert.Equal(t, "/tmp/one/shared", repoList[2].Path)
 }
 
+func TestRunDevCommit_Good_DefaultMessage_Good(t *testing.T) {
+	root := t.TempDir()
+	repoDir := filepath.Join(root, "repo")
+
+	require.NoError(t, os.MkdirAll(repoDir, 0755))
+	runGitInRepo(t, repoDir, "init")
+	runGitInRepo(t, repoDir, "config", "user.email", "test@test.com")
+	runGitInRepo(t, repoDir, "config", "user.name", "Test User")
+
+	require.NoError(t, os.WriteFile(filepath.Join(repoDir, "README.md"), []byte("hello\n"), 0644))
+	runGitInRepo(t, repoDir, "add", "README.md")
+	runGitInRepo(t, repoDir, "commit", "-m", "initial")
+
+	require.NoError(t, os.WriteFile(filepath.Join(repoDir, "notes.txt"), []byte("dirty\n"), 0644))
+
+	regPath := filepath.Join(root, "repos.yaml")
+	require.NoError(t, os.WriteFile(regPath, []byte(`
+version: 1
+base_path: `+root+`
+repos:
+  repo:
+    type: module
+    path: repo
+`), 0644))
+
+	require.NoError(t, runDevCommit([]string{regPath}, ""))
+
+	out, err := exec.Command("git", "-C", repoDir, "log", "-1", "--pretty=%s").CombinedOutput()
+	require.NoError(t, err, string(out))
+	assert.Equal(t, defaultWorkspaceCommitMessage+"\n", string(out))
+}
+
 type moduleVersion struct {
 	Version string
 	Tag     string

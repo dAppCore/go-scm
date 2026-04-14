@@ -220,8 +220,18 @@ func TestManifest_IsProvider_Good(t *testing.T) {
 	assert.True(t, m.IsProvider())
 }
 
+func TestManifest_IsProvider_Good_WhitespaceTrimmed_Good(t *testing.T) {
+	m := Manifest{Namespace: "  /api/v1/test  ", Binary: "  ./test  "}
+	assert.True(t, m.IsProvider())
+}
+
 func TestManifest_IsProvider_Bad_NoNamespace_Good(t *testing.T) {
 	m := Manifest{Binary: "./test"}
+	assert.False(t, m.IsProvider())
+}
+
+func TestManifest_IsProvider_Bad_WhitespaceOnly_Good(t *testing.T) {
+	m := Manifest{Namespace: "   ", Binary: "./test"}
 	assert.False(t, m.IsProvider())
 }
 

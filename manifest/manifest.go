@@ -48,7 +48,7 @@ type ElementSpec struct {
 // (namespace and binary), indicating it is a runtime provider.
 // Usage: IsProvider(...)
 func (m *Manifest) IsProvider() bool {
-	return m.Namespace != "" && m.Binary != ""
+	return strings.TrimSpace(m.Namespace) != "" && strings.TrimSpace(m.Binary) != ""
 }
 
 // Permissions declares the I/O capabilities a module requires.

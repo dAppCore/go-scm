@@ -16,6 +16,8 @@ import (
 	"dappco.re/go/core/scm/repos"
 )
 
+const defaultWorkspaceCommitMessage = "chore: sync workspace"
+
 func addDevCommand(parent *cli.Command) {
 	devCmd := &cli.Command{
 		Use:   "dev",
@@ -92,7 +94,7 @@ func addDevCommitCommand(parent *cli.Command) {
 	}
 
 	cmd.Flags().StringArrayVar(&registries, "registry", nil, "Explicit repos.yaml paths (repeatable)")
-	cmd.Flags().StringVarP(&message, "message", "m", "", "Commit message to use for dirty repositories")
+	cmd.Flags().StringVarP(&message, "message", "m", "", "Commit message to use for dirty repositories (defaults to a workspace sync message)")
 	parent.AddCommand(cmd)
 }
 
@@ -111,7 +113,7 @@ func addDevWorkCommand(parent *cli.Command) {
 	}
 
 	cmd.Flags().StringArrayVar(&registries, "registry", nil, "Explicit repos.yaml paths (repeatable)")
-	cmd.Flags().StringVarP(&message, "message", "m", "", "Commit message for dirty repositories")
+	cmd.Flags().StringVarP(&message, "message", "m", "", "Commit message for dirty repositories (defaults to a workspace sync message)")
 	parent.AddCommand(cmd)
 }
 
@@ -213,8 +215,9 @@ func runDevPush(registryPaths []string) error {
 }
 
 func runDevCommit(registryPaths []string, message string) error {
-	if strings.TrimSpace(message) == "" {
-		return coreerr.E("scm.runDevCommit", "commit message is required", nil)
+	commitMessage := strings.TrimSpace(message)
+	if commitMessage == "" {
+		commitMessage = defaultWorkspaceCommitMessage
 	}
 
 	statuses, err := workspaceStatuses(context.Background(), registryPaths)
@@ -232,7 +235,7 @@ func runDevCommit(registryPaths []string, message string) error {
 			failures = append(failures, status.Name+": "+err.Error())
 			continue
 		}
-		if err := git.Commit(context.Background(), status.Path, message); err != nil {
+		if err := git.Commit(context.Background(), status.Path, commitMessage); err != nil {
 			failures = append(failures, status.Name+": "+err.Error())
 			continue
 		}
@@ -246,10 +249,8 @@ func runDevWork(registryPaths []string, message string) error {
 	if err := runDevHealth(registryPaths); err != nil {
 		return err
 	}
-	if strings.TrimSpace(message) != "" {
-		if err := runDevCommit(registryPaths, message); err != nil {
-			return err
-		}
+	if err := runDevCommit(registryPaths, message); err != nil {
+		return err
 	}
 	return runDevPush(registryPaths)
 }
