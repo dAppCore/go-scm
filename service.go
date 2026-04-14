@@ -165,7 +165,9 @@ func (s *CoreService) handleRepoSyncAll(ctx context.Context, opts core.Options) 
 			continue
 		}
 
-		branch := repoBranch(repo, nil, s.Options().DefaultBranch)
+		// Preserve registry-level defaults for sync-all so repos inherit the
+		// same branch resolution rules as single-repo sync.
+		branch := repoBranch(repo, repo.Registry(), s.Options().DefaultBranch)
 		if branch == "" {
 			branch = "main"
 		}

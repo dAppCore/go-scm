@@ -246,9 +246,6 @@ func runDevWork(registryPaths []string, message string) error {
 	if err := runDevHealth(registryPaths); err != nil {
 		return err
 	}
-	if err := runDevPull(registryPaths); err != nil {
-		return err
-	}
 	if strings.TrimSpace(message) != "" {
 		if err := runDevCommit(registryPaths, message); err != nil {
 			return err

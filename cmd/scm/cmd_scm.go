@@ -5,7 +5,7 @@
 //
 // Commands:
 //   - compile: Compile .core/manifest.yaml into core.json
-//   - dev:     Workspace registry operations (health, pull, push, impact)
+//   - dev:     Workspace registry operations (health, pull, push, commit, work, impact)
 //   - index:   Build marketplace index from repository directories
 //   - export:  Export a compiled manifest as JSON to stdout
 //   - pkg:     Marketplace search/install/update/list/publish

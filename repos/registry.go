@@ -563,6 +563,15 @@ func (repo *Repo) IsGitRepo() bool {
 	return repo.getMedium().IsDir(gitPath)
 }
 
+// Registry returns the registry that finalised the repo, if known.
+// Usage: Registry(...)
+func (repo *Repo) Registry() *Registry {
+	if repo == nil {
+		return nil
+	}
+	return repo.registry
+}
+
 func (repo *Repo) getMedium() io.Medium {
 	if repo.registry != nil && repo.registry.medium != nil {
 		return repo.registry.medium

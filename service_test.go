@@ -4,13 +4,17 @@ package scm
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"dappco.re/go/core"
 	"dappco.re/go/core/io"
+	scmgit "dappco.re/go/core/scm/git"
 	"dappco.re/go/core/scm/repos"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	exec "golang.org/x/sys/execabs"
 )
 
 func TestCoreService_OnStartup_RegistersSyncActions_Good(t *testing.T) {
@@ -157,4 +161,63 @@ repos:
 	require.NotNil(t, reg)
 	assert.Equal(t, "beta", reg.Org)
 	assert.Equal(t, "/tmp/beta/go-scm", path)
+}
+
+func TestCoreService_HandleRepoSyncAll_Good_UsesRegistryDefaultBranch_Good(t *testing.T) {
+	root := t.TempDir()
+	remote := filepath.Join(root, "remote.git")
+	source := filepath.Join(root, "source")
+	clone := filepath.Join(root, "go-scm")
+	regPath := filepath.Join(root, "repos.yaml")
+
+	require.NoError(t, os.MkdirAll(remote, 0755))
+	runGitCommand(t, remote, "init", "--bare")
+
+	require.NoError(t, os.MkdirAll(source, 0755))
+	runGitCommand(t, source, "init")
+	runGitCommand(t, source, "checkout", "-b", "dev")
+	require.NoError(t, os.WriteFile(filepath.Join(source, "README.md"), []byte("hello\n"), 0644))
+	runGitCommand(t, source, "add", "README.md")
+	runGitCommand(t, source, "commit", "-m", "initial")
+	runGitCommand(t, source, "remote", "add", "origin", remote)
+	runGitCommand(t, source, "push", "-u", "origin", "dev")
+
+	require.NoError(t, scmgit.Clone(context.Background(), remote, clone, "dev"))
+
+	require.NoError(t, os.WriteFile(regPath, []byte(`
+version: 1
+org: core
+base_path: `+root+`
+defaults:
+  branch: dev
+repos:
+  go-scm:
+    type: module
+`), 0644))
+
+	c := core.New()
+	factory := NewCoreService(ServiceOptions{
+		Medium:       io.Local,
+		RegistryPath: regPath,
+	})
+
+	svcAny, err := factory(c)
+	require.NoError(t, err)
+	svc := svcAny.(*CoreService)
+
+	result := svc.handleRepoSyncAll(context.Background(), core.NewOptions())
+	require.True(t, result.OK)
+
+	value, ok := result.Value.(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, 1, value["synced"])
+}
+
+func runGitCommand(t *testing.T, dir string, args ...string) {
+	t.Helper()
+
+	cmdArgs := append([]string{"-C", dir, "-c", "user.email=test@test.com", "-c", "user.name=test"}, args...)
+	cmd := exec.Command("git", cmdArgs...)
+	out, err := cmd.CombinedOutput()
+	require.NoError(t, err, "git %v: %s", args, string(out))
 }
