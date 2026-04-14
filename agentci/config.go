@@ -6,8 +6,8 @@ package agentci
 import (
 	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
 
-	coreerr "dappco.re/go/core/log"
 	"dappco.re/go/core/config"
+	coreerr "dappco.re/go/core/log"
 )
 
 // AgentConfig represents a single agent machine in the config file.
@@ -83,7 +83,7 @@ func LoadActiveAgents(cfg *config.Config) (map[string]AgentConfig, error) {
 // Returns sensible defaults if no config is present.
 // Usage: LoadClothoConfig(...)
 func LoadClothoConfig(cfg *config.Config) (ClothoConfig, error) {
-	var cc ClothoConfig
+	cc := ClothoConfig{ValidationThreshold: -1}
 	if err := cfg.Get("agentci.clotho", &cc); err != nil {
 		return ClothoConfig{
 			Strategy:            "direct",
@@ -93,7 +93,7 @@ func LoadClothoConfig(cfg *config.Config) (ClothoConfig, error) {
 	if cc.Strategy == "" {
 		cc.Strategy = "direct"
 	}
-	if cc.ValidationThreshold == 0 {
+	if cc.ValidationThreshold < 0 {
 		cc.ValidationThreshold = 0.85
 	}
 	return cc, nil

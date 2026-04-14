@@ -5,8 +5,8 @@ package agentci
 import (
 	"testing"
 
-	"dappco.re/go/core/io"
 	"dappco.re/go/core/config"
+	"dappco.re/go/core/io"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -182,6 +182,17 @@ func TestLoadClothoConfig_Good_Defaults_Good(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "direct", cc.Strategy)
 	assert.Equal(t, 0.85, cc.ValidationThreshold)
+}
+
+func TestLoadClothoConfig_Good_ZeroThreshold_Good(t *testing.T) {
+	cfg := newTestConfig(t, `
+agentci:
+  clotho:
+    validation_threshold: 0.0
+`)
+	cc, err := LoadClothoConfig(cfg)
+	require.NoError(t, err)
+	assert.Equal(t, 0.0, cc.ValidationThreshold)
 }
 
 func TestSaveAgent_Good(t *testing.T) {

@@ -39,6 +39,25 @@ func TestClone_Good_WithTag_Good(t *testing.T) {
 	assert.Equal(t, "v1.0.0", tag)
 }
 
+func TestCurrentTag_Good_NoExactTag_Good(t *testing.T) {
+	repo := createTaggedRepo(t, "untagged-repo",
+		repoVersion{Version: "1.0.0"},
+	)
+
+	tag, err := CurrentTag(context.Background(), repo)
+	require.NoError(t, err)
+	assert.Empty(t, tag)
+}
+
+func TestCurrentTag_Bad_InvalidRepo_Good(t *testing.T) {
+	repo := filepath.Join(t.TempDir(), "empty-repo")
+	require.NoError(t, os.MkdirAll(repo, 0o755))
+
+	_, err := CurrentTag(context.Background(), repo)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "not a git repository")
+}
+
 func TestCheckout_Good_SwitchTag_Good(t *testing.T) {
 	repo := createTaggedRepo(t, "checkout-repo",
 		repoVersion{Version: "1.0.0", Tag: "v1.0.0"},

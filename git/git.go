@@ -289,7 +289,10 @@ func AddAll(ctx context.Context, path string) error {
 func CurrentTag(ctx context.Context, path string) (string, error) {
 	out, err := gitCommand(ctx, path, "describe", "--tags", "--exact-match", "HEAD")
 	if err != nil {
-		return "", nil
+		if isNoExactTagError(err) {
+			return "", nil
+		}
+		return "", err
 	}
 	return strings.TrimSpace(out), nil
 }
@@ -537,6 +540,23 @@ func signatureVerificationFailure(msg string) bool {
 		"cannot check signature",
 		"missing object referenced by",
 		"cannot verify a non-tag object",
+	} {
+		if strings.Contains(msg, needle) {
+			return true
+		}
+	}
+	return false
+}
+
+func isNoExactTagError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	msg := strings.ToLower(err.Error())
+	for _, needle := range []string{
+		"no names found, cannot describe anything",
+		"no tag exactly matches",
 	} {
 		if strings.Contains(msg, needle) {
 			return true
