@@ -10,10 +10,23 @@ import (
 	strings "dappco.re/go/core/scm/internal/ax/stringsx"
 	"maps"
 	"slices"
+	"sync"
 
 	core "dappco.re/go/core/log"
 	"golang.org/x/net/html"
 )
+
+type processTask struct {
+	name    string
+	srcPath string
+	outPath string
+	ext     string
+}
+
+type processOutcome struct {
+	outPath string
+	err     error
+}
 
 // Processor converts collected data to clean markdown.
 type Processor struct {
@@ -32,6 +45,8 @@ func (p *Processor) Name() string {
 
 // Process reads files from the source directory, converts HTML or JSON
 // to clean markdown, and writes the results to the output directory.
+// Supported files are processed concurrently so large directories can be
+// converted faster without changing the output schema.
 // Usage: Process(...)
 func (p *Processor) Process(ctx context.Context, cfg *Config) (*Result, error) {
 	result := &Result{Source: p.Name()}
@@ -68,75 +83,104 @@ func (p *Processor) Process(ctx context.Context, cfg *Config) (*Result, error) {
 		return result, core.E("collect.Processor.Process", "failed to create output directory", err)
 	}
 
+	tasks := make([]processTask, 0, len(entries))
 	for _, entry := range entries {
-		if ctx.Err() != nil {
-			return result, core.E("collect.Processor.Process", "context cancelled", ctx.Err())
-		}
-
 		if entry.IsDir() {
 			continue
 		}
 
 		name := entry.Name()
-		srcPath := filepath.Join(p.Dir, name)
-
-		content, err := cfg.Output.Read(srcPath)
-		if err != nil {
-			result.Errors++
-			if cfg.Dispatcher != nil {
-				cfg.Dispatcher.EmitError(p.Name(), fmt.Sprintf("Failed to read %s: %v", name, err), nil)
-			}
-			continue
-		}
-
-		var processed string
 		ext := strings.ToLower(filepath.Ext(name))
-
 		switch ext {
-		case ".html", ".htm":
-			processed, err = htmlToMarkdown(content)
-			if err != nil {
-				result.Errors++
-				if cfg.Dispatcher != nil {
-					cfg.Dispatcher.EmitError(p.Name(), fmt.Sprintf("Failed to convert %s: %v", name, err), nil)
-				}
-				continue
-			}
-		case ".json":
-			processed, err = jsonToMarkdown(content)
-			if err != nil {
-				result.Errors++
-				if cfg.Dispatcher != nil {
-					cfg.Dispatcher.EmitError(p.Name(), fmt.Sprintf("Failed to convert %s: %v", name, err), nil)
-				}
-				continue
-			}
-		case ".md":
-			// Already markdown, just clean up
-			processed = strings.TrimSpace(content)
+		case ".html", ".htm", ".json", ".md":
+			// Supported input type.
 		default:
 			result.Skipped++
 			continue
 		}
 
-		// Write with .md extension
+		srcPath := filepath.Join(p.Dir, name)
 		outName := strings.TrimSuffix(name, ext) + ".md"
-		outPath := filepath.Join(outputDir, outName)
+		tasks = append(tasks, processTask{
+			name:    name,
+			srcPath: srcPath,
+			outPath: filepath.Join(outputDir, outName),
+			ext:     ext,
+		})
+	}
 
-		if err := cfg.Output.Write(outPath, processed); err != nil {
-			result.Errors++
-			if cfg.Dispatcher != nil {
-				cfg.Dispatcher.EmitError(p.Name(), fmt.Sprintf("Failed to write %s: %v", outName, err), nil)
+	results := make([]processOutcome, len(tasks))
+	var wg sync.WaitGroup
+
+	for i, task := range tasks {
+		wg.Add(1)
+		go func(i int, task processTask) {
+			defer wg.Done()
+
+			if ctx.Err() != nil {
+				results[i].err = ctx.Err()
+				if cfg.Dispatcher != nil {
+					cfg.Dispatcher.EmitError(p.Name(), fmt.Sprintf("Cancelled before processing %s: %v", task.name, ctx.Err()), nil)
+				}
+				return
 			}
+
+			content, err := cfg.Output.Read(task.srcPath)
+			if err != nil {
+				results[i].err = err
+				if cfg.Dispatcher != nil {
+					cfg.Dispatcher.EmitError(p.Name(), fmt.Sprintf("Failed to read %s: %v", task.name, err), nil)
+				}
+				return
+			}
+
+			var processed string
+			switch task.ext {
+			case ".html", ".htm":
+				processed, err = htmlToMarkdown(content)
+			case ".json":
+				processed, err = jsonToMarkdown(content)
+			case ".md":
+				processed = strings.TrimSpace(content)
+			}
+			if err != nil {
+				results[i].err = err
+				if cfg.Dispatcher != nil {
+					cfg.Dispatcher.EmitError(p.Name(), fmt.Sprintf("Failed to convert %s: %v", task.name, err), nil)
+				}
+				return
+			}
+
+			if err := cfg.Output.Write(task.outPath, processed); err != nil {
+				results[i].err = err
+				if cfg.Dispatcher != nil {
+					cfg.Dispatcher.EmitError(p.Name(), fmt.Sprintf("Failed to write %s: %v", filepath.Base(task.outPath), err), nil)
+				}
+				return
+			}
+
+			results[i].outPath = task.outPath
+			if cfg.Dispatcher != nil {
+				cfg.Dispatcher.EmitItem(p.Name(), fmt.Sprintf("Processed: %s", task.name), nil)
+			}
+		}(i, task)
+	}
+	wg.Wait()
+
+	for _, outcome := range results {
+		if outcome.err != nil {
+			result.Errors++
 			continue
 		}
-
-		result.Items++
-		result.Files = append(result.Files, outPath)
-
-		if cfg.Dispatcher != nil {
-			cfg.Dispatcher.EmitItem(p.Name(), fmt.Sprintf("Processed: %s", name), nil)
+		if outcome.outPath == "" {
+			continue
 		}
+		result.Items++
+		result.Files = append(result.Files, outcome.outPath)
+	}
+
+	if ctx.Err() != nil {
+		return result, core.E("collect.Processor.Process", "context cancelled", ctx.Err())
 	}
 
 	if cfg.Dispatcher != nil {

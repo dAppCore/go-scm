@@ -55,6 +55,7 @@ type EventHandler func(Event)
 // and are called synchronously when an event is emitted.
 type Dispatcher struct {
 	mu       sync.RWMutex
+	emitMu   sync.Mutex
 	handlers map[string][]EventHandler
 }
 
@@ -85,8 +86,11 @@ func (d *Dispatcher) Emit(event Event) {
 	}
 
 	d.mu.RLock()
-	handlers := d.handlers[event.Type]
+	handlers := append([]EventHandler(nil), d.handlers[event.Type]...)
 	d.mu.RUnlock()
+
+	d.emitMu.Lock()
+	defer d.emitMu.Unlock()
 
 	for _, h := range handlers {
 		h(event)
