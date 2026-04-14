@@ -76,7 +76,20 @@ func TestRepoBranch_Good_PrefersRepoBranch_Good(t *testing.T) {
 	}
 
 	assert.Equal(t, "dev", repoBranch(repo, reg, ""))
-	assert.Equal(t, "fallback", repoBranch(repo, reg, "fallback"))
+	assert.Equal(t, "dev", repoBranch(repo, reg, "fallback"))
+}
+
+func TestRepoBranch_Good_UsesRegistryDefaultBeforeFallback_Good(t *testing.T) {
+	repo := &repos.Repo{}
+	reg := &repos.Registry{
+		Defaults: repos.RegistryDefaults{Branch: "dev"},
+	}
+
+	assert.Equal(t, "dev", repoBranch(repo, reg, "fallback"))
+}
+
+func TestRepoBranch_Good_UsesFallbackWhenUnset_Good(t *testing.T) {
+	assert.Equal(t, "fallback", repoBranch(&repos.Repo{}, &repos.Registry{}, "fallback"))
 }
 
 func TestCoreService_ResolveRepo_Good_RespectsRequestedOrg_Good(t *testing.T) {

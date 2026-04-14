@@ -275,16 +275,13 @@ func (s *CoreService) resolveRepo(name, org, root string) (*repos.Repo, *repos.R
 }
 
 func repoBranch(repo *repos.Repo, reg *repos.Registry, fallback string) string {
-	if fallback != "" {
-		return fallback
-	}
 	if repo != nil && repo.Branch != "" {
 		return repo.Branch
 	}
 	if reg != nil && reg.Defaults.Branch != "" {
 		return reg.Defaults.Branch
 	}
-	return ""
+	return fallback
 }
 
 func firstOption(opts core.Options, keys ...string) string {
