@@ -9,6 +9,7 @@ import (
 
 	"dappco.re/go/core/io"
 	core "dappco.re/go/core/log"
+	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
 )
 
 // State tracks collection progress for incremental runs.
@@ -43,6 +44,9 @@ type StateEntry struct {
 // using the provided storage medium.
 // Usage: NewState(...)
 func NewState(m io.Medium, path string) *State {
+	if m == nil {
+		m = io.Local
+	}
 	return &State{
 		medium:  m,
 		path:    path,
@@ -58,6 +62,9 @@ func (s *State) Load() error {
 	defer s.mu.Unlock()
 
 	if !s.medium.IsFile(s.path) {
+		if s.entries == nil {
+			s.entries = make(map[string]*StateEntry)
+		}
 		return nil
 	}
 
@@ -83,6 +90,10 @@ func (s *State) Load() error {
 func (s *State) Save() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	if err := s.medium.EnsureDir(filepath.Dir(s.path)); err != nil {
+		return core.E("collect.State.Save", "failed to create state directory", err)
+	}
 
 	data, err := json.MarshalIndent(s.entries, "", "  ")
 	if err != nil {

@@ -631,5 +631,6 @@ func moduleMatchesQuery(mod marketplace.Module, query string) bool {
 	q := strings.ToLower(query)
 	return strings.Contains(strings.ToLower(mod.Code), q) ||
 		strings.Contains(strings.ToLower(mod.Name), q) ||
+		strings.Contains(strings.ToLower(mod.Version), q) ||
 		strings.Contains(strings.ToLower(mod.Category), q)
 }

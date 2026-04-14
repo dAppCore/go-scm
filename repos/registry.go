@@ -153,13 +153,13 @@ func FindRegistry(m io.Medium) (string, error) {
 	}
 
 	for {
-		// Check repos.yaml (existing)
-		candidate := filepath.Join(dir, "repos.yaml")
+		// Check .core/repos.yaml (new)
+		candidate := filepath.Join(dir, ".core", "repos.yaml")
 		if m.Exists(candidate) {
 			return candidate, nil
 		}
-		// Check .core/repos.yaml (new)
-		candidate = filepath.Join(dir, ".core", "repos.yaml")
+		// Check repos.yaml (legacy)
+		candidate = filepath.Join(dir, "repos.yaml")
 		if m.Exists(candidate) {
 			return candidate, nil
 		}
@@ -221,8 +221,8 @@ func FindRegistries(m io.Medium) ([]string, error) {
 	}
 	for {
 		for _, candidate := range []string{
-			filepath.Join(dir, "repos.yaml"),
 			filepath.Join(dir, ".core", "repos.yaml"),
+			filepath.Join(dir, "repos.yaml"),
 		} {
 			if m.Exists(candidate) {
 				add(candidate)
