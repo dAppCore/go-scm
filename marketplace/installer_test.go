@@ -23,6 +23,7 @@ func TestInstallerPersistsInstalledModulesToStore(t *testing.T) {
 	mod := Module{
 		Code:    "go-io",
 		Name:    "Core I/O",
+		Version: "0.3.0",
 		Repo:    "ssh://example.org/core/go-io.git",
 		SignKey: "ed25519:public-key",
 	}
@@ -43,6 +44,9 @@ func TestInstallerPersistsInstalledModulesToStore(t *testing.T) {
 	if len(installed) != 1 || installed[0].Code != "go-io" {
 		t.Fatalf("unexpected installed modules: %#v", installed)
 	}
+	if installed[0].Version != "0.3.0" {
+		t.Fatalf("expected installed version to be preserved, got %#v", installed[0].Version)
+	}
 
 	if err := installer.Update(context.Background(), "go-io"); err != nil {
 		t.Fatalf("update: %v", err)
@@ -54,6 +58,9 @@ func TestInstallerPersistsInstalledModulesToStore(t *testing.T) {
 	}
 	if len(updated) != 1 || updated[0].Code != "go-io" {
 		t.Fatalf("unexpected updated modules: %#v", updated)
+	}
+	if updated[0].Version != "0.3.0" {
+		t.Fatalf("expected updated version to be preserved, got %#v", updated[0].Version)
 	}
 
 	if err := installer.Remove("go-io"); err != nil {

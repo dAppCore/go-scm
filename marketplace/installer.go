@@ -56,7 +56,7 @@ func (i *Installer) Install(ctx context.Context, mod Module) error {
 	entry := InstalledModule{
 		Code:        mod.Code,
 		Name:        mod.Name,
-		Version:     "latest",
+		Version:     versionOrLatest(mod.Version),
 		Repo:        mod.Repo,
 		EntryPoint:  "core.json",
 		SignKey:     mod.SignKey,
@@ -185,4 +185,11 @@ func (i *Installer) installedFromStore() ([]InstalledModule, error) {
 		modules = append(modules, entry)
 	}
 	return modules, nil
+}
+
+func versionOrLatest(version string) string {
+	if strings.TrimSpace(version) == "" {
+		return "latest"
+	}
+	return strings.TrimSpace(version)
 }

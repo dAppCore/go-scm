@@ -13,6 +13,7 @@ import (
 type Module struct {
 	Code     string `json:"code"`
 	Name     string `json:"name"`
+	Version  string `json:"version,omitempty"`
 	Repo     string `json:"repo"`
 	SignKey  string `json:"sign_key"`
 	Category string `json:"category"`
@@ -87,9 +88,13 @@ func BuildIndexFromManifests(manifests []*manifest.Manifest) *Index {
 		mod := Module{
 			Code:     m.Code,
 			Name:     m.Name,
+			Version:  strings.TrimSpace(m.Version),
 			Repo:     "",
 			SignKey:  m.SignKey,
 			Category: firstCategory(m.Modules, m.Layout),
+		}
+		if mod.Version == "" {
+			mod.Version = "latest"
 		}
 		idx.Modules = append(idx.Modules, mod)
 		if mod.Category != "" {
