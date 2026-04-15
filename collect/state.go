@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/fs"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -36,7 +37,11 @@ func NewState(m coreio.Medium, path string) *State {
 	if m == nil {
 		m = coreio.NewMemoryMedium()
 	}
-	return &State{medium: m, path: filepath.Clean(path), entries: make(map[string]*StateEntry)}
+	statePath := strings.TrimSpace(path)
+	if statePath != "" {
+		statePath = filepath.Clean(statePath)
+	}
+	return &State{medium: m, path: statePath, entries: make(map[string]*StateEntry)}
 }
 
 // Get returns a copy of the state for a source.

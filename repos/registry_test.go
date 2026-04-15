@@ -26,3 +26,32 @@ func TestFindRegistryHonorsCORE_REPOS(t *testing.T) {
 		t.Fatalf("expected %q, got %q", path, got)
 	}
 }
+
+func TestLoadRegistryPreservesMediumForSave(t *testing.T) {
+	medium := coreio.NewMockMedium()
+	path := filepath.Join(t.TempDir(), "repos.yaml")
+	if err := medium.Write(path, "version: 1\nrepos:\n  demo:\n    path: demo\n"); err != nil {
+		t.Fatalf("seed registry: %v", err)
+	}
+
+	reg, err := LoadRegistry(medium, path)
+	if err != nil {
+		t.Fatalf("LoadRegistry: %v", err)
+	}
+	if reg == nil {
+		t.Fatal("expected registry")
+	}
+	reg.Defaults.Branch = "dev"
+
+	if err := reg.Save(path); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+
+	raw, ok := medium.Files[path]
+	if !ok {
+		t.Fatalf("expected registry save to use the original medium")
+	}
+	if raw == "" {
+		t.Fatalf("expected saved registry content")
+	}
+}

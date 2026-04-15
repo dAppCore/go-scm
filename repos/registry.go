@@ -196,6 +196,7 @@ func LoadRegistry(m coreio.Medium, path string) (*Registry, error) {
 			repo.Path = filepath.Join(r.BasePath, name)
 		}
 	}
+	r.medium = m
 	return &r, nil
 }
 
