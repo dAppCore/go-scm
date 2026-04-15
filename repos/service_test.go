@@ -20,6 +20,9 @@ func TestServiceRegistersRepoSyncActions(t *testing.T) {
 	filePath := filepath.Join(repoPath, "state.txt")
 
 	runGitCmd(t, root, "git", "init", "--bare", remotePath)
+	if err := os.MkdirAll(filepath.Dir(repoPath), 0o755); err != nil {
+		t.Fatalf("mkdir workspace parent: %v", err)
+	}
 	runGitCmd(t, root, "git", "clone", remotePath, repoPath)
 	runGitCmd(t, repoPath, "git", "-C", repoPath, "config", "user.name", "Test User")
 	runGitCmd(t, repoPath, "git", "-C", repoPath, "config", "user.email", "test@example.com")
@@ -150,6 +153,62 @@ func TestServiceLoadsProjectAndHomeRegistries(t *testing.T) {
 	}
 	if got := reg.Repos["shared"].Path; got != homeRepo {
 		t.Fatalf("unexpected home repo path: %q", got)
+	}
+}
+
+func TestServiceSyncRepoFallsBackToWorkspacePath(t *testing.T) {
+	root := t.TempDir()
+	t.Setenv("HOME", t.TempDir())
+	t.Setenv("CORE_REPOS", "")
+	org := "core"
+	repoName := "repo1"
+	repoPath := filepath.Join(root, org, repoName)
+	remotePath := filepath.Join(root, "remote.git")
+	filePath := filepath.Join(repoPath, "state.txt")
+
+	runGitCmd(t, root, "git", "init", "--bare", remotePath)
+	runGitCmd(t, root, "git", "clone", remotePath, repoPath)
+	runGitCmd(t, repoPath, "git", "-C", repoPath, "config", "user.name", "Test User")
+	runGitCmd(t, repoPath, "git", "-C", repoPath, "config", "user.email", "test@example.com")
+	runGitCmd(t, repoPath, "git", "-C", repoPath, "checkout", "-b", "dev")
+
+	if err := os.WriteFile(filePath, []byte("remote state\n"), 0o600); err != nil {
+		t.Fatalf("write seed file: %v", err)
+	}
+	runGitCmd(t, repoPath, "git", "-C", repoPath, "add", "state.txt")
+	runGitCmd(t, repoPath, "git", "-C", repoPath, "commit", "-m", "initial")
+	runGitCmd(t, repoPath, "git", "-C", repoPath, "push", "-u", "origin", "dev")
+
+	svc := &Service{ServiceRuntime: core.NewServiceRuntime(core.New(), ServiceOptions{
+		Root:         root,
+		RegistryPath: filepath.Join(root, ".core", "missing.yaml"),
+	})}
+
+	if err := os.WriteFile(filePath, []byte("local changes\n"), 0o600); err != nil {
+		t.Fatalf("write local change: %v", err)
+	}
+	runGitCmd(t, repoPath, "git", "-C", repoPath, "commit", "-am", "local change")
+
+	result, err := svc.syncRepo(context.Background(), core.NewOptions(
+		core.Option{Key: "root", Value: root},
+		core.Option{Key: "org", Value: org},
+		core.Option{Key: "repo", Value: repoName},
+		core.Option{Key: "remote", Value: "origin"},
+		core.Option{Key: "branch", Value: "dev"},
+	))
+	if err != nil {
+		t.Fatalf("sync repo fallback: %v", err)
+	}
+	if result == nil || !result.Success {
+		t.Fatalf("unexpected sync result: %#v", result)
+	}
+
+	raw, err := os.ReadFile(filePath)
+	if err != nil {
+		t.Fatalf("read synced file: %v", err)
+	}
+	if got := string(raw); got != "remote state\n" {
+		t.Fatalf("unexpected synced file contents: %q", got)
 	}
 }
 

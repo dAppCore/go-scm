@@ -26,6 +26,7 @@ type ServiceOptions struct {
 // WorkspacePushed is an IPC payload that requests a repo sync after a push.
 type WorkspacePushed struct {
 	Root   string
+	Org    string
 	Repo   string
 	Path   string
 	Remote string
@@ -106,6 +107,7 @@ func (s *Service) handleRepoSyncAll(ctx context.Context, opts core.Options) core
 func (s *Service) syncWorkspace(ctx context.Context, pushed WorkspacePushed) core.Result {
 	opts := core.NewOptions(
 		core.Option{Key: "root", Value: pushed.Root},
+		core.Option{Key: "org", Value: pushed.Org},
 		core.Option{Key: "repo", Value: pushed.Repo},
 		core.Option{Key: "path", Value: pushed.Path},
 		core.Option{Key: "remote", Value: pushed.Remote},
@@ -137,10 +139,27 @@ func (s *Service) syncRepo(ctx context.Context, opts core.Options) (*git.SyncRes
 
 	if repoName := strings.TrimSpace(opts.String("repo")); repoName != "" {
 		reg, err := s.registryForPath(opts.String("root"))
-		if err != nil {
+		if err != nil && !errors.Is(err, os.ErrNotExist) {
 			return nil, err
 		}
 		if reg == nil {
+			root := strings.TrimSpace(opts.String("root"))
+			if root == "" {
+				root = s.Options().Root
+			}
+			if root == "" {
+				if home, homeErr := os.UserHomeDir(); homeErr == nil {
+					root = filepath.Join(home, "Code")
+				}
+			}
+			org := strings.TrimSpace(opts.String("org"))
+			if root != "" && org != "" {
+				path := filepath.Join(root, org, repoName)
+				if err := git.SyncWithRemote(ctx, path, remote, branch); err != nil {
+					return &git.SyncResult{Name: repoName, Path: path, Success: false, Error: err}, err
+				}
+				return &git.SyncResult{Name: repoName, Path: path, Success: true}, nil
+			}
 			return nil, fmt.Errorf("repos.Service.syncRepo: registry not loaded")
 		}
 		if err := reg.SyncRepo(ctx, repoName, remote, branch); err != nil {
