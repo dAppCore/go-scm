@@ -51,7 +51,7 @@ func LoadAgents(cfg *config.Config) (map[string]AgentConfig, error) {
 		return map[string]AgentConfig{}, nil
 	}
 
-	// Validate active agents and apply defaults where the runtime needs them.
+	// Validate and apply defaults.
 	for name, ac := range agents {
 		if !ac.Active {
 			continue

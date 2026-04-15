@@ -79,7 +79,7 @@ agentci:
 `)
 	agents, err := LoadAgents(cfg)
 	require.NoError(t, err)
-	// Both are returned, but only active-agent has runtime defaults applied.
+	// Both are returned, but only active-agent has defaults applied.
 	assert.Len(t, agents, 2)
 	assert.Contains(t, agents, "active-agent")
 	assert.Contains(t, agents, "offline-agent")
