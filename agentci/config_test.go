@@ -41,6 +41,19 @@ func TestLoadAgentsAndRoundTrip(t *testing.T) {
 		t.Fatalf("unexpected agent round-trip: %#v", got)
 	}
 
+	agents["cladius"] = AgentConfig{Host: "mutated"}
+	agents["new"] = AgentConfig{Host: "extra"}
+	agentsAgain, err := LoadAgents(cfg)
+	if err != nil {
+		t.Fatalf("reload agents after mutation: %v", err)
+	}
+	if got := agentsAgain["cladius"]; got.Host != agent.Host {
+		t.Fatalf("expected load result to be detached from caller mutations, got %#v", got)
+	}
+	if _, ok := agentsAgain["new"]; ok {
+		t.Fatalf("expected load result not to include caller-added entries")
+	}
+
 	active, err := LoadActiveAgents(cfg)
 	if err != nil {
 		t.Fatalf("load active agents: %v", err)

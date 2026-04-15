@@ -55,7 +55,7 @@ func LoadAgents(cfg *config.Config) (map[string]AgentConfig, error) {
 	if agents == nil {
 		agents = make(map[string]AgentConfig)
 	}
-	return agents, nil
+	return cloneAgents(agents), nil
 }
 
 // ListAgents returns all configured agents (active and inactive).
@@ -194,4 +194,18 @@ func (a *AgentConfig) UnmarshalYAML(value *yaml.Node) error {
 
 func isMissingKeyError(err error) bool {
 	return err != nil && strings.Contains(err.Error(), "key not found")
+}
+
+func cloneAgents(src map[string]AgentConfig) map[string]AgentConfig {
+	if len(src) == 0 {
+		return make(map[string]AgentConfig)
+	}
+	dst := make(map[string]AgentConfig, len(src))
+	for name, agent := range src {
+		if len(agent.Roles) > 0 {
+			agent.Roles = append([]string(nil), agent.Roles...)
+		}
+		dst[name] = agent
+	}
+	return dst
 }
