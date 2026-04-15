@@ -150,6 +150,11 @@ func TestResolvePathWithinRoot_Bad_EscapesRoot(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestResolvePathWithinRoot_Bad_EmptyRoot(t *testing.T) {
+	_, _, err := ResolvePathWithinRoot("", "core")
+	assert.Error(t, err)
+}
+
 func TestSecureSSHCommand_Good(t *testing.T) {
 	cmd := SecureSSHCommand("host.example.com", "ls -la")
 	args := cmd.Args

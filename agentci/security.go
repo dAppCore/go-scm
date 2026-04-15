@@ -49,6 +49,10 @@ func ValidatePathElement(input string) (string, error) {
 // ResolvePathWithinRoot resolves a validated path element beneath a root directory.
 // Usage: ResolvePathWithinRoot(...)
 func ResolvePathWithinRoot(root string, input string) (string, string, error) {
+	if strings.TrimSpace(root) == "" {
+		return "", "", fmt.Errorf("agentci.ResolvePathWithinRoot: root is required")
+	}
+
 	safeName, err := ValidatePathElement(input)
 	if err != nil {
 		return "", "", fmt.Errorf("agentci.ResolvePathWithinRoot: invalid path element: %w", err)

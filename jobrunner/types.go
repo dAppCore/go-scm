@@ -33,6 +33,7 @@ type JobHandler interface {
 type JobSource interface {
 	Name() string
 	Poll(ctx context.Context) ([]*PipelineSignal, error)
+	Report(ctx context.Context, result *ActionResult) error
 }
 
 // PipelineSignal is the structural snapshot of a child issue/PR.

@@ -47,7 +47,7 @@ func LoadAgents(cfg *config.Config) (map[string]AgentConfig, error) {
 		return agents, nil
 	}
 	if err := cfg.Get("agents", &agents); err != nil {
-		if strings.Contains(err.Error(), "key not found") {
+		if isMissingKeyError(err) {
 			return agents, nil
 		}
 		return nil, fmt.Errorf("agentci.LoadAgents: get agents: %w", err)
@@ -87,7 +87,7 @@ func LoadClothoConfig(cfg *config.Config) (ClothoConfig, error) {
 	}
 	var raw map[string]any
 	if err := cfg.Get("clotho", &raw); err != nil {
-		if strings.Contains(err.Error(), "key not found") {
+		if isMissingKeyError(err) {
 			return clotho, nil
 		}
 		return clotho, fmt.Errorf("agentci.LoadClothoConfig: get clotho: %w", err)
@@ -165,4 +165,8 @@ func (a *AgentConfig) UnmarshalYAML(value *yaml.Node) error {
 	}
 	*a = AgentConfig(out)
 	return nil
+}
+
+func isMissingKeyError(err error) bool {
+	return err != nil && strings.Contains(err.Error(), "key not found")
 }

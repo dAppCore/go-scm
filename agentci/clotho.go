@@ -24,22 +24,22 @@ type Spinner struct {
 	Agents map[string]AgentConfig
 }
 
-func (s *Spinner) resolveAgent(agentName string) (AgentConfig, bool) {
+func (s *Spinner) resolveAgent(agentName string) (string, AgentConfig, bool) {
 	if s == nil {
-		return AgentConfig{}, false
+		return "", AgentConfig{}, false
 	}
 
 	if agent, ok := s.Agents[agentName]; ok {
-		return agent, true
+		return agentName, agent, true
 	}
 
 	for name, cfg := range s.Agents {
 		if strings.EqualFold(name, agentName) || strings.EqualFold(cfg.ForgejoUser, agentName) {
-			return cfg, true
+			return name, cfg, true
 		}
 	}
 
-	return AgentConfig{}, false
+	return "", AgentConfig{}, false
 }
 
 // NewSpinner creates a new Clotho orchestrator.
@@ -58,7 +58,7 @@ func (s *Spinner) DeterminePlan(signal *jobrunner.PipelineSignal, agentName stri
 		return RunModeDirect
 	}
 
-	agent, ok := s.resolveAgent(agentName)
+	_, agent, ok := s.resolveAgent(agentName)
 
 	critical := false
 	if signal != nil {
@@ -87,7 +87,7 @@ func (s *Spinner) FindByForgejoUser(forgejoUser string) (string, AgentConfig, bo
 		return "", AgentConfig{}, false
 	}
 	for name, agent := range s.Agents {
-		if strings.EqualFold(agent.ForgejoUser, forgejoUser) {
+		if strings.EqualFold(name, forgejoUser) || strings.EqualFold(agent.ForgejoUser, forgejoUser) {
 			return name, agent, true
 		}
 	}
@@ -96,7 +96,7 @@ func (s *Spinner) FindByForgejoUser(forgejoUser string) (string, AgentConfig, bo
 
 // GetVerifierModel returns the model for the secondary "signed" verification run.
 func (s *Spinner) GetVerifierModel(agentName string) string {
-	agent, ok := s.resolveAgent(agentName)
+	_, agent, ok := s.resolveAgent(agentName)
 	if !ok {
 		return ""
 	}
