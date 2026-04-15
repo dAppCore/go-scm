@@ -34,9 +34,27 @@ func (m *MarketCollector) Collect(ctx context.Context, cfg *Config) (*Result, er
 	if cfg == nil {
 		return nil, errors.New("collect.MarketCollector.Collect: config is required")
 	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	if ctx != nil {
 		if err := ctx.Err(); err != nil {
 			return nil, err
+		}
+	}
+	if cfg.Dispatcher != nil {
+		cfg.Dispatcher.EmitStart(m.Name(), "Starting market data collection")
+	}
+	if cfg.DryRun {
+		if cfg.Dispatcher != nil {
+			cfg.Dispatcher.EmitProgress(m.Name(), "[dry-run] Would collect market data", nil)
+			cfg.Dispatcher.EmitComplete(m.Name(), "Market dry-run complete", &Result{Source: m.Name()})
+		}
+		return &Result{Source: m.Name()}, nil
+	}
+	if cfg.Limiter != nil {
+		if err := cfg.Limiter.Wait(ctx, "coingecko"); err != nil {
+			return &Result{Source: m.Name()}, err
 		}
 	}
 	data := &coinData{
@@ -56,7 +74,12 @@ func (m *MarketCollector) Collect(ctx context.Context, cfg *Config) (*Result, er
 	if err != nil {
 		return &Result{Source: m.Name(), Errors: 1}, err
 	}
-	return &Result{Source: m.Name(), Items: 1, Files: []string{outPath}}, nil
+	result := &Result{Source: m.Name(), Items: 1, Files: []string{outPath}}
+	if cfg.Dispatcher != nil {
+		cfg.Dispatcher.EmitItem(m.Name(), fmt.Sprintf("Collected market data for %s", m.CoinID), nil)
+		cfg.Dispatcher.EmitComplete(m.Name(), "Market collection complete", result)
+	}
+	return result, nil
 }
 
 // FormatMarketSummary is exported for testing.

@@ -39,19 +39,19 @@ type Result struct {
 
 // NewConfig creates a Config with sensible defaults.
 func NewConfig(outputDir string) *Config {
-	return NewConfigWithMedium(coreio.NewMemoryMedium(), outputDir)
+	return NewConfigWithMedium(coreio.NewMockMedium(), outputDir)
 }
 
 // NewConfigWithMedium creates a Config using the specified storage medium.
 func NewConfigWithMedium(m coreio.Medium, outputDir string) *Config {
 	if m == nil {
-		m = coreio.NewMemoryMedium()
+		m = coreio.NewMockMedium()
 	}
 	if strings.TrimSpace(outputDir) == "" {
 		outputDir = "collect"
 	}
 	outputDir = filepath.Clean(outputDir)
-	statePath := filepath.Join(outputDir, "state.json")
+	statePath := filepath.Join(outputDir, ".collect-state.json")
 	return &Config{
 		Output:     m,
 		OutputDir:  outputDir,

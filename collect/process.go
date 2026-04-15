@@ -26,6 +26,9 @@ func (p *Processor) Process(ctx context.Context, cfg *Config) (*Result, error) {
 	if cfg == nil {
 		return nil, errors.New("collect.Processor.Process: config is required")
 	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	if ctx != nil {
 		if err := ctx.Err(); err != nil {
 			return nil, err
@@ -34,12 +37,22 @@ func (p *Processor) Process(ctx context.Context, cfg *Config) (*Result, error) {
 	if cfg.Output == nil {
 		return nil, errors.New("collect.Processor.Process: output medium is required")
 	}
+	if cfg.Dispatcher != nil {
+		cfg.Dispatcher.EmitStart(p.Name(), "Starting processing")
+	}
 
 	dir := p.Dir
 	if strings.TrimSpace(dir) == "" {
 		dir = p.Source
 	}
 	if dir == "" {
+		return &Result{Source: p.Name()}, nil
+	}
+	if cfg.DryRun {
+		if cfg.Dispatcher != nil {
+			cfg.Dispatcher.EmitProgress(p.Name(), "[dry-run] Would process files", nil)
+			cfg.Dispatcher.EmitComplete(p.Name(), "Process dry-run complete", &Result{Source: p.Name()})
+		}
 		return &Result{Source: p.Name()}, nil
 	}
 
@@ -76,13 +89,17 @@ func (p *Processor) Process(ctx context.Context, cfg *Config) (*Result, error) {
 			result.Errors++
 			continue
 		}
-		outPath, err := writeResultFile(cfg, p.Name(), name+".md", md)
+		outName := strings.TrimSuffix(name, filepath.Ext(name)) + ".md"
+		outPath, err := writeResultFile(cfg, p.Name(), outName, md)
 		if err != nil {
 			result.Errors++
 			continue
 		}
 		result.Items++
 		result.Files = append(result.Files, outPath)
+	}
+	if cfg.Dispatcher != nil {
+		cfg.Dispatcher.EmitComplete(p.Name(), fmt.Sprintf("Processed %d files", result.Items), result)
 	}
 	return result, nil
 }

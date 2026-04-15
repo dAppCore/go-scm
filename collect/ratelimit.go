@@ -4,9 +4,10 @@ package collect
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
+	"fmt"
 	"os/exec"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -18,24 +19,64 @@ type RateLimiter struct {
 	last   map[string]time.Time
 }
 
+var defaultDelays = map[string]time.Duration{
+	"github":      500 * time.Millisecond,
+	"bitcointalk": 2 * time.Second,
+	"coingecko":   1500 * time.Millisecond,
+	"iacr":        1 * time.Second,
+	"arxiv":       1 * time.Second,
+}
+
 // NewRateLimiter creates a limiter with default delays.
 func NewRateLimiter() *RateLimiter {
+	delays := make(map[string]time.Duration, len(defaultDelays))
+	for k, v := range defaultDelays {
+		delays[k] = v
+	}
 	return &RateLimiter{
-		delays: map[string]time.Duration{
-			"github": 5 * time.Second,
-		},
-		last: make(map[string]time.Time),
+		delays: delays,
+		last:   make(map[string]time.Time),
 	}
 }
 
-// GetDelay returns the delay configured for a source.
-func (r *RateLimiter) GetDelay(source string) time.Duration {
+// Wait blocks until the rate limit allows the next request for the given source.
+// It respects context cancellation.
+func (r *RateLimiter) Wait(ctx context.Context, source string) error {
 	if r == nil {
-		return 0
+		return nil
 	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
 	r.mu.Lock()
-	defer r.mu.Unlock()
-	return r.delays[source]
+	delay, ok := r.delays[source]
+	if !ok {
+		delay = 500 * time.Millisecond
+	}
+	lastTime := r.last[source]
+	elapsed := time.Since(lastTime)
+	if elapsed >= delay {
+		r.last[source] = time.Now()
+		r.mu.Unlock()
+		return nil
+	}
+	remaining := delay - elapsed
+	r.mu.Unlock()
+
+	timer := time.NewTimer(remaining)
+	defer timer.Stop()
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-timer.C:
+	}
+
+	r.mu.Lock()
+	r.last[source] = time.Now()
+	r.mu.Unlock()
+	return nil
 }
 
 // SetDelay sets the delay for a source.
@@ -51,71 +92,62 @@ func (r *RateLimiter) SetDelay(source string, d time.Duration) {
 	r.delays[source] = d
 }
 
-// Wait blocks until the rate limit allows the next request.
-func (r *RateLimiter) Wait(ctx context.Context, source string) error {
+// GetDelay returns the delay configured for a source.
+func (r *RateLimiter) GetDelay(source string) time.Duration {
 	if r == nil {
-		return nil
-	}
-	if ctx == nil {
-		ctx = context.Background()
+		return 500 * time.Millisecond
 	}
 	r.mu.Lock()
-	delay := r.delays[source]
-	last := r.last[source]
-	now := time.Now()
-	if delay <= 0 {
-		r.last[source] = now
-		r.mu.Unlock()
-		return nil
+	defer r.mu.Unlock()
+	if d, ok := r.delays[source]; ok {
+		return d
 	}
-	wait := last.Add(delay).Sub(now)
-	if wait < 0 {
-		wait = 0
-	}
-	r.mu.Unlock()
-
-	timer := time.NewTimer(wait)
-	defer timer.Stop()
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	case <-timer.C:
-	}
-
-	r.mu.Lock()
-	r.last[source] = time.Now()
-	r.mu.Unlock()
-	return nil
+	return 500 * time.Millisecond
 }
 
 // CheckGitHubRateLimit checks GitHub API rate limit status via gh api.
+// Returns used and limit counts. Auto-pauses at 75% usage by increasing
+// the GitHub rate limit delay.
+//
+// Deprecated: Use CheckGitHubRateLimitCtx for context-aware cancellation.
 func (r *RateLimiter) CheckGitHubRateLimit() (used, limit int, err error) {
 	return r.CheckGitHubRateLimitCtx(context.Background())
 }
 
-// CheckGitHubRateLimitCtx checks GitHub API rate limit status via gh api with context support.
+// CheckGitHubRateLimitCtx checks GitHub API rate limit status via gh api with
+// context support. Returns used and limit counts. Auto-pauses at 75% usage by
+// increasing the GitHub rate limit delay.
 func (r *RateLimiter) CheckGitHubRateLimitCtx(ctx context.Context) (used, limit int, err error) {
+	if r == nil {
+		return 0, 0, nil
+	}
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	cmd := exec.CommandContext(ctx, "gh", "api", "rate_limit")
-	out, runErr := cmd.Output()
-	if runErr != nil {
-		return 0, 0, runErr
+
+	cmd := exec.CommandContext(ctx, "gh", "api", "rate_limit", "--jq", ".rate | \"\\(.used) \\(.limit)\"")
+	out, err := cmd.Output()
+	if err != nil {
+		return 0, 0, fmt.Errorf("collect.RateLimiter.CheckGitHubRateLimitCtx: %w", err)
 	}
-	var payload struct {
-		Resources struct {
-			Core struct {
-				Limit int `json:"limit"`
-				Used  int `json:"used"`
-			} `json:"core"`
-		} `json:"resources"`
+
+	parts := strings.Fields(strings.TrimSpace(string(out)))
+	if len(parts) != 2 {
+		return 0, 0, fmt.Errorf("collect.RateLimiter.CheckGitHubRateLimitCtx: unexpected output %q", strings.TrimSpace(string(out)))
 	}
-	if err := json.Unmarshal(out, &payload); err != nil {
-		return 0, 0, err
+
+	used, err = strconv.Atoi(parts[0])
+	if err != nil {
+		return 0, 0, fmt.Errorf("collect.RateLimiter.CheckGitHubRateLimitCtx: parse used: %w", err)
 	}
-	if payload.Resources.Core.Limit == 0 {
-		return 0, 0, errors.New("collect: gh api returned zero rate limit")
+	limit, err = strconv.Atoi(parts[1])
+	if err != nil {
+		return 0, 0, fmt.Errorf("collect.RateLimiter.CheckGitHubRateLimitCtx: parse limit: %w", err)
 	}
-	return payload.Resources.Core.Used, payload.Resources.Core.Limit, nil
+
+	if limit > 0 && float64(used)/float64(limit) >= 0.75 {
+		r.SetDelay("github", 5*time.Second)
+	}
+
+	return used, limit, nil
 }
