@@ -59,6 +59,19 @@ func TestSpinnerResolveByForgejoUser(t *testing.T) {
 	}
 }
 
+func TestSpinnerGetVerifierModelReturnsOnlySecondaryModel(t *testing.T) {
+	s := NewSpinner(ClothoConfig{}, map[string]AgentConfig{
+		"charon": {
+			ForgejoUser: "forge",
+			Model:       "gpt-5.4",
+		},
+	})
+
+	if got := s.GetVerifierModel("charon"); got != "" {
+		t.Fatalf("expected empty verifier model when no secondary model is configured, got %q", got)
+	}
+}
+
 func TestNewSpinnerCopiesAgentSlices(t *testing.T) {
 	agents := map[string]AgentConfig{
 		"charon": {

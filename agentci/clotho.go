@@ -96,13 +96,7 @@ func (s *Spinner) GetVerifierModel(agentName string) string {
 	if !ok {
 		return ""
 	}
-	if agent.VerifyModel != "" {
-		return agent.VerifyModel
-	}
-	if agent.Model != "" {
-		return agent.Model
-	}
-	return ""
+	return agent.VerifyModel
 }
 
 // Weave compares primary and verifier outputs. Returns true if they converge.
