@@ -1,0 +1,95 @@
+// SPDX-License-Identifier: EUPL-1.2
+
+package handlers
+
+import (
+	"context"
+	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
+	"time"
+
+	coreerr "dappco.re/go/core/log"
+	"dappco.re/go/core/scm/forge"
+	"dappco.re/go/core/scm/jobrunner"
+)
+
+const (
+	//
+	ColorAgentComplete = "#0e8a16" // Green
+)
+
+// CompletionHandler manages issue state when an agent finishes work.
+type CompletionHandler struct {
+	forge *forge.Client
+}
+
+// NewCompletionHandler creates a handler for agent completion events.
+// Usage: NewCompletionHandler(...)
+func NewCompletionHandler(client *forge.Client) *CompletionHandler {
+	return &CompletionHandler{
+		forge: client,
+	}
+}
+
+// Name returns the handler identifier.
+// Usage: Name(...)
+func (h *CompletionHandler) Name() string {
+	return "completion"
+}
+
+// Match returns true if the signal indicates an agent has finished a task.
+// Usage: Match(...)
+func (h *CompletionHandler) Match(signal *jobrunner.PipelineSignal) bool {
+	return signal.Type == "agent_completion"
+}
+
+// Execute updates the issue labels based on the completion status.
+// Usage: Execute(...)
+func (h *CompletionHandler) Execute(ctx context.Context, signal *jobrunner.PipelineSignal) (*jobrunner.ActionResult, error) {
+	start := time.Now()
+
+	// Remove in-progress label.
+	if inProgressLabel, err := h.forge.GetLabelByName(signal.RepoOwner, signal.RepoName, LabelInProgress); err == nil {
+		_ = h.forge.RemoveIssueLabel(signal.RepoOwner, signal.RepoName, int64(signal.ChildNumber), inProgressLabel.ID)
+	}
+
+	if signal.Success {
+		completeLabel, err := h.forge.EnsureLabel(signal.RepoOwner, signal.RepoName, LabelAgentComplete, ColorAgentComplete)
+		if err != nil {
+			return nil, coreerr.E("completion.Execute", "ensure label "+LabelAgentComplete, err)
+		}
+
+		if err := h.forge.AddIssueLabels(signal.RepoOwner, signal.RepoName, int64(signal.ChildNumber), []int64{completeLabel.ID}); err != nil {
+			return nil, coreerr.E("completion.Execute", "add completed label", err)
+		}
+
+		if signal.Message != "" {
+			_ = h.forge.CreateIssueComment(signal.RepoOwner, signal.RepoName, int64(signal.ChildNumber), signal.Message)
+		}
+	} else {
+		failedLabel, err := h.forge.EnsureLabel(signal.RepoOwner, signal.RepoName, LabelAgentFailed, ColorAgentFailed)
+		if err != nil {
+			return nil, coreerr.E("completion.Execute", "ensure label "+LabelAgentFailed, err)
+		}
+
+		if err := h.forge.AddIssueLabels(signal.RepoOwner, signal.RepoName, int64(signal.ChildNumber), []int64{failedLabel.ID}); err != nil {
+			return nil, coreerr.E("completion.Execute", "add failed label", err)
+		}
+
+		msg := "Agent reported failure."
+		if signal.Error != "" {
+			msg += fmt.Sprintf("\n\nError: %s", signal.Error)
+		}
+		_ = h.forge.CreateIssueComment(signal.RepoOwner, signal.RepoName, int64(signal.ChildNumber), msg)
+	}
+
+	return &jobrunner.ActionResult{
+		Action:      "completion",
+		RepoOwner:   signal.RepoOwner,
+		RepoName:    signal.RepoName,
+		EpicNumber:  signal.EpicNumber,
+		ChildNumber: signal.ChildNumber,
+		Success:     true,
+		Timestamp:   time.Now(),
+		Duration:    time.Since(start),
+	}, nil
+}

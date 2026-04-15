@@ -1,0 +1,178 @@
+// SPDX-License-Identifier: EUPL-1.2
+
+package gitea
+
+import (
+	"iter"
+
+	"code.gitea.io/sdk/gitea"
+
+	"dappco.re/go/core/log"
+)
+
+// ListOrgRepos returns all repositories for the given organisation.
+// Usage: ListOrgRepos(...)
+func (c *Client) ListOrgRepos(org string) ([]*gitea.Repository, error) {
+	var all []*gitea.Repository
+	page := 1
+
+	for {
+		repos, resp, err := c.api.ListOrgRepos(org, gitea.ListOrgReposOptions{
+			ListOptions: gitea.ListOptions{Page: page, PageSize: 50},
+		})
+		if err != nil {
+			return nil, log.E("gitea.ListOrgRepos", "failed to list org repos", err)
+		}
+
+		all = append(all, repos...)
+
+		if resp == nil || page >= resp.LastPage {
+			break
+		}
+		page++
+	}
+
+	return all, nil
+}
+
+// ListOrgReposIter returns an iterator over repositories for the given organisation.
+// Usage: ListOrgReposIter(...)
+func (c *Client) ListOrgReposIter(org string) iter.Seq2[*gitea.Repository, error] {
+	return func(yield func(*gitea.Repository, error) bool) {
+		page := 1
+		for {
+			repos, resp, err := c.api.ListOrgRepos(org, gitea.ListOrgReposOptions{
+				ListOptions: gitea.ListOptions{Page: page, PageSize: 50},
+			})
+			if err != nil {
+				yield(nil, log.E("gitea.ListOrgRepos", "failed to list org repos", err))
+				return
+			}
+			for _, repo := range repos {
+				if !yield(repo, nil) {
+					return
+				}
+			}
+			if resp == nil || page >= resp.LastPage {
+				break
+			}
+			page++
+		}
+	}
+}
+
+// ListUserRepos returns all repositories for the authenticated user.
+// Usage: ListUserRepos(...)
+func (c *Client) ListUserRepos() ([]*gitea.Repository, error) {
+	var all []*gitea.Repository
+	page := 1
+
+	for {
+		repos, resp, err := c.api.ListMyRepos(gitea.ListReposOptions{
+			ListOptions: gitea.ListOptions{Page: page, PageSize: 50},
+		})
+		if err != nil {
+			return nil, log.E("gitea.ListUserRepos", "failed to list user repos", err)
+		}
+
+		all = append(all, repos...)
+
+		if resp == nil || page >= resp.LastPage {
+			break
+		}
+		page++
+	}
+
+	return all, nil
+}
+
+// ListUserReposIter returns an iterator over repositories for the authenticated user.
+// Usage: ListUserReposIter(...)
+func (c *Client) ListUserReposIter() iter.Seq2[*gitea.Repository, error] {
+	return func(yield func(*gitea.Repository, error) bool) {
+		page := 1
+		for {
+			repos, resp, err := c.api.ListMyRepos(gitea.ListReposOptions{
+				ListOptions: gitea.ListOptions{Page: page, PageSize: 50},
+			})
+			if err != nil {
+				yield(nil, log.E("gitea.ListUserRepos", "failed to list user repos", err))
+				return
+			}
+			for _, repo := range repos {
+				if !yield(repo, nil) {
+					return
+				}
+			}
+			if resp == nil || page >= resp.LastPage {
+				break
+			}
+			page++
+		}
+	}
+}
+
+// GetRepo returns a single repository by owner and name.
+// Usage: GetRepo(...)
+func (c *Client) GetRepo(owner, name string) (*gitea.Repository, error) {
+	repo, _, err := c.api.GetRepo(owner, name)
+	if err != nil {
+		return nil, log.E("gitea.GetRepo", "failed to get repo", err)
+	}
+
+	return repo, nil
+}
+
+// CreateMirrorFromService creates a mirror repository from an arbitrary git service.
+// Usage: CreateMirrorFromService(...)
+func (c *Client) CreateMirrorFromService(owner, name, cloneURL string, service gitea.GitServiceType, authToken string) (*gitea.Repository, error) {
+	opts := gitea.MigrateRepoOption{
+		RepoName:    name,
+		RepoOwner:   owner,
+		CloneAddr:   cloneURL,
+		Service:     service,
+		Mirror:      true,
+		Description: "Mirror of " + cloneURL,
+	}
+
+	if authToken != "" {
+		opts.AuthToken = authToken
+	}
+
+	repo, _, err := c.api.MigrateRepo(opts)
+	if err != nil {
+		return nil, log.E("gitea.CreateMirrorFromService", "failed to create mirror", err)
+	}
+
+	return repo, nil
+}
+
+// CreateMirror creates a mirror repository on Gitea from a GitHub clone URL.
+// This uses the Gitea migration API to set up a pull mirror.
+// If authToken is provided, it is used to authenticate against the source (e.g. for private GitHub repos).
+// Usage: CreateMirror(...)
+func (c *Client) CreateMirror(owner, name, cloneURL, authToken string) (*gitea.Repository, error) {
+	return c.CreateMirrorFromService(owner, name, cloneURL, gitea.GitServiceGithub, authToken)
+}
+
+// DeleteRepo deletes a repository from Gitea.
+// Usage: DeleteRepo(...)
+func (c *Client) DeleteRepo(owner, name string) error {
+	_, err := c.api.DeleteRepo(owner, name)
+	if err != nil {
+		return log.E("gitea.DeleteRepo", "failed to delete repo", err)
+	}
+
+	return nil
+}
+
+// CreateOrgRepo creates a new empty repository under an organisation.
+// Usage: CreateOrgRepo(...)
+func (c *Client) CreateOrgRepo(org string, opts gitea.CreateRepoOption) (*gitea.Repository, error) {
+	repo, _, err := c.api.CreateOrgRepo(org, opts)
+	if err != nil {
+		return nil, log.E("gitea.CreateOrgRepo", "failed to create org repo", err)
+	}
+
+	return repo, nil
+}
