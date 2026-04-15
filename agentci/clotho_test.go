@@ -44,3 +44,17 @@ func TestSpinnerDeterministicBehaviour(t *testing.T) {
 		t.Fatalf("expected weave convergence: ok=%v err=%v", ok, err)
 	}
 }
+
+func TestSpinnerResolveByForgejoUser(t *testing.T) {
+	s := NewSpinner(ClothoConfig{}, map[string]AgentConfig{
+		"charon": {
+			ForgejoUser: "forge",
+			Model:       "gpt-5.4",
+			VerifyModel: "gpt-5.3-codex-spark",
+		},
+	})
+
+	if got := s.GetVerifierModel("forge"); got != "gpt-5.3-codex-spark" {
+		t.Fatalf("expected verifier model by forgejo user, got %q", got)
+	}
+}

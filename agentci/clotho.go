@@ -24,6 +24,24 @@ type Spinner struct {
 	Agents map[string]AgentConfig
 }
 
+func (s *Spinner) resolveAgent(agentName string) (AgentConfig, bool) {
+	if s == nil {
+		return AgentConfig{}, false
+	}
+
+	if agent, ok := s.Agents[agentName]; ok {
+		return agent, true
+	}
+
+	for name, cfg := range s.Agents {
+		if strings.EqualFold(name, agentName) || strings.EqualFold(cfg.ForgejoUser, agentName) {
+			return cfg, true
+		}
+	}
+
+	return AgentConfig{}, false
+}
+
 // NewSpinner creates a new Clotho orchestrator.
 func NewSpinner(cfg ClothoConfig, agents map[string]AgentConfig) *Spinner {
 	cp := make(map[string]AgentConfig, len(agents))
@@ -43,16 +61,7 @@ func (s *Spinner) DeterminePlan(signal *jobrunner.PipelineSignal, agentName stri
 		return RunModeDirect
 	}
 
-	agent, ok := s.Agents[agentName]
-	if !ok {
-		for name, cfg := range s.Agents {
-			if strings.EqualFold(name, agentName) || strings.EqualFold(cfg.ForgejoUser, agentName) {
-				agent = cfg
-				ok = true
-				break
-			}
-		}
-	}
+	agent, ok := s.resolveAgent(agentName)
 
 	critical := false
 	if signal != nil {
@@ -94,22 +103,25 @@ func (s *Spinner) FindByForgejoUser(forgejoUser string) (string, AgentConfig, bo
 
 // GetVerifierModel returns the model for the secondary "signed" verification run.
 func (s *Spinner) GetVerifierModel(agentName string) string {
-	if s == nil {
+	agent, ok := s.resolveAgent(agentName)
+	if !ok {
 		return ""
 	}
-	if agent, ok := s.Agents[agentName]; ok {
-		if agent.VerifyModel != "" {
-			return agent.VerifyModel
-		}
-		if agent.Model != "" {
-			return agent.Model
-		}
+	if agent.VerifyModel != "" {
+		return agent.VerifyModel
+	}
+	if agent.Model != "" {
+		return agent.Model
 	}
 	return ""
 }
 
 // Weave compares primary and verifier outputs. Returns true if they converge.
 func (s *Spinner) Weave(ctx context.Context, primaryOutput, signedOutput []byte) (bool, error) {
-	_ = ctx
+	if ctx != nil {
+		if err := ctx.Err(); err != nil {
+			return false, err
+		}
+	}
 	return bytes.Equal(bytes.TrimSpace(primaryOutput), bytes.TrimSpace(signedOutput)), nil
 }
