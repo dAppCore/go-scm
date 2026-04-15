@@ -197,45 +197,64 @@ func (s *Service) loadRegistry() (*Registry, error) {
 }
 
 func (s *Service) loadRegistryAt(root string) (*Registry, error) {
-	path, err := s.registryPath(root)
+	paths, err := s.registryPaths(root)
 	if err != nil {
 		return nil, err
 	}
-	raw, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
+	if len(paths) == 0 {
+		return nil, os.ErrNotExist
 	}
-	var reg Registry
-	if err := yaml.Unmarshal(raw, &reg); err != nil {
-		return nil, err
-	}
-	if reg.Repos == nil {
-		reg.Repos = map[string]*Repo{}
-	}
-	if reg.BasePath == "" {
-		reg.BasePath = inferRegistryBasePath(path)
-	}
-	for name, repo := range reg.Repos {
-		if repo == nil {
+	var merged *Registry
+	for _, path := range paths {
+		reg, err := loadRegistryFile(path)
+		if err != nil {
+			return nil, err
+		}
+		if merged == nil {
+			merged = reg
 			continue
 		}
-		repo.Name = name
-		if repo.Path == "" {
-			repo.Path = filepath.Join(reg.BasePath, name)
+		for name, repo := range reg.Repos {
+			if repo == nil {
+				continue
+			}
+			if _, exists := merged.Repos[name]; exists {
+				continue
+			}
+			cp := *repo
+			cp.registry = merged
+			merged.Repos[name] = &cp
 		}
-		repo.registry = &reg
+		if merged.BasePath == "" {
+			merged.BasePath = reg.BasePath
+		}
 	}
-	return &reg, nil
+	if merged == nil {
+		return nil, os.ErrNotExist
+	}
+	return merged, nil
 }
 
 func (s *Service) registryPath(root string) (string, error) {
+	paths, err := s.registryPaths(root)
+	if err != nil {
+		return "", err
+	}
+	if len(paths) == 0 {
+		return "", os.ErrNotExist
+	}
+	return paths[0], nil
+}
+
+func (s *Service) registryPaths(root string) ([]string, error) {
 	if s == nil {
-		return "", errors.New("repos.Service.registryPath: service is required")
+		return nil, errors.New("repos.Service.registryPaths: service is required")
 	}
 	opts := s.Options()
 	candidates := []string{}
 	if opts.RegistryPath != "" {
 		candidates = append(candidates, opts.RegistryPath)
+		return cleanExistingCandidates(candidates), nil
 	}
 	if root != "" {
 		candidates = append(candidates,
@@ -264,7 +283,12 @@ func (s *Service) registryPath(root string) (string, error) {
 		candidates = append(candidates, filepath.Join(home, ".core", "repos.yaml"))
 	}
 
+	return cleanExistingCandidates(candidates), nil
+}
+
+func cleanExistingCandidates(candidates []string) []string {
 	seen := map[string]struct{}{}
+	paths := make([]string, 0, len(candidates))
 	for _, candidate := range candidates {
 		if candidate == "" {
 			continue
@@ -275,10 +299,38 @@ func (s *Service) registryPath(root string) (string, error) {
 		}
 		seen[candidate] = struct{}{}
 		if _, err := os.Stat(candidate); err == nil {
-			return candidate, nil
+			paths = append(paths, candidate)
 		}
 	}
-	return "", os.ErrNotExist
+	return paths
+}
+
+func loadRegistryFile(path string) (*Registry, error) {
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	var reg Registry
+	if err := yaml.Unmarshal(raw, &reg); err != nil {
+		return nil, err
+	}
+	if reg.Repos == nil {
+		reg.Repos = map[string]*Repo{}
+	}
+	if reg.BasePath == "" {
+		reg.BasePath = inferRegistryBasePath(path)
+	}
+	for name, repo := range reg.Repos {
+		if repo == nil {
+			continue
+		}
+		repo.Name = name
+		if repo.Path == "" {
+			repo.Path = filepath.Join(reg.BasePath, name)
+		}
+		repo.registry = &reg
+	}
+	return &reg, nil
 }
 
 func inferRegistryBasePath(path string) string {

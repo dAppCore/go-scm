@@ -92,6 +92,67 @@ func TestServiceRegistersRepoSyncActions(t *testing.T) {
 	}
 }
 
+func TestServiceLoadsProjectAndHomeRegistries(t *testing.T) {
+	root := t.TempDir()
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+
+	projectRepo := filepath.Join(root, "project-repo")
+	homeRepo := filepath.Join(home, "home-repo")
+
+	projectRegistry := &Registry{
+		Version:  1,
+		BasePath: root,
+		Repos: map[string]*Repo{
+			"project": {Path: projectRepo},
+		},
+	}
+	homeRegistry := &Registry{
+		Version:  1,
+		BasePath: home,
+		Repos: map[string]*Repo{
+			"shared": {Path: homeRepo},
+		},
+	}
+
+	if err := writeRegistry(root, projectRegistry); err != nil {
+		t.Fatalf("write project registry: %v", err)
+	}
+	if err := writeRegistry(home, homeRegistry); err != nil {
+		t.Fatalf("write home registry: %v", err)
+	}
+
+	c := core.New(core.WithService(NewService(ServiceOptions{Root: root})))
+	if r := c.ServiceStartup(context.Background(), nil); !r.OK {
+		t.Fatalf("service startup failed: %v", r.Value)
+	}
+	svcRes := c.Service("repos")
+	if !svcRes.OK {
+		t.Fatalf("repos service was not registered")
+	}
+	svc, ok := svcRes.Value.(*Service)
+	if !ok {
+		t.Fatalf("unexpected service type: %T", svcRes.Value)
+	}
+	reg, err := svc.loadRegistryAt(root)
+	if err != nil {
+		t.Fatalf("load merged registry: %v", err)
+	}
+
+	if _, ok := reg.Get("project"); !ok {
+		t.Fatalf("expected project registry entry to be loaded")
+	}
+	if _, ok := reg.Get("shared"); !ok {
+		t.Fatalf("expected home registry entry to be loaded")
+	}
+	if got := reg.Repos["project"].Path; got != projectRepo {
+		t.Fatalf("unexpected project repo path: %q", got)
+	}
+	if got := reg.Repos["shared"].Path; got != homeRepo {
+		t.Fatalf("unexpected home repo path: %q", got)
+	}
+}
+
 func writeRegistry(root string, reg *Registry) error {
 	raw, err := yaml.Marshal(reg)
 	if err != nil {
