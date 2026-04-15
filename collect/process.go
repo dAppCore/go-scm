@@ -76,9 +76,15 @@ func (p *Processor) Process(ctx context.Context, cfg *Config) (*Result, error) {
 			}
 		}
 		name := entry.Name()
+		if cfg.Dispatcher != nil {
+			cfg.Dispatcher.EmitProgress(p.Name(), fmt.Sprintf("Processing %s", name), nil)
+		}
 		raw, err := cfg.Output.Read(filepath.Join(dir, name))
 		if err != nil {
 			result.Errors++
+			if cfg.Dispatcher != nil {
+				cfg.Dispatcher.EmitError(p.Name(), fmt.Sprintf("Failed to read %s: %v", name, err), nil)
+			}
 			continue
 		}
 		var md string
@@ -92,16 +98,25 @@ func (p *Processor) Process(ctx context.Context, cfg *Config) (*Result, error) {
 		}
 		if err != nil {
 			result.Errors++
+			if cfg.Dispatcher != nil {
+				cfg.Dispatcher.EmitError(p.Name(), fmt.Sprintf("Failed to convert %s: %v", name, err), nil)
+			}
 			continue
 		}
 		outName := strings.TrimSuffix(name, filepath.Ext(name)) + ".md"
 		outPath, err := writeResultFile(cfg, p.Name(), outName, md)
 		if err != nil {
 			result.Errors++
+			if cfg.Dispatcher != nil {
+				cfg.Dispatcher.EmitError(p.Name(), fmt.Sprintf("Failed to write %s: %v", outName, err), nil)
+			}
 			continue
 		}
 		result.Items++
 		result.Files = append(result.Files, outPath)
+		if cfg.Dispatcher != nil {
+			cfg.Dispatcher.EmitItem(p.Name(), fmt.Sprintf("Processed %s", name), nil)
+		}
 	}
 	if cfg.Dispatcher != nil {
 		cfg.Dispatcher.EmitComplete(p.Name(), fmt.Sprintf("Processed %d files", result.Items), result)
