@@ -40,7 +40,7 @@ func NewSpinner(cfg ClothoConfig, agents map[string]AgentConfig) *Spinner {
 // the global strategy, agent configuration, and repository criticality.
 // Usage: DeterminePlan(...)
 func (s *Spinner) DeterminePlan(signal *jobrunner.PipelineSignal, agentName string) RunMode {
-	if signal == nil {
+	if s == nil || signal == nil {
 		return ModeStandard
 	}
 	if s.Config.Strategy != "clotho-verified" {
@@ -59,7 +59,7 @@ func (s *Spinner) DeterminePlan(signal *jobrunner.PipelineSignal, agentName stri
 	}
 
 	// Protect critical repos with dual-run (Axiom 1).
-	if signal.RepoName == "core" || strings.Contains(signal.RepoName, "security") {
+	if strings.EqualFold(signal.RepoName, "core") || strings.Contains(strings.ToLower(signal.RepoName), "security") {
 		return ModeDual
 	}
 
@@ -69,6 +69,9 @@ func (s *Spinner) DeterminePlan(signal *jobrunner.PipelineSignal, agentName stri
 // GetVerifierModel returns the model for the secondary "signed" verification run.
 // Usage: GetVerifierModel(...)
 func (s *Spinner) GetVerifierModel(agentName string) string {
+	if s == nil {
+		return "gemini-1.5-pro"
+	}
 	agent, ok := s.Agents[agentName]
 	if !ok || agent.VerifyModel == "" {
 		return "gemini-1.5-pro"
@@ -80,6 +83,9 @@ func (s *Spinner) GetVerifierModel(agentName string) string {
 // This decouples agent naming (mythological roles) from Forgejo identity.
 // Usage: FindByForgejoUser(...)
 func (s *Spinner) FindByForgejoUser(forgejoUser string) (string, AgentConfig, bool) {
+	if s == nil {
+		return "", AgentConfig{}, false
+	}
 	if forgejoUser == "" {
 		return "", AgentConfig{}, false
 	}
@@ -117,7 +123,10 @@ func (s *Spinner) Weave(ctx context.Context, primaryOutput, signedOutput []byte)
 		return true, nil
 	}
 
-	threshold := s.Config.ValidationThreshold
+	threshold := 0.85
+	if s != nil {
+		threshold = s.Config.ValidationThreshold
+	}
 	if threshold < 0 || threshold > 1 {
 		threshold = 0.85
 	}

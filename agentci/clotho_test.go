@@ -104,3 +104,28 @@ func TestSpinner_DeterminePlan_Good_HighSecurityLevel_Good(t *testing.T) {
 	ok := spinner.DeterminePlan(&jobrunner.PipelineSignal{RepoName: "docs"}, "charon")
 	assert.Equal(t, ModeDual, ok)
 }
+
+func TestSpinner_DeterminePlan_Good_CriticalRepoIsCaseInsensitive(t *testing.T) {
+	spinner := NewSpinner(ClothoConfig{Strategy: "clotho-verified"}, map[string]AgentConfig{
+		"charon": {},
+	})
+
+	ok := spinner.DeterminePlan(&jobrunner.PipelineSignal{RepoName: "Security-Toolkit"}, "charon")
+	assert.Equal(t, ModeDual, ok)
+}
+
+func TestSpinner_Good_NilReceiverDefaults(t *testing.T) {
+	var spinner *Spinner
+
+	assert.Equal(t, ModeStandard, spinner.DeterminePlan(&jobrunner.PipelineSignal{RepoName: "docs"}, "charon"))
+	assert.Equal(t, "gemini-1.5-pro", spinner.GetVerifierModel("charon"))
+
+	name, agent, ok := spinner.FindByForgejoUser("charon")
+	assert.Empty(t, name)
+	assert.Empty(t, agent)
+	assert.False(t, ok)
+
+	converged, err := spinner.Weave(context.Background(), []byte("alpha"), []byte("alpha"))
+	require.NoError(t, err)
+	assert.True(t, converged)
+}
