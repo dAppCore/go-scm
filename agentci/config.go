@@ -85,14 +85,21 @@ func LoadClothoConfig(cfg *config.Config) (ClothoConfig, error) {
 	if cfg == nil {
 		return clotho, nil
 	}
-	if err := cfg.Get("clotho", &clotho); err != nil {
+	var raw map[string]any
+	if err := cfg.Get("clotho", &raw); err != nil {
 		if strings.Contains(err.Error(), "key not found") {
 			return clotho, nil
 		}
 		return clotho, fmt.Errorf("agentci.LoadClothoConfig: get clotho: %w", err)
 	}
+	if err := cfg.Get("clotho", &clotho); err != nil {
+		return clotho, fmt.Errorf("agentci.LoadClothoConfig: decode clotho: %w", err)
+	}
 	if clotho.Strategy == "" {
 		clotho.Strategy = defaultClothoConfig().Strategy
+	}
+	if _, ok := raw["validation_threshold"]; !ok {
+		clotho.ValidationThreshold = defaultClothoConfig().ValidationThreshold
 	}
 	return clotho, nil
 }
@@ -106,7 +113,10 @@ func SaveAgent(cfg *config.Config, name string, ac AgentConfig) error {
 		return errors.New("agentci.SaveAgent: name is required")
 	}
 
-	agents, _ := LoadAgents(cfg)
+	agents, err := LoadAgents(cfg)
+	if err != nil {
+		return fmt.Errorf("agentci.SaveAgent: load agents: %w", err)
+	}
 	if agents == nil {
 		agents = make(map[string]AgentConfig)
 	}
@@ -126,7 +136,10 @@ func RemoveAgent(cfg *config.Config, name string) error {
 		return errors.New("agentci.RemoveAgent: name is required")
 	}
 
-	agents, _ := LoadAgents(cfg)
+	agents, err := LoadAgents(cfg)
+	if err != nil {
+		return fmt.Errorf("agentci.RemoveAgent: load agents: %w", err)
+	}
 	delete(agents, name)
 	if err := cfg.Set("agents", agents); err != nil {
 		return fmt.Errorf("agentci.RemoveAgent: set agents: %w", err)

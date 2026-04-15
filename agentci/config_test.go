@@ -74,6 +74,9 @@ func TestLoadClothoConfigDefaults(t *testing.T) {
 	if clotho.Strategy != "direct" {
 		t.Fatalf("expected direct strategy, got %q", clotho.Strategy)
 	}
+	if clotho.ValidationThreshold != 0.5 {
+		t.Fatalf("expected default validation threshold, got %v", clotho.ValidationThreshold)
+	}
 }
 
 func TestLoadAgentsReturnsErrorForInvalidData(t *testing.T) {
@@ -103,5 +106,23 @@ func TestLoadClothoConfigReturnsErrorForInvalidData(t *testing.T) {
 
 	if _, err := LoadClothoConfig(cfg); err == nil {
 		t.Fatalf("expected load clotho error")
+	}
+}
+
+func TestSaveAndRemoveAgentPropagateLoadErrors(t *testing.T) {
+	cfg, err := config.New()
+	if err != nil {
+		t.Fatalf("new config: %v", err)
+	}
+
+	if err := cfg.Set("agents", "not-a-map"); err != nil {
+		t.Fatalf("set agents: %v", err)
+	}
+
+	if err := SaveAgent(cfg, "charon", AgentConfig{}); err == nil {
+		t.Fatalf("expected save agent error")
+	}
+	if err := RemoveAgent(cfg, "charon"); err == nil {
+		t.Fatalf("expected remove agent error")
 	}
 }
