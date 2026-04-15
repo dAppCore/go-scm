@@ -123,6 +123,23 @@ func TestSpinner_DeterminePlan_Good_StrategyIsCaseInsensitive(t *testing.T) {
 	assert.Equal(t, ModeDual, ok)
 }
 
+func TestSpinner_DeterminePlan_Good_ForgejoUserLookup(t *testing.T) {
+	spinner := NewSpinner(ClothoConfig{Strategy: "clotho-verified"}, map[string]AgentConfig{
+		"charon": {ForgejoUser: "Charon", DualRun: true},
+	})
+
+	ok := spinner.DeterminePlan(&jobrunner.PipelineSignal{RepoName: "docs"}, "charon")
+	assert.Equal(t, ModeDual, ok)
+}
+
+func TestSpinner_GetVerifierModel_Good_ForgejoUserLookup(t *testing.T) {
+	spinner := NewSpinner(ClothoConfig{}, map[string]AgentConfig{
+		"charon": {ForgejoUser: "Charon", VerifyModel: "gpt-5.1"},
+	})
+
+	assert.Equal(t, "gpt-5.1", spinner.GetVerifierModel("Charon"))
+}
+
 func TestSpinner_FindByForgejoUser_Good_CaseInsensitive(t *testing.T) {
 	spinner := NewSpinner(ClothoConfig{}, map[string]AgentConfig{
 		"charon": {ForgejoUser: "Charon"},
@@ -132,6 +149,17 @@ func TestSpinner_FindByForgejoUser_Good_CaseInsensitive(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, "charon", name)
 	assert.Equal(t, "Charon", agent.ForgejoUser)
+}
+
+func TestSpinner_FindByForgejoUser_Good_CaseInsensitiveKey(t *testing.T) {
+	spinner := NewSpinner(ClothoConfig{}, map[string]AgentConfig{
+		"Charon": {ForgejoUser: "other"},
+	})
+
+	name, agent, ok := spinner.FindByForgejoUser("charon")
+	require.True(t, ok)
+	assert.Equal(t, "Charon", name)
+	assert.Equal(t, "other", agent.ForgejoUser)
 }
 
 func TestSpinner_Good_NilReceiverDefaults(t *testing.T) {

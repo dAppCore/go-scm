@@ -49,6 +49,9 @@ func (s *Spinner) DeterminePlan(signal *jobrunner.PipelineSignal, agentName stri
 
 	agent, ok := s.Agents[agentName]
 	if !ok {
+		_, agent, ok = s.FindByForgejoUser(agentName)
+	}
+	if !ok {
 		return ModeStandard
 	}
 	if agent.DualRun {
@@ -74,6 +77,9 @@ func (s *Spinner) GetVerifierModel(agentName string) string {
 		return "gemini-1.5-pro"
 	}
 	agent, ok := s.Agents[agentName]
+	if !ok {
+		_, agent, ok = s.FindByForgejoUser(agentName)
+	}
 	if !ok || agent.VerifyModel == "" {
 		return "gemini-1.5-pro"
 	}
@@ -93,6 +99,11 @@ func (s *Spinner) FindByForgejoUser(forgejoUser string) (string, AgentConfig, bo
 	// Direct match on config key first.
 	if agent, ok := s.Agents[forgejoUser]; ok {
 		return forgejoUser, agent, true
+	}
+	for name, agent := range s.Agents {
+		if strings.EqualFold(name, forgejoUser) {
+			return name, agent, true
+		}
 	}
 	// Search by ForgejoUser field.
 	for name, agent := range s.Agents {
