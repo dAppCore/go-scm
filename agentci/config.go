@@ -40,11 +40,9 @@ func LoadAgents(cfg *config.Config) (map[string]AgentConfig, error) {
 		return map[string]AgentConfig{}, nil
 	}
 
-	// Validate and apply defaults.
+	// Validate and apply defaults to every configured agent; active filtering
+	// happens in LoadActiveAgents.
 	for name, ac := range agents {
-		if !ac.Active {
-			continue
-		}
 		if ac.Host == "" {
 			return nil, coreerr.E("agentci.LoadAgents", "agent "+name+": host is required", nil)
 		}
