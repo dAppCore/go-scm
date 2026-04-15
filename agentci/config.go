@@ -95,6 +95,9 @@ func LoadClothoConfig(cfg *config.Config) (ClothoConfig, error) {
 	if err := cfg.Get("clotho", &clotho); err != nil {
 		return clotho, fmt.Errorf("agentci.LoadClothoConfig: decode clotho: %w", err)
 	}
+	if raw == nil {
+		raw = map[string]any{}
+	}
 	if clotho.Strategy == "" {
 		clotho.Strategy = defaultClothoConfig().Strategy
 	}

@@ -58,3 +58,18 @@ func TestSpinnerResolveByForgejoUser(t *testing.T) {
 		t.Fatalf("expected verifier model by forgejo user, got %q", got)
 	}
 }
+
+func TestSpinnerDeterminePlanHonorsAgentOverridesUnderDirectStrategy(t *testing.T) {
+	s := NewSpinner(ClothoConfig{Strategy: "direct"}, map[string]AgentConfig{
+		"charon": {
+			ForgejoUser:   "forge",
+			Model:         "gpt-5.4",
+			VerifyModel:   "gpt-5.3-codex-spark",
+			SecurityLevel: "high",
+		},
+	})
+
+	if got := s.DeterminePlan(&jobrunner.PipelineSignal{}, "charon"); got != RunModeClothoVerified {
+		t.Fatalf("expected agent override to force verified mode, got %q", got)
+	}
+}

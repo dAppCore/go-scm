@@ -57,9 +57,6 @@ func (s *Spinner) DeterminePlan(signal *jobrunner.PipelineSignal, agentName stri
 	if s == nil {
 		return RunModeDirect
 	}
-	if strings.EqualFold(s.Config.Strategy, string(RunModeDirect)) {
-		return RunModeDirect
-	}
 
 	agent, ok := s.resolveAgent(agentName)
 
@@ -75,9 +72,6 @@ func (s *Spinner) DeterminePlan(signal *jobrunner.PipelineSignal, agentName stri
 
 	if ok {
 		if agent.DualRun || strings.EqualFold(agent.SecurityLevel, "high") {
-			return RunModeClothoVerified
-		}
-		if agent.VerifyModel != "" && strings.EqualFold(s.Config.Strategy, string(RunModeClothoVerified)) && critical {
 			return RunModeClothoVerified
 		}
 	}

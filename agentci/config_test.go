@@ -109,6 +109,28 @@ func TestLoadClothoConfigReturnsErrorForInvalidData(t *testing.T) {
 	}
 }
 
+func TestLoadClothoConfigHandlesNullConfig(t *testing.T) {
+	cfg, err := config.New()
+	if err != nil {
+		t.Fatalf("new config: %v", err)
+	}
+
+	if err := cfg.Set("clotho", nil); err != nil {
+		t.Fatalf("set clotho: %v", err)
+	}
+
+	clotho, err := LoadClothoConfig(cfg)
+	if err != nil {
+		t.Fatalf("load clotho: %v", err)
+	}
+	if clotho.Strategy != "direct" {
+		t.Fatalf("expected default strategy, got %q", clotho.Strategy)
+	}
+	if clotho.ValidationThreshold != 0.5 {
+		t.Fatalf("expected default validation threshold, got %v", clotho.ValidationThreshold)
+	}
+}
+
 func TestSaveAndRemoveAgentPropagateLoadErrors(t *testing.T) {
 	cfg, err := config.New()
 	if err != nil {
