@@ -62,6 +62,13 @@ func ResolvePathWithinRoot(root string, input string) (string, string, error) {
 
 	resolved := filepath.Clean(filepath.Join(absRoot, safeName))
 	cleanRoot := filepath.Clean(absRoot)
+	if cleanRoot == string(filepath.Separator) {
+		if !strings.HasPrefix(resolved, cleanRoot) {
+			return "", "", coreerr.E("agentci.ResolvePathWithinRoot", "resolved path escaped root", nil)
+		}
+		return safeName, resolved, nil
+	}
+
 	rootPrefix := cleanRoot + string(filepath.Separator)
 	if resolved != cleanRoot && !strings.HasPrefix(resolved, rootPrefix) {
 		return "", "", coreerr.E("agentci.ResolvePathWithinRoot", "resolved path escaped root", nil)

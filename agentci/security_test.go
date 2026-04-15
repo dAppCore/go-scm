@@ -131,6 +131,25 @@ func TestJoinRemotePath_Good_BaseOnly_Good(t *testing.T) {
 	assert.Equal(t, "~/ai-work/queue", got)
 }
 
+func TestResolvePathWithinRoot_Good_RootDirectory_Good(t *testing.T) {
+	safe, resolved, err := ResolvePathWithinRoot("/", "tmp")
+	require.NoError(t, err)
+	assert.Equal(t, "tmp", safe)
+	assert.Equal(t, "/tmp", resolved)
+}
+
+func TestResolvePathWithinRoot_Good_Subdirectory_Good(t *testing.T) {
+	safe, resolved, err := ResolvePathWithinRoot("/var/lib", "core")
+	require.NoError(t, err)
+	assert.Equal(t, "core", safe)
+	assert.Equal(t, "/var/lib/core", resolved)
+}
+
+func TestResolvePathWithinRoot_Bad_EscapesRoot(t *testing.T) {
+	_, _, err := ResolvePathWithinRoot("/var/lib", "../core")
+	assert.Error(t, err)
+}
+
 func TestSecureSSHCommand_Good(t *testing.T) {
 	cmd := SecureSSHCommand("host.example.com", "ls -la")
 	args := cmd.Args
