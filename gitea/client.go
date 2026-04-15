@@ -11,7 +11,6 @@ import (
 type Client struct {
 	api   *gitea.Client
 	url   string
-	token string
 }
 
 func New(url, token string) (*Client, error) {
@@ -22,7 +21,7 @@ func New(url, token string) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Client{api: api, url: url, token: token}, nil
+	return &Client{api: api, url: url}, nil
 }
 
 func (c *Client) API() *gitea.Client {
@@ -38,11 +37,3 @@ func (c *Client) URL() string {
 	}
 	return c.url
 }
-
-func (c *Client) Token() string {
-	if c == nil {
-		return ""
-	}
-	return c.token
-}
-
