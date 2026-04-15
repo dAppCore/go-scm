@@ -37,13 +37,9 @@ type Service struct {
 	lastStatus []RepoStatus
 }
 
-func NewService(opts ServiceOptions) func(*core.Core) (any, error) {
-	return func(c *core.Core) (any, error) {
-		s := &Service{ServiceRuntime: core.NewServiceRuntime(c, opts)}
-		if opts.WorkDir != "" {
-			s.lastStatus = Status(context.Background(), StatusOptions{Paths: []string{opts.WorkDir}})
-		}
-		return s, nil
+func NewService(opts ServiceOptions) func(*core.Core) core.Result {
+	return func(c *core.Core) core.Result {
+		return core.Result{Value: &Service{ServiceRuntime: core.NewServiceRuntime(c, opts)}, OK: true}
 	}
 }
 
@@ -100,13 +96,16 @@ func (s *Service) AheadReposIter() iter.Seq[RepoStatus] {
 	}
 }
 
-func (s *Service) OnStartup(ctx context.Context) error {
-	if s == nil || s.Options().WorkDir == "" {
-		return nil
+func (s *Service) OnStartup(ctx context.Context) core.Result {
+	if s == nil {
+		return core.Result{OK: true}
+	}
+	if s.Options().WorkDir == "" {
+		return core.Result{OK: true}
 	}
 	if err := ctx.Err(); err != nil {
-		return err
+		return core.Result{Value: err, OK: false}
 	}
 	s.lastStatus = Status(ctx, StatusOptions{Paths: []string{s.Options().WorkDir}})
-	return nil
+	return core.Result{OK: true}
 }
