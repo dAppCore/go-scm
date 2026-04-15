@@ -281,5 +281,8 @@ func formatMarketSummary(data *coinData) string {
 // FormatMarketSummary is exported for testing.
 // Usage: FormatMarketSummary(...)
 func FormatMarketSummary(data *coinData) string {
+	if data == nil {
+		return ""
+	}
 	return formatMarketSummary(data)
 }

@@ -166,6 +166,10 @@ func TestFormatMarketSummary_Good(t *testing.T) {
 	assert.Contains(t, summary, "Total Supply")
 }
 
+func TestFormatMarketSummary_Good_Nil_Good(t *testing.T) {
+	assert.Empty(t, FormatMarketSummary(nil))
+}
+
 func TestMarketCollector_Collect_Bad_ServerError_Good(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
