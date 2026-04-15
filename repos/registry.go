@@ -11,6 +11,8 @@ import (
 	strings "dappco.re/go/core/scm/internal/ax/stringsx"
 	"net/url"
 	"sort"
+	stdos "os"
+	stdpath "path/filepath"
 	stdstrings "strings"
 
 	"dappco.re/go/core/io"
@@ -771,8 +773,8 @@ func registryCandidatesFromEnv() []string {
 		return nil
 	}
 
-	raw = strings.ReplaceAll(raw, ",", ":")
-	fields := strings.Split(raw, ":")
+	raw = stdstrings.ReplaceAll(raw, ",", string(stdos.PathListSeparator))
+	fields := stdpath.SplitList(raw)
 	if len(fields) == 0 {
 		return nil
 	}

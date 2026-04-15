@@ -83,3 +83,12 @@ func TestSpinner_DeterminePlan_Good(t *testing.T) {
 	ok := spinner.DeterminePlan(&jobrunner.PipelineSignal{RepoName: "docs"}, "charon")
 	assert.Equal(t, ModeDual, ok)
 }
+
+func TestSpinner_DeterminePlan_Good_HighSecurityLevel_Good(t *testing.T) {
+	spinner := NewSpinner(ClothoConfig{Strategy: "clotho-verified"}, map[string]AgentConfig{
+		"charon": {SecurityLevel: "high"},
+	})
+
+	ok := spinner.DeterminePlan(&jobrunner.PipelineSignal{RepoName: "docs"}, "charon")
+	assert.Equal(t, ModeDual, ok)
+}

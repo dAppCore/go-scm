@@ -124,6 +124,12 @@ func TestValidateRemoteDir_Bad(t *testing.T) {
 	}
 }
 
+func TestJoinRemotePath_Good_BaseOnly_Good(t *testing.T) {
+	got, err := JoinRemotePath("~/ai-work/queue")
+	require.NoError(t, err)
+	assert.Equal(t, "~/ai-work/queue", got)
+}
+
 func TestSecureSSHCommand_Good(t *testing.T) {
 	cmd := SecureSSHCommand("host.example.com", "ls -la")
 	args := cmd.Args

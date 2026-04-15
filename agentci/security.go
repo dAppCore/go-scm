@@ -124,6 +124,9 @@ func JoinRemotePath(base string, parts ...string) (string, error) {
 	if err != nil {
 		return "", coreerr.E("agentci.JoinRemotePath", "invalid base directory", err)
 	}
+	if len(parts) == 0 {
+		return safeBase, nil
+	}
 
 	cleanParts := make([]string, 0, len(parts))
 	for _, part := range parts {

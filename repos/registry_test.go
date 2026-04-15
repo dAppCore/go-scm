@@ -782,6 +782,41 @@ repos: {}
 	assert.Contains(t, paths, path)
 }
 
+func TestFindRegistries_Good_CORE_REPOSEnv_MultiplePaths_Good(t *testing.T) {
+	oldWD, err := os.Getwd()
+	require.NoError(t, err)
+	cwd := t.TempDir()
+	require.NoError(t, os.Chdir(cwd))
+	t.Cleanup(func() {
+		_ = os.Chdir(oldWD)
+	})
+
+	t.Setenv("HOME", t.TempDir())
+
+	m := io.NewMockMedium()
+	first := "/custom/one/repos.yaml"
+	second := "/custom/two/repos.yaml"
+
+	_ = m.Write(first, `
+version: 1
+org: one
+base_path: /tmp/one
+repos: {}
+`)
+	_ = m.Write(second, `
+version: 1
+org: two
+base_path: /tmp/two
+repos: {}
+`)
+
+	t.Setenv("CORE_REPOS", first+","+second)
+
+	paths, err := FindRegistries(m)
+	require.NoError(t, err)
+	assert.Equal(t, []string{first, second}, paths[:2])
+}
+
 func TestLoadRegistries_Good_NoRegistriesReturnsEmpty_Good(t *testing.T) {
 	oldWD, err := os.Getwd()
 	require.NoError(t, err)

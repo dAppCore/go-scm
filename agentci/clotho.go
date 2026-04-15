@@ -54,6 +54,9 @@ func (s *Spinner) DeterminePlan(signal *jobrunner.PipelineSignal, agentName stri
 	if agent.DualRun {
 		return ModeDual
 	}
+	if strings.EqualFold(agent.SecurityLevel, "high") {
+		return ModeDual
+	}
 
 	// Protect critical repos with dual-run (Axiom 1).
 	if signal.RepoName == "core" || strings.Contains(signal.RepoName, "security") {
