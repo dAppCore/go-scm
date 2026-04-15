@@ -205,6 +205,19 @@ agentci:
 	assert.Equal(t, 0.7, cc.ValidationThreshold)
 }
 
+func TestLoadClothoConfig_Good_TrimmedStrategyAndSigningKey_Good(t *testing.T) {
+	cfg := newTestConfig(t, `
+agentci:
+  clotho:
+    strategy: " clotho-verified "
+    signing_key_path: " /etc/core/keys/clotho.pub "
+`)
+	cc, err := LoadClothoConfig(cfg)
+	require.NoError(t, err)
+	assert.Equal(t, "clotho-verified", cc.Strategy)
+	assert.Equal(t, "/etc/core/keys/clotho.pub", cc.SigningKeyPath)
+}
+
 func TestLoadClothoConfig_Good_Defaults_Good(t *testing.T) {
 	cfg := newTestConfig(t, "")
 	cc, err := LoadClothoConfig(cfg)

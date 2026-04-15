@@ -114,6 +114,26 @@ func TestSpinner_DeterminePlan_Good_CriticalRepoIsCaseInsensitive(t *testing.T) 
 	assert.Equal(t, ModeDual, ok)
 }
 
+func TestSpinner_DeterminePlan_Good_StrategyIsCaseInsensitive(t *testing.T) {
+	spinner := NewSpinner(ClothoConfig{Strategy: "ClOtHo-VeRiFiEd"}, map[string]AgentConfig{
+		"charon": {DualRun: true},
+	})
+
+	ok := spinner.DeterminePlan(&jobrunner.PipelineSignal{RepoName: "docs"}, "charon")
+	assert.Equal(t, ModeDual, ok)
+}
+
+func TestSpinner_FindByForgejoUser_Good_CaseInsensitive(t *testing.T) {
+	spinner := NewSpinner(ClothoConfig{}, map[string]AgentConfig{
+		"charon": {ForgejoUser: "Charon"},
+	})
+
+	name, agent, ok := spinner.FindByForgejoUser("charon")
+	require.True(t, ok)
+	assert.Equal(t, "charon", name)
+	assert.Equal(t, "Charon", agent.ForgejoUser)
+}
+
 func TestSpinner_Good_NilReceiverDefaults(t *testing.T) {
 	var spinner *Spinner
 

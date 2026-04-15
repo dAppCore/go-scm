@@ -43,7 +43,7 @@ func (s *Spinner) DeterminePlan(signal *jobrunner.PipelineSignal, agentName stri
 	if s == nil || signal == nil {
 		return ModeStandard
 	}
-	if s.Config.Strategy != "clotho-verified" {
+	if !strings.EqualFold(strings.TrimSpace(s.Config.Strategy), "clotho-verified") {
 		return ModeStandard
 	}
 
@@ -59,7 +59,8 @@ func (s *Spinner) DeterminePlan(signal *jobrunner.PipelineSignal, agentName stri
 	}
 
 	// Protect critical repos with dual-run (Axiom 1).
-	if strings.EqualFold(signal.RepoName, "core") || strings.Contains(strings.ToLower(signal.RepoName), "security") {
+	repoID := strings.ToLower(strings.TrimSpace(signal.RepoFullName()))
+	if strings.EqualFold(signal.RepoName, "core") || strings.Contains(repoID, "security") {
 		return ModeDual
 	}
 
@@ -95,7 +96,7 @@ func (s *Spinner) FindByForgejoUser(forgejoUser string) (string, AgentConfig, bo
 	}
 	// Search by ForgejoUser field.
 	for name, agent := range s.Agents {
-		if agent.ForgejoUser != "" && agent.ForgejoUser == forgejoUser {
+		if agent.ForgejoUser != "" && strings.EqualFold(agent.ForgejoUser, forgejoUser) {
 			return name, agent, true
 		}
 	}
@@ -141,6 +142,7 @@ func normalizeClothoConfig(cfg ClothoConfig) ClothoConfig {
 		cfg.ValidationThreshold = 0.85
 		return cfg
 	}
+	cfg.Strategy = strings.TrimSpace(cfg.Strategy)
 	if cfg.Strategy == "" {
 		cfg.Strategy = "direct"
 	}

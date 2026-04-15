@@ -115,7 +115,7 @@ func LoadClothoConfig(cfg *config.Config) (ClothoConfig, error) {
 	}
 
 	if strategy, ok := raw["strategy"].(string); ok && strategy != "" {
-		cc.Strategy = strategy
+		cc.Strategy = stdstrings.TrimSpace(strategy)
 	}
 	if threshold, ok := raw["validation_threshold"]; ok {
 		switch v := threshold.(type) {
@@ -130,7 +130,11 @@ func LoadClothoConfig(cfg *config.Config) (ClothoConfig, error) {
 		case uint64:
 			cc.ValidationThreshold = float64(v)
 		case string:
-			parsed, err := strconv.ParseFloat(stdstrings.TrimSpace(v), 64)
+			trimmed := stdstrings.TrimSpace(v)
+			if trimmed == "" {
+				break
+			}
+			parsed, err := strconv.ParseFloat(trimmed, 64)
 			if err != nil {
 				return ClothoConfig{}, coreerr.E("agentci.LoadClothoConfig", "parse validation threshold", err)
 			}
@@ -138,7 +142,7 @@ func LoadClothoConfig(cfg *config.Config) (ClothoConfig, error) {
 		}
 	}
 	if signKeyPath, ok := raw["signing_key_path"].(string); ok {
-		cc.SigningKeyPath = signKeyPath
+		cc.SigningKeyPath = stdstrings.TrimSpace(signKeyPath)
 	}
 	return cc, nil
 }
