@@ -5,6 +5,7 @@ package agentci
 
 import (
 	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
+	stdstrings "strings"
 
 	"dappco.re/go/core/config"
 	coreerr "dappco.re/go/core/log"
@@ -40,15 +41,19 @@ func LoadAgents(cfg *config.Config) (map[string]AgentConfig, error) {
 	}
 	var agents map[string]AgentConfig
 	if err := cfg.Get("agentci.agents", &agents); err != nil {
-		return map[string]AgentConfig{}, nil
+		if stdstrings.Contains(err.Error(), "key not found") {
+			return map[string]AgentConfig{}, nil
+		}
+		return nil, coreerr.E("agentci.LoadAgents", "load agents", err)
 	}
 	if agents == nil {
 		return map[string]AgentConfig{}, nil
 	}
 
-	// Validate and apply defaults.
+	// Validate active agents and apply defaults where the runtime needs them.
 	for name, ac := range agents {
 		if !ac.Active {
+			agents[name] = ac
 			continue
 		}
 		if ac.Host == "" {
@@ -100,6 +105,9 @@ func LoadClothoConfig(cfg *config.Config) (ClothoConfig, error) {
 	}
 	var raw map[string]any
 	if err := cfg.Get("agentci.clotho", &raw); err != nil {
+		if !stdstrings.Contains(err.Error(), "key not found") {
+			return ClothoConfig{}, coreerr.E("agentci.LoadClothoConfig", "load clotho config", err)
+		}
 		return ClothoConfig{
 			Strategy:            "direct",
 			ValidationThreshold: 0.85,
@@ -174,7 +182,10 @@ func RemoveAgent(cfg *config.Config, name string) error {
 	}
 	var agents map[string]AgentConfig
 	if err := cfg.Get("agentci.agents", &agents); err != nil {
-		return coreerr.E("agentci.RemoveAgent", "no agents configured", nil)
+		if stdstrings.Contains(err.Error(), "key not found") {
+			return coreerr.E("agentci.RemoveAgent", "no agents configured", nil)
+		}
+		return coreerr.E("agentci.RemoveAgent", "load agents", err)
 	}
 	if _, ok := agents[name]; !ok {
 		return coreerr.E("agentci.RemoveAgent", "agent not found: "+name, nil)
@@ -191,7 +202,10 @@ func ListAgents(cfg *config.Config) (map[string]AgentConfig, error) {
 	}
 	var agents map[string]AgentConfig
 	if err := cfg.Get("agentci.agents", &agents); err != nil {
-		return map[string]AgentConfig{}, nil
+		if stdstrings.Contains(err.Error(), "key not found") {
+			return map[string]AgentConfig{}, nil
+		}
+		return nil, coreerr.E("agentci.ListAgents", "load agents", err)
 	}
 	if agents == nil {
 		return map[string]AgentConfig{}, nil

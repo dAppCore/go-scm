@@ -79,9 +79,10 @@ agentci:
 `)
 	agents, err := LoadAgents(cfg)
 	require.NoError(t, err)
-	// Both are returned, but only active-agent has defaults applied.
+	// Both are returned, but only active-agent has runtime defaults applied.
 	assert.Len(t, agents, 2)
 	assert.Contains(t, agents, "active-agent")
+	assert.Contains(t, agents, "offline-agent")
 }
 
 func TestLoadActiveAgents_Good(t *testing.T) {
@@ -143,6 +144,16 @@ agentci:
 	_, err := LoadAgents(cfg)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "host is required")
+}
+
+func TestLoadAgents_Bad_InvalidShape(t *testing.T) {
+	cfg := newTestConfig(t, `
+agentci:
+  agents: not-a-map
+`)
+	_, err := LoadAgents(cfg)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "load agents")
 }
 
 func TestLoadAgents_Good_WithDualRun_Good(t *testing.T) {
@@ -217,6 +228,16 @@ agentci:
 	cc, err := LoadClothoConfig(cfg)
 	require.NoError(t, err)
 	assert.Equal(t, 0.0, cc.ValidationThreshold)
+}
+
+func TestLoadClothoConfig_Bad_InvalidShape(t *testing.T) {
+	cfg := newTestConfig(t, `
+agentci:
+  clotho: not-a-map
+`)
+	_, err := LoadClothoConfig(cfg)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "load clotho config")
 }
 
 func TestSaveAgent_Good(t *testing.T) {

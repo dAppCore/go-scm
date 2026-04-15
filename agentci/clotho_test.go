@@ -64,6 +64,18 @@ func TestSpinner_Weave_Bad_ZeroValueConfigDefaults(t *testing.T) {
 	assert.False(t, ok)
 }
 
+func TestSpinner_Weave_Good_ExplicitZeroThresholdPreserved(t *testing.T) {
+	spinner := NewSpinner(ClothoConfig{Strategy: "clotho-verified", ValidationThreshold: 0.0}, nil)
+
+	ok, err := spinner.Weave(
+		context.Background(),
+		[]byte("alpha beta gamma delta epsilon zeta"),
+		[]byte("alpha beta gamma delta epsilon eta"),
+	)
+	require.NoError(t, err)
+	assert.True(t, ok)
+}
+
 func TestSpinner_Weave_Bad_ContextCancelled(t *testing.T) {
 	spinner := NewSpinner(ClothoConfig{}, nil)
 	ctx, cancel := context.WithCancel(context.Background())
