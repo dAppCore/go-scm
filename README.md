@@ -4,11 +4,11 @@
 
 # go-scm
 
-SCM integration, AgentCI dispatch automation, and data collection for the Lethean ecosystem. Provides a Forgejo API client and a Gitea client for the public mirror, multi-repo git operations with parallel status checks, the Clotho Protocol orchestrator for dual-run agent verification, a PR automation pipeline (poll → dispatch → journal) driven by epic issue task lists, and pluggable data collectors for BitcoinTalk, GitHub, market data, and research papers.
+SCM integration, AgentCI dispatch automation, and data collection for the Lethean ecosystem. Provides a Forgejo API client and a Gitea client for the public mirror, multi-repo git operations with parallel status checks, the Clotho Protocol orchestrator for dual-run agent verification, the `core dev`/`core pkg` CLI surface, automatic `WorkspacePushed` repo sync handling, a PR automation pipeline (poll → dispatch → journal) driven by epic issue task lists, and pluggable data collectors for BitcoinTalk, GitHub, market data, and research papers.
 
 **Module**: `dappco.re/go/core/scm`
 **Licence**: EUPL-1.2
-**Language**: Go 1.25
+**Language**: Go 1.26
 
 ## Quick Start
 
