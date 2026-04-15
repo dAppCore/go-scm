@@ -190,6 +190,17 @@ func TestLoadClothoConfig_Good_Defaults_Good(t *testing.T) {
 	assert.Equal(t, 0.85, cc.ValidationThreshold)
 }
 
+func TestLoadClothoConfig_Good_EmptySection_Good(t *testing.T) {
+	cfg := newTestConfig(t, `
+agentci:
+  clotho: {}
+`)
+	cc, err := LoadClothoConfig(cfg)
+	require.NoError(t, err)
+	assert.Equal(t, "direct", cc.Strategy)
+	assert.Equal(t, 0.85, cc.ValidationThreshold)
+}
+
 func TestLoadClothoConfig_Good_NilConfig_Good(t *testing.T) {
 	cc, err := LoadClothoConfig(nil)
 	require.NoError(t, err)

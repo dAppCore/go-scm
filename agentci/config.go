@@ -98,18 +98,38 @@ func LoadClothoConfig(cfg *config.Config) (ClothoConfig, error) {
 			ValidationThreshold: 0.85,
 		}, nil
 	}
-	cc := ClothoConfig{ValidationThreshold: -1}
-	if err := cfg.Get("agentci.clotho", &cc); err != nil {
+	var raw map[string]any
+	if err := cfg.Get("agentci.clotho", &raw); err != nil {
 		return ClothoConfig{
 			Strategy:            "direct",
 			ValidationThreshold: 0.85,
 		}, nil
 	}
-	if cc.Strategy == "" {
-		cc.Strategy = "direct"
+
+	cc := ClothoConfig{
+		Strategy:            "direct",
+		ValidationThreshold: 0.85,
 	}
-	if cc.ValidationThreshold < 0 {
-		cc.ValidationThreshold = 0.85
+
+	if strategy, ok := raw["strategy"].(string); ok && strategy != "" {
+		cc.Strategy = strategy
+	}
+	if threshold, ok := raw["validation_threshold"]; ok {
+		switch v := threshold.(type) {
+		case float64:
+			cc.ValidationThreshold = v
+		case float32:
+			cc.ValidationThreshold = float64(v)
+		case int:
+			cc.ValidationThreshold = float64(v)
+		case int64:
+			cc.ValidationThreshold = float64(v)
+		case uint64:
+			cc.ValidationThreshold = float64(v)
+		}
+	}
+	if signKeyPath, ok := raw["signing_key_path"].(string); ok {
+		cc.SigningKeyPath = signKeyPath
 	}
 	return cc, nil
 }

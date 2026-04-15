@@ -52,6 +52,18 @@ func TestSpinner_Weave_Good_EmptyOutputs(t *testing.T) {
 	assert.True(t, ok)
 }
 
+func TestSpinner_Weave_Bad_ZeroValueConfigDefaults(t *testing.T) {
+	spinner := NewSpinner(ClothoConfig{}, nil)
+
+	ok, err := spinner.Weave(
+		context.Background(),
+		[]byte("alpha beta gamma delta epsilon zeta"),
+		[]byte("alpha beta gamma delta epsilon eta"),
+	)
+	require.NoError(t, err)
+	assert.False(t, ok)
+}
+
 func TestSpinner_Weave_Bad_ContextCancelled(t *testing.T) {
 	spinner := NewSpinner(ClothoConfig{}, nil)
 	ctx, cancel := context.WithCancel(context.Background())

@@ -29,6 +29,7 @@ type Spinner struct {
 // NewSpinner creates a new Clotho orchestrator.
 // Usage: NewSpinner(...)
 func NewSpinner(cfg ClothoConfig, agents map[string]AgentConfig) *Spinner {
+	cfg = normalizeClothoConfig(cfg)
 	return &Spinner{
 		Config: cfg,
 		Agents: agents,
@@ -120,6 +121,19 @@ func (s *Spinner) Weave(ctx context.Context, primaryOutput, signedOutput []byte)
 
 	similarity := weaveDiceSimilarity(primary, signed)
 	return similarity >= threshold, nil
+}
+
+func normalizeClothoConfig(cfg ClothoConfig) ClothoConfig {
+	if cfg.Strategy == "" {
+		cfg.Strategy = "direct"
+	}
+	if cfg.ValidationThreshold < 0 || cfg.ValidationThreshold > 1 {
+		cfg.ValidationThreshold = 0.85
+	}
+	if cfg.ValidationThreshold == 0 && cfg.Strategy == "direct" && cfg.SigningKeyPath == "" {
+		cfg.ValidationThreshold = 0.85
+	}
+	return cfg
 }
 
 func tokenizeWeaveOutput(output []byte) []string {
