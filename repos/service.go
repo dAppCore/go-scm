@@ -129,6 +129,7 @@ func (s *Service) syncRepo(ctx context.Context, opts core.Options) (*git.SyncRes
 
 	remote := optionOrDefault(opts.String("remote"), s.Options().Remote, "origin")
 	branch := optionOrDefault(opts.String("branch"), s.Options().Branch, "dev")
+	workspacePath, workspaceOK := workspaceRepoPath(opts, s.Options().Root)
 
 	if path := strings.TrimSpace(opts.String("path")); path != "" {
 		if err := git.SyncWithRemote(ctx, path, remote, branch); err != nil {
@@ -142,34 +143,24 @@ func (s *Service) syncRepo(ctx context.Context, opts core.Options) (*git.SyncRes
 		if err != nil && !errors.Is(err, os.ErrNotExist) {
 			return nil, err
 		}
+		if reg != nil {
+			if repo, ok := reg.Get(repoName); ok {
+				if err := git.SyncWithRemote(ctx, repo.Path, remote, branch); err != nil {
+					return &git.SyncResult{Name: repo.Name, Path: repo.Path, Success: false, Error: err}, err
+				}
+				return &git.SyncResult{Name: repo.Name, Path: repo.Path, Success: true}, nil
+			}
+		}
+		if workspaceOK {
+			if err := git.SyncWithRemote(ctx, workspacePath, remote, branch); err != nil {
+				return &git.SyncResult{Name: repoName, Path: workspacePath, Success: false, Error: err}, err
+			}
+			return &git.SyncResult{Name: repoName, Path: workspacePath, Success: true}, nil
+		}
 		if reg == nil {
-			root := strings.TrimSpace(opts.String("root"))
-			if root == "" {
-				root = s.Options().Root
-			}
-			if root == "" {
-				if home, homeErr := os.UserHomeDir(); homeErr == nil {
-					root = filepath.Join(home, "Code")
-				}
-			}
-			org := strings.TrimSpace(opts.String("org"))
-			if root != "" && org != "" {
-				path := filepath.Join(root, org, repoName)
-				if err := git.SyncWithRemote(ctx, path, remote, branch); err != nil {
-					return &git.SyncResult{Name: repoName, Path: path, Success: false, Error: err}, err
-				}
-				return &git.SyncResult{Name: repoName, Path: path, Success: true}, nil
-			}
 			return nil, fmt.Errorf("repos.Service.syncRepo: registry not loaded")
 		}
-		if err := reg.SyncRepo(ctx, repoName, remote, branch); err != nil {
-			return &git.SyncResult{Name: repoName, Success: false, Error: err}, err
-		}
-		repo, ok := reg.Get(repoName)
-		if !ok {
-			return &git.SyncResult{Name: repoName, Success: true}, nil
-		}
-		return &git.SyncResult{Name: repo.Name, Path: repo.Path, Success: true}, nil
+		return nil, fmt.Errorf("repos.Service.syncRepo: repo %q not found in registry", repoName)
 	}
 
 	return nil, errors.New("repos.Service.syncRepo: repo or path is required")
@@ -370,4 +361,22 @@ func optionOrDefault(values ...string) string {
 		}
 	}
 	return ""
+}
+
+func workspaceRepoPath(opts core.Options, defaultRoot string) (string, bool) {
+	root := strings.TrimSpace(opts.String("root"))
+	if root == "" {
+		root = strings.TrimSpace(defaultRoot)
+	}
+	if root == "" {
+		if home, err := os.UserHomeDir(); err == nil {
+			root = filepath.Join(home, "Code")
+		}
+	}
+	org := strings.TrimSpace(opts.String("org"))
+	repo := strings.TrimSpace(opts.String("repo"))
+	if org == "" || repo == "" {
+		return "", false
+	}
+	return filepath.Join(root, org, repo), true
 }
