@@ -71,8 +71,14 @@ func NewDispatcher() *Dispatcher {
 // registered for the same event type and will be called in order.
 // Usage: On(...)
 func (d *Dispatcher) On(eventType string, handler EventHandler) {
+	if d == nil {
+		return
+	}
 	d.mu.Lock()
 	defer d.mu.Unlock()
+	if d.handlers == nil {
+		d.handlers = make(map[string][]EventHandler)
+	}
 	d.handlers[eventType] = append(d.handlers[eventType], handler)
 }
 
@@ -81,6 +87,9 @@ func (d *Dispatcher) On(eventType string, handler EventHandler) {
 // The event's Time field is set to now if it is zero.
 // Usage: Emit(...)
 func (d *Dispatcher) Emit(event Event) {
+	if d == nil {
+		return
+	}
 	if event.Time.IsZero() {
 		event.Time = time.Now()
 	}

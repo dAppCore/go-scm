@@ -51,6 +51,10 @@ func (b *BitcoinTalkCollector) Name() string {
 // Collect gathers posts from a BitcoinTalk topic.
 // Usage: Collect(...)
 func (b *BitcoinTalkCollector) Collect(ctx context.Context, cfg *Config) (*Result, error) {
+	return b.collectWithFetcher(ctx, cfg, b.fetchPage)
+}
+
+func (b *BitcoinTalkCollector) collectWithFetcher(ctx context.Context, cfg *Config, fetcher FetchPageFunc) (*Result, error) {
 	result := &Result{Source: b.Name()}
 
 	if cfg.Dispatcher != nil {
@@ -96,7 +100,11 @@ func (b *BitcoinTalkCollector) Collect(ctx context.Context, cfg *Config) (*Resul
 
 		pageURL := fmt.Sprintf("https://bitcointalk.org/index.php?topic=%s.%d", topicID, offset)
 
-		posts, err := b.fetchPage(ctx, pageURL)
+		if fetcher == nil {
+			fetcher = b.fetchPage
+		}
+
+		posts, err := fetcher(ctx, pageURL)
 		if err != nil {
 			result.Errors++
 			if cfg.Dispatcher != nil {
@@ -345,6 +353,22 @@ type FetchPageFunc func(ctx context.Context, url string) ([]btPost, error)
 type BitcoinTalkCollectorWithFetcher struct {
 	BitcoinTalkCollector
 	Fetcher FetchPageFunc
+}
+
+// Name returns the collector name.
+// Usage: Name(...)
+func (b *BitcoinTalkCollectorWithFetcher) Name() string {
+	return b.BitcoinTalkCollector.Name()
+}
+
+// Collect gathers posts from a BitcoinTalk topic using the injected fetcher
+// when provided. This is primarily used by tests.
+// Usage: Collect(...)
+func (b *BitcoinTalkCollectorWithFetcher) Collect(ctx context.Context, cfg *Config) (*Result, error) {
+	if b.Fetcher == nil {
+		return b.BitcoinTalkCollector.Collect(ctx, cfg)
+	}
+	return b.BitcoinTalkCollector.collectWithFetcher(ctx, cfg, b.Fetcher)
 }
 
 // SetHTTPClient replaces the package-level HTTP client.

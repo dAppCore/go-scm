@@ -46,7 +46,17 @@ func NewRateLimiter() *RateLimiter {
 // It respects context cancellation.
 // Usage: Wait(...)
 func (r *RateLimiter) Wait(ctx context.Context, source string) error {
+	if r == nil {
+		return nil
+	}
 	r.mu.Lock()
+	if r.delays == nil {
+		r.delays = make(map[string]time.Duration, len(defaultDelays))
+		maps.Copy(r.delays, defaultDelays)
+	}
+	if r.last == nil {
+		r.last = make(map[string]time.Time)
+	}
 	delay, ok := r.delays[source]
 	if !ok {
 		delay = 500 * time.Millisecond
@@ -81,16 +91,30 @@ func (r *RateLimiter) Wait(ctx context.Context, source string) error {
 // SetDelay sets the delay for a source.
 // Usage: SetDelay(...)
 func (r *RateLimiter) SetDelay(source string, d time.Duration) {
+	if r == nil {
+		return
+	}
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	if r.delays == nil {
+		r.delays = make(map[string]time.Duration, len(defaultDelays))
+		maps.Copy(r.delays, defaultDelays)
+	}
 	r.delays[source] = d
 }
 
 // GetDelay returns the delay configured for a source.
 // Usage: GetDelay(...)
 func (r *RateLimiter) GetDelay(source string) time.Duration {
+	if r == nil {
+		return 500 * time.Millisecond
+	}
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	if r.delays == nil {
+		r.delays = make(map[string]time.Duration, len(defaultDelays))
+		maps.Copy(r.delays, defaultDelays)
+	}
 	if d, ok := r.delays[source]; ok {
 		return d
 	}
@@ -111,6 +135,9 @@ func (r *RateLimiter) CheckGitHubRateLimit() (used, limit int, err error) {
 // the GitHub rate limit delay.
 // Usage: CheckGitHubRateLimitCtx(...)
 func (r *RateLimiter) CheckGitHubRateLimitCtx(ctx context.Context) (used, limit int, err error) {
+	if r == nil {
+		r = NewRateLimiter()
+	}
 	cmd := exec.CommandContext(ctx, "gh", "api", "rate_limit", "--jq", ".rate | \"\\(.used) \\(.limit)\"")
 	out, err := cmd.Output()
 	if err != nil {

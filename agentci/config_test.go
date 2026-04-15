@@ -126,6 +126,12 @@ func TestLoadAgents_Good_NoConfig_Good(t *testing.T) {
 	assert.Empty(t, agents)
 }
 
+func TestLoadAgents_Good_NilConfig_Good(t *testing.T) {
+	agents, err := LoadAgents(nil)
+	require.NoError(t, err)
+	assert.Empty(t, agents)
+}
+
 func TestLoadAgents_Bad_MissingHost_Good(t *testing.T) {
 	cfg := newTestConfig(t, `
 agentci:
@@ -179,6 +185,13 @@ agentci:
 func TestLoadClothoConfig_Good_Defaults_Good(t *testing.T) {
 	cfg := newTestConfig(t, "")
 	cc, err := LoadClothoConfig(cfg)
+	require.NoError(t, err)
+	assert.Equal(t, "direct", cc.Strategy)
+	assert.Equal(t, 0.85, cc.ValidationThreshold)
+}
+
+func TestLoadClothoConfig_Good_NilConfig_Good(t *testing.T) {
+	cc, err := LoadClothoConfig(nil)
 	require.NoError(t, err)
 	assert.Equal(t, "direct", cc.Strategy)
 	assert.Equal(t, 0.85, cc.ValidationThreshold)
@@ -287,6 +300,12 @@ func TestRemoveAgent_Bad_NoAgents_Good(t *testing.T) {
 	assert.Contains(t, err.Error(), "no agents configured")
 }
 
+func TestRemoveAgent_Bad_NilConfig_Good(t *testing.T) {
+	err := RemoveAgent(nil, "anything")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "config is required")
+}
+
 func TestListAgents_Good(t *testing.T) {
 	cfg := newTestConfig(t, `
 agentci:
@@ -308,6 +327,12 @@ agentci:
 func TestListAgents_Good_Empty_Good(t *testing.T) {
 	cfg := newTestConfig(t, "")
 	agents, err := ListAgents(cfg)
+	require.NoError(t, err)
+	assert.Empty(t, agents)
+}
+
+func TestListAgents_Good_NilConfig_Good(t *testing.T) {
+	agents, err := ListAgents(nil)
 	require.NoError(t, err)
 	assert.Empty(t, agents)
 }

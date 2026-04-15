@@ -35,6 +35,9 @@ type ClothoConfig struct {
 // Returns an empty map (not an error) if no agents are configured.
 // Usage: LoadAgents(...)
 func LoadAgents(cfg *config.Config) (map[string]AgentConfig, error) {
+	if cfg == nil {
+		return map[string]AgentConfig{}, nil
+	}
 	var agents map[string]AgentConfig
 	if err := cfg.Get("agentci.agents", &agents); err != nil {
 		return map[string]AgentConfig{}, nil
@@ -66,6 +69,9 @@ func LoadAgents(cfg *config.Config) (map[string]AgentConfig, error) {
 // LoadActiveAgents returns only active agents.
 // Usage: LoadActiveAgents(...)
 func LoadActiveAgents(cfg *config.Config) (map[string]AgentConfig, error) {
+	if cfg == nil {
+		return map[string]AgentConfig{}, nil
+	}
 	all, err := LoadAgents(cfg)
 	if err != nil {
 		return nil, err
@@ -83,6 +89,12 @@ func LoadActiveAgents(cfg *config.Config) (map[string]AgentConfig, error) {
 // Returns sensible defaults if no config is present.
 // Usage: LoadClothoConfig(...)
 func LoadClothoConfig(cfg *config.Config) (ClothoConfig, error) {
+	if cfg == nil {
+		return ClothoConfig{
+			Strategy:            "direct",
+			ValidationThreshold: 0.85,
+		}, nil
+	}
 	cc := ClothoConfig{ValidationThreshold: -1}
 	if err := cfg.Get("agentci.clotho", &cc); err != nil {
 		return ClothoConfig{
@@ -102,6 +114,9 @@ func LoadClothoConfig(cfg *config.Config) (ClothoConfig, error) {
 // SaveAgent writes an agent config entry to the config file.
 // Usage: SaveAgent(...)
 func SaveAgent(cfg *config.Config, name string, ac AgentConfig) error {
+	if cfg == nil {
+		return coreerr.E("agentci.SaveAgent", "config is required", nil)
+	}
 	key := fmt.Sprintf("agentci.agents.%s", name)
 	data := map[string]any{
 		"host":         ac.Host,
@@ -131,6 +146,9 @@ func SaveAgent(cfg *config.Config, name string, ac AgentConfig) error {
 // RemoveAgent removes an agent from the config file.
 // Usage: RemoveAgent(...)
 func RemoveAgent(cfg *config.Config, name string) error {
+	if cfg == nil {
+		return coreerr.E("agentci.RemoveAgent", "config is required", nil)
+	}
 	var agents map[string]AgentConfig
 	if err := cfg.Get("agentci.agents", &agents); err != nil {
 		return coreerr.E("agentci.RemoveAgent", "no agents configured", nil)
@@ -145,6 +163,9 @@ func RemoveAgent(cfg *config.Config, name string) error {
 // ListAgents returns all configured agents (active and inactive).
 // Usage: ListAgents(...)
 func ListAgents(cfg *config.Config) (map[string]AgentConfig, error) {
+	if cfg == nil {
+		return map[string]AgentConfig{}, nil
+	}
 	var agents map[string]AgentConfig
 	if err := cfg.Get("agentci.agents", &agents); err != nil {
 		return map[string]AgentConfig{}, nil

@@ -86,26 +86,24 @@ func ValidateRemoteDir(dir string) (string, error) {
 		return dir, nil
 	}
 
-	cleaned := path.Clean(dir)
 	prefix := ""
-	rest := cleaned
+	rest := dir
 
 	if strings.HasPrefix(dir, "~/") {
 		prefix = "~/"
-		rest = strings.TrimPrefix(cleaned, "~/")
+		rest = strings.TrimPrefix(dir, "~/")
 	}
 	if strings.HasPrefix(dir, "/") {
 		prefix = "/"
-		rest = strings.TrimPrefix(cleaned, "/")
-	}
-
-	if rest == "." || rest == ".." || strings.HasPrefix(rest, "../") {
-		return "", coreerr.E("agentci.ValidateRemoteDir", "directory escaped root", nil)
+		rest = strings.TrimPrefix(dir, "/")
 	}
 
 	for _, part := range strings.Split(rest, "/") {
 		if part == "" {
 			continue
+		}
+		if part == "." || part == ".." {
+			return "", coreerr.E("agentci.ValidateRemoteDir", "directory escaped root", nil)
 		}
 		if _, err := ValidatePathElement(part); err != nil {
 			return "", coreerr.E("agentci.ValidateRemoteDir", "invalid directory segment", err)
@@ -116,7 +114,7 @@ func ValidateRemoteDir(dir string) (string, error) {
 		return prefix, nil
 	}
 
-	return prefix + rest, nil
+	return path.Clean(dir), nil
 }
 
 // JoinRemotePath joins validated remote path elements using forward slashes.

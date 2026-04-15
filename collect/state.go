@@ -58,8 +58,14 @@ func NewState(m io.Medium, path string) *State {
 // is initialised as empty without error.
 // Usage: Load(...)
 func (s *State) Load() error {
+	if s == nil {
+		return nil
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	if s.medium == nil {
+		s.medium = io.Local
+	}
 
 	if !s.medium.IsFile(s.path) {
 		if s.entries == nil {
@@ -88,9 +94,18 @@ func (s *State) Load() error {
 // Save writes state to disk.
 // Usage: Save(...)
 func (s *State) Save() error {
+	if s == nil {
+		return nil
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	if s.medium == nil {
+		s.medium = io.Local
+	}
 
+	if s.entries == nil {
+		s.entries = make(map[string]*StateEntry)
+	}
 	if err := s.medium.EnsureDir(filepath.Dir(s.path)); err != nil {
 		return core.E("collect.State.Save", "failed to create state directory", err)
 	}
@@ -111,8 +126,14 @@ func (s *State) Save() error {
 // indicates whether the entry was found.
 // Usage: Get(...)
 func (s *State) Get(source string) (*StateEntry, bool) {
+	if s == nil {
+		return nil, false
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	if s.entries == nil {
+		return nil, false
+	}
 	entry, ok := s.entries[source]
 	if !ok {
 		return nil, false
@@ -125,8 +146,14 @@ func (s *State) Get(source string) (*StateEntry, bool) {
 // Set updates state for a source.
 // Usage: Set(...)
 func (s *State) Set(source string, entry *StateEntry) {
+	if s == nil {
+		return
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	if s.entries == nil {
+		s.entries = make(map[string]*StateEntry)
+	}
 	if entry == nil {
 		delete(s.entries, source)
 		return

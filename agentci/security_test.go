@@ -80,6 +80,50 @@ func TestEscapeShellArg_Good(t *testing.T) {
 	}
 }
 
+func TestValidateRemoteDir_Good(t *testing.T) {
+	tests := []struct {
+		input string
+		want  string
+	}{
+		{"/", "/"},
+		{"~", "~"},
+		{"queue", "queue"},
+		{"queue/subdir", "queue/subdir"},
+		{"/var/tmp/queue", "/var/tmp/queue"},
+		{"~/ai-work/queue", "~/ai-work/queue"},
+		{"queue//nested", "queue/nested"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			got, err := ValidateRemoteDir(tt.input)
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestValidateRemoteDir_Bad(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+	}{
+		{"parent traversal", "../queue"},
+		{"nested traversal", "queue/../done"},
+		{"absolute traversal", "/var/../tmp"},
+		{"home traversal", "~/ai-work/../../queue"},
+		{"dot segment", "queue/./nested"},
+		{"backslash", `queue\done`},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := ValidateRemoteDir(tt.input)
+			assert.Error(t, err)
+		})
+	}
+}
+
 func TestSecureSSHCommand_Good(t *testing.T) {
 	cmd := SecureSSHCommand("host.example.com", "ls -la")
 	args := cmd.Args

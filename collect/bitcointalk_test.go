@@ -71,6 +71,32 @@ func TestBitcoinTalkCollector_Collect_Good_URL_Good(t *testing.T) {
 	assert.Contains(t, content, "Post 1 by")
 }
 
+func TestBitcoinTalkCollectorWithFetcher_Collect_Good(t *testing.T) {
+	m := io.NewMockMedium()
+	cfg := NewConfigWithMedium(m, "/output")
+	cfg.Limiter = nil
+
+	called := 0
+	wrapper := &BitcoinTalkCollectorWithFetcher{
+		BitcoinTalkCollector: BitcoinTalkCollector{TopicID: "12345"},
+		Fetcher: func(ctx context.Context, url string) ([]btPost, error) {
+			called++
+			assert.Contains(t, url, "topic=12345.0")
+			return []btPost{{Author: "tester", Date: "2026-04-15", Content: "hello from fetcher"}}, nil
+		},
+	}
+
+	result, err := wrapper.Collect(context.Background(), cfg)
+
+	assert.NoError(t, err)
+	assert.Equal(t, 1, called)
+	assert.Equal(t, 1, result.Items)
+
+	content, err := m.Read("/output/bitcointalk/12345/posts/1.md")
+	assert.NoError(t, err)
+	assert.Contains(t, content, "hello from fetcher")
+}
+
 func TestParsePostsFromHTML_Good(t *testing.T) {
 	sampleHTML := `
 	<html><body>
