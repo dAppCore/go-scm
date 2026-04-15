@@ -78,7 +78,7 @@ func TestSpinnerDeterminePlanIgnoresResolvedThreadsWhenOtherwiseClean(t *testing
 	s := NewSpinner(ClothoConfig{Strategy: "clotho-verified"}, nil)
 
 	signal := &jobrunner.PipelineSignal{
-		PRState:        "OPEN",
+		PRState:         "OPEN",
 		ThreadsTotal:    1,
 		ThreadsResolved: 1,
 		CheckStatus:     "SUCCESS",
