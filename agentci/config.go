@@ -104,6 +104,12 @@ func LoadClothoConfig(cfg *config.Config) (ClothoConfig, error) {
 	if _, ok := raw["validation_threshold"]; !ok {
 		clotho.ValidationThreshold = defaultClothoConfig().ValidationThreshold
 	}
+	if clotho.ValidationThreshold < 0 || clotho.ValidationThreshold > 1 {
+		return clotho, fmt.Errorf(
+			"agentci.LoadClothoConfig: validation_threshold must be between 0.0 and 1.0, got %v",
+			clotho.ValidationThreshold,
+		)
+	}
 	return clotho, nil
 }
 

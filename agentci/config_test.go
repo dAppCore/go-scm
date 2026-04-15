@@ -131,6 +131,23 @@ func TestLoadClothoConfigHandlesNullConfig(t *testing.T) {
 	}
 }
 
+func TestLoadClothoConfigRejectsOutOfRangeThreshold(t *testing.T) {
+	cfg, err := config.New()
+	if err != nil {
+		t.Fatalf("new config: %v", err)
+	}
+
+	if err := cfg.Set("clotho", map[string]any{
+		"validation_threshold": 1.5,
+	}); err != nil {
+		t.Fatalf("set clotho: %v", err)
+	}
+
+	if _, err := LoadClothoConfig(cfg); err == nil {
+		t.Fatalf("expected load clotho error for invalid threshold")
+	}
+}
+
 func TestSaveAndRemoveAgentPropagateLoadErrors(t *testing.T) {
 	cfg, err := config.New()
 	if err != nil {
