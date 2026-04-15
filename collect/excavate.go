@@ -5,6 +5,7 @@ package collect
 import (
 	"context"
 	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
+	stdstrings "strings"
 	"time"
 
 	core "dappco.re/go/core/log"
@@ -36,6 +37,9 @@ func (e *Excavator) Name() string {
 func (e *Excavator) Run(ctx context.Context, cfg *Config) (*Result, error) {
 	result := &Result{Source: e.Name()}
 
+	if cfg == nil {
+		return result, core.E("collect.Excavator.Run", "config is required", nil)
+	}
 	if len(e.Collectors) == 0 {
 		return result, nil
 	}
@@ -67,9 +71,12 @@ func (e *Excavator) Run(ctx context.Context, cfg *Config) (*Result, error) {
 		return result, nil
 	}
 
+	var runErr error
+
 	for i, c := range e.Collectors {
 		if ctx.Err() != nil {
-			return result, core.E("collect.Excavator.Run", "context cancelled", ctx.Err())
+			runErr = core.E("collect.Excavator.Run", "context cancelled", ctx.Err())
+			break
 		}
 
 		if cfg.Dispatcher != nil {
@@ -91,6 +98,14 @@ func (e *Excavator) Run(ctx context.Context, cfg *Config) (*Result, error) {
 					result.Skipped++
 					continue
 				}
+			}
+		}
+
+		if cfg.Limiter != nil {
+			sourceKey := collectorRateLimitKey(c.Name())
+			if err := cfg.Limiter.Wait(ctx, sourceKey); err != nil {
+				runErr = core.E("collect.Excavator.Run", "rate limit wait failed", err)
+				break
 			}
 		}
 
@@ -137,5 +152,12 @@ func (e *Excavator) Run(ctx context.Context, cfg *Config) (*Result, error) {
 				result.Items, result.Errors, result.Skipped), result)
 	}
 
-	return result, nil
+	return result, runErr
+}
+
+func collectorRateLimitKey(name string) string {
+	if key, _, ok := stdstrings.Cut(name, ":"); ok && key != "" {
+		return key
+	}
+	return name
 }

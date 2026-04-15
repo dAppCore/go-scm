@@ -51,6 +51,9 @@ func (p *Processor) Name() string {
 func (p *Processor) Process(ctx context.Context, cfg *Config) (*Result, error) {
 	result := &Result{Source: p.Name()}
 
+	if cfg == nil {
+		return result, core.E("collect.Processor.Process", "config is required", nil)
+	}
 	if p.Dir == "" {
 		return result, core.E("collect.Processor.Process", "directory is required", nil)
 	}

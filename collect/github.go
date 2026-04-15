@@ -68,6 +68,9 @@ func (g *GitHubCollector) Name() string {
 func (g *GitHubCollector) Collect(ctx context.Context, cfg *Config) (*Result, error) {
 	result := &Result{Source: g.Name()}
 
+	if cfg == nil {
+		return result, core.E("collect.GitHub.Collect", "config is required", nil)
+	}
 	if cfg.Dispatcher != nil {
 		cfg.Dispatcher.EmitStart(g.Name(), "Starting GitHub collection")
 	}

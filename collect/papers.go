@@ -60,6 +60,9 @@ type paper struct {
 func (p *PapersCollector) Collect(ctx context.Context, cfg *Config) (*Result, error) {
 	result := &Result{Source: p.Name()}
 
+	if cfg == nil {
+		return result, core.E("collect.Papers.Collect", "config is required", nil)
+	}
 	if p.Query == "" {
 		return result, core.E("collect.Papers.Collect", "query is required", nil)
 	}

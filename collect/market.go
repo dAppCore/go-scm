@@ -70,6 +70,9 @@ type historicalData struct {
 func (m *MarketCollector) Collect(ctx context.Context, cfg *Config) (*Result, error) {
 	result := &Result{Source: m.Name()}
 
+	if cfg == nil {
+		return result, core.E("collect.Market.Collect", "config is required", nil)
+	}
 	if m.CoinID == "" {
 		return result, core.E("collect.Market.Collect", "coin ID is required", nil)
 	}
