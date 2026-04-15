@@ -37,6 +37,8 @@ func (p *ScmProvider) RegisterRoutes(rg *gin.RouterGroup) {
 	rg.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"ok": true})
 	})
+	rg.GET("/ui", p.serveUI)
+	rg.StaticFS("/ui/assets", embeddedUI)
 	rg.GET("/marketplace", p.listMarketplace)
 	rg.GET("/marketplace/:code", p.getMarketplaceModule)
 	rg.GET("/repos", p.listRepos)
@@ -48,6 +50,7 @@ func (p *ScmProvider) RegisterRoutes(rg *gin.RouterGroup) {
 func (p *ScmProvider) Describe() []api.RouteDescription {
 	return []api.RouteDescription{
 		{Method: "GET", Path: "/health", Summary: "Health check", StatusCode: http.StatusOK},
+		{Method: "GET", Path: "/ui", Summary: "Embedded UI", StatusCode: http.StatusOK, Tags: []string{"scm"}},
 		{Method: "GET", Path: "/marketplace", Summary: "List marketplace modules", StatusCode: http.StatusOK, Tags: []string{"scm"}},
 		{Method: "GET", Path: "/marketplace/:code", Summary: "Get marketplace module", StatusCode: http.StatusOK, Tags: []string{"scm"}},
 		{Method: "GET", Path: "/repos", Summary: "List registered repos", StatusCode: http.StatusOK, Tags: []string{"scm"}},
@@ -61,6 +64,17 @@ func (p *ScmProvider) Channels() []string { return nil }
 
 func (p *ScmProvider) Element() coreprovider.ElementSpec {
 	return coreprovider.ElementSpec{Tag: "core-scm", Source: ""}
+}
+
+func (p *ScmProvider) serveUI(c *gin.Context) {
+	if c == nil {
+		return
+	}
+	if len(embeddedIndexHTML) == 0 {
+		c.Status(http.StatusNotFound)
+		return
+	}
+	c.Data(http.StatusOK, "text/html; charset=utf-8", embeddedIndexHTML)
 }
 
 func (p *ScmProvider) listMarketplace(c *gin.Context) {

@@ -54,6 +54,7 @@ func TestScmProviderRoutesExposeState(t *testing.T) {
 	provider.RegisterRoutes(group)
 
 	assertRouteOK(t, router, "/scm/health", "ok")
+	assertRouteOK(t, router, "/scm/ui", "Source control operations")
 	assertRouteOK(t, router, "/scm/marketplace", "go-io")
 	assertRouteOK(t, router, "/scm/marketplace/go-io", "Core I/O")
 	assertRouteOK(t, router, "/scm/repos", "go-io")
