@@ -49,13 +49,18 @@ func (i *Installer) Install(ctx context.Context, source string) error {
 		return err
 	}
 	if i.registry != nil {
-		_ = i.registry.Add(&PluginConfig{
+		if err := i.registry.Add(&PluginConfig{
 			Name:        repo,
 			Version:     version,
 			Source:      "github:" + org + "/" + repo,
 			Enabled:     true,
 			InstalledAt: time.Now().UTC().Format(time.RFC3339Nano),
-		})
+		}); err != nil {
+			return err
+		}
+		if err := i.registry.Save(); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -65,7 +70,10 @@ func (i *Installer) Remove(name string) error {
 		return errors.New("plugin.Installer.Remove: installer is required")
 	}
 	if i.registry != nil {
-		return i.registry.Remove(name)
+		if err := i.registry.Remove(name); err != nil {
+			return err
+		}
+		return i.registry.Save()
 	}
 	return nil
 }
@@ -79,5 +87,16 @@ func (i *Installer) Update(ctx context.Context, name string) error {
 			return err
 		}
 	}
-	return nil
+	if i.registry == nil {
+		return nil
+	}
+	cfg, ok := i.registry.Get(name)
+	if !ok || cfg == nil {
+		return errors.New("plugin.Installer.Update: plugin not found")
+	}
+	cfg.InstalledAt = time.Now().UTC().Format(time.RFC3339Nano)
+	if err := i.registry.Add(cfg); err != nil {
+		return err
+	}
+	return i.registry.Save()
 }

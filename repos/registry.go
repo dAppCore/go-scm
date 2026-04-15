@@ -205,6 +205,14 @@ func FindRegistry(m coreio.Medium) (string, error) {
 		return "", errors.New("repos.FindRegistry: medium is required")
 	}
 	candidates := []string{"repos.yaml", filepath.Join(".core", "repos.yaml")}
+	if env := strings.TrimSpace(osx.Getenv("CORE_REPOS")); env != "" {
+		for _, candidate := range strings.Split(env, string(filepath.ListSeparator)) {
+			candidate = strings.TrimSpace(candidate)
+			if candidate != "" {
+				candidates = append([]string{candidate}, candidates...)
+			}
+		}
+	}
 	if cwd, err := osx.Getwd(); err == nil {
 		dir := cwd
 		for {

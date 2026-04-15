@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"path/filepath"
+	"strings"
 	"time"
 
 	coreio "dappco.re/go/core/io"
@@ -107,5 +108,25 @@ func (i *Installer) Update(ctx context.Context, code string) error {
 			return err
 		}
 	}
-	return nil
+	if i.medium == nil {
+		return errors.New("marketplace.Installer.Update: medium is required")
+	}
+	path := filepath.Join(i.modulesDir, code, "module.json")
+	raw, err := i.medium.Read(path)
+	if err != nil {
+		return err
+	}
+	var entry InstalledModule
+	if err := jsonx.Unmarshal([]byte(raw), &entry); err != nil {
+		return err
+	}
+	if strings.TrimSpace(entry.Code) == "" {
+		return errors.New("marketplace.Installer.Update: installed module is invalid")
+	}
+	entry.InstalledAt = time.Now().UTC().Format(time.RFC3339Nano)
+	updated, err := jsonx.MarshalIndent(entry, "", "  ")
+	if err != nil {
+		return err
+	}
+	return i.medium.Write(path, string(updated))
 }
