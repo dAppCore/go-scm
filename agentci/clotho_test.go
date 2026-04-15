@@ -59,6 +59,34 @@ func TestSpinnerResolveByForgejoUser(t *testing.T) {
 	}
 }
 
+func TestNewSpinnerCopiesAgentSlices(t *testing.T) {
+	agents := map[string]AgentConfig{
+		"charon": {
+			ForgejoUser: "forge",
+			Roles:       []string{"dispatch", "review"},
+		},
+	}
+
+	s := NewSpinner(ClothoConfig{}, agents)
+	agents["charon"] = AgentConfig{ForgejoUser: "mutated", Roles: []string{"other"}}
+	agents["new"] = AgentConfig{ForgejoUser: "extra"}
+
+	got, ok := s.Agents["charon"]
+	if !ok {
+		t.Fatal("expected spinner to keep original agent")
+	}
+	if got.ForgejoUser != "forge" {
+		t.Fatalf("expected spinner to retain original agent data, got %#v", got)
+	}
+
+	mutated := agents["charon"]
+	mutated.Roles[0] = "mutated"
+	agents["charon"] = mutated
+	if got.Roles[0] != "dispatch" || got.Roles[1] != "review" {
+		t.Fatalf("expected spinner roles to be detached from caller mutations, got %#v", got.Roles)
+	}
+}
+
 func TestSpinnerDeterminePlanHonorsAgentOverridesUnderDirectStrategy(t *testing.T) {
 	s := NewSpinner(ClothoConfig{Strategy: "direct"}, map[string]AgentConfig{
 		"charon": {

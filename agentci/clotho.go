@@ -44,11 +44,7 @@ func (s *Spinner) resolveAgent(agentName string) (string, AgentConfig, bool) {
 
 // NewSpinner creates a new Clotho orchestrator.
 func NewSpinner(cfg ClothoConfig, agents map[string]AgentConfig) *Spinner {
-	cp := make(map[string]AgentConfig, len(agents))
-	for k, v := range agents {
-		cp[k] = v
-	}
-	return &Spinner{Config: cfg, Agents: cp}
+	return &Spinner{Config: cfg, Agents: cloneAgents(agents)}
 }
 
 // DeterminePlan decides if a signal requires dual-run verification based on
