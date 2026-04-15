@@ -193,6 +193,18 @@ agentci:
 	assert.Equal(t, "/etc/core/keys/clotho.pub", cc.SigningKeyPath)
 }
 
+func TestLoadClothoConfig_Good_StringThreshold_Good(t *testing.T) {
+	cfg := newTestConfig(t, `
+agentci:
+  clotho:
+    validation_threshold: "0.7"
+`)
+	cc, err := LoadClothoConfig(cfg)
+	require.NoError(t, err)
+	assert.Equal(t, "direct", cc.Strategy)
+	assert.Equal(t, 0.7, cc.ValidationThreshold)
+}
+
 func TestLoadClothoConfig_Good_Defaults_Good(t *testing.T) {
 	cfg := newTestConfig(t, "")
 	cc, err := LoadClothoConfig(cfg)

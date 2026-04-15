@@ -5,6 +5,7 @@ package agentci
 
 import (
 	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
+	"strconv"
 	stdstrings "strings"
 
 	"dappco.re/go/core/config"
@@ -97,26 +98,21 @@ func LoadActiveAgents(cfg *config.Config) (map[string]AgentConfig, error) {
 // Returns sensible defaults if no config is present.
 // Usage: LoadClothoConfig(...)
 func LoadClothoConfig(cfg *config.Config) (ClothoConfig, error) {
-	if cfg == nil {
-		return ClothoConfig{
-			Strategy:            "direct",
-			ValidationThreshold: 0.85,
-		}, nil
-	}
-	var raw map[string]any
-	if err := cfg.Get("agentci.clotho", &raw); err != nil {
-		if !stdstrings.Contains(err.Error(), "key not found") {
-			return ClothoConfig{}, coreerr.E("agentci.LoadClothoConfig", "load clotho config", err)
-		}
-		return ClothoConfig{
-			Strategy:            "direct",
-			ValidationThreshold: 0.85,
-		}, nil
-	}
-
 	cc := ClothoConfig{
 		Strategy:            "direct",
 		ValidationThreshold: 0.85,
+	}
+
+	if cfg == nil {
+		return cc, nil
+	}
+
+	var raw map[string]any
+	if err := cfg.Get("agentci.clotho", &raw); err != nil {
+		if stdstrings.Contains(err.Error(), "key not found") {
+			return cc, nil
+		}
+		return ClothoConfig{}, coreerr.E("agentci.LoadClothoConfig", "load clotho config", err)
 	}
 
 	if strategy, ok := raw["strategy"].(string); ok && strategy != "" {
@@ -134,6 +130,12 @@ func LoadClothoConfig(cfg *config.Config) (ClothoConfig, error) {
 			cc.ValidationThreshold = float64(v)
 		case uint64:
 			cc.ValidationThreshold = float64(v)
+		case string:
+			parsed, err := strconv.ParseFloat(stdstrings.TrimSpace(v), 64)
+			if err != nil {
+				return ClothoConfig{}, coreerr.E("agentci.LoadClothoConfig", "parse validation threshold", err)
+			}
+			cc.ValidationThreshold = parsed
 		}
 	}
 	if signKeyPath, ok := raw["signing_key_path"].(string); ok {
