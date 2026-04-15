@@ -88,7 +88,7 @@ func BuildIndexFromManifests(manifests []*manifest.Manifest) *Index {
 			Code:     m.Code,
 			Name:     m.Name,
 			Repo:     "",
-			SignKey:  "",
+			SignKey:  m.SignKey,
 			Category: firstCategory(m.Modules, m.Layout),
 		}
 		idx.Modules = append(idx.Modules, mod)

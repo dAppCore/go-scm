@@ -11,6 +11,7 @@ func TestCompileIncludesBuildInfo(t *testing.T) {
 		Code:    "go-io",
 		Name:    "Core I/O",
 		Version: "0.3.0",
+		SignKey: "ed25519:public-key",
 	}
 
 	cm, err := Compile(m, CompileOptions{
@@ -42,5 +43,25 @@ func TestCompileIncludesBuildInfo(t *testing.T) {
 	}
 	if parsed.Build.Checksums != cm.Build.Checksums {
 		t.Fatalf("build info did not round-trip: %#v", parsed.Build)
+	}
+	if parsed.SignKey != m.SignKey {
+		t.Fatalf("sign key did not round-trip: %q", parsed.SignKey)
+	}
+}
+
+func TestParseManifestIncludesSignKey(t *testing.T) {
+	raw := []byte(`
+code: go-io
+name: Core I/O
+version: 0.3.0
+sign_key: ed25519:public-key
+`)
+
+	m, err := Parse(raw)
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	if m.SignKey != "ed25519:public-key" {
+		t.Fatalf("unexpected sign key: %q", m.SignKey)
 	}
 }

@@ -43,6 +43,7 @@ type Manifest struct {
 	Author      string            `yaml:"author,omitempty" json:"author,omitempty"`
 	Licence     string            `yaml:"licence,omitempty" json:"licence,omitempty"`
 	Sign        string            `yaml:"sign,omitempty" json:"sign,omitempty"`
+	SignKey     string            `yaml:"sign_key,omitempty" json:"sign_key,omitempty"`
 	Layout      string            `yaml:"layout,omitempty" json:"layout,omitempty"`
 	Slots       map[string]string `yaml:"slots,omitempty" json:"slots,omitempty"`
 

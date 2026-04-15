@@ -11,8 +11,8 @@ import (
 
 	coreio "dappco.re/go/core/io"
 	"dappco.re/go/core/io/store"
-	"dappco.re/go/scm/manifest"
 	"dappco.re/go/scm/internal/ax/jsonx"
+	"dappco.re/go/scm/manifest"
 )
 
 type InstalledModule struct {
@@ -57,6 +57,7 @@ func (i *Installer) Install(ctx context.Context, mod Module) error {
 		Version:     "latest",
 		Repo:        mod.Repo,
 		EntryPoint:  "core.json",
+		SignKey:     mod.SignKey,
 		InstalledAt: time.Now().UTC().Format(time.RFC3339Nano),
 	}
 	raw, err := jsonx.MarshalIndent(entry, "", "  ")
