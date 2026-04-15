@@ -13,6 +13,11 @@ import (
 	"strings"
 )
 
+var (
+	htmlAnchorRe = regexp.MustCompile(`(?is)<a[^>]*href=(?:"([^"]+)"|'([^']+)')[^>]*>(.*?)</a>`)
+	htmlTagRe    = regexp.MustCompile(`(?is)<[^>]+>`)
+)
+
 // Processor converts collected data to clean markdown.
 type Processor struct {
 	Source string
@@ -34,9 +39,6 @@ func (p *Processor) Process(ctx context.Context, cfg *Config) (*Result, error) {
 			return nil, err
 		}
 	}
-	if cfg.Output == nil {
-		return nil, errors.New("collect.Processor.Process: output medium is required")
-	}
 	if cfg.Dispatcher != nil {
 		cfg.Dispatcher.EmitStart(p.Name(), "Starting processing")
 	}
@@ -54,6 +56,9 @@ func (p *Processor) Process(ctx context.Context, cfg *Config) (*Result, error) {
 			cfg.Dispatcher.EmitComplete(p.Name(), "Process dry-run complete", &Result{Source: p.Name()})
 		}
 		return &Result{Source: p.Name()}, nil
+	}
+	if cfg.Output == nil {
+		return nil, errors.New("collect.Processor.Process: output medium is required")
 	}
 
 	entries, err := cfg.Output.List(dir)
@@ -110,21 +115,43 @@ func HTMLToMarkdown(content string) (string, error) {
 		return "", nil
 	}
 	out := content
-	replacements := [][2]string{
-		{`<h1>`, "# "}, {`</h1>`, "\n\n"},
-		{`<h2>`, "## "}, {`</h2>`, "\n\n"},
-		{`<h3>`, "### "}, {`</h3>`, "\n\n"},
-		{`<p>`, ""}, {`</p>`, "\n\n"},
-		{`<br>`, "\n"}, {`<br/>`, "\n"}, {`<br />`, "\n"},
-		{`<strong>`, "**"}, {`</strong>`, "**"},
-		{`<em>`, "*"}, {`</em>`, "*"},
+	replacements := []struct {
+		pattern *regexp.Regexp
+		value   string
+	}{
+		{regexp.MustCompile(`(?is)<h1[^>]*>`), "# "},
+		{regexp.MustCompile(`(?is)</h1>`), "\n\n"},
+		{regexp.MustCompile(`(?is)<h2[^>]*>`), "## "},
+		{regexp.MustCompile(`(?is)</h2>`), "\n\n"},
+		{regexp.MustCompile(`(?is)<h3[^>]*>`), "### "},
+		{regexp.MustCompile(`(?is)</h3>`), "\n\n"},
+		{regexp.MustCompile(`(?is)<p[^>]*>`), ""},
+		{regexp.MustCompile(`(?is)</p>`), "\n\n"},
+		{regexp.MustCompile(`(?is)<br\s*/?>`), "\n"},
+		{regexp.MustCompile(`(?is)<strong[^>]*>`), "**"},
+		{regexp.MustCompile(`(?is)</strong>`), "**"},
+		{regexp.MustCompile(`(?is)<em[^>]*>`), "*"},
+		{regexp.MustCompile(`(?is)</em>`), "*"},
 	}
 	for _, repl := range replacements {
-		out = strings.ReplaceAll(out, repl[0], repl[1])
-		out = strings.ReplaceAll(out, strings.ToUpper(repl[0]), repl[1])
+		out = repl.pattern.ReplaceAllString(out, repl.value)
 	}
-	out = regexp.MustCompile(`(?is)<a[^>]*href="([^"]+)"[^>]*>(.*?)</a>`).ReplaceAllString(out, `[$2]($1)`)
-	out = regexp.MustCompile(`(?is)<[^>]+>`).ReplaceAllString(out, "")
+	out = htmlAnchorRe.ReplaceAllStringFunc(out, func(s string) string {
+		match := htmlAnchorRe.FindStringSubmatch(s)
+		if len(match) != 4 {
+			return s
+		}
+		href := match[1]
+		if href == "" {
+			href = match[2]
+		}
+		text := strings.TrimSpace(match[3])
+		if href == "" {
+			return text
+		}
+		return "[" + text + "](" + href + ")"
+	})
+	out = htmlTagRe.ReplaceAllString(out, "")
 	return strings.TrimSpace(out), nil
 }
 
@@ -133,19 +160,40 @@ func JSONToMarkdown(content string) (string, error) {
 	if strings.TrimSpace(content) == "" {
 		return "", nil
 	}
-	var value any
-	if err := json.Unmarshal([]byte(content), &value); err != nil {
-		return "", err
-	}
 	buf := &bytes.Buffer{}
 	fmt.Fprintln(buf, "```json")
-	enc := json.NewEncoder(buf)
-	enc.SetIndent("", "  ")
-	if err := enc.Encode(value); err != nil {
-		return "", err
-	}
-	if strings.HasSuffix(buf.String(), "\n") {
-		// keep it as-is; the closing fence follows on a new line
+	var value any
+	if err := json.Unmarshal([]byte(content), &value); err == nil {
+		enc := json.NewEncoder(buf)
+		enc.SetIndent("", "  ")
+		if err := enc.Encode(value); err != nil {
+			return "", err
+		}
+	} else {
+		lines := strings.Split(content, "\n")
+		enc := json.NewEncoder(buf)
+		enc.SetIndent("", "  ")
+		encoded := false
+		for _, line := range lines {
+			line = strings.TrimSpace(line)
+			if line == "" {
+				continue
+			}
+			var lineValue any
+			if err := json.Unmarshal([]byte(line), &lineValue); err != nil {
+				return "", err
+			}
+			if encoded {
+				buf.WriteString("\n")
+			}
+			if err := enc.Encode(lineValue); err != nil {
+				return "", err
+			}
+			encoded = true
+		}
+		if !encoded {
+			return "", nil
+		}
 	}
 	fmt.Fprintln(buf, "```")
 	return strings.TrimSpace(buf.String()), nil
