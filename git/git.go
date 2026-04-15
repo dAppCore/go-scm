@@ -169,6 +169,24 @@ func PushMultiple(ctx context.Context, paths []string, names map[string]string) 
 	return out
 }
 
+func PullMultiple(ctx context.Context, paths []string, names map[string]string) []PushResult {
+	var out []PushResult
+	for _, path := range paths {
+		name := names[path]
+		if name == "" {
+			name = filepath.Base(path)
+		}
+		r := PushResult{Name: name, Path: path}
+		if err := Pull(ctx, path); err != nil {
+			r.Error = err
+		} else {
+			r.Success = true
+		}
+		out = append(out, r)
+	}
+	return out
+}
+
 func PushMultipleIter(ctx context.Context, paths []string, names map[string]string) iter.Seq[PushResult] {
 	return func(yield func(PushResult) bool) {
 		for _, path := range paths {
@@ -178,6 +196,26 @@ func PushMultipleIter(ctx context.Context, paths []string, names map[string]stri
 			}
 			r := PushResult{Name: name, Path: path}
 			if err := Push(ctx, path); err != nil {
+				r.Error = err
+			} else {
+				r.Success = true
+			}
+			if !yield(r) {
+				return
+			}
+		}
+	}
+}
+
+func PullMultipleIter(ctx context.Context, paths []string, names map[string]string) iter.Seq[PushResult] {
+	return func(yield func(PushResult) bool) {
+		for _, path := range paths {
+			name := names[path]
+			if name == "" {
+				name = filepath.Base(path)
+			}
+			r := PushResult{Name: name, Path: path}
+			if err := Pull(ctx, path); err != nil {
 				r.Error = err
 			} else {
 				r.Success = true
