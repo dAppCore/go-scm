@@ -153,13 +153,8 @@ func normalizeClothoConfig(cfg ClothoConfig) ClothoConfig {
 		cfg.ValidationThreshold = 0.85
 		return cfg
 	}
-	cfg.Strategy = strings.TrimSpace(cfg.Strategy)
-	if cfg.Strategy == "" {
-		cfg.Strategy = "direct"
-	}
-	if cfg.ValidationThreshold < 0 || cfg.ValidationThreshold > 1 {
-		cfg.ValidationThreshold = 0.85
-	}
+	cfg.Strategy = normalizeClothoStrategy(cfg.Strategy)
+	cfg.ValidationThreshold = normalizeClothoThreshold(cfg.ValidationThreshold)
 	return cfg
 }
 

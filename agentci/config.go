@@ -111,21 +111,21 @@ func LoadClothoConfig(cfg *config.Config) (ClothoConfig, error) {
 		return ClothoConfig{}, coreerr.E("agentci.LoadClothoConfig", "load clotho config", err)
 	}
 
-	if strategy, ok := raw["strategy"].(string); ok && strategy != "" {
-		cc.Strategy = stdstrings.TrimSpace(strategy)
+	if strategy, ok := raw["strategy"].(string); ok {
+		cc.Strategy = normalizeClothoStrategy(strategy)
 	}
 	if threshold, ok := raw["validation_threshold"]; ok {
 		switch v := threshold.(type) {
 		case float64:
-			cc.ValidationThreshold = v
+			cc.ValidationThreshold = normalizeClothoThreshold(v)
 		case float32:
-			cc.ValidationThreshold = float64(v)
+			cc.ValidationThreshold = normalizeClothoThreshold(float64(v))
 		case int:
-			cc.ValidationThreshold = float64(v)
+			cc.ValidationThreshold = normalizeClothoThreshold(float64(v))
 		case int64:
-			cc.ValidationThreshold = float64(v)
+			cc.ValidationThreshold = normalizeClothoThreshold(float64(v))
 		case uint64:
-			cc.ValidationThreshold = float64(v)
+			cc.ValidationThreshold = normalizeClothoThreshold(float64(v))
 		case string:
 			trimmed := stdstrings.TrimSpace(v)
 			if trimmed == "" {
@@ -135,13 +135,27 @@ func LoadClothoConfig(cfg *config.Config) (ClothoConfig, error) {
 			if err != nil {
 				return ClothoConfig{}, coreerr.E("agentci.LoadClothoConfig", "parse validation threshold", err)
 			}
-			cc.ValidationThreshold = parsed
+			cc.ValidationThreshold = normalizeClothoThreshold(parsed)
 		}
 	}
 	if signKeyPath, ok := raw["signing_key_path"].(string); ok {
 		cc.SigningKeyPath = stdstrings.TrimSpace(signKeyPath)
 	}
 	return cc, nil
+}
+
+func normalizeClothoStrategy(strategy string) string {
+	if stdstrings.EqualFold(stdstrings.TrimSpace(strategy), "clotho-verified") {
+		return "clotho-verified"
+	}
+	return "direct"
+}
+
+func normalizeClothoThreshold(threshold float64) float64 {
+	if threshold < 0 || threshold > 1 {
+		return 0.85
+	}
+	return threshold
 }
 
 // SaveAgent writes an agent config entry to the config file.
