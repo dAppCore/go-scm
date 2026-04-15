@@ -79,10 +79,13 @@ agentci:
 `)
 	agents, err := LoadAgents(cfg)
 	require.NoError(t, err)
-	// Both are returned, but only active-agent has defaults applied.
+	// Both are returned, and defaults are applied uniformly.
 	assert.Len(t, agents, 2)
 	assert.Contains(t, agents, "active-agent")
 	assert.Contains(t, agents, "offline-agent")
+	assert.Equal(t, "/home/claude/ai-work/queue", agents["offline-agent"].QueueDir)
+	assert.Equal(t, "sonnet", agents["offline-agent"].Model)
+	assert.Equal(t, "claude", agents["offline-agent"].Runner)
 }
 
 func TestLoadActiveAgents_Good(t *testing.T) {

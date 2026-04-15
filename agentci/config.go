@@ -53,12 +53,6 @@ func LoadAgents(cfg *config.Config) (map[string]AgentConfig, error) {
 
 	// Validate and apply defaults.
 	for name, ac := range agents {
-		if !ac.Active {
-			continue
-		}
-		if ac.Host == "" {
-			return nil, coreerr.E("agentci.LoadAgents", "agent "+name+": host is required", nil)
-		}
 		if ac.QueueDir == "" {
 			ac.QueueDir = "/home/claude/ai-work/queue"
 		}
@@ -67,6 +61,9 @@ func LoadAgents(cfg *config.Config) (map[string]AgentConfig, error) {
 		}
 		if ac.Runner == "" {
 			ac.Runner = "claude"
+		}
+		if ac.Active && ac.Host == "" {
+			return nil, coreerr.E("agentci.LoadAgents", "agent "+name+": host is required", nil)
 		}
 		agents[name] = ac
 	}
