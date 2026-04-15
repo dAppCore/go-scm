@@ -375,5 +375,9 @@ func (b *BitcoinTalkCollectorWithFetcher) Collect(ctx context.Context, cfg *Conf
 // Use this in tests to inject a custom transport or timeout.
 // Usage: SetHTTPClient(...)
 func SetHTTPClient(c *http.Client) {
+	if c == nil {
+		httpClient = &http.Client{Timeout: 30 * time.Second}
+		return
+	}
 	httpClient = c
 }

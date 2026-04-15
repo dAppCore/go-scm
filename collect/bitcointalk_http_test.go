@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"dappco.re/go/core/io"
 	"github.com/stretchr/testify/assert"
@@ -189,6 +190,10 @@ func TestSetHTTPClient_Good(t *testing.T) {
 	custom := &http.Client{}
 	SetHTTPClient(custom)
 	assert.Equal(t, custom, httpClient)
+
+	SetHTTPClient(nil)
+	require.NotNil(t, httpClient)
+	assert.Equal(t, 30*time.Second, httpClient.Timeout)
 }
 
 func TestFetchPage_Good(t *testing.T) {
