@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"sort"
 
-	"dappco.re/go/scm/manifest"
-	"dappco.re/go/scm/internal/ax/jsonx"
 	"dappco.re/go/scm/internal/ax/osx"
+	"dappco.re/go/scm/manifest"
+	"gopkg.in/yaml.v3"
 )
 
 type DiscoveredProvider struct {
@@ -109,7 +109,7 @@ func LoadProviderRegistry(path string) (*ProviderRegistryFile, error) {
 		return &ProviderRegistryFile{Version: 1, Providers: map[string]ProviderRegistryEntry{}}, nil
 	}
 	var reg ProviderRegistryFile
-	if err := jsonx.Unmarshal(raw, &reg); err != nil {
+	if err := yaml.Unmarshal(raw, &reg); err != nil {
 		return nil, err
 	}
 	if reg.Version == 0 {
@@ -125,7 +125,7 @@ func SaveProviderRegistry(path string, reg *ProviderRegistryFile) error {
 	if reg == nil {
 		reg = &ProviderRegistryFile{Version: 1, Providers: map[string]ProviderRegistryEntry{}}
 	}
-	raw, err := jsonx.MarshalIndent(reg, "", "  ")
+	raw, err := yaml.Marshal(reg)
 	if err != nil {
 		return err
 	}

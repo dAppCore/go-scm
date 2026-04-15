@@ -8,7 +8,7 @@ import (
 
 	coreio "dappco.re/go/core/io"
 	"dappco.re/go/scm/internal/ax/filepathx"
-	"dappco.re/go/scm/internal/ax/jsonx"
+	"gopkg.in/yaml.v3"
 )
 
 type RepoGitState struct {
@@ -31,7 +31,9 @@ type GitState struct {
 	Agents  map[string]*AgentState   `yaml:"agents,omitempty"`
 }
 
-func NewGitState() *GitState { return &GitState{Version: 1, Repos: map[string]*RepoGitState{}, Agents: map[string]*AgentState{}} }
+func NewGitState() *GitState {
+	return &GitState{Version: 1, Repos: map[string]*RepoGitState{}, Agents: map[string]*AgentState{}}
+}
 
 func (gs *GitState) ensure() {
 	if gs.Repos == nil {
@@ -45,8 +47,16 @@ func (gs *GitState) ensure() {
 	}
 }
 
-func (gs *GitState) TouchPull(name string) { gs.ensure(); st := gs.repo(name); st.LastPull = time.Now().UTC() }
-func (gs *GitState) TouchPush(name string) { gs.ensure(); st := gs.repo(name); st.LastPush = time.Now().UTC() }
+func (gs *GitState) TouchPull(name string) {
+	gs.ensure()
+	st := gs.repo(name)
+	st.LastPull = time.Now().UTC()
+}
+func (gs *GitState) TouchPush(name string) {
+	gs.ensure()
+	st := gs.repo(name)
+	st.LastPush = time.Now().UTC()
+}
 
 func (gs *GitState) UpdateRepo(name, branch, remote string, ahead, behind int) {
 	gs.ensure()
@@ -122,7 +132,7 @@ func LoadGitState(m coreio.Medium, root string) (*GitState, error) {
 		return NewGitState(), nil
 	}
 	var gs GitState
-	if err := jsonx.Unmarshal([]byte(raw), &gs); err != nil {
+	if err := yaml.Unmarshal([]byte(raw), &gs); err != nil {
 		return nil, err
 	}
 	gs.ensure()
@@ -136,7 +146,7 @@ func SaveGitState(m coreio.Medium, root string, gs *GitState) error {
 	if gs == nil {
 		gs = NewGitState()
 	}
-	raw, err := jsonx.MarshalIndent(gs, "", "  ")
+	raw, err := yaml.Marshal(gs)
 	if err != nil {
 		return err
 	}

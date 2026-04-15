@@ -14,7 +14,6 @@ import (
 	coreio "dappco.re/go/core/io"
 	"dappco.re/go/scm/git"
 	"dappco.re/go/scm/internal/ax/filepathx"
-	"dappco.re/go/scm/internal/ax/jsonx"
 	"dappco.re/go/scm/internal/ax/osx"
 	"gopkg.in/yaml.v3"
 )
@@ -261,7 +260,7 @@ func (r *Registry) Save(path string) error {
 	if r == nil {
 		return errors.New("repos.Registry.Save: registry is required")
 	}
-	raw, err := jsonx.MarshalIndent(r, "", "  ")
+	raw, err := yaml.Marshal(r)
 	if err != nil {
 		return err
 	}
