@@ -80,6 +80,10 @@ func (r *ProviderRegistryFile) Remove(code string) {
 }
 
 func DiscoverProviders(dir string) ([]DiscoveredProvider, error) {
+	absDir, err := filepath.Abs(dir)
+	if err == nil {
+		dir = absDir
+	}
 	entries, err := osx.ReadDir(dir)
 	if err != nil {
 		return nil, err

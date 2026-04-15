@@ -60,10 +60,12 @@ func (p *ScmProvider) Describe() []api.RouteDescription {
 	}
 }
 
-func (p *ScmProvider) Channels() []string { return nil }
+func (p *ScmProvider) Channels() []string {
+	return []string{"scm"}
+}
 
 func (p *ScmProvider) Element() coreprovider.ElementSpec {
-	return coreprovider.ElementSpec{Tag: "core-scm", Source: ""}
+	return coreprovider.ElementSpec{Tag: "core-scm", Source: "ui/app.js"}
 }
 
 func (p *ScmProvider) serveUI(c *gin.Context) {

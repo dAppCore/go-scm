@@ -86,6 +86,22 @@ func TestScmProviderDescribeIncludesReadOnlyRoutes(t *testing.T) {
 	}
 }
 
+func TestScmProviderMetadataExposesStreamAndElement(t *testing.T) {
+	provider := NewProvider(nil, nil, nil, nil)
+
+	if got := provider.Channels(); len(got) != 1 || got[0] != "scm" {
+		t.Fatalf("unexpected channels: %#v", got)
+	}
+
+	element := provider.Element()
+	if element.Tag != "core-scm" {
+		t.Fatalf("unexpected element tag: %q", element.Tag)
+	}
+	if element.Source != "ui/app.js" {
+		t.Fatalf("unexpected element source: %q", element.Source)
+	}
+}
+
 func assertRouteOK(t *testing.T, router *gin.Engine, path, want string) {
 	t.Helper()
 	req := httptest.NewRequest(http.MethodGet, path, nil)
