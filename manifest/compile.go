@@ -17,14 +17,16 @@ type CompileOptions struct {
 	Tag     string
 	BuiltBy string
 	SignKey ed25519.PrivateKey
+	Build   BuildInfo
 }
 
 type CompiledManifest struct {
 	Manifest `json:",inline" yaml:",inline"`
-	Commit   string `json:"commit,omitempty" yaml:"commit,omitempty"`
-	Tag      string `json:"tag,omitempty" yaml:"tag,omitempty"`
-	BuiltAt  string `json:"built_at,omitempty" yaml:"built_at,omitempty"`
-	BuiltBy  string `json:"built_by,omitempty" yaml:"built_by,omitempty"`
+	Commit   string    `json:"commit,omitempty" yaml:"commit,omitempty"`
+	Tag      string    `json:"tag,omitempty" yaml:"tag,omitempty"`
+	BuiltAt  string    `json:"built_at,omitempty" yaml:"built_at,omitempty"`
+	BuiltBy  string    `json:"built_by,omitempty" yaml:"built_by,omitempty"`
+	Build    BuildInfo `json:"build,omitempty" yaml:"build,omitempty"`
 }
 
 func Compile(m *Manifest, opts CompileOptions) (*CompiledManifest, error) {
@@ -43,6 +45,7 @@ func Compile(m *Manifest, opts CompileOptions) (*CompiledManifest, error) {
 		Tag:      opts.Tag,
 		BuiltAt:  time.Now().UTC().Format(time.RFC3339Nano),
 		BuiltBy:  opts.BuiltBy,
+		Build:    normalizeBuildInfo(opts.Build),
 	}, nil
 }
 
@@ -84,4 +87,11 @@ func WriteCompiled(medium coreio.Medium, root string, cm *CompiledManifest) erro
 		return err
 	}
 	return medium.Write(filepathx.Join(root, "core.json"), string(raw))
+}
+
+func normalizeBuildInfo(build BuildInfo) BuildInfo {
+	if len(build.Targets) > 0 {
+		build.Targets = append([]string(nil), build.Targets...)
+	}
+	return build
 }

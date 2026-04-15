@@ -29,6 +29,12 @@ type DaemonSpec struct {
 	Default bool     `yaml:"default,omitempty" json:"default,omitempty"`
 }
 
+// BuildInfo captures metadata added when the manifest is compiled into core.json.
+type BuildInfo struct {
+	Targets   []string `yaml:"targets,omitempty" json:"targets,omitempty"`
+	Checksums string   `yaml:"checksums,omitempty" json:"checksums,omitempty"`
+}
+
 type Manifest struct {
 	Code        string            `yaml:"code" json:"code"`
 	Name        string            `yaml:"name" json:"name"`
@@ -40,15 +46,15 @@ type Manifest struct {
 	Layout      string            `yaml:"layout,omitempty" json:"layout,omitempty"`
 	Slots       map[string]string `yaml:"slots,omitempty" json:"slots,omitempty"`
 
-	Namespace  string                 `yaml:"namespace,omitempty" json:"namespace,omitempty"`
-	Port       int                    `yaml:"port,omitempty" json:"port,omitempty"`
-	Binary     string                 `yaml:"binary,omitempty" json:"binary,omitempty"`
-	Args       []string               `yaml:"args,omitempty" json:"args,omitempty"`
-	Element    *ElementSpec           `yaml:"element,omitempty" json:"element,omitempty"`
-	Spec       string                 `yaml:"spec,omitempty" json:"spec,omitempty"`
+	Namespace   string                `yaml:"namespace,omitempty" json:"namespace,omitempty"`
+	Port        int                   `yaml:"port,omitempty" json:"port,omitempty"`
+	Binary      string                `yaml:"binary,omitempty" json:"binary,omitempty"`
+	Args        []string              `yaml:"args,omitempty" json:"args,omitempty"`
+	Element     *ElementSpec          `yaml:"element,omitempty" json:"element,omitempty"`
+	Spec        string                `yaml:"spec,omitempty" json:"spec,omitempty"`
 	Permissions Permissions           `yaml:"permissions,omitempty" json:"permissions,omitempty"`
-	Modules    []string               `yaml:"modules,omitempty" json:"modules,omitempty"`
-	Daemons    map[string]DaemonSpec   `yaml:"daemons,omitempty" json:"daemons,omitempty"`
+	Modules     []string              `yaml:"modules,omitempty" json:"modules,omitempty"`
+	Daemons     map[string]DaemonSpec `yaml:"daemons,omitempty" json:"daemons,omitempty"`
 }
 
 func Parse(data []byte) (*Manifest, error) {

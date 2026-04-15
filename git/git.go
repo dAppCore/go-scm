@@ -6,9 +6,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"iter"
 	"os/exec"
 	"path/filepath"
-	"iter"
 	"strings"
 )
 
@@ -56,14 +56,23 @@ type RepoStatus struct {
 	Error     error
 }
 
+type SyncResult struct {
+	Name    string
+	Path    string
+	Success bool
+	Error   error
+}
+
 type StatusOptions struct {
 	Paths []string
 	Names map[string]string
 }
 
 func (s *RepoStatus) HasUnpulled() bool { return s != nil && s.Behind > 0 }
-func (s *RepoStatus) HasUnpushed() bool  { return s != nil && s.Ahead > 0 }
-func (s *RepoStatus) IsDirty() bool      { return s != nil && (s.Modified > 0 || s.Untracked > 0 || s.Staged > 0) }
+func (s *RepoStatus) HasUnpushed() bool { return s != nil && s.Ahead > 0 }
+func (s *RepoStatus) IsDirty() bool {
+	return s != nil && (s.Modified > 0 || s.Untracked > 0 || s.Staged > 0)
+}
 
 func IsNonFastForward(err error) bool {
 	if err == nil {
@@ -96,6 +105,50 @@ func Pull(ctx context.Context, path string) error {
 func Push(ctx context.Context, path string) error {
 	_, _, err := runGit(ctx, path, "push")
 	return err
+}
+
+// Sync fetches the default Forge remote and hard-resets the working tree to
+// match the requested branch.
+func Sync(ctx context.Context, path string) error {
+	return SyncWithRemote(ctx, path, "origin", "dev")
+}
+
+// SyncWithRemote fetches a branch from the given remote and resets the local
+// working tree to match it.
+func SyncWithRemote(ctx context.Context, path, remote, branch string) error {
+	if err := ensurePath(path); err != nil {
+		return err
+	}
+	if strings.TrimSpace(remote) == "" {
+		remote = "origin"
+	}
+	if strings.TrimSpace(branch) == "" {
+		branch = "dev"
+	}
+	if _, _, err := runGit(ctx, path, "fetch", remote, branch); err != nil {
+		return err
+	}
+	_, _, err := runGit(ctx, path, "reset", "--hard", remote+"/"+branch)
+	return err
+}
+
+// SyncMultiple synchronizes a set of local clones and returns a per-repo result.
+func SyncMultiple(ctx context.Context, paths []string, names map[string]string, remote, branch string) []SyncResult {
+	var out []SyncResult
+	for _, path := range paths {
+		name := names[path]
+		if name == "" {
+			name = filepath.Base(path)
+		}
+		r := SyncResult{Name: name, Path: path}
+		if err := SyncWithRemote(ctx, path, remote, branch); err != nil {
+			r.Error = err
+		} else {
+			r.Success = true
+		}
+		out = append(out, r)
+	}
+	return out
 }
 
 func PushMultiple(ctx context.Context, paths []string, names map[string]string) []PushResult {

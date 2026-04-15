@@ -3,13 +3,16 @@
 package repos
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"io/fs"
 	"path/filepath"
 	"sort"
 	"strings"
 
 	coreio "dappco.re/go/core/io"
+	"dappco.re/go/scm/git"
 	"dappco.re/go/scm/internal/ax/filepathx"
 	"dappco.re/go/scm/internal/ax/jsonx"
 	"dappco.re/go/scm/internal/ax/osx"
@@ -25,15 +28,15 @@ type RegistryDefaults struct {
 }
 
 type Repo struct {
-	Name        string   `yaml:"-"`
-	Type        string   `yaml:"type"`
-	DependsOn   []string `yaml:"depends_on"`
-	Description string   `yaml:"description"`
-	Docs        bool     `yaml:"docs"`
-	CI          string   `yaml:"ci"`
-	Domain      string   `yaml:"domain,omitempty"`
-	Clone       *bool    `yaml:"clone,omitempty"`
-	Path        string   `yaml:"path,omitempty"`
+	Name        string    `yaml:"-"`
+	Type        string    `yaml:"type"`
+	DependsOn   []string  `yaml:"depends_on"`
+	Description string    `yaml:"description"`
+	Docs        bool      `yaml:"docs"`
+	CI          string    `yaml:"ci"`
+	Domain      string    `yaml:"domain,omitempty"`
+	Clone       *bool     `yaml:"clone,omitempty"`
+	Path        string    `yaml:"path,omitempty"`
 	registry    *Registry `yaml:"-"`
 }
 
@@ -44,6 +47,14 @@ type Registry struct {
 	Repos    map[string]*Repo `yaml:"repos"`
 	Defaults RegistryDefaults `yaml:"defaults"`
 	medium   coreio.Medium    `yaml:"-"`
+}
+
+// SyncResult reports the outcome of syncing a registry repo clone.
+type SyncResult struct {
+	Name    string
+	Path    string
+	Success bool
+	Error   error
 }
 
 func (repo *Repo) Exists() bool {
@@ -250,4 +261,41 @@ func (r *Registry) Save(path string) error {
 		return r.medium.Write(path, string(raw))
 	}
 	return osx.WriteFile(path, raw, 0o600)
+}
+
+// SyncRepo fetches and resets a named repo to match its Forge remote branch.
+func (r *Registry) SyncRepo(ctx context.Context, name, remote, branch string) error {
+	if r == nil {
+		return errors.New("repos.Registry.SyncRepo: registry is required")
+	}
+	repo, ok := r.Get(name)
+	if !ok {
+		return fmt.Errorf("repos.Registry.SyncRepo: repo %q not found", name)
+	}
+	if repo.Path == "" {
+		return fmt.Errorf("repos.Registry.SyncRepo: repo %q has no path", name)
+	}
+	return git.SyncWithRemote(ctx, repo.Path, remote, branch)
+}
+
+// SyncAll synchronizes every repo in the registry.
+func (r *Registry) SyncAll(ctx context.Context, remote, branch string) []SyncResult {
+	if r == nil {
+		return nil
+	}
+	repos := r.List()
+	out := make([]SyncResult, 0, len(repos))
+	for _, repo := range repos {
+		if repo == nil {
+			continue
+		}
+		result := SyncResult{Name: repo.Name, Path: repo.Path}
+		if err := git.SyncWithRemote(ctx, repo.Path, remote, branch); err != nil {
+			result.Error = err
+		} else {
+			result.Success = true
+		}
+		out = append(out, result)
+	}
+	return out
 }
