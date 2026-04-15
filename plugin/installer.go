@@ -1,0 +1,83 @@
+// SPDX-License-Identifier: EUPL-1.2
+
+package plugin
+
+import (
+	"context"
+	"errors"
+	"strings"
+	"time"
+
+	coreio "dappco.re/go/core/io"
+)
+
+type Installer struct {
+	medium   coreio.Medium
+	registry *Registry
+}
+
+func NewInstaller(m coreio.Medium, registry *Registry) *Installer {
+	return &Installer{medium: m, registry: registry}
+}
+
+func ParseSource(source string) (org, repo, version string, err error) {
+	if source == "" {
+		return "", "", "", errors.New("plugin.ParseSource: source is required")
+	}
+	base := source
+	if idx := strings.LastIndex(source, "@"); idx >= 0 {
+		base, version = source[:idx], source[idx+1:]
+	}
+	parts := strings.SplitN(base, "/", 2)
+	if len(parts) != 2 {
+		return "", "", "", errors.New("plugin.ParseSource: expected org/repo or org/repo@version")
+	}
+	return parts[0], parts[1], version, nil
+}
+
+func (i *Installer) Install(ctx context.Context, source string) error {
+	if i == nil {
+		return errors.New("plugin.Installer.Install: installer is required")
+	}
+	if ctx != nil {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+	}
+	org, repo, version, err := ParseSource(source)
+	if err != nil {
+		return err
+	}
+	if i.registry != nil {
+		_ = i.registry.Add(&PluginConfig{
+			Name:        repo,
+			Version:     version,
+			Source:      "github:" + org + "/" + repo,
+			Enabled:     true,
+			InstalledAt: time.Now().UTC().Format(time.RFC3339Nano),
+		})
+	}
+	return nil
+}
+
+func (i *Installer) Remove(name string) error {
+	if i == nil {
+		return errors.New("plugin.Installer.Remove: installer is required")
+	}
+	if i.registry != nil {
+		return i.registry.Remove(name)
+	}
+	return nil
+}
+
+func (i *Installer) Update(ctx context.Context, name string) error {
+	if i == nil {
+		return errors.New("plugin.Installer.Update: installer is required")
+	}
+	if ctx != nil {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+	}
+	return nil
+}

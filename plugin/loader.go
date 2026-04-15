@@ -1,0 +1,48 @@
+// SPDX-License-Identifier: EUPL-1.2
+
+package plugin
+
+import (
+	"errors"
+	"path/filepath"
+
+	coreio "dappco.re/go/core/io"
+)
+
+type Loader struct {
+	medium  coreio.Medium
+	baseDir string
+}
+
+func NewLoader(m coreio.Medium, baseDir string) *Loader {
+	return &Loader{medium: m, baseDir: baseDir}
+}
+
+func (l *Loader) Discover() ([]*Manifest, error) {
+	if l == nil || l.medium == nil {
+		return nil, nil
+	}
+	entries, err := l.medium.List(l.baseDir)
+	if err != nil {
+		return nil, err
+	}
+	var out []*Manifest
+	for _, entry := range entries {
+		if entry == nil || !entry.IsDir() {
+			continue
+		}
+		manifest, err := LoadManifest(l.medium, filepath.Join(l.baseDir, entry.Name(), "plugin.json"))
+		if err != nil {
+			continue
+		}
+		out = append(out, manifest)
+	}
+	return out, nil
+}
+
+func (l *Loader) LoadPlugin(name string) (*Manifest, error) {
+	if l == nil || l.medium == nil {
+		return nil, errors.New("plugin.Loader.LoadPlugin: loader is required")
+	}
+	return LoadManifest(l.medium, filepath.Join(l.baseDir, name, "plugin.json"))
+}
