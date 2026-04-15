@@ -9,6 +9,7 @@ import (
 	"math"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // MarketCollector collects market data from CoinGecko.
@@ -57,6 +58,11 @@ func (m *MarketCollector) Collect(ctx context.Context, cfg *Config) (*Result, er
 			return &Result{Source: m.Name()}, err
 		}
 	}
+	if m.Historical && strings.TrimSpace(m.FromDate) != "" {
+		if _, err := time.Parse("2006-01-02", strings.TrimSpace(m.FromDate)); err != nil {
+			return &Result{Source: m.Name()}, fmt.Errorf("collect.MarketCollector.Collect: invalid from_date %q: %w", m.FromDate, err)
+		}
+	}
 	data := &coinData{
 		Name:         strings.Title(strings.TrimSpace(m.CoinID)),
 		Symbol:       strings.ToUpper(firstToken(m.CoinID)),
@@ -66,6 +72,17 @@ func (m *MarketCollector) Collect(ctx context.Context, cfg *Config) (*Result, er
 		Change24H:    0,
 	}
 	content := FormatMarketSummary(data)
+	if m.Historical || strings.TrimSpace(m.FromDate) != "" {
+		var details strings.Builder
+		details.WriteString("\n")
+		details.WriteString("- Historical: ")
+		details.WriteString(strconv.FormatBool(m.Historical))
+		details.WriteString("\n")
+		if strings.TrimSpace(m.FromDate) != "" {
+			fmt.Fprintf(&details, "- From date: %s\n", strings.TrimSpace(m.FromDate))
+		}
+		content += details.String()
+	}
 	path := "market.md"
 	if m.CoinID != "" {
 		path = m.CoinID + ".md"
