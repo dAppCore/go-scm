@@ -148,6 +148,23 @@ func TestLoadClothoConfigRejectsOutOfRangeThreshold(t *testing.T) {
 	}
 }
 
+func TestLoadClothoConfigRejectsUnknownStrategy(t *testing.T) {
+	cfg, err := config.New()
+	if err != nil {
+		t.Fatalf("new config: %v", err)
+	}
+
+	if err := cfg.Set("clotho", map[string]any{
+		"strategy": "experimental",
+	}); err != nil {
+		t.Fatalf("set clotho: %v", err)
+	}
+
+	if _, err := LoadClothoConfig(cfg); err == nil {
+		t.Fatalf("expected load clotho error for invalid strategy")
+	}
+}
+
 func TestSaveAndRemoveAgentPropagateLoadErrors(t *testing.T) {
 	cfg, err := config.New()
 	if err != nil {

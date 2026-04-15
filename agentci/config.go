@@ -101,6 +101,9 @@ func LoadClothoConfig(cfg *config.Config) (ClothoConfig, error) {
 	if clotho.Strategy == "" {
 		clotho.Strategy = defaultClothoConfig().Strategy
 	}
+	if err := validateClothoStrategy(clotho.Strategy); err != nil {
+		return clotho, err
+	}
 	if _, ok := raw["validation_threshold"]; !ok {
 		clotho.ValidationThreshold = defaultClothoConfig().ValidationThreshold
 	}
@@ -111,6 +114,22 @@ func LoadClothoConfig(cfg *config.Config) (ClothoConfig, error) {
 		)
 	}
 	return clotho, nil
+}
+
+func validateClothoStrategy(strategy string) error {
+	switch {
+	case strategy == "":
+		return nil
+	case strings.EqualFold(strategy, "direct"):
+		return nil
+	case strings.EqualFold(strategy, "clotho-verified"):
+		return nil
+	default:
+		return fmt.Errorf(
+			"agentci.LoadClothoConfig: strategy must be direct or clotho-verified, got %q",
+			strategy,
+		)
+	}
 }
 
 // SaveAgent writes an agent config entry to the config file.
