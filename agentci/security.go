@@ -110,6 +110,9 @@ func ValidateRemoteDir(dir string) (string, error) {
 	}
 
 	if rest == "" || rest == "." {
+		if prefix == "~/" {
+			return "~", nil
+		}
 		return prefix, nil
 	}
 

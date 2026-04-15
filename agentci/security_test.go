@@ -87,6 +87,7 @@ func TestValidateRemoteDir_Good(t *testing.T) {
 	}{
 		{"/", "/"},
 		{"~", "~"},
+		{"~/", "~"},
 		{"queue", "queue"},
 		{"queue/subdir", "queue/subdir"},
 		{"/var/tmp/queue", "/var/tmp/queue"},
