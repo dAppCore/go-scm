@@ -73,3 +73,19 @@ func TestSpinnerDeterminePlanHonorsAgentOverridesUnderDirectStrategy(t *testing.
 		t.Fatalf("expected agent override to force verified mode, got %q", got)
 	}
 }
+
+func TestSpinnerDeterminePlanIgnoresResolvedThreadsWhenOtherwiseClean(t *testing.T) {
+	s := NewSpinner(ClothoConfig{Strategy: "clotho-verified"}, nil)
+
+	signal := &jobrunner.PipelineSignal{
+		PRState:        "OPEN",
+		ThreadsTotal:    1,
+		ThreadsResolved: 1,
+		CheckStatus:     "SUCCESS",
+		Mergeable:       "MERGEABLE",
+	}
+
+	if got := s.DeterminePlan(signal, "charon"); got != RunModeDirect {
+		t.Fatalf("expected resolved threads to stay in direct mode, got %q", got)
+	}
+}

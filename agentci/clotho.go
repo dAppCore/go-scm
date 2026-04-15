@@ -66,8 +66,7 @@ func (s *Spinner) DeterminePlan(signal *jobrunner.PipelineSignal, agentName stri
 			signal.HasUnresolvedThreads() ||
 			(signal.CheckStatus != "" && !strings.EqualFold(signal.CheckStatus, "SUCCESS")) ||
 			(signal.Mergeable != "" && !strings.EqualFold(signal.Mergeable, "MERGEABLE")) ||
-			signal.NeedsCoding ||
-			(strings.EqualFold(signal.PRState, "OPEN") && signal.ThreadsTotal > 0)
+			signal.NeedsCoding
 	}
 
 	if ok {
