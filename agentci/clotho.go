@@ -114,7 +114,7 @@ func (s *Spinner) Weave(ctx context.Context, primaryOutput, signedOutput []byte)
 	}
 
 	threshold := s.Config.ValidationThreshold
-	if threshold <= 0 || threshold > 1 {
+	if threshold < 0 || threshold > 1 {
 		threshold = 0.85
 	}
 

@@ -42,6 +42,9 @@ func LoadAgents(cfg *config.Config) (map[string]AgentConfig, error) {
 	if err := cfg.Get("agentci.agents", &agents); err != nil {
 		return map[string]AgentConfig{}, nil
 	}
+	if agents == nil {
+		return map[string]AgentConfig{}, nil
+	}
 
 	// Validate and apply defaults.
 	for name, ac := range agents {
@@ -168,6 +171,9 @@ func ListAgents(cfg *config.Config) (map[string]AgentConfig, error) {
 	}
 	var agents map[string]AgentConfig
 	if err := cfg.Get("agentci.agents", &agents); err != nil {
+		return map[string]AgentConfig{}, nil
+	}
+	if agents == nil {
 		return map[string]AgentConfig{}, nil
 	}
 	return agents, nil
