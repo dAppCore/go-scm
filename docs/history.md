@@ -48,7 +48,7 @@ The `git.Service` struct and its framework integration methods (`OnStartup`, `ha
 
 **agentci/ — 56% to 94.5%**
 
-Tests added for `Spinner` methods (`DeterminePlan`, `GetVerifierModel`, `FindByForgejoUser`, `Weave`) and all security functions (`SanitizePath`, `EscapeShellArg`, `SecureSSHCommand`, `MaskToken`). Notable finding: `SanitizePath("../secret")` returns `"secret"` — this is correct behaviour (strip via `filepath.Base`), not a bug.
+Tests added for `Spinner` methods (`DeterminePlan`, `GetVerifierModel`, `FindByForgejoUser`, `Weave`) and all security functions (`SanitizePath`, `EscapeShellArg`, `SecureSSHCommand`, `MaskToken`). `SanitizePath` now rejects traversal and separator characters instead of normalising them away, which matches the stricter agent dispatch contract.
 
 **collect/ — 57.3% to 83.0%** (additional test files)
 

@@ -16,23 +16,22 @@ import (
 var safeNameRegex = regexp.MustCompile(`^[a-zA-Z0-9\-\_\.]+$`)
 
 // SanitizePath ensures a filename or directory name is safe and prevents path traversal.
-// Returns the validated basename.
+// Returns the validated input unchanged.
 // Usage: SanitizePath(...)
 func SanitizePath(input string) (string, error) {
 	if input == "" {
 		return "", coreerr.E("agentci.SanitizePath", "path element is required", nil)
 	}
-	safeName := filepath.Base(input)
-	if safeName == "." || safeName == ".." {
+	if input == "." || input == ".." {
 		return "", coreerr.E("agentci.SanitizePath", "invalid path element: "+input, nil)
 	}
-	if strings.ContainsAny(safeName, `/\`) {
+	if strings.ContainsAny(input, `/\`) {
 		return "", coreerr.E("agentci.SanitizePath", "path separators are not allowed: "+input, nil)
 	}
-	if !safeNameRegex.MatchString(safeName) {
+	if !safeNameRegex.MatchString(input) {
 		return "", coreerr.E("agentci.SanitizePath", "invalid characters in path element: "+input, nil)
 	}
-	return safeName, nil
+	return input, nil
 }
 
 // ValidatePathElement validates a single local path element and returns its safe form.

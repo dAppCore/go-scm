@@ -373,7 +373,7 @@ The Forge token is transferred as a separate `.env.$ticketID` file with `0600` p
 
 | Function | Purpose |
 |----------|---------|
-| `SanitizePath(input)` | Returns `filepath.Base(input)` after validating against `^[a-zA-Z0-9\-\_\.]+$` |
+| `SanitizePath(input)` | Validates a single safe path element against `^[a-zA-Z0-9\-\_\.]+$` and returns it unchanged |
 | `EscapeShellArg(arg)` | Wraps in single quotes with internal quote escaping |
 | `SecureSSHCommand(host, cmd)` | SSH with `StrictHostKeyChecking=yes`, `BatchMode=yes`, `ConnectTimeout=10` |
 | `MaskToken(token)` | Returns first 4 + `****` + last 4 characters |
