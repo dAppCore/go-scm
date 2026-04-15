@@ -4,6 +4,7 @@ package jobrunner
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 )
 
@@ -20,6 +21,75 @@ type ActionResult struct {
 	Timestamp   time.Time     `json:"ts"`
 	Duration    time.Duration `json:"duration_ms"`
 	Cycle       int           `json:"cycle"`
+}
+
+// MarshalJSON encodes Duration in milliseconds so the JSON form matches the tag
+// and the journal snapshots.
+func (a ActionResult) MarshalJSON() ([]byte, error) {
+	type alias struct {
+		Action      string    `json:"action"`
+		RepoOwner   string    `json:"repo_owner"`
+		RepoName    string    `json:"repo_name"`
+		EpicNumber  int       `json:"epic"`
+		ChildNumber int       `json:"child"`
+		PRNumber    int       `json:"pr"`
+		Success     bool      `json:"success"`
+		Error       string    `json:"error,omitempty"`
+		Timestamp   time.Time `json:"ts"`
+		DurationMs  int64     `json:"duration_ms"`
+		Cycle       int       `json:"cycle"`
+	}
+
+	return json.Marshal(alias{
+		Action:      a.Action,
+		RepoOwner:   a.RepoOwner,
+		RepoName:    a.RepoName,
+		EpicNumber:  a.EpicNumber,
+		ChildNumber: a.ChildNumber,
+		PRNumber:    a.PRNumber,
+		Success:     a.Success,
+		Error:       a.Error,
+		Timestamp:   a.Timestamp,
+		DurationMs:  a.Duration.Milliseconds(),
+		Cycle:       a.Cycle,
+	})
+}
+
+// UnmarshalJSON decodes Duration from milliseconds in the JSON form.
+func (a *ActionResult) UnmarshalJSON(data []byte) error {
+	type alias struct {
+		Action      string    `json:"action"`
+		RepoOwner   string    `json:"repo_owner"`
+		RepoName    string    `json:"repo_name"`
+		EpicNumber  int       `json:"epic"`
+		ChildNumber int       `json:"child"`
+		PRNumber    int       `json:"pr"`
+		Success     bool      `json:"success"`
+		Error       string    `json:"error,omitempty"`
+		Timestamp   time.Time `json:"ts"`
+		DurationMs  int64     `json:"duration_ms"`
+		Cycle       int       `json:"cycle"`
+	}
+
+	var out alias
+	if err := json.Unmarshal(data, &out); err != nil {
+		return err
+	}
+
+	*a = ActionResult{
+		Action:      out.Action,
+		RepoOwner:   out.RepoOwner,
+		RepoName:    out.RepoName,
+		EpicNumber:  out.EpicNumber,
+		ChildNumber: out.ChildNumber,
+		PRNumber:    out.PRNumber,
+		Success:     out.Success,
+		Error:       out.Error,
+		Timestamp:   out.Timestamp,
+		Duration:    time.Duration(out.DurationMs) * time.Millisecond,
+		Cycle:       out.Cycle,
+	}
+	return nil
 }
 
 // JobHandler processes a single pipeline signal.

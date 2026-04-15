@@ -73,6 +73,39 @@ func TestJournalAppendWritesDatePartitionedJSONL(t *testing.T) {
 	}
 }
 
+func TestActionResultJSONUsesMilliseconds(t *testing.T) {
+	original := ActionResult{
+		Action:    "dispatch",
+		PRNumber:  17,
+		Success:   true,
+		Timestamp: time.Date(2026, 4, 15, 14, 30, 0, 0, time.UTC),
+		Duration:  1500 * time.Millisecond,
+		Cycle:     4,
+	}
+
+	raw, err := json.Marshal(original)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+
+	var decoded map[string]any
+	if err := json.Unmarshal(raw, &decoded); err != nil {
+		t.Fatalf("unmarshal map: %v", err)
+	}
+
+	if got := decoded["duration_ms"]; got != float64(1500) {
+		t.Fatalf("unexpected duration_ms: %#v", got)
+	}
+
+	var roundTrip ActionResult
+	if err := json.Unmarshal(raw, &roundTrip); err != nil {
+		t.Fatalf("round trip unmarshal: %v", err)
+	}
+	if roundTrip.Duration != original.Duration {
+		t.Fatalf("unexpected duration round trip: %v", roundTrip.Duration)
+	}
+}
+
 func splitLines(s string) []string {
 	var out []string
 	start := 0
