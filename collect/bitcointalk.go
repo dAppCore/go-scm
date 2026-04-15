@@ -3,6 +3,7 @@
 package collect
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -12,6 +13,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"golang.org/x/net/html"
 )
 
 // FetchPageFunc is an injectable function type for fetching pages.
@@ -268,26 +271,42 @@ func ParsePostsFromHTML(htmlContent string) ([]btPost, error) {
 	if strings.TrimSpace(htmlContent) == "" {
 		return nil, nil
 	}
-	re := regexp.MustCompile(`(?is)<div[^>]*class="[^"]*post[^"]*"[^>]*>(.*?)</div>`)
-	matches := re.FindAllStringSubmatch(htmlContent, -1)
-	if len(matches) == 0 {
-		plain := stripTags(htmlContent)
-		if strings.TrimSpace(plain) == "" {
-			return nil, nil
+	root, err := html.Parse(strings.NewReader(htmlContent))
+	if err != nil {
+		return parsePostsFallback(htmlContent), nil
+	}
+
+	var posts []btPost
+	var walk func(*html.Node)
+	walk = func(n *html.Node) {
+		if n == nil {
+			return
 		}
-		return []btPost{{Number: 1, Content: plain}}, nil
+		if n.Type == html.ElementNode && n.Data == "div" && hasClass(n, "post") {
+			post := btPost{Number: len(posts) + 1}
+			post.Author = findTextByClass(n, "author")
+			post.Date = findTextByClass(n, "date")
+			post.Content = strings.TrimSpace(renderTextFragment(n))
+			if post.Content == "" {
+				post.Content = strings.TrimSpace(textContent(n))
+			}
+			posts = append(posts, post)
+			return
+		}
+		for child := n.FirstChild; child != nil; child = child.NextSibling {
+			walk(child)
+		}
 	}
-	posts := make([]btPost, 0, len(matches))
-	for i, match := range matches {
-		block := match[1]
-		posts = append(posts, btPost{
-			Number:  i + 1,
-			Author:  extractTagText(block, "author"),
-			Date:    extractTagText(block, "date"),
-			Content: strings.TrimSpace(stripTags(block)),
-		})
+	walk(root)
+	if len(posts) > 0 {
+		return posts, nil
 	}
-	return posts, nil
+
+	plain := strings.TrimSpace(stripTags(htmlContent))
+	if plain == "" {
+		return nil, nil
+	}
+	return []btPost{{Number: 1, Content: plain}}, nil
 }
 
 // FormatPostMarkdown formats a post as markdown.
@@ -318,4 +337,99 @@ func extractTagText(block, name string) string {
 		return strings.TrimSpace(stripTags(match[1]))
 	}
 	return ""
+}
+
+func parsePostsFallback(htmlContent string) []btPost {
+	re := regexp.MustCompile(`(?is)<div[^>]*class="[^"]*post[^"]*"[^>]*>(.*?)</div>`)
+	matches := re.FindAllStringSubmatch(htmlContent, -1)
+	if len(matches) == 0 {
+		plain := strings.TrimSpace(stripTags(htmlContent))
+		if plain == "" {
+			return nil
+		}
+		return []btPost{{Number: 1, Content: plain}}
+	}
+	posts := make([]btPost, 0, len(matches))
+	for i, match := range matches {
+		block := match[1]
+		posts = append(posts, btPost{
+			Number:  i + 1,
+			Author:  extractTagText(block, "author"),
+			Date:    extractTagText(block, "date"),
+			Content: strings.TrimSpace(stripTags(block)),
+		})
+	}
+	return posts
+}
+
+func hasClass(node *html.Node, class string) bool {
+	for _, attr := range node.Attr {
+		if attr.Key != "class" {
+			continue
+		}
+		for _, part := range strings.Fields(attr.Val) {
+			if strings.EqualFold(part, class) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func findTextByClass(node *html.Node, class string) string {
+	if node == nil {
+		return ""
+	}
+	var found string
+	var walk func(*html.Node)
+	walk = func(n *html.Node) {
+		if n == nil || found != "" {
+			return
+		}
+		if n.Type == html.ElementNode && hasClass(n, class) {
+			found = strings.TrimSpace(renderTextFragment(n))
+			if found != "" {
+				return
+			}
+		}
+		for child := n.FirstChild; child != nil; child = child.NextSibling {
+			walk(child)
+		}
+	}
+	walk(node)
+	return found
+}
+
+func renderTextFragment(node *html.Node) string {
+	if node == nil {
+		return ""
+	}
+	var buf bytes.Buffer
+	for child := node.FirstChild; child != nil; child = child.NextSibling {
+		if err := html.Render(&buf, child); err != nil {
+			return textContent(node)
+		}
+	}
+	return stripTags(buf.String())
+}
+
+func textContent(node *html.Node) string {
+	if node == nil {
+		return ""
+	}
+	var b strings.Builder
+	var walk func(*html.Node)
+	walk = func(n *html.Node) {
+		if n == nil {
+			return
+		}
+		if n.Type == html.TextNode {
+			b.WriteString(n.Data)
+		}
+		for child := n.FirstChild; child != nil; child = child.NextSibling {
+			walk(child)
+		}
+	}
+	walk(node)
+	return strings.TrimSpace(b.String())
 }
