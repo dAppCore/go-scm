@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strings"
 
-	"dappco.re/go/core/api"
-	coreprovider "dappco.re/go/core/api/pkg/provider"
+	"dappco.re/go/api"
+	coreprovider "dappco.re/go/api/pkg/provider"
 	coreio "dappco.re/go/io"
 	"dappco.re/go/scm/marketplace"
 	"dappco.re/go/scm/repos"

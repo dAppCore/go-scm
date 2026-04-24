@@ -7,7 +7,7 @@ require (
 	codeberg.org/forgejo/go-sdk v0.0.0
 	dappco.re/go/config v0.0.0
 	dappco.re/go/core v0.8.0-alpha.1
-	dappco.re/go/core/api v0.3.0
+	dappco.re/go/api v0.3.0
 	dappco.re/go/io v0.4.2
 	dappco.re/go/ws v0.4.0
 	github.com/gin-gonic/gin v1.12.0
