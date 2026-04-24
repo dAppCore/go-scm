@@ -1,0 +1,44 @@
+version: "3"
+
+tasks:
+  build:
+    dir: ../../..
+    cmds:
+      - go build ./...
+
+  test:
+    dir: ../../..
+    cmds:
+      - go test -count=1 -race ./...
+
+  vet:
+    dir: ../../..
+    cmds:
+      - go vet ./...
+
+  smoke:
+    dir: ../../..
+    cmds:
+      - |
+        if [ ! -d cmd/gitea ]; then
+          echo "Skipping gitea smoke: cmd/gitea not present"
+          exit 0
+        fi
+        bin="$(mktemp -t gitea-smoke.XXXXXX)"
+        trap 'rm -f "$bin"' EXIT
+        go build -o "$bin" ./cmd/gitea
+        "$bin" --help >/dev/null
+        "$bin" repos --help >/dev/null
+        "$bin" issues --help >/dev/null
+        if [ -z "${GITEA_TOKEN:-}" ] || [ -z "${GITEA_SMOKE_REPO:-}" ]; then
+          echo "Skipping gitea authenticated smoke: GITEA_TOKEN/GITEA_SMOKE_REPO unset"
+          exit 0
+        fi
+        "$bin" repos >/dev/null
+        "$bin" issues "$GITEA_SMOKE_REPO" >/dev/null
+
+  default:
+    deps:
+      - build
+      - test
+      - vet
