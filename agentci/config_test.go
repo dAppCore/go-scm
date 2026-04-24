@@ -8,7 +8,7 @@ import (
 	// Note: testing is the standard Go test harness.
 	"testing"
 
-	"dappco.re/go/core/config"
+	"dappco.re/go/config"
 )
 
 func TestLoadAgentsAndRoundTrip(t *testing.T) {

@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	coreio "dappco.re/go/core/io"
-	"dappco.re/go/core/io/store"
+	coreio "dappco.re/go/io"
+	"dappco.re/go/io/store"
 	"dappco.re/go/scm/internal/ax/jsonx"
 	"dappco.re/go/scm/manifest"
 )

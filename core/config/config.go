@@ -3,7 +3,7 @@
 package config
 
 import (
-	// Note: errors.New is retained because core/config is the local replacement for dappco.re/go/core/config and cannot depend on downstream core helpers.
+	// Note: errors.New is retained because core/config is the local replacement for dappco.re/go/config and cannot depend on downstream core helpers.
 	"errors"
 	// Note: os filesystem calls are retained because core/config persists its own backing file before higher-level core filesystem APIs are available.
 	"os"

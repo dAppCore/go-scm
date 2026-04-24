@@ -20,7 +20,7 @@ import (
 	// Note: time.Time is retained for state timestamps serialized to disk.
 	"time"
 
-	coreio "dappco.re/go/core/io"
+	coreio "dappco.re/go/io"
 )
 
 // State tracks collection progress for incremental runs.

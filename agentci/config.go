@@ -10,7 +10,7 @@ import (
 	// Note: strings helpers are retained for case-insensitive strategy matching and config error classification.
 	"strings"
 
-	"dappco.re/go/core/config"
+	"dappco.re/go/config"
 	"gopkg.in/yaml.v3"
 )
 

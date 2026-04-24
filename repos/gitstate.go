@@ -6,7 +6,7 @@ import (
 	"errors"
 	"time"
 
-	coreio "dappco.re/go/core/io"
+	coreio "dappco.re/go/io"
 	"dappco.re/go/scm/internal/ax/filepathx"
 	"gopkg.in/yaml.v3"
 )

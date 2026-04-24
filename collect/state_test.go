@@ -6,7 +6,7 @@ import (
 	// Note: testing is the standard Go test harness.
 	"testing"
 
-	coreio "dappco.re/go/core/io"
+	coreio "dappco.re/go/io"
 )
 
 func TestNewStateWithEmptyPathDoesNotPersist(t *testing.T) {

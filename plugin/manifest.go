@@ -6,7 +6,7 @@ import (
 	// Note: errors.New is retained for stable manifest validation errors.
 	"errors"
 
-	coreio "dappco.re/go/core/io"
+	coreio "dappco.re/go/io"
 	"dappco.re/go/scm/internal/ax/jsonx"
 )
 

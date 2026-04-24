@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	coreio "dappco.re/go/core/io"
+	coreio "dappco.re/go/io"
 	"dappco.re/go/scm/marketplace"
 	"dappco.re/go/scm/repos"
 	"github.com/gin-gonic/gin"
@@ -68,10 +68,10 @@ func TestScmProviderDescribeIncludesReadOnlyRoutes(t *testing.T) {
 	descs := provider.Describe()
 
 	want := map[string]bool{
-		"GET /health":         false,
-		"GET /marketplace":    false,
-		"GET /repos":          false,
-		"GET /modules":        false,
+		"GET /health":      false,
+		"GET /marketplace": false,
+		"GET /repos":       false,
+		"GET /modules":     false,
 	}
 	for _, desc := range descs {
 		key := desc.Method + " " + desc.Path

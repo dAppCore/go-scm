@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	coreio "dappco.re/go/core/io"
+	coreio "dappco.re/go/io"
 )
 
 func TestFindRegistryHonorsCORE_REPOS(t *testing.T) {

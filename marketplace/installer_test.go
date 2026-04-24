@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	coreio "dappco.re/go/core/io"
-	"dappco.re/go/core/io/store"
+	coreio "dappco.re/go/io"
+	"dappco.re/go/io/store"
 )
 
 func TestInstallerPersistsInstalledModulesToStore(t *testing.T) {

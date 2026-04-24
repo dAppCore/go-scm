@@ -8,7 +8,7 @@ import (
 	// Note: filepath.Join is retained because plugin manifests are stored on an OS-specific local path layout.
 	"path/filepath"
 
-	coreio "dappco.re/go/core/io"
+	coreio "dappco.re/go/io"
 )
 
 type Loader struct {

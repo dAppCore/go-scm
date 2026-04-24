@@ -12,7 +12,7 @@ import (
 	// Note: time is retained for RFC3339 install timestamps in plugin metadata.
 	"time"
 
-	coreio "dappco.re/go/core/io"
+	coreio "dappco.re/go/io"
 )
 
 type Installer struct {

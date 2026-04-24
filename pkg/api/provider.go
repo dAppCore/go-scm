@@ -8,10 +8,10 @@ import (
 
 	"dappco.re/go/core/api"
 	coreprovider "dappco.re/go/core/api/pkg/provider"
-	coreio "dappco.re/go/core/io"
-	"dappco.re/go/core/ws"
+	coreio "dappco.re/go/io"
 	"dappco.re/go/scm/marketplace"
 	"dappco.re/go/scm/repos"
+	"dappco.re/go/ws"
 	"github.com/gin-gonic/gin"
 )
 

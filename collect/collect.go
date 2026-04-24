@@ -12,7 +12,7 @@ import (
 	// Note: strings.TrimSpace is retained for output directory validation without broad collector refactors.
 	"strings"
 
-	coreio "dappco.re/go/core/io"
+	coreio "dappco.re/go/io"
 )
 
 // Collector is the interface all collection sources implement.

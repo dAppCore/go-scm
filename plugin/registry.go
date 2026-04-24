@@ -8,7 +8,7 @@ import (
 	// Note: sort.Strings is retained for deterministic registry listing output.
 	"sort"
 
-	coreio "dappco.re/go/core/io"
+	coreio "dappco.re/go/io"
 	"dappco.re/go/scm/internal/ax/jsonx"
 )
 

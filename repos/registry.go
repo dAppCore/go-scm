@@ -11,7 +11,7 @@ import (
 	"sort"
 	"strings"
 
-	coreio "dappco.re/go/core/io"
+	coreio "dappco.re/go/io"
 	"dappco.re/go/scm/git"
 	"dappco.re/go/scm/internal/ax/filepathx"
 	"dappco.re/go/scm/internal/ax/osx"
