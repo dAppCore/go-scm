@@ -3,9 +3,13 @@
 package collect
 
 import (
+	// Note: context.Context is retained as the collector API cancellation contract.
 	"context"
+	// Note: errors.New is retained for stable collector validation errors.
 	"errors"
+	// Note: fmt.Fprintf/Sprintf are retained for Markdown and dispatcher message formatting in this load-bearing collector.
 	"fmt"
+	// Note: strings helpers are retained for paper metadata normalization and Markdown output.
 	"strings"
 )
 

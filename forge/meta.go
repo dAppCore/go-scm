@@ -3,6 +3,7 @@
 package forge
 
 import (
+	// Note: time.Time mirrors Forgejo metadata timestamps in public structs.
 	"time"
 
 	"codeberg.org/forgejo/go-sdk/forgejo"

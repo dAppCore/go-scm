@@ -3,13 +3,21 @@
 package collect
 
 import (
+	// Note: bytes.Buffer is retained for efficient Markdown assembly in processors.
 	"bytes"
+	// Note: context.Context is retained as the processor API cancellation contract.
 	"context"
+	// Note: encoding/json is retained for JSON and JSONL pretty-print processing.
 	"encoding/json"
+	// Note: errors.New is retained for stable processor validation errors.
 	"errors"
+	// Note: fmt.Fprintln/Sprintf are retained for Markdown and dispatcher message formatting.
 	"fmt"
+	// Note: filepath is retained for OS-specific output path and extension handling.
 	"path/filepath"
+	// Note: regexp is retained for HTML conversion patterns; no core equivalent covers compiled regexes.
 	"regexp"
+	// Note: strings helpers are retained for HTML/JSON text normalization in conversion routines.
 	"strings"
 )
 

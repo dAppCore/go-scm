@@ -3,7 +3,9 @@
 package forge
 
 import (
+	// Note: iter.Seq2 is retained because the forge client exposes lazy paginated iterators directly.
 	"iter"
+	// Note: strings helpers are retained for label de-duplication and case-insensitive matching.
 	"strings"
 
 	"codeberg.org/forgejo/go-sdk/forgejo"

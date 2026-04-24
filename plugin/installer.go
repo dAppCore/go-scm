@@ -3,9 +3,13 @@
 package plugin
 
 import (
+	// Note: context.Context is retained as the installer API cancellation contract.
 	"context"
+	// Note: errors.New is retained for stable installer validation errors.
 	"errors"
+	// Note: strings helpers are retained for parsing plugin source identifiers.
 	"strings"
+	// Note: time is retained for RFC3339 install timestamps in plugin metadata.
 	"time"
 
 	coreio "dappco.re/go/core/io"

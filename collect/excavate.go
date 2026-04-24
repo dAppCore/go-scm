@@ -3,9 +3,13 @@
 package collect
 
 import (
+	// Note: context.Context is retained as the excavator API cancellation contract.
 	"context"
+	// Note: errors.New is retained for stable excavator validation errors.
 	"errors"
+	// Note: fmt.Sprintf is retained for dispatcher progress and summary messages.
 	"fmt"
+	// Note: time.Now is retained behind nowUTC for collection state timestamps.
 	"time"
 )
 

@@ -3,8 +3,11 @@
 package gitea
 
 import (
+	// Note: errors.New is retained for stable config validation errors.
 	"errors"
+	// Note: os is retained for environment and home-directory config discovery before a Core runtime exists.
 	"os"
+	// Note: filepath is retained for OS-specific config file paths.
 	"path/filepath"
 
 	"gopkg.in/yaml.v3"
@@ -89,4 +92,3 @@ func SaveConfig(url, token string) error {
 	}
 	return os.WriteFile(path, raw, 0o600)
 }
-

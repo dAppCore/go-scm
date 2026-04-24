@@ -2,7 +2,10 @@
 
 package plugin
 
-import "context"
+import (
+	// Note: context.Context is retained as the plugin lifecycle API contract.
+	"context"
+)
 
 type Plugin interface {
 	Name() string
@@ -17,8 +20,8 @@ type BasePlugin struct {
 	PluginVersion string
 }
 
-func (p *BasePlugin) Name() string    { return p.PluginName }
-func (p *BasePlugin) Version() string { return p.PluginVersion }
+func (p *BasePlugin) Name() string                { return p.PluginName }
+func (p *BasePlugin) Version() string             { return p.PluginVersion }
 func (p *BasePlugin) Init(context.Context) error  { return nil }
 func (p *BasePlugin) Start(context.Context) error { return nil }
 func (p *BasePlugin) Stop(context.Context) error  { return nil }

@@ -3,12 +3,19 @@
 package collect
 
 import (
+	// Note: context.Context is retained as the collector API cancellation contract.
 	"context"
+	// Note: errors.New is retained for stable collector validation errors.
 	"errors"
+	// Note: fmt.Fprintf/Sprintf are retained for Markdown and dispatcher message formatting in this collector.
 	"fmt"
+	// Note: math.IsNaN/IsInf are retained for market number formatting.
 	"math"
+	// Note: strconv is retained for bool and float formatting in market summaries.
 	"strconv"
+	// Note: strings helpers are retained for coin/date normalization and Markdown assembly.
 	"strings"
+	// Note: time.Parse is retained for historical date validation.
 	"time"
 )
 

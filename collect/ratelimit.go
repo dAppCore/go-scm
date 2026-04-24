@@ -3,12 +3,19 @@
 package collect
 
 import (
+	// Note: context.Context is retained as the rate limiter cancellation contract.
 	"context"
+	// Note: fmt.Errorf is retained for wrapped gh CLI rate-limit errors.
 	"fmt"
+	// Note: os/exec is retained because rate-limit probing intentionally invokes the gh CLI.
 	"os/exec"
+	// Note: strconv.Atoi is retained for parsing gh rate-limit output.
 	"strconv"
+	// Note: strings helpers are retained for parsing gh rate-limit output.
 	"strings"
+	// Note: sync.Mutex protects limiter state and has no core equivalent.
 	"sync"
+	// Note: time is retained for limiter delay calculations and timers.
 	"time"
 )
 

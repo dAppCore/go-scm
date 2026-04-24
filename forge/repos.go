@@ -3,6 +3,7 @@
 package forge
 
 import (
+	// Note: iter.Seq2 is retained because the forge client exposes lazy paginated iterators directly.
 	"iter"
 
 	"codeberg.org/forgejo/go-sdk/forgejo"
@@ -113,4 +114,3 @@ func (c *Client) MigrateRepo(opts forgejo.MigrateRepoOption) (*forgejo.Repositor
 	repo, _, err := c.api.MigrateRepo(opts)
 	return repo, err
 }
-

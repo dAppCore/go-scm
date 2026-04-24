@@ -3,10 +3,15 @@
 package config
 
 import (
+	// Note: errors.New is retained because core/config is the local replacement for dappco.re/go/core/config and cannot depend on downstream core helpers.
 	"errors"
+	// Note: os filesystem calls are retained because core/config persists its own backing file before higher-level core filesystem APIs are available.
 	"os"
+	// Note: filepath is retained for OS-specific config path assembly in this standalone config module.
 	"path/filepath"
+	// Note: strings.Split is retained for dotted config-key traversal without adding a downstream core dependency.
 	"strings"
+	// Note: sync protects the in-memory config store and has no core equivalent in this low-level module.
 	"sync"
 
 	"gopkg.in/yaml.v3"

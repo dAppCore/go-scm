@@ -3,12 +3,19 @@
 package agentci
 
 import (
+	// Note: context.Context is retained as the public cancellation contract for SSH command construction.
 	"context"
+	// Note: fmt.Errorf is retained for wrapped validation errors across path and SSH helpers.
 	"fmt"
+	// Note: os/exec is retained because these helpers intentionally construct ssh exec.Cmd values.
 	"os/exec"
+	// Note: path is retained for remote POSIX path normalization independent of host OS filepath semantics.
 	"path"
+	// Note: filepath is retained for host OS path containment checks under local roots.
 	"path/filepath"
+	// Note: regexp is retained for path-element allowlist validation; no core equivalent covers compiled regexes.
 	"regexp"
+	// Note: strings helpers are retained for path sanitation and shell-argument escaping.
 	"strings"
 )
 

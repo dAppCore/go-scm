@@ -3,8 +3,11 @@
 package collect
 
 import (
+	// Note: context.Context is retained in tests to exercise collector public APIs.
 	"context"
+	// Note: strings.Contains is retained for assertions over generated Markdown.
 	"strings"
+	// Note: testing is the standard Go test harness.
 	"testing"
 
 	coreio "dappco.re/go/core/io"

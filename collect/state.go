@@ -3,13 +3,21 @@
 package collect
 
 import (
+	// Note: encoding/json is retained for persisted state compatibility; core.JSON helpers do not expose MarshalIndent or streaming behavior.
 	"encoding/json"
+	// Note: errors.Is/New are retained for fs.ErrNotExist handling and stable state validation errors.
 	"errors"
+	// Note: fmt.Errorf is retained for wrapped state persistence errors.
 	"fmt"
+	// Note: io/fs is retained for fs.ErrNotExist from the configured coreio medium.
 	"io/fs"
+	// Note: filepath is retained for OS-specific state file normalization.
 	"path/filepath"
+	// Note: strings.TrimSpace is retained for state path validation without refactoring persistence setup.
 	"strings"
+	// Note: sync.Mutex protects the persisted state map and has no core equivalent.
 	"sync"
+	// Note: time.Time is retained for state timestamps serialized to disk.
 	"time"
 
 	coreio "dappco.re/go/core/io"

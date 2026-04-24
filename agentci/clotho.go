@@ -3,8 +3,11 @@
 package agentci
 
 import (
+	// Note: bytes.Equal/TrimSpace are retained for byte-level output comparison in the verifier path.
 	"bytes"
+	// Note: context.Context is retained as the public cancellation contract for Spinner.Weave.
 	"context"
+	// Note: strings.EqualFold is retained for agent and strategy matching without broad refactors in agentci policy code.
 	"strings"
 
 	"dappco.re/go/scm/jobrunner"

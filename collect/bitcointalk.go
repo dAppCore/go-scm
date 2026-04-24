@@ -3,15 +3,25 @@
 package collect
 
 import (
+	// Note: bytes.Buffer is retained for text rendering and Markdown assembly.
 	"bytes"
+	// Note: context.Context is retained as the collector and fetcher cancellation contract.
 	"context"
+	// Note: errors.New is retained for stable collector validation errors.
 	"errors"
+	// Note: fmt.Fprintf/Sprintf/Errorf are retained for Markdown and HTTP error formatting.
 	"fmt"
+	// Note: io.ReadAll is retained for reading HTTP response bodies.
 	"io"
+	// Note: net/http is retained for fetching forum pages and injectable HTTP client state.
 	"net/http"
+	// Note: regexp is retained for topic and HTML fallback parsing; no core equivalent covers compiled regexes.
 	"regexp"
+	// Note: strconv is retained for page number and filename formatting.
 	"strconv"
+	// Note: strings helpers are retained for HTML text normalization and URL/page parsing.
 	"strings"
+	// Note: time is retained for the package-level HTTP client timeout.
 	"time"
 
 	"golang.org/x/net/html"

@@ -3,6 +3,7 @@
 package forge
 
 import (
+	// Note: iter.Seq2 is retained because the forge client exposes lazy paginated iterators directly.
 	"iter"
 
 	"codeberg.org/forgejo/go-sdk/forgejo"
@@ -60,4 +61,3 @@ func (c *Client) ListMyOrgsIter() iter.Seq2[*forgejo.Organization, error] {
 		}
 	}
 }
-

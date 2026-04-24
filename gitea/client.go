@@ -3,14 +3,15 @@
 package gitea
 
 import (
+	// Note: errors.New is retained for stable constructor validation errors.
 	"errors"
 
 	"code.gitea.io/sdk/gitea"
 )
 
 type Client struct {
-	api   *gitea.Client
-	url   string
+	api *gitea.Client
+	url string
 }
 
 func New(url, token string) (*Client, error) {

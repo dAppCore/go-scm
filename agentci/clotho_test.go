@@ -3,7 +3,9 @@
 package agentci
 
 import (
+	// Note: context.Context is retained in tests to exercise Spinner.Weave through its public API.
 	"context"
+	// Note: testing is the standard Go test harness.
 	"testing"
 
 	"dappco.re/go/scm/jobrunner"

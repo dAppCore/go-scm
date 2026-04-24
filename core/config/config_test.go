@@ -3,7 +3,9 @@
 package config
 
 import (
+	// Note: filepath.Join is retained in tests to build temporary config paths without changing production dependencies.
 	"path/filepath"
+	// Note: testing is the standard Go test harness.
 	"testing"
 )
 

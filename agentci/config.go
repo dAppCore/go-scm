@@ -3,8 +3,11 @@
 package agentci
 
 import (
+	// Note: errors.New is retained for stable validation errors in the agentci config API.
 	"errors"
+	// Note: fmt.Errorf is retained for wrapped config load/save errors; replacing here would add churn across load-bearing config paths.
 	"fmt"
+	// Note: strings helpers are retained for case-insensitive strategy matching and config error classification.
 	"strings"
 
 	"dappco.re/go/core/config"

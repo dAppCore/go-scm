@@ -3,8 +3,11 @@
 package agentci
 
 import (
+	// Note: context.Context is retained in tests to exercise SSH command construction with cancellation-aware APIs.
 	"context"
+	// Note: slices.Contains is retained for test assertions over generated command arguments.
 	"slices"
+	// Note: testing is the standard Go test harness.
 	"testing"
 )
 

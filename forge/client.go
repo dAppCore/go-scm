@@ -3,6 +3,7 @@
 package forge
 
 import (
+	// Note: errors.New is retained for stable constructor validation errors.
 	"errors"
 
 	"codeberg.org/forgejo/go-sdk/forgejo"
@@ -64,4 +65,3 @@ func (c *Client) ForkRepo(owner, repo string, org string) (*forgejo.Repository, 
 	fork, _, err := c.api.CreateFork(owner, repo, opts)
 	return fork, err
 }
-

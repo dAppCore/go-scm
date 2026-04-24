@@ -3,9 +3,13 @@
 package collect
 
 import (
+	// Note: context.Context is retained as the collector API cancellation contract.
 	"context"
+	// Note: errors.New is retained for stable collection validation errors.
 	"errors"
+	// Note: filepath is retained for OS-specific output and state file paths.
 	"path/filepath"
+	// Note: strings.TrimSpace is retained for output directory validation without broad collector refactors.
 	"strings"
 
 	coreio "dappco.re/go/core/io"

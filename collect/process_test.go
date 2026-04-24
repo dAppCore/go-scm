@@ -3,8 +3,11 @@
 package collect
 
 import (
+	// Note: context.Context is retained in tests to exercise processor public APIs.
 	"context"
+	// Note: strings.Contains is retained for assertions over generated Markdown.
 	"strings"
+	// Note: testing is the standard Go test harness.
 	"testing"
 )
 
@@ -29,4 +32,3 @@ func TestJSONToMarkdownHandlesJSONL(t *testing.T) {
 		t.Fatalf("unexpected markdown output: %q", md)
 	}
 }
-

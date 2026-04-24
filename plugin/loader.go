@@ -3,7 +3,9 @@
 package plugin
 
 import (
+	// Note: errors.New is retained for stable loader validation errors.
 	"errors"
+	// Note: filepath.Join is retained because plugin manifests are stored on an OS-specific local path layout.
 	"path/filepath"
 
 	coreio "dappco.re/go/core/io"

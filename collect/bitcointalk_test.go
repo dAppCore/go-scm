@@ -3,7 +3,9 @@
 package collect
 
 import (
+	// Note: strings.Contains is retained for assertions over parsed Markdown/text output.
 	"strings"
+	// Note: testing is the standard Go test harness.
 	"testing"
 )
 

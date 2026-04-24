@@ -3,6 +3,7 @@
 package gitea
 
 import (
+	// Note: time.Time mirrors Gitea metadata timestamps in public structs.
 	"time"
 
 	"code.gitea.io/sdk/gitea"

@@ -3,7 +3,9 @@
 package plugin
 
 import (
+	// Note: errors.New is retained for stable registry validation errors.
 	"errors"
+	// Note: sort.Strings is retained for deterministic registry listing output.
 	"sort"
 
 	coreio "dappco.re/go/core/io"

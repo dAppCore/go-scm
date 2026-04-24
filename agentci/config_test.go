@@ -3,7 +3,9 @@
 package agentci
 
 import (
+	// Note: filepath.Join is retained in tests to build temporary config paths without touching production path helpers.
 	"path/filepath"
+	// Note: testing is the standard Go test harness.
 	"testing"
 
 	"dappco.re/go/core/config"

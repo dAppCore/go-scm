@@ -3,10 +3,15 @@
 package forge
 
 import (
+	// Note: bytes.NewReader is retained for constructing the small PATCH payload body.
 	"bytes"
+	// Note: iter.Seq2 is retained because the forge client exposes lazy paginated iterators directly.
 	"iter"
+	// Note: net/http is retained for the raw PATCH endpoint not covered by the Forgejo SDK.
 	"net/http"
+	// Note: net/url.JoinPath is retained for safe API endpoint assembly.
 	"net/url"
+	// Note: strconv is retained for bool/int path and JSON literal formatting in the raw PATCH call.
 	"strconv"
 
 	"codeberg.org/forgejo/go-sdk/forgejo"

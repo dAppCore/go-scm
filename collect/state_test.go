@@ -3,6 +3,7 @@
 package collect
 
 import (
+	// Note: testing is the standard Go test harness.
 	"testing"
 
 	coreio "dappco.re/go/core/io"

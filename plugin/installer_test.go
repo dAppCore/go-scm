@@ -3,8 +3,11 @@
 package plugin
 
 import (
+	// Note: context.Context is retained in tests to exercise installer public APIs.
 	"context"
+	// Note: strings.Contains is retained for assertions against persisted registry YAML.
 	"strings"
+	// Note: testing is the standard Go test harness.
 	"testing"
 
 	coreio "dappco.re/go/core/io"

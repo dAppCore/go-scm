@@ -3,7 +3,9 @@
 package collect
 
 import (
+	// Note: sync.RWMutex protects dispatcher handlers and has no core equivalent.
 	"sync"
+	// Note: time.Time is retained for event timestamps in the public event struct.
 	"time"
 )
 

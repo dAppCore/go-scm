@@ -3,6 +3,7 @@
 package plugin
 
 import (
+	// Note: errors.New is retained for stable manifest validation errors.
 	"errors"
 
 	coreio "dappco.re/go/core/io"

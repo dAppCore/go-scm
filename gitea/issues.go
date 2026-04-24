@@ -3,6 +3,7 @@
 package gitea
 
 import (
+	// Note: iter.Seq2 is retained because the Gitea client exposes lazy paginated iterators directly.
 	"iter"
 
 	"code.gitea.io/sdk/gitea"
@@ -256,4 +257,3 @@ func (c *Client) ListPullRequestsIter(owner, repo string, state string) iter.Seq
 		}
 	}
 }
-
