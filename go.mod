@@ -5,18 +5,18 @@ go 1.26.0
 require (
 	code.gitea.io/sdk/gitea v0.24.1
 	codeberg.org/forgejo/go-sdk v0.0.0
-	dappco.re/go/config v0.0.0
+	dappco.re/go/config v0.8.0-alpha.1
 	dappco.re/go/core v0.8.0-alpha.1
-	dappco.re/go/api v0.3.0
-	dappco.re/go/io v0.4.2
-	dappco.re/go/ws v0.4.0
+	dappco.re/go/api v0.8.0-alpha.1
+	dappco.re/go/io v0.8.0-alpha.1
+	dappco.re/go/ws v0.8.0-alpha.1
 	github.com/gin-gonic/gin v1.12.0
 	golang.org/x/net v0.53.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
-	dappco.re/go/log v0.1.0 // indirect
+	dappco.re/go/log v0.8.0-alpha.1 // indirect
 	github.com/42wim/httpsig v1.2.4 // indirect
 	github.com/99designs/gqlgen v0.17.88 // indirect
 	github.com/KyleBanks/depth v1.2.1 // indirect
