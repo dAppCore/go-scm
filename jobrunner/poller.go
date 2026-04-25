@@ -3,11 +3,15 @@
 package jobrunner
 
 import (
+	// Note: AX-6 — Poller accepts caller cancellation and deadline propagation through context.Context.
 	"context"
-	"errors"
-	"fmt"
+	// Note: AX-6 — sync.RWMutex is structural here because the pinned Core module does not export core.RWMutex.
 	"sync"
+	// Note: AX-6 — Poller cadence is expressed with time.Duration and time.Ticker.
 	"time"
+
+	// Note: AX-6 — Core supplies structured errors and formatting primitives.
+	core "dappco.re/go/core"
 )
 
 // Poller discovers signals from sources and dispatches them to handlers.
@@ -137,7 +141,7 @@ func (p *Poller) RunOnce(ctx context.Context) error {
 
 		signals, err := source.Poll(ctx)
 		if err != nil {
-			return fmt.Errorf("jobrunner.Poller.RunOnce: poll %s: %w", source.Name(), err)
+			return core.E("jobrunner.Poller.RunOnce", core.Sprintf("poll %s", source.Name()), err)
 		}
 
 		for _, signal := range signals {
@@ -158,10 +162,10 @@ func (p *Poller) RunOnce(ctx context.Context) error {
 
 			result, err := handler.Execute(ctx, signal)
 			if err != nil {
-				return fmt.Errorf("jobrunner.Poller.RunOnce: execute %s: %w", handler.Name(), err)
+				return core.E("jobrunner.Poller.RunOnce", core.Sprintf("execute %s", handler.Name()), err)
 			}
 			if result == nil {
-				return errors.New("jobrunner.Poller.RunOnce: handler returned nil result")
+				return core.E("jobrunner.Poller.RunOnce", "handler returned nil result", nil)
 			}
 			if journal != nil {
 				if err := journal.Append(signal, result); err != nil {
@@ -169,7 +173,7 @@ func (p *Poller) RunOnce(ctx context.Context) error {
 				}
 			}
 			if err := source.Report(ctx, result); err != nil {
-				return fmt.Errorf("jobrunner.Poller.RunOnce: report %s: %w", source.Name(), err)
+				return core.E("jobrunner.Poller.RunOnce", core.Sprintf("report %s", source.Name()), err)
 			}
 		}
 	}
