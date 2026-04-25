@@ -4,10 +4,10 @@ package manifest
 
 import (
 	"crypto/ed25519" // intrinsic
-	"encoding/json"
-	"errors"
+	// Note: AX-6 — Build metadata records wall-clock compilation time.
 	"time"
 
+	core "dappco.re/go/core"
 	coreio "dappco.re/go/io"
 	"dappco.re/go/scm/internal/ax/filepathx"
 )
@@ -35,12 +35,12 @@ func Compile(m *Manifest, info BuildInfo) ([]byte, error) {
 	}
 	cp := *m
 	cp.Build = normalizeBuildInfo(info)
-	return json.Marshal(&cp)
+	return marshalJSON("manifest.Compile", &cp)
 }
 
 func ParseCoreJSON(data []byte) (*Manifest, error) {
 	var m Manifest
-	if err := json.Unmarshal(data, &m); err != nil {
+	if err := unmarshalJSON("manifest.ParseCoreJSON", data, &m); err != nil {
 		return nil, err
 	}
 	if err := validateManifest(&m); err != nil {
@@ -75,14 +75,14 @@ func CompileWithOptions(m *Manifest, opts CompileOptions) (*CompiledManifest, er
 
 func MarshalJSON(cm *CompiledManifest) ([]byte, error) {
 	if cm == nil {
-		return nil, errors.New("manifest.MarshalJSON: compiled manifest is required")
+		return nil, core.E("manifest.MarshalJSON", "compiled manifest is required", nil)
 	}
-	return json.Marshal(cm)
+	return marshalJSON("manifest.MarshalJSON", cm)
 }
 
 func ParseCompiled(data []byte) (*CompiledManifest, error) {
 	var cm CompiledManifest
-	if err := json.Unmarshal(data, &cm); err != nil {
+	if err := unmarshalJSON("manifest.ParseCompiled", data, &cm); err != nil {
 		return nil, err
 	}
 	return &cm, nil
@@ -90,7 +90,7 @@ func ParseCompiled(data []byte) (*CompiledManifest, error) {
 
 func LoadCompiled(medium coreio.Medium, root string) (*CompiledManifest, error) {
 	if medium == nil {
-		return nil, errors.New("manifest.LoadCompiled: medium is required")
+		return nil, core.E("manifest.LoadCompiled", "medium is required", nil)
 	}
 	raw, err := medium.Read(filepathx.Join(root, "core.json"))
 	if err != nil {
@@ -101,10 +101,10 @@ func LoadCompiled(medium coreio.Medium, root string) (*CompiledManifest, error) 
 
 func WriteCompiled(medium coreio.Medium, root string, cm *CompiledManifest) error {
 	if medium == nil {
-		return errors.New("manifest.WriteCompiled: medium is required")
+		return core.E("manifest.WriteCompiled", "medium is required", nil)
 	}
 	if cm == nil {
-		return errors.New("manifest.WriteCompiled: compiled manifest is required")
+		return core.E("manifest.WriteCompiled", "compiled manifest is required", nil)
 	}
 	raw, err := MarshalJSON(cm)
 	if err != nil {
@@ -118,4 +118,31 @@ func normalizeBuildInfo(build BuildInfo) BuildInfo {
 		build.Targets = append([]string(nil), build.Targets...)
 	}
 	return build
+}
+
+func marshalJSON(op string, v any) ([]byte, error) {
+	r := core.JSONMarshal(v)
+	if !r.OK {
+		return nil, resultError(op, "marshal JSON", r)
+	}
+	raw, ok := r.Value.([]byte)
+	if !ok {
+		return nil, core.E(op, "marshal JSON returned invalid payload", nil)
+	}
+	return raw, nil
+}
+
+func unmarshalJSON(op string, data []byte, target any) error {
+	r := core.JSONUnmarshal(data, target)
+	if !r.OK {
+		return resultError(op, "unmarshal JSON", r)
+	}
+	return nil
+}
+
+func resultError(op, msg string, r core.Result) error {
+	if err, ok := r.Value.(error); ok {
+		return core.E(op, msg, err)
+	}
+	return core.E(op, msg, nil)
 }

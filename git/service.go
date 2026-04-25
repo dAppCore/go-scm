@@ -4,10 +4,9 @@ package git
 
 import (
 	"context"
-	"errors"
 	"iter"
+	// Note: AX-6 — validatePath requires filepath.Rel; no core relative-path primitive exists.
 	"path/filepath"
-	"strings"
 	"sync"
 
 	core "dappco.re/go/core"
@@ -140,7 +139,7 @@ func (s *Service) OnStartup(ctx context.Context) core.Result {
 
 	c := s.Core()
 	if c == nil {
-		return core.Result{Value: errors.New("git.Service.OnStartup: core is required"), OK: false}
+		return core.Result{Value: core.E("git.Service.OnStartup", "core is required", nil), OK: false}
 	}
 
 	c.RegisterQuery(s.handleQuery)
@@ -259,20 +258,21 @@ func (s *Service) runPullMultiple(ctx context.Context, paths []string, names map
 }
 
 func (s *Service) validatePath(path string) error {
-	if filepath.IsAbs(path) {
+	ds := core.Env("DS")
+	if core.PathIsAbs(path) {
 		return nil
 	}
 	workDir := s.Options().WorkDir
 	if workDir == "" {
-		return errors.New("git.validatePath: path must be absolute")
+		return core.E("git.validatePath", "path must be absolute", nil)
 	}
-	workDir = filepath.Clean(workDir)
-	if !filepath.IsAbs(workDir) {
-		return errors.New("git.validatePath: WorkDir must be absolute")
+	workDir = core.CleanPath(workDir, ds)
+	if !core.PathIsAbs(workDir) {
+		return core.E("git.validatePath", "WorkDir must be absolute", nil)
 	}
-	rel, err := filepath.Rel(workDir, filepath.Clean(path))
-	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
-		return errors.New("git.validatePath: path is outside of allowed WorkDir")
+	rel, err := filepath.Rel(workDir, core.CleanPath(path, ds))
+	if err != nil || rel == ".." || core.HasPrefix(rel, ".."+ds) {
+		return core.E("git.validatePath", "path is outside of allowed WorkDir", nil)
 	}
 	return nil
 }

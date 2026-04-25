@@ -3,11 +3,10 @@
 package plugin
 
 import (
-	// Note: errors.New is retained for stable registry validation errors.
-	"errors"
-	// Note: sort.Strings is retained for deterministic registry listing output.
+	// Note: AX-6 — Registry listing must be deterministic across map iteration (no core sort primitive).
 	"sort"
 
+	core "dappco.re/go/core"
 	coreio "dappco.re/go/io"
 	"dappco.re/go/scm/internal/ax/jsonx"
 )
@@ -24,7 +23,7 @@ func NewRegistry(m coreio.Medium, basePath string) *Registry {
 
 func (r *Registry) Add(cfg *PluginConfig) error {
 	if r == nil || cfg == nil {
-		return errors.New("plugin.Registry.Add: config is required")
+		return core.E("plugin.Registry.Add", "config is required", nil)
 	}
 	if r.plugins == nil {
 		r.plugins = map[string]*PluginConfig{}
@@ -80,7 +79,7 @@ func (r *Registry) Load() error {
 
 func (r *Registry) Remove(name string) error {
 	if r == nil {
-		return errors.New("plugin.Registry.Remove: registry is required")
+		return core.E("plugin.Registry.Remove", "registry is required", nil)
 	}
 	delete(r.plugins, name)
 	return nil

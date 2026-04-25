@@ -3,10 +3,10 @@
 package marketplace
 
 import (
-	"encoding/json"
+	// Note: AX-6 — Marketplace modules and categories must be ordered deterministically (no core sort primitive).
 	"sort"
-	"strings"
 
+	core "dappco.re/go/core"
 	"dappco.re/go/scm/manifest"
 )
 
@@ -28,8 +28,9 @@ type Index struct {
 
 func ParseIndex(data []byte) (*Index, error) {
 	var idx Index
-	if err := json.Unmarshal(data, &idx); err != nil {
-		return nil, err
+	r := core.JSONUnmarshal(data, &idx)
+	if !r.OK {
+		return nil, resultError("marketplace.ParseIndex", "unmarshal index", r)
 	}
 	return &idx, nil
 }
@@ -39,7 +40,7 @@ func (idx *Index) Find(code string) (Module, bool) {
 		return Module{}, false
 	}
 	for _, mod := range idx.Modules {
-		if strings.EqualFold(mod.Code, code) {
+		if core.Lower(mod.Code) == core.Lower(code) {
 			return mod, true
 		}
 	}
@@ -52,7 +53,7 @@ func (idx *Index) ByCategory(category string) []Module {
 	}
 	var out []Module
 	for _, mod := range idx.Modules {
-		if strings.EqualFold(mod.Category, category) {
+		if core.Lower(mod.Category) == core.Lower(category) {
 			out = append(out, mod)
 		}
 	}
@@ -63,13 +64,13 @@ func (idx *Index) Search(query string) []Module {
 	if idx == nil {
 		return nil
 	}
-	q := strings.ToLower(strings.TrimSpace(query))
+	q := core.Lower(core.Trim(query))
 	if q == "" {
 		return append([]Module(nil), idx.Modules...)
 	}
 	var out []Module
 	for _, mod := range idx.Modules {
-		if strings.Contains(strings.ToLower(mod.Code), q) || strings.Contains(strings.ToLower(mod.Name), q) || strings.Contains(strings.ToLower(mod.Category), q) {
+		if core.Contains(core.Lower(mod.Code), q) || core.Contains(core.Lower(mod.Name), q) || core.Contains(core.Lower(mod.Category), q) {
 			out = append(out, mod)
 		}
 	}
@@ -89,7 +90,7 @@ func BuildIndexFromManifests(manifests []*manifest.Manifest) *Index {
 		mod := Module{
 			Code:     m.Code,
 			Name:     m.Name,
-			Version:  strings.TrimSpace(m.Version),
+			Version:  core.Trim(m.Version),
 			Repo:     "",
 			Sign:     m.Sign,
 			SignKey:  m.SignKey,
@@ -112,7 +113,7 @@ func firstCategory(modules []string, layout string) string {
 	if len(modules) > 0 {
 		return modules[0]
 	}
-	return strings.TrimSpace(layout)
+	return core.Trim(layout)
 }
 
 func sortedKeys(m map[string]struct{}) []string {
@@ -125,4 +126,11 @@ func sortedKeys(m map[string]struct{}) []string {
 	}
 	sort.Strings(out)
 	return out
+}
+
+func resultError(op, msg string, r core.Result) error {
+	if err, ok := r.Value.(error); ok {
+		return core.E(op, msg, err)
+	}
+	return core.E(op, msg, nil)
 }

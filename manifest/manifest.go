@@ -3,10 +3,10 @@
 package manifest
 
 import (
-	"errors"
+	// Note: AX-6 — Slot and daemon names must be returned deterministically (no core sort primitive).
 	"sort"
-	"strings"
 
+	core "dappco.re/go/core"
 	"gopkg.in/yaml.v3"
 )
 
@@ -72,7 +72,7 @@ func (m *Manifest) IsProvider() bool {
 	if m == nil {
 		return false
 	}
-	return strings.TrimSpace(m.Namespace) != "" && strings.TrimSpace(m.Binary) != ""
+	return core.Trim(m.Namespace) != "" && core.Trim(m.Binary) != ""
 }
 
 func (m *Manifest) SlotNames() []string {
@@ -82,7 +82,7 @@ func (m *Manifest) SlotNames() []string {
 	seen := make(map[string]struct{}, len(m.Slots))
 	out := make([]string, 0, len(m.Slots))
 	for _, v := range m.Slots {
-		v = strings.TrimSpace(v)
+		v = core.Trim(v)
 		if v == "" {
 			continue
 		}
@@ -127,16 +127,16 @@ func (m *Manifest) DefaultDaemon() (string, DaemonSpec, bool) {
 
 func validateManifest(m *Manifest) error {
 	if m == nil {
-		return errors.New("manifest is required")
+		return core.E("", "manifest is required", nil)
 	}
-	if strings.TrimSpace(m.Code) == "" {
-		return errors.New("manifest code is required")
+	if core.Trim(m.Code) == "" {
+		return core.E("", "manifest code is required", nil)
 	}
-	if strings.TrimSpace(m.Name) == "" {
-		return errors.New("manifest name is required")
+	if core.Trim(m.Name) == "" {
+		return core.E("", "manifest name is required", nil)
 	}
-	if strings.TrimSpace(m.Version) == "" {
-		return errors.New("manifest version is required")
+	if core.Trim(m.Version) == "" {
+		return core.E("", "manifest version is required", nil)
 	}
 	return nil
 }

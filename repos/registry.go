@@ -5,19 +5,12 @@ package repos
 import (
 	// Note: AX-6 — Git sync operations propagate cancellation through context.Context.
 	"context"
-	// Note: AX-6 — Registry APIs return standard errors for nil inputs and cycles.
-	"errors"
-	// Note: AX-6 — Repo lookup errors include dynamic repo names.
-	"fmt"
 	// Note: AX-6 — Registry discovery uses fs.ErrNotExist as the filesystem sentinel.
 	"io/fs"
-	// Note: AX-6 — Repo paths and .git checks use local filesystem path semantics.
-	"path/filepath"
-	// Note: AX-6 — Registry listing must be deterministic across map iteration.
+	// Note: AX-6 — Registry listing must be deterministic across map iteration (no core sort primitive).
 	"sort"
-	// Note: AX-6 — Registry filters and environment path lists need string normalization.
-	"strings"
 
+	core "dappco.re/go/core"
 	coreio "dappco.re/go/io"
 	"dappco.re/go/scm/git"
 	"dappco.re/go/scm/internal/ax/filepathx"
@@ -75,7 +68,7 @@ func (repo *Repo) IsGitRepo() bool {
 	if repo == nil || repo.Path == "" {
 		return false
 	}
-	_, err := osx.Stat(filepath.Join(repo.Path, ".git"))
+	_, err := osx.Stat(filepathx.Join(repo.Path, ".git"))
 	return err == nil
 }
 
@@ -98,7 +91,7 @@ func (r *Registry) List() []*Repo {
 		cp.Name = name
 		cp.registry = r
 		if cp.Path == "" {
-			cp.Path = filepath.Join(r.BasePath, name)
+			cp.Path = filepathx.Join(r.BasePath, name)
 		}
 		out = append(out, &cp)
 	}
@@ -117,7 +110,7 @@ func (r *Registry) Get(name string) (*Repo, bool) {
 	cp.Name = name
 	cp.registry = r
 	if cp.Path == "" {
-		cp.Path = filepath.Join(r.BasePath, name)
+		cp.Path = filepathx.Join(r.BasePath, name)
 	}
 	return &cp, true
 }
@@ -125,7 +118,7 @@ func (r *Registry) Get(name string) (*Repo, bool) {
 func (r *Registry) ByType(t string) []*Repo {
 	var out []*Repo
 	for _, repo := range r.List() {
-		if strings.EqualFold(repo.Type, t) {
+		if core.Lower(repo.Type) == core.Lower(t) {
 			out = append(out, repo)
 		}
 	}
@@ -150,7 +143,7 @@ func (r *Registry) TopologicalOrder() ([]*Repo, error) {
 			return nil
 		}
 		if stack[name] {
-			return errors.New("repos.Registry.TopologicalOrder: dependency cycle")
+			return core.E("repos.Registry.TopologicalOrder", "dependency cycle", nil)
 		}
 		repo := byName[name]
 		if repo == nil {
@@ -180,7 +173,7 @@ func (r *Registry) TopologicalOrder() ([]*Repo, error) {
 
 func LoadRegistry(m coreio.Medium, path string) (*Registry, error) {
 	if m == nil {
-		return nil, errors.New("repos.LoadRegistry: medium is required")
+		return nil, core.E("repos.LoadRegistry", "medium is required", nil)
 	}
 	raw, err := m.Read(path)
 	if err != nil {
@@ -200,7 +193,7 @@ func LoadRegistry(m coreio.Medium, path string) (*Registry, error) {
 		repo.Name = name
 		repo.registry = &r
 		if repo.Path == "" {
-			repo.Path = filepath.Join(r.BasePath, name)
+			repo.Path = filepathx.Join(r.BasePath, name)
 		}
 	}
 	r.medium = m
@@ -209,12 +202,12 @@ func LoadRegistry(m coreio.Medium, path string) (*Registry, error) {
 
 func FindRegistry(m coreio.Medium) (string, error) {
 	if m == nil {
-		return "", errors.New("repos.FindRegistry: medium is required")
+		return "", core.E("repos.FindRegistry", "medium is required", nil)
 	}
-	candidates := []string{"repos.yaml", filepath.Join(".core", "repos.yaml")}
-	if env := strings.TrimSpace(osx.Getenv("CORE_REPOS")); env != "" {
-		for _, candidate := range strings.Split(env, string(filepath.ListSeparator)) {
-			candidate = strings.TrimSpace(candidate)
+	candidates := []string{"repos.yaml", filepathx.Join(".core", "repos.yaml")}
+	if env := core.Trim(osx.Getenv("CORE_REPOS")); env != "" {
+		for _, candidate := range core.Split(env, core.Env("PS")) {
+			candidate = core.Trim(candidate)
 			if candidate != "" {
 				candidates = append([]string{candidate}, candidates...)
 			}
@@ -223,8 +216,8 @@ func FindRegistry(m coreio.Medium) (string, error) {
 	if cwd, err := osx.Getwd(); err == nil {
 		dir := cwd
 		for {
-			candidates = append(candidates, filepath.Join(dir, ".core", "repos.yaml"))
-			parent := filepath.Dir(dir)
+			candidates = append(candidates, filepathx.Join(dir, ".core", "repos.yaml"))
+			parent := filepathx.Dir(dir)
 			if parent == dir {
 				break
 			}
@@ -232,7 +225,7 @@ func FindRegistry(m coreio.Medium) (string, error) {
 		}
 	}
 	if home, err := osx.UserHomeDir(); err == nil {
-		candidates = append(candidates, filepath.Join(home, ".core", "repos.yaml"))
+		candidates = append(candidates, filepathx.Join(home, ".core", "repos.yaml"))
 	}
 	for _, candidate := range candidates {
 		if m.Exists(candidate) {
@@ -244,7 +237,7 @@ func FindRegistry(m coreio.Medium) (string, error) {
 
 func ScanDirectory(m coreio.Medium, dir string) (*Registry, error) {
 	if m == nil {
-		return nil, errors.New("repos.ScanDirectory: medium is required")
+		return nil, core.E("repos.ScanDirectory", "medium is required", nil)
 	}
 	entries, err := m.List(dir)
 	if err != nil {
@@ -266,7 +259,7 @@ func ScanDirectory(m coreio.Medium, dir string) (*Registry, error) {
 
 func (r *Registry) Save(path string) error {
 	if r == nil {
-		return errors.New("repos.Registry.Save: registry is required")
+		return core.E("repos.Registry.Save", "registry is required", nil)
 	}
 	raw, err := yaml.Marshal(r)
 	if err != nil {
@@ -281,14 +274,14 @@ func (r *Registry) Save(path string) error {
 // SyncRepo fetches and resets a named repo to match its Forge remote branch.
 func (r *Registry) SyncRepo(ctx context.Context, name, remote, branch string) error {
 	if r == nil {
-		return errors.New("repos.Registry.SyncRepo: registry is required")
+		return core.E("repos.Registry.SyncRepo", "registry is required", nil)
 	}
 	repo, ok := r.Get(name)
 	if !ok {
-		return fmt.Errorf("repos.Registry.SyncRepo: repo %q not found", name)
+		return core.E("repos.Registry.SyncRepo", core.Sprintf("repo %q not found", name), nil)
 	}
 	if repo.Path == "" {
-		return fmt.Errorf("repos.Registry.SyncRepo: repo %q has no path", name)
+		return core.E("repos.Registry.SyncRepo", core.Sprintf("repo %q has no path", name), nil)
 	}
 	return git.SyncWithRemote(ctx, repo.Path, remote, branch)
 }

@@ -3,11 +3,12 @@
 package api
 
 import (
+	// Note: AX-6 — Provider routes expose HTTP status codes at the Gin boundary.
 	"net/http"
-	"strings"
 
 	"dappco.re/go/api"
 	coreprovider "dappco.re/go/api/pkg/provider"
+	core "dappco.re/go/core"
 	coreio "dappco.re/go/io"
 	"dappco.re/go/scm/marketplace"
 	"dappco.re/go/scm/repos"
@@ -98,7 +99,7 @@ func (p *ScmProvider) getMarketplaceModule(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "module not found"})
 		return
 	}
-	code := strings.TrimSpace(c.Param("code"))
+	code := core.Trim(c.Param("code"))
 	if code == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "code is required"})
 		return
@@ -130,7 +131,7 @@ func (p *ScmProvider) getRepo(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "repo not found"})
 		return
 	}
-	name := strings.TrimSpace(c.Param("name"))
+	name := core.Trim(c.Param("name"))
 	if name == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "name is required"})
 		return
@@ -163,7 +164,7 @@ func (p *ScmProvider) getInstalledModule(c *gin.Context) {
 	if c == nil {
 		return
 	}
-	code := strings.TrimSpace(c.Param("code"))
+	code := core.Trim(c.Param("code"))
 	if code == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "code is required"})
 		return
@@ -178,7 +179,7 @@ func (p *ScmProvider) getInstalledModule(c *gin.Context) {
 		return
 	}
 	for _, mod := range modules {
-		if strings.EqualFold(mod.Code, code) {
+		if core.Lower(mod.Code) == core.Lower(code) {
 			c.JSON(http.StatusOK, mod)
 			return
 		}

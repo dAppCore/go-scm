@@ -4,12 +4,12 @@ package git
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"iter"
+	// Note: AX-6 — Git operations intentionally spawn the system git binary.
 	"os/exec"
-	"path/filepath"
-	"strings"
+	"strconv"
+
+	core "dappco.re/go/core"
 )
 
 type GitError struct {
@@ -21,8 +21,8 @@ func (e *GitError) Error() string {
 	if e == nil {
 		return ""
 	}
-	if strings.TrimSpace(e.Stderr) != "" {
-		return strings.TrimSpace(e.Stderr)
+	if core.Trim(e.Stderr) != "" {
+		return core.Trim(e.Stderr)
 	}
 	if e.Err != nil {
 		return e.Err.Error()
@@ -78,8 +78,8 @@ func IsNonFastForward(err error) bool {
 	if err == nil {
 		return false
 	}
-	msg := strings.ToLower(err.Error())
-	return strings.Contains(msg, "non-fast-forward") || strings.Contains(msg, "fetch first") || strings.Contains(msg, "rejected")
+	msg := core.Lower(err.Error())
+	return core.Contains(msg, "non-fast-forward") || core.Contains(msg, "fetch first") || core.Contains(msg, "rejected")
 }
 
 func runGit(ctx context.Context, path string, args ...string) ([]byte, []byte, error) {
@@ -87,7 +87,7 @@ func runGit(ctx context.Context, path string, args ...string) ([]byte, []byte, e
 		ctx = context.Background()
 	}
 	cmd := exec.CommandContext(ctx, "git", append([]string{"-C", path}, args...)...)
-	stdout, stderr := &strings.Builder{}, &strings.Builder{}
+	stdout, stderr := core.NewBuilder(), core.NewBuilder()
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 	err := cmd.Run()
@@ -119,10 +119,10 @@ func SyncWithRemote(ctx context.Context, path, remote, branch string) error {
 	if err := ensurePath(path); err != nil {
 		return err
 	}
-	if strings.TrimSpace(remote) == "" {
+	if core.Trim(remote) == "" {
 		remote = "origin"
 	}
-	if strings.TrimSpace(branch) == "" {
+	if core.Trim(branch) == "" {
 		branch = "dev"
 	}
 	if _, _, err := runGit(ctx, path, "fetch", remote, branch); err != nil {
@@ -138,7 +138,7 @@ func SyncMultiple(ctx context.Context, paths []string, names map[string]string, 
 	for _, path := range paths {
 		name := names[path]
 		if name == "" {
-			name = filepath.Base(path)
+			name = core.PathBase(path)
 		}
 		r := SyncResult{Name: name, Path: path}
 		if err := SyncWithRemote(ctx, path, remote, branch); err != nil {
@@ -156,7 +156,7 @@ func PushMultiple(ctx context.Context, paths []string, names map[string]string) 
 	for _, path := range paths {
 		name := names[path]
 		if name == "" {
-			name = filepath.Base(path)
+			name = core.PathBase(path)
 		}
 		r := PushResult{Name: name, Path: path}
 		if err := Push(ctx, path); err != nil {
@@ -174,7 +174,7 @@ func PullMultiple(ctx context.Context, paths []string, names map[string]string) 
 	for _, path := range paths {
 		name := names[path]
 		if name == "" {
-			name = filepath.Base(path)
+			name = core.PathBase(path)
 		}
 		r := PushResult{Name: name, Path: path}
 		if err := Pull(ctx, path); err != nil {
@@ -192,7 +192,7 @@ func PushMultipleIter(ctx context.Context, paths []string, names map[string]stri
 		for _, path := range paths {
 			name := names[path]
 			if name == "" {
-				name = filepath.Base(path)
+				name = core.PathBase(path)
 			}
 			r := PushResult{Name: name, Path: path}
 			if err := Push(ctx, path); err != nil {
@@ -212,7 +212,7 @@ func PullMultipleIter(ctx context.Context, paths []string, names map[string]stri
 		for _, path := range paths {
 			name := names[path]
 			if name == "" {
-				name = filepath.Base(path)
+				name = core.PathBase(path)
 			}
 			r := PushResult{Name: name, Path: path}
 			if err := Pull(ctx, path); err != nil {
@@ -232,7 +232,7 @@ func Status(ctx context.Context, opts StatusOptions) []RepoStatus {
 	for _, path := range opts.Paths {
 		name := opts.Names[path]
 		if name == "" {
-			name = filepath.Base(path)
+			name = core.PathBase(path)
 		}
 		st := RepoStatus{Name: name, Path: path}
 		outText, _, err := runGit(ctx, path, "status", "--porcelain", "--branch")
@@ -252,7 +252,7 @@ func StatusIter(ctx context.Context, opts StatusOptions) iter.Seq[RepoStatus] {
 		for _, path := range opts.Paths {
 			name := opts.Names[path]
 			if name == "" {
-				name = filepath.Base(path)
+				name = core.PathBase(path)
 			}
 			st := RepoStatus{Name: name, Path: path}
 			out, _, err := runGit(ctx, path, "status", "--porcelain", "--branch")
@@ -272,11 +272,11 @@ func StatusIter(ctx context.Context, opts StatusOptions) iter.Seq[RepoStatus] {
 }
 
 func parseStatus(output string, st *RepoStatus) {
-	for _, line := range strings.Split(output, "\n") {
-		line = strings.TrimSpace(line)
+	for _, line := range core.Split(output, "\n") {
+		line = core.Trim(line)
 		switch {
-		case strings.HasPrefix(line, "## "):
-			parseBranchLine(strings.TrimPrefix(line, "## "), st)
+		case core.HasPrefix(line, "## "):
+			parseBranchLine(core.TrimPrefix(line, "## "), st)
 		case len(line) >= 2:
 			switch {
 			case line[0] == '?' && line[1] == '?':
@@ -291,31 +291,36 @@ func parseStatus(output string, st *RepoStatus) {
 }
 
 func parseBranchLine(line string, st *RepoStatus) {
-	parts := strings.Split(line, "...")
+	parts := core.Split(line, "...")
 	if len(parts) > 0 {
-		st.Branch = strings.TrimSpace(parts[0])
+		st.Branch = core.Trim(parts[0])
 	}
 	if len(parts) < 2 {
 		return
 	}
 	rest := parts[1]
-	if idx := strings.Index(rest, "["); idx >= 0 {
-		ranges := strings.TrimSuffix(rest[idx+1:], "]")
-		for _, part := range strings.Split(ranges, ",") {
-			part = strings.TrimSpace(part)
+	if rangeParts := core.SplitN(rest, "[", 2); len(rangeParts) == 2 {
+		ranges := core.TrimSuffix(rangeParts[1], "]")
+		for _, part := range core.Split(ranges, ",") {
+			part = core.Trim(part)
 			switch {
-			case strings.HasPrefix(part, "ahead "):
-				fmt.Sscanf(strings.TrimPrefix(part, "ahead "), "%d", &st.Ahead)
-			case strings.HasPrefix(part, "behind "):
-				fmt.Sscanf(strings.TrimPrefix(part, "behind "), "%d", &st.Behind)
+			case core.HasPrefix(part, "ahead "):
+				st.Ahead = parseCount(core.TrimPrefix(part, "ahead "))
+			case core.HasPrefix(part, "behind "):
+				st.Behind = parseCount(core.TrimPrefix(part, "behind "))
 			}
 		}
 	}
 }
 
 func ensurePath(path string) error {
-	if strings.TrimSpace(path) == "" {
-		return errors.New("git path is required")
+	if core.Trim(path) == "" {
+		return core.E("", "git path is required", nil)
 	}
 	return nil
+}
+
+func parseCount(raw string) int {
+	n, _ := strconv.Atoi(core.Trim(raw))
+	return n
 }
