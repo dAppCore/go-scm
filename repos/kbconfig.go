@@ -3,8 +3,11 @@
 package repos
 
 import (
+	// Note: AX-6 — Config APIs return standard errors for nil storage media.
 	"errors"
+	// Note: AX-6 — Wiki checkout paths use local filesystem path semantics.
 	"path/filepath"
+	// Note: AX-6 — Wiki remote URLs require suffix normalization.
 	"strings"
 
 	coreio "dappco.re/go/io"

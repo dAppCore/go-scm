@@ -3,8 +3,11 @@
 package repos
 
 import (
+	// Note: AX-6 — Config APIs return standard errors for nil storage media.
 	"errors"
+	// Note: AX-6 — Trigger names are matched case-insensitively.
 	"strings"
+	// Note: AX-6 — Work config exposes duration fields and defaults.
 	"time"
 
 	coreio "dappco.re/go/io"

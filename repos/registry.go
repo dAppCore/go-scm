@@ -3,12 +3,19 @@
 package repos
 
 import (
+	// Note: AX-6 — Git sync operations propagate cancellation through context.Context.
 	"context"
+	// Note: AX-6 — Registry APIs return standard errors for nil inputs and cycles.
 	"errors"
+	// Note: AX-6 — Repo lookup errors include dynamic repo names.
 	"fmt"
+	// Note: AX-6 — Registry discovery uses fs.ErrNotExist as the filesystem sentinel.
 	"io/fs"
+	// Note: AX-6 — Repo paths and .git checks use local filesystem path semantics.
 	"path/filepath"
+	// Note: AX-6 — Registry listing must be deterministic across map iteration.
 	"sort"
+	// Note: AX-6 — Registry filters and environment path lists need string normalization.
 	"strings"
 
 	coreio "dappco.re/go/io"

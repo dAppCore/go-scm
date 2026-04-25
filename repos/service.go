@@ -3,11 +3,17 @@
 package repos
 
 import (
+	// Note: AX-6 — Core action handlers and git sync accept context.Context.
 	"context"
+	// Note: AX-6 — Startup and registry lookups need standard sentinel error handling.
 	"errors"
+	// Note: AX-6 — Sync errors include dynamic repo names and registry state.
 	"fmt"
+	// Note: AX-6 — Registry discovery reads process cwd/home and filesystem state.
 	"os"
+	// Note: AX-6 — Registry paths are local filesystem paths, not slash-only paths.
 	"path/filepath"
+	// Note: AX-6 — Options are normalized from user-provided strings.
 	"strings"
 
 	core "dappco.re/go/core"

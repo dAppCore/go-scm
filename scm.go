@@ -4,7 +4,9 @@
 package scm
 
 import (
+	// Note: AX-6 — Core lifecycle hooks use context.Context directly.
 	"context"
+	// Note: AX-6 — Constructor failures return standard error values through core.Result.
 	"errors"
 
 	core "dappco.re/go/core"
