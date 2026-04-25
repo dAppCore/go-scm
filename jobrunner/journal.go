@@ -3,13 +3,13 @@
 package jobrunner
 
 import (
-	"encoding/json"
-	"errors"
-	"fmt"
-	"os"
-	"path/filepath"
+	// Note: AX-6 — Journal appends are serialized by a process-local mutex.
 	"sync"
+	// Note: AX-6 — Journal entries use UTC timestamps and date partitions.
 	"time"
+
+	// Note: AX-6 — Core provides JSON, path, filesystem, and structured error primitives.
+	core "dappco.re/go/core"
 )
 
 // Journal writes ActionResult entries to date-partitioned JSONL files.
@@ -51,22 +51,18 @@ type ResultSnapshot struct {
 // NewJournal creates a new Journal rooted at baseDir.
 func NewJournal(baseDir string) (*Journal, error) {
 	if baseDir == "" {
-		return nil, errors.New("jobrunner.NewJournal: baseDir is required")
+		return nil, core.E("jobrunner.NewJournal", "baseDir is required", nil)
 	}
-	abs, err := filepath.Abs(baseDir)
-	if err != nil {
-		return nil, fmt.Errorf("jobrunner.NewJournal: resolve baseDir: %w", err)
-	}
-	return &Journal{baseDir: abs}, nil
+	return &Journal{baseDir: absoluteJournalPath(baseDir)}, nil
 }
 
 // Append writes a journal entry for the given signal and result.
 func (j *Journal) Append(signal *PipelineSignal, result *ActionResult) error {
 	if j == nil {
-		return errors.New("jobrunner.Journal.Append: journal is required")
+		return core.E("jobrunner.Journal.Append", "journal is required", nil)
 	}
 	if result == nil {
-		return errors.New("jobrunner.Journal.Append: result is required")
+		return core.E("jobrunner.Journal.Append", "result is required", nil)
 	}
 
 	ts := result.Timestamp
@@ -99,30 +95,63 @@ func (j *Journal) Append(signal *PipelineSignal, result *ActionResult) error {
 		Cycle: result.Cycle,
 	}
 
-	payload, err := json.Marshal(entry)
-	if err != nil {
-		return fmt.Errorf("jobrunner.Journal.Append: marshal entry: %w", err)
+	marshalResult := core.JSONMarshal(entry)
+	if !marshalResult.OK {
+		return core.E("jobrunner.Journal.Append", "marshal entry", resultCause(marshalResult))
+	}
+	payload, ok := marshalResult.Value.([]byte)
+	if !ok {
+		return core.E("jobrunner.Journal.Append", "marshal entry returned invalid payload", nil)
 	}
 
-	filePath := filepath.Join(j.baseDir, ts.Format("2006"), ts.Format("01"), ts.Format("02")+".jsonl")
+	filePath := core.Path(j.baseDir, ts.Format("2006"), ts.Format("01"), ts.Format("02")+".jsonl")
 
 	j.mu.Lock()
 	defer j.mu.Unlock()
 
-	if err := os.MkdirAll(filepath.Dir(filePath), 0o755); err != nil {
-		return fmt.Errorf("jobrunner.Journal.Append: create directories: %w", err)
+	fs := (&core.Fs{}).NewUnrestricted()
+	if r := fs.EnsureDir(core.PathDir(filePath)); !r.OK {
+		return core.E("jobrunner.Journal.Append", "create directories", resultCause(r))
+	}
+	if !fs.Exists(filePath) {
+		if r := fs.WriteMode(filePath, "", 0o600); !r.OK {
+			return core.E("jobrunner.Journal.Append", "create journal", resultCause(r))
+		}
 	}
 
-	f, err := os.OpenFile(filePath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o600)
-	if err != nil {
-		return fmt.Errorf("jobrunner.Journal.Append: open journal: %w", err)
+	openResult := fs.Append(filePath)
+	if !openResult.OK {
+		return core.E("jobrunner.Journal.Append", "open journal", resultCause(openResult))
+	}
+	f, ok := openResult.Value.(journalWriteCloser)
+	if !ok {
+		return core.E("jobrunner.Journal.Append", "open journal returned invalid writer", nil)
 	}
 	defer f.Close()
 
 	if _, err := f.Write(append(payload, '\n')); err != nil {
-		return fmt.Errorf("jobrunner.Journal.Append: write journal: %w", err)
+		return core.E("jobrunner.Journal.Append", "write journal", err)
 	}
 	return nil
+}
+
+func absoluteJournalPath(path string) string {
+	if core.PathIsAbs(path) {
+		return core.Path(path)
+	}
+	return core.Path(core.Env("DIR_CWD"), path)
+}
+
+func resultCause(r core.Result) error {
+	if err, ok := r.Value.(error); ok {
+		return err
+	}
+	return nil
+}
+
+type journalWriteCloser interface {
+	Write([]byte) (int, error)
+	Close() error
 }
 
 func repoRef(signal *PipelineSignal) string {
