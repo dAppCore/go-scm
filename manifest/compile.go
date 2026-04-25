@@ -29,7 +29,27 @@ type CompiledManifest struct {
 	Build    BuildInfo `json:"build,omitempty" yaml:"build,omitempty"`
 }
 
-func Compile(m *Manifest, opts CompileOptions) (*CompiledManifest, error) {
+func Compile(m *Manifest, info BuildInfo) ([]byte, error) {
+	if err := validateManifest(m); err != nil {
+		return nil, err
+	}
+	cp := *m
+	cp.Build = normalizeBuildInfo(info)
+	return json.Marshal(&cp)
+}
+
+func ParseCoreJSON(data []byte) (*Manifest, error) {
+	var m Manifest
+	if err := json.Unmarshal(data, &m); err != nil {
+		return nil, err
+	}
+	if err := validateManifest(&m); err != nil {
+		return nil, err
+	}
+	return &m, nil
+}
+
+func CompileWithOptions(m *Manifest, opts CompileOptions) (*CompiledManifest, error) {
 	if err := validateManifest(m); err != nil {
 		return nil, err
 	}

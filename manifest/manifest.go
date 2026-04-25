@@ -33,6 +33,7 @@ type DaemonSpec struct {
 type BuildInfo struct {
 	Targets   []string `yaml:"targets,omitempty" json:"targets,omitempty"`
 	Checksums string   `yaml:"checksums,omitempty" json:"checksums,omitempty"`
+	SHA256    string   `yaml:"sha256,omitempty" json:"sha256,omitempty"`
 }
 
 type Manifest struct {
@@ -56,6 +57,7 @@ type Manifest struct {
 	Permissions Permissions           `yaml:"permissions,omitempty" json:"permissions,omitempty"`
 	Modules     []string              `yaml:"modules,omitempty" json:"modules,omitempty"`
 	Daemons     map[string]DaemonSpec `yaml:"daemons,omitempty" json:"daemons,omitempty"`
+	Build       BuildInfo             `yaml:"build,omitempty" json:"build,omitempty"`
 }
 
 func Parse(data []byte) (*Manifest, error) {

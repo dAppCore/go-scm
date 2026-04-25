@@ -14,13 +14,14 @@ func TestCompileIncludesBuildInfo(t *testing.T) {
 		SignKey: "ed25519:public-key",
 	}
 
-	cm, err := Compile(m, CompileOptions{
+	cm, err := CompileWithOptions(m, CompileOptions{
 		Commit:  "abc123",
 		Tag:     "v0.3.0",
 		BuiltBy: "codex",
 		Build: BuildInfo{
 			Targets:   []string{"linux/amd64", "darwin/arm64"},
 			Checksums: "SHA-256",
+			SHA256:    "abc123",
 		},
 	})
 	if err != nil {
@@ -43,6 +44,9 @@ func TestCompileIncludesBuildInfo(t *testing.T) {
 	}
 	if parsed.Build.Checksums != cm.Build.Checksums {
 		t.Fatalf("build info did not round-trip: %#v", parsed.Build)
+	}
+	if parsed.Build.SHA256 != cm.Build.SHA256 {
+		t.Fatalf("build sha256 did not round-trip: %#v", parsed.Build)
 	}
 	if parsed.SignKey != m.SignKey {
 		t.Fatalf("sign key did not round-trip: %q", parsed.SignKey)
