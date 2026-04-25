@@ -3,12 +3,16 @@
 package api
 
 import (
+	"crypto/ed25519" // intrinsic
+	"encoding/base64"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
 	coreio "dappco.re/go/io"
+	"dappco.re/go/scm/manifest"
 	"dappco.re/go/scm/marketplace"
 	"dappco.re/go/scm/repos"
 	"github.com/gin-gonic/gin"
@@ -19,24 +23,19 @@ func TestScmProviderRoutesExposeState(t *testing.T) {
 
 	medium := coreio.NewMockMedium()
 	installer := marketplace.NewInstaller(medium, "modules")
-	if err := installer.Install(nil, marketplace.Module{
-		Code:    "go-io",
-		Name:    "Core I/O",
-		Repo:    "ssh://git@example.com/core/go-io.git",
-		SignKey: "ed25519:public-key",
-	}); err != nil {
+	mod := signedMarketplaceModule(t, marketplace.Module{
+		Code: "go-io",
+		Name: "Core I/O",
+		Repo: "ssh://git@example.com/core/go-io.git",
+	})
+	if err := installer.Install(nil, mod); err != nil {
 		t.Fatalf("install module: %v", err)
 	}
 
 	provider := NewProvider(
 		&marketplace.Index{
 			Version: 1,
-			Modules: []marketplace.Module{{
-				Code:    "go-io",
-				Name:    "Core I/O",
-				Repo:    "ssh://git@example.com/core/go-io.git",
-				SignKey: "ed25519:public-key",
-			}},
+			Modules: []marketplace.Module{mod},
 		},
 		installer,
 		&repos.Registry{
@@ -100,6 +99,27 @@ func TestScmProviderMetadataExposesStreamAndElement(t *testing.T) {
 	if element.Source != "ui/app.js" {
 		t.Fatalf("unexpected element source: %q", element.Source)
 	}
+}
+
+func signedMarketplaceModule(t *testing.T, mod marketplace.Module) marketplace.Module {
+	t.Helper()
+	pub, priv, err := ed25519.GenerateKey(nil)
+	if err != nil {
+		t.Fatalf("generate key: %v", err)
+	}
+	mod.SignKey = base64.StdEncoding.EncodeToString(pub)
+	cp := mod
+	cp.Sign = ""
+	payload, err := json.Marshal(cp)
+	if err != nil {
+		t.Fatalf("module payload: %v", err)
+	}
+	sig := &manifest.Manifest{SignKey: mod.SignKey}
+	if err := manifest.Sign(sig, payload, priv); err != nil {
+		t.Fatalf("sign module: %v", err)
+	}
+	mod.Sign = sig.Sign
+	return mod
 }
 
 func assertRouteOK(t *testing.T, router *gin.Engine, path, want string) {

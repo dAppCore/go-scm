@@ -3,12 +3,12 @@
 package manifest
 
 import (
-	"crypto/ed25519"
-	"crypto/sha256"
+	"crypto/ed25519" // intrinsic
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"fmt"
+
+	core "dappco.re/go/core"
 )
 
 func canonicalManifestBytes(m *Manifest) ([]byte, error) {
@@ -17,44 +17,48 @@ func canonicalManifestBytes(m *Manifest) ([]byte, error) {
 	}
 	cp := *m
 	cp.Sign = ""
+	cp.SignKey = ""
 	return json.Marshal(cp)
 }
 
-func Sign(m *Manifest, priv ed25519.PrivateKey) error {
+func Sign(m *Manifest, payload []byte, priv ed25519.PrivateKey) error {
 	if m == nil {
 		return errors.New("manifest.Sign: manifest is required")
 	}
-	if len(priv) == 0 {
+	if len(priv) != ed25519.PrivateKeySize {
 		return errors.New("manifest.Sign: private key is required")
 	}
-	payload, err := canonicalManifestBytes(m)
-	if err != nil {
-		return err
-	}
-	sum := sha256.Sum256(payload)
-	sig := ed25519.Sign(priv, sum[:])
+	sig := ed25519.Sign(priv, payload)
 	m.Sign = base64.StdEncoding.EncodeToString(sig)
 	return nil
 }
 
-func Verify(m *Manifest, pub ed25519.PublicKey) (bool, error) {
+func Verify(m *Manifest, payload []byte) error {
 	if m == nil {
-		return false, errors.New("manifest.Verify: manifest is required")
+		return core.E("manifest.Verify", "manifest is required", nil)
 	}
-	if len(pub) == 0 {
-		return false, errors.New("manifest.Verify: public key is required")
+	if m.SignKey == "" {
+		return core.E("manifest.Verify", "sign key is required", nil)
 	}
 	if m.Sign == "" {
-		return false, nil
+		return core.E("manifest.Verify", "signature is required", nil)
 	}
-	payload, err := canonicalManifestBytes(m)
+	pub, err := base64.StdEncoding.DecodeString(m.SignKey)
 	if err != nil {
-		return false, err
+		return core.E("manifest.Verify", "decode sign key", err)
 	}
-	sum := sha256.Sum256(payload)
 	sig, err := base64.StdEncoding.DecodeString(m.Sign)
 	if err != nil {
-		return false, fmt.Errorf("manifest.Verify: decode signature: %w", err)
+		return core.E("manifest.Verify", "decode signature", err)
 	}
-	return ed25519.Verify(pub, sum[:], sig), nil
+	if len(pub) != ed25519.PublicKeySize {
+		return core.E("manifest.Verify", "invalid sign key", nil)
+	}
+	if len(sig) != ed25519.SignatureSize {
+		return core.E("manifest.Verify", "invalid signature", nil)
+	}
+	if !ed25519.Verify(ed25519.PublicKey(pub), payload, sig) {
+		return core.E("manifest.Verify", "signature verification failed", nil)
+	}
+	return nil
 }

@@ -15,6 +15,7 @@ type Module struct {
 	Name     string `json:"name"`
 	Version  string `json:"version,omitempty"`
 	Repo     string `json:"repo"`
+	Sign     string `json:"sign,omitempty"`
 	SignKey  string `json:"sign_key"`
 	Category string `json:"category"`
 }
@@ -90,6 +91,7 @@ func BuildIndexFromManifests(manifests []*manifest.Manifest) *Index {
 			Name:     m.Name,
 			Version:  strings.TrimSpace(m.Version),
 			Repo:     "",
+			Sign:     m.Sign,
 			SignKey:  m.SignKey,
 			Category: firstCategory(m.Modules, m.Layout),
 		}

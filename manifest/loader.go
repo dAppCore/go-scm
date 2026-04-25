@@ -3,7 +3,8 @@
 package manifest
 
 import (
-	"crypto/ed25519"
+	"crypto/ed25519" // intrinsic
+	"encoding/base64"
 	"errors"
 
 	coreio "dappco.re/go/io"
@@ -27,12 +28,18 @@ func LoadVerified(medium coreio.Medium, root string, pub ed25519.PublicKey) (*Ma
 	if err != nil {
 		return nil, err
 	}
-	ok, err := Verify(m, pub)
+	verifyManifest := m
+	if len(pub) > 0 {
+		cp := *m
+		cp.SignKey = base64.StdEncoding.EncodeToString(pub)
+		verifyManifest = &cp
+	}
+	payload, err := canonicalManifestBytes(m)
 	if err != nil {
 		return nil, err
 	}
-	if !ok {
-		return nil, errors.New("manifest.LoadVerified: signature verification failed")
+	if err := Verify(verifyManifest, payload); err != nil {
+		return nil, err
 	}
 	return m, nil
 }

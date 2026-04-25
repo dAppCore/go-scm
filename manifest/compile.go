@@ -3,7 +3,7 @@
 package manifest
 
 import (
-	"crypto/ed25519"
+	"crypto/ed25519" // intrinsic
 	"encoding/json"
 	"errors"
 	"time"
@@ -55,7 +55,11 @@ func CompileWithOptions(m *Manifest, opts CompileOptions) (*CompiledManifest, er
 	}
 	cp := *m
 	if len(opts.SignKey) > 0 && cp.Sign == "" {
-		if err := Sign(&cp, opts.SignKey); err != nil {
+		payload, err := canonicalManifestBytes(&cp)
+		if err != nil {
+			return nil, err
+		}
+		if err := Sign(&cp, payload, opts.SignKey); err != nil {
 			return nil, err
 		}
 	}

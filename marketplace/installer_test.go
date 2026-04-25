@@ -4,23 +4,25 @@ package marketplace
 
 import (
 	"context"
+	"crypto/ed25519" // intrinsic
+	"encoding/base64"
 	"path/filepath"
 	"testing"
 
 	coreio "dappco.re/go/io"
+	"dappco.re/go/scm/manifest"
 )
 
 func TestInstallerPersistsInstalledModulesToMedium(t *testing.T) {
 	medium := coreio.NewMockMedium()
 
 	installer := NewInstaller(medium, "modules")
-	mod := Module{
+	mod := signedTestModule(t, Module{
 		Code:    "go-io",
 		Name:    "Core I/O",
 		Version: "0.3.0",
 		Repo:    "ssh://example.org/core/go-io.git",
-		SignKey: "ed25519:public-key",
-	}
+	})
 
 	if err := installer.Install(context.Background(), mod); err != nil {
 		t.Fatalf("install: %v", err)
@@ -67,4 +69,42 @@ func TestInstallerPersistsInstalledModulesToMedium(t *testing.T) {
 	if len(installed) != 0 {
 		t.Fatalf("expected no installed modules after remove, got %#v", installed)
 	}
+}
+
+func TestInstallerRejectsVerifyFailBeforeMediumWrite(t *testing.T) {
+	medium := coreio.NewMockMedium()
+	installer := NewInstaller(medium, "modules")
+	mod := signedTestModule(t, Module{
+		Code:    "go-io",
+		Name:    "Core I/O",
+		Version: "0.3.0",
+		Repo:    "ssh://example.org/core/go-io.git",
+	})
+	mod.Name = "Tampered Core I/O"
+
+	if err := installer.Install(context.Background(), mod); err == nil {
+		t.Fatal("expected install to reject invalid signature")
+	}
+	if _, ok := medium.Files[filepath.Join("modules", "go-io", "module.json")]; ok {
+		t.Fatal("module.json was written after signature verification failed")
+	}
+}
+
+func signedTestModule(t *testing.T, mod Module) Module {
+	t.Helper()
+	pub, priv, err := ed25519.GenerateKey(nil)
+	if err != nil {
+		t.Fatalf("generate key: %v", err)
+	}
+	mod.SignKey = base64.StdEncoding.EncodeToString(pub)
+	payload, err := moduleVerificationPayload(mod)
+	if err != nil {
+		t.Fatalf("module payload: %v", err)
+	}
+	sig := &manifest.Manifest{SignKey: mod.SignKey}
+	if err := manifest.Sign(sig, payload, priv); err != nil {
+		t.Fatalf("sign module: %v", err)
+	}
+	mod.Sign = sig.Sign
+	return mod
 }

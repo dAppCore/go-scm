@@ -3,6 +3,8 @@
 package manifest
 
 import (
+	"crypto/ed25519" // intrinsic
+	"encoding/base64"
 	"encoding/json"
 	"testing"
 )
@@ -81,5 +83,60 @@ func TestManifest_ParseCoreJSON_Bad_Malformed(t *testing.T) {
 	_, err := ParseCoreJSON([]byte(`{"code":`))
 	if err == nil {
 		t.Fatal("expected malformed JSON error")
+	}
+}
+
+func TestManifest_Verify_Good(t *testing.T) {
+	pub, priv, err := ed25519.GenerateKey(nil)
+	if err != nil {
+		t.Fatalf("generate key: %v", err)
+	}
+	m := &Manifest{SignKey: base64.StdEncoding.EncodeToString(pub)}
+	payload := []byte(`{"code":"go-io","version":"0.3.0"}`)
+
+	if err := Sign(m, payload, priv); err != nil {
+		t.Fatalf("sign: %v", err)
+	}
+	if m.Sign == "" {
+		t.Fatal("expected signature to be populated")
+	}
+	if err := Verify(m, payload); err != nil {
+		t.Fatalf("verify: %v", err)
+	}
+}
+
+func TestManifest_Verify_Bad_WrongKey(t *testing.T) {
+	_, priv, err := ed25519.GenerateKey(nil)
+	if err != nil {
+		t.Fatalf("generate signing key: %v", err)
+	}
+	wrongPub, _, err := ed25519.GenerateKey(nil)
+	if err != nil {
+		t.Fatalf("generate wrong key: %v", err)
+	}
+	m := &Manifest{SignKey: base64.StdEncoding.EncodeToString(wrongPub)}
+	payload := []byte(`{"code":"go-io","version":"0.3.0"}`)
+
+	if err := Sign(m, payload, priv); err != nil {
+		t.Fatalf("sign: %v", err)
+	}
+	if err := Verify(m, payload); err == nil {
+		t.Fatal("expected wrong key verification to fail")
+	}
+}
+
+func TestManifest_Verify_Bad_TamperedPayload(t *testing.T) {
+	pub, priv, err := ed25519.GenerateKey(nil)
+	if err != nil {
+		t.Fatalf("generate key: %v", err)
+	}
+	m := &Manifest{SignKey: base64.StdEncoding.EncodeToString(pub)}
+	payload := []byte(`{"code":"go-io","version":"0.3.0"}`)
+
+	if err := Sign(m, payload, priv); err != nil {
+		t.Fatalf("sign: %v", err)
+	}
+	if err := Verify(m, []byte(`{"code":"go-io","version":"0.3.1"}`)); err == nil {
+		t.Fatal("expected tampered payload verification to fail")
 	}
 }

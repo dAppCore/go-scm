@@ -49,6 +49,9 @@ func (i *Installer) Install(ctx context.Context, mod Module) error {
 	if mod.Code == "" {
 		return errors.New("marketplace.Installer.Install: module code is required")
 	}
+	if err := verifyModuleSignature(mod); err != nil {
+		return err
+	}
 	entry := InstalledModule{
 		Code:        mod.Code,
 		Name:        mod.Name,
@@ -66,6 +69,23 @@ func (i *Installer) Install(ctx context.Context, mod Module) error {
 		return err
 	}
 	return nil
+}
+
+func verifyModuleSignature(mod Module) error {
+	payload, err := moduleVerificationPayload(mod)
+	if err != nil {
+		return err
+	}
+	return manifest.Verify(&manifest.Manifest{
+		Sign:    mod.Sign,
+		SignKey: mod.SignKey,
+	}, payload)
+}
+
+func moduleVerificationPayload(mod Module) ([]byte, error) {
+	cp := mod
+	cp.Sign = ""
+	return jsonx.Marshal(cp)
 }
 
 func (i *Installer) Installed() ([]InstalledModule, error) {
