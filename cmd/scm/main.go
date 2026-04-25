@@ -5,6 +5,10 @@ package main
 import (
 	core "dappco.re/go/core"
 	scm "dappco.re/go/scm"
+	compilecmd "dappco.re/go/scm/cmd/compile"
+	pkgcmd "dappco.re/go/scm/cmd/pkg"
+	signcmd "dappco.re/go/scm/cmd/sign"
+	verifycmd "dappco.re/go/scm/cmd/verify"
 )
 
 func main() {
@@ -20,6 +24,10 @@ func newApp() *core.Core {
 
 	app.Command("health", core.Command{Action: health(app)})
 	app.Command("dev/health", core.Command{Action: health(app)})
+	compilecmd.Register(app)
+	signcmd.Register(app)
+	verifycmd.Register(app)
+	pkgcmd.Register(app)
 
 	return app
 }
