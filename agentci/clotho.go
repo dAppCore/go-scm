@@ -3,13 +3,10 @@
 package agentci
 
 import (
-	// Note: bytes.Equal/TrimSpace are retained for byte-level output comparison in the verifier path.
-	"bytes"
 	// Note: context.Context is retained as the public cancellation contract for Spinner.Weave.
 	"context"
-	// Note: strings.EqualFold is retained for agent and strategy matching without broad refactors in agentci policy code.
-	"strings"
 
+	"dappco.re/go/core"
 	"dappco.re/go/scm/jobrunner"
 )
 
@@ -37,7 +34,7 @@ func (s *Spinner) resolveAgent(agentName string) (string, AgentConfig, bool) {
 	}
 
 	for name, cfg := range s.Agents {
-		if strings.EqualFold(name, agentName) || strings.EqualFold(cfg.ForgejoUser, agentName) {
+		if equalFold(name, agentName) || equalFold(cfg.ForgejoUser, agentName) {
 			return name, cfg, true
 		}
 	}
@@ -63,18 +60,18 @@ func (s *Spinner) DeterminePlan(signal *jobrunner.PipelineSignal, agentName stri
 	if signal != nil {
 		critical = signal.IsDraft ||
 			signal.HasUnresolvedThreads() ||
-			(signal.CheckStatus != "" && !strings.EqualFold(signal.CheckStatus, "SUCCESS")) ||
-			(signal.Mergeable != "" && !strings.EqualFold(signal.Mergeable, "MERGEABLE")) ||
+			(signal.CheckStatus != "" && !equalFold(signal.CheckStatus, "SUCCESS")) ||
+			(signal.Mergeable != "" && !equalFold(signal.Mergeable, "MERGEABLE")) ||
 			signal.NeedsCoding
 	}
 
 	if ok {
-		if agent.DualRun || strings.EqualFold(agent.SecurityLevel, "high") {
+		if agent.DualRun || equalFold(agent.SecurityLevel, "high") {
 			return RunModeClothoVerified
 		}
 	}
 
-	if strings.EqualFold(s.Config.Strategy, string(RunModeClothoVerified)) && critical {
+	if equalFold(s.Config.Strategy, string(RunModeClothoVerified)) && critical {
 		return RunModeClothoVerified
 	}
 	return RunModeDirect
@@ -86,7 +83,7 @@ func (s *Spinner) FindByForgejoUser(forgejoUser string) (string, AgentConfig, bo
 		return "", AgentConfig{}, false
 	}
 	for name, agent := range s.Agents {
-		if strings.EqualFold(name, forgejoUser) || strings.EqualFold(agent.ForgejoUser, forgejoUser) {
+		if equalFold(name, forgejoUser) || equalFold(agent.ForgejoUser, forgejoUser) {
 			return name, agent, true
 		}
 	}
@@ -109,5 +106,9 @@ func (s *Spinner) Weave(ctx context.Context, primaryOutput, signedOutput []byte)
 			return false, err
 		}
 	}
-	return bytes.Equal(bytes.TrimSpace(primaryOutput), bytes.TrimSpace(signedOutput)), nil
+	return core.Trim(string(primaryOutput)) == core.Trim(string(signedOutput)), nil
+}
+
+func equalFold(left, right string) bool {
+	return core.Lower(left) == core.Lower(right)
 }
