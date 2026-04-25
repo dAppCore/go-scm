@@ -9,16 +9,10 @@ import (
 	"context"
 	// Note: encoding/json is retained for JSON and JSONL pretty-print processing.
 	"encoding/json"
-	// Note: errors.New is retained for stable processor validation errors.
-	"errors"
-	// Note: fmt.Fprintln/Sprintf are retained for Markdown and dispatcher message formatting.
-	"fmt"
-	// Note: filepath is retained for OS-specific output path and extension handling.
-	"path/filepath"
 	// Note: regexp is retained for HTML conversion patterns; no core equivalent covers compiled regexes.
 	"regexp"
-	// Note: strings helpers are retained for HTML/JSON text normalization in conversion routines.
-	"strings"
+
+	core "dappco.re/go/core"
 )
 
 var (
@@ -37,7 +31,7 @@ func (p *Processor) Name() string { return "process" }
 // Process reads files from the source directory, converts HTML or JSON to clean markdown, and writes the results.
 func (p *Processor) Process(ctx context.Context, cfg *Config) (*Result, error) {
 	if cfg == nil {
-		return nil, errors.New("collect.Processor.Process: config is required")
+		return nil, core.E("collect.Processor.Process", "config is required", nil)
 	}
 	if ctx == nil {
 		ctx = context.Background()
@@ -52,7 +46,7 @@ func (p *Processor) Process(ctx context.Context, cfg *Config) (*Result, error) {
 	}
 
 	dir := p.Dir
-	if strings.TrimSpace(dir) == "" {
+	if core.Trim(dir) == "" {
 		dir = p.Source
 	}
 	if dir == "" {
@@ -66,7 +60,7 @@ func (p *Processor) Process(ctx context.Context, cfg *Config) (*Result, error) {
 		return &Result{Source: p.Name()}, nil
 	}
 	if cfg.Output == nil {
-		return nil, errors.New("collect.Processor.Process: output medium is required")
+		return nil, core.E("collect.Processor.Process", "output medium is required", nil)
 	}
 
 	entries, err := cfg.Output.List(dir)
@@ -85,18 +79,18 @@ func (p *Processor) Process(ctx context.Context, cfg *Config) (*Result, error) {
 		}
 		name := entry.Name()
 		if cfg.Dispatcher != nil {
-			cfg.Dispatcher.EmitProgress(p.Name(), fmt.Sprintf("Processing %s", name), nil)
+			cfg.Dispatcher.EmitProgress(p.Name(), core.Sprintf("Processing %s", name), nil)
 		}
-		raw, err := cfg.Output.Read(filepath.Join(dir, name))
+		raw, err := cfg.Output.Read(core.JoinPath(dir, name))
 		if err != nil {
 			result.Errors++
 			if cfg.Dispatcher != nil {
-				cfg.Dispatcher.EmitError(p.Name(), fmt.Sprintf("Failed to read %s: %v", name, err), nil)
+				cfg.Dispatcher.EmitError(p.Name(), core.Sprintf("Failed to read %s: %v", name, err), nil)
 			}
 			continue
 		}
 		var md string
-		switch strings.ToLower(filepath.Ext(name)) {
+		switch core.Lower(core.PathExt(name)) {
 		case ".html", ".htm":
 			md, err = HTMLToMarkdown(raw)
 		case ".json", ".jsonl":
@@ -107,34 +101,34 @@ func (p *Processor) Process(ctx context.Context, cfg *Config) (*Result, error) {
 		if err != nil {
 			result.Errors++
 			if cfg.Dispatcher != nil {
-				cfg.Dispatcher.EmitError(p.Name(), fmt.Sprintf("Failed to convert %s: %v", name, err), nil)
+				cfg.Dispatcher.EmitError(p.Name(), core.Sprintf("Failed to convert %s: %v", name, err), nil)
 			}
 			continue
 		}
-		outName := strings.TrimSuffix(name, filepath.Ext(name)) + ".md"
+		outName := core.TrimSuffix(name, core.PathExt(name)) + ".md"
 		outPath, err := writeResultFile(cfg, p.Name(), outName, md)
 		if err != nil {
 			result.Errors++
 			if cfg.Dispatcher != nil {
-				cfg.Dispatcher.EmitError(p.Name(), fmt.Sprintf("Failed to write %s: %v", outName, err), nil)
+				cfg.Dispatcher.EmitError(p.Name(), core.Sprintf("Failed to write %s: %v", outName, err), nil)
 			}
 			continue
 		}
 		result.Items++
 		result.Files = append(result.Files, outPath)
 		if cfg.Dispatcher != nil {
-			cfg.Dispatcher.EmitItem(p.Name(), fmt.Sprintf("Processed %s", name), nil)
+			cfg.Dispatcher.EmitItem(p.Name(), core.Sprintf("Processed %s", name), nil)
 		}
 	}
 	if cfg.Dispatcher != nil {
-		cfg.Dispatcher.EmitComplete(p.Name(), fmt.Sprintf("Processed %d files", result.Items), result)
+		cfg.Dispatcher.EmitComplete(p.Name(), core.Sprintf("Processed %d files", result.Items), result)
 	}
 	return result, nil
 }
 
 // HTMLToMarkdown is exported for testing.
 func HTMLToMarkdown(content string) (string, error) {
-	if strings.TrimSpace(content) == "" {
+	if core.Trim(content) == "" {
 		return "", nil
 	}
 	out := content
@@ -168,23 +162,23 @@ func HTMLToMarkdown(content string) (string, error) {
 		if href == "" {
 			href = match[2]
 		}
-		text := strings.TrimSpace(match[3])
+		text := core.Trim(match[3])
 		if href == "" {
 			return text
 		}
 		return "[" + text + "](" + href + ")"
 	})
 	out = htmlTagRe.ReplaceAllString(out, "")
-	return strings.TrimSpace(out), nil
+	return core.Trim(out), nil
 }
 
 // JSONToMarkdown is exported for testing.
 func JSONToMarkdown(content string) (string, error) {
-	if strings.TrimSpace(content) == "" {
+	if core.Trim(content) == "" {
 		return "", nil
 	}
 	buf := &bytes.Buffer{}
-	fmt.Fprintln(buf, "```json")
+	buf.WriteString("```json\n")
 	var value any
 	if err := json.Unmarshal([]byte(content), &value); err == nil {
 		enc := json.NewEncoder(buf)
@@ -193,12 +187,12 @@ func JSONToMarkdown(content string) (string, error) {
 			return "", err
 		}
 	} else {
-		lines := strings.Split(content, "\n")
+		lines := core.Split(content, "\n")
 		enc := json.NewEncoder(buf)
 		enc.SetIndent("", "  ")
 		encoded := false
 		for _, line := range lines {
-			line = strings.TrimSpace(line)
+			line = core.Trim(line)
 			if line == "" {
 				continue
 			}
@@ -218,6 +212,6 @@ func JSONToMarkdown(content string) (string, error) {
 			return "", nil
 		}
 	}
-	fmt.Fprintln(buf, "```")
-	return strings.TrimSpace(buf.String()), nil
+	buf.WriteString("```\n")
+	return core.Trim(buf.String()), nil
 }

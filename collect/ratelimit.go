@@ -5,18 +5,16 @@ package collect
 import (
 	// Note: context.Context is retained as the rate limiter cancellation contract.
 	"context"
-	// Note: fmt.Errorf is retained for wrapped gh CLI rate-limit errors.
-	"fmt"
-	// Note: os/exec is retained because rate-limit probing intentionally invokes the gh CLI.
+	// Note: AX-6 — structural boundary: gh CLI rate-limit probing intentionally invokes a binary until collect has a process-service boundary.
 	"os/exec"
 	// Note: strconv.Atoi is retained for parsing gh rate-limit output.
 	"strconv"
-	// Note: strings helpers are retained for parsing gh rate-limit output.
-	"strings"
 	// Note: sync.Mutex protects limiter state and has no core equivalent.
 	"sync"
 	// Note: time is retained for limiter delay calculations and timers.
 	"time"
+
+	core "dappco.re/go/core"
 )
 
 // RateLimiter tracks per-source rate limiting to avoid overwhelming APIs.
@@ -135,21 +133,22 @@ func (r *RateLimiter) CheckGitHubRateLimitCtx(ctx context.Context) (used, limit 
 	cmd := exec.CommandContext(ctx, "gh", "api", "rate_limit", "--jq", ".rate | \"\\(.used) \\(.limit)\"")
 	out, err := cmd.Output()
 	if err != nil {
-		return 0, 0, fmt.Errorf("collect.RateLimiter.CheckGitHubRateLimitCtx: %w", err)
+		return 0, 0, core.E("collect.RateLimiter.CheckGitHubRateLimitCtx", "gh api rate_limit", err)
 	}
 
-	parts := strings.Fields(strings.TrimSpace(string(out)))
+	trimmed := core.Trim(string(out))
+	parts := textFields(trimmed)
 	if len(parts) != 2 {
-		return 0, 0, fmt.Errorf("collect.RateLimiter.CheckGitHubRateLimitCtx: unexpected output %q", strings.TrimSpace(string(out)))
+		return 0, 0, core.E("collect.RateLimiter.CheckGitHubRateLimitCtx", core.Sprintf("unexpected output %q", trimmed), nil)
 	}
 
 	used, err = strconv.Atoi(parts[0])
 	if err != nil {
-		return 0, 0, fmt.Errorf("collect.RateLimiter.CheckGitHubRateLimitCtx: parse used: %w", err)
+		return 0, 0, core.E("collect.RateLimiter.CheckGitHubRateLimitCtx", "parse used", err)
 	}
 	limit, err = strconv.Atoi(parts[1])
 	if err != nil {
-		return 0, 0, fmt.Errorf("collect.RateLimiter.CheckGitHubRateLimitCtx: parse limit: %w", err)
+		return 0, 0, core.E("collect.RateLimiter.CheckGitHubRateLimitCtx", "parse limit", err)
 	}
 
 	if limit > 0 && float64(used)/float64(limit) >= 0.75 {

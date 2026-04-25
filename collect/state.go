@@ -5,21 +5,14 @@ package collect
 import (
 	// Note: encoding/json is retained for persisted state compatibility; core.JSON helpers do not expose MarshalIndent or streaming behavior.
 	"encoding/json"
-	// Note: errors.Is/New are retained for fs.ErrNotExist handling and stable state validation errors.
-	"errors"
-	// Note: fmt.Errorf is retained for wrapped state persistence errors.
-	"fmt"
 	// Note: io/fs is retained for fs.ErrNotExist from the configured coreio medium.
 	"io/fs"
-	// Note: filepath is retained for OS-specific state file normalization.
-	"path/filepath"
-	// Note: strings.TrimSpace is retained for state path validation without refactoring persistence setup.
-	"strings"
 	// Note: sync.Mutex protects the persisted state map and has no core equivalent.
 	"sync"
 	// Note: time.Time is retained for state timestamps serialized to disk.
 	"time"
 
+	core "dappco.re/go/core"
 	coreio "dappco.re/go/io"
 )
 
@@ -45,9 +38,9 @@ func NewState(m coreio.Medium, path string) *State {
 	if m == nil {
 		m = coreio.NewMemoryMedium()
 	}
-	statePath := strings.TrimSpace(path)
+	statePath := core.Trim(path)
 	if statePath != "" {
-		statePath = filepath.Clean(statePath)
+		statePath = core.CleanPath(statePath, core.Env("DS"))
 	}
 	return &State{medium: m, path: statePath, entries: make(map[string]*StateEntry)}
 }
@@ -85,24 +78,24 @@ func (s *State) Set(source string, entry *StateEntry) {
 // Load reads state from disk.
 func (s *State) Load() error {
 	if s == nil {
-		return errors.New("collect.State.Load: state is required")
+		return core.E("collect.State.Load", "state is required", nil)
 	}
 	if s.medium == nil || s.path == "" {
 		return nil
 	}
 	raw, err := s.medium.Read(s.path)
 	if err != nil {
-		if errors.Is(err, fs.ErrNotExist) {
+		if core.Is(err, fs.ErrNotExist) {
 			s.mu.Lock()
 			s.entries = make(map[string]*StateEntry)
 			s.mu.Unlock()
 			return nil
 		}
-		return fmt.Errorf("collect.State.Load: read: %w", err)
+		return core.E("collect.State.Load", "read", err)
 	}
 	var data map[string]*StateEntry
 	if err := json.Unmarshal([]byte(raw), &data); err != nil {
-		return fmt.Errorf("collect.State.Load: unmarshal: %w", err)
+		return core.E("collect.State.Load", "unmarshal", err)
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -116,7 +109,7 @@ func (s *State) Load() error {
 // Save writes state to disk.
 func (s *State) Save() error {
 	if s == nil {
-		return errors.New("collect.State.Save: state is required")
+		return core.E("collect.State.Save", "state is required", nil)
 	}
 	if s.medium == nil || s.path == "" {
 		return nil
@@ -125,16 +118,16 @@ func (s *State) Save() error {
 	defer s.mu.Unlock()
 	raw, err := json.MarshalIndent(s.entries, "", "  ")
 	if err != nil {
-		return fmt.Errorf("collect.State.Save: marshal: %w", err)
+		return core.E("collect.State.Save", "marshal", err)
 	}
-	dir := filepath.Dir(s.path)
+	dir := core.PathDir(s.path)
 	if dir != "." {
 		if err := s.medium.EnsureDir(dir); err != nil {
-			return fmt.Errorf("collect.State.Save: ensure dir: %w", err)
+			return core.E("collect.State.Save", "ensure dir", err)
 		}
 	}
 	if err := s.medium.Write(s.path, string(raw)); err != nil {
-		return fmt.Errorf("collect.State.Save: write: %w", err)
+		return core.E("collect.State.Save", "write", err)
 	}
 	return nil
 }

@@ -5,12 +5,8 @@ package collect
 import (
 	// Note: context.Context is retained as the collector API cancellation contract.
 	"context"
-	// Note: errors.New is retained for stable collector validation errors.
-	"errors"
-	// Note: fmt.Fprintf/Sprintf are retained for Markdown and dispatcher message formatting in this load-bearing collector.
-	"fmt"
-	// Note: strings helpers are retained for paper metadata normalization and Markdown output.
-	"strings"
+
+	core "dappco.re/go/core"
 )
 
 const (
@@ -31,7 +27,7 @@ func (p *PapersCollector) Name() string { return "papers" }
 // Collect gathers papers from the configured sources.
 func (p *PapersCollector) Collect(ctx context.Context, cfg *Config) (*Result, error) {
 	if cfg == nil {
-		return nil, errors.New("collect.PapersCollector.Collect: config is required")
+		return nil, core.E("collect.PapersCollector.Collect", "config is required", nil)
 	}
 	if ctx == nil {
 		ctx = context.Background()
@@ -74,7 +70,7 @@ func (p *PapersCollector) Collect(ctx context.Context, cfg *Config) (*Result, er
 	)
 	path := "papers.md"
 	if p.Category != "" {
-		path = strings.ReplaceAll(p.Category, "/", "_") + ".md"
+		path = core.Replace(p.Category, "/", "_") + ".md"
 	}
 	outPath, err := writeResultFile(cfg, p.Name(), path, content)
 	if err != nil {
@@ -82,7 +78,7 @@ func (p *PapersCollector) Collect(ctx context.Context, cfg *Config) (*Result, er
 	}
 	result := &Result{Source: p.Name(), Items: 1, Files: []string{outPath}}
 	if cfg.Dispatcher != nil {
-		cfg.Dispatcher.EmitItem(p.Name(), fmt.Sprintf("Collected paper data for %q", p.Query), nil)
+		cfg.Dispatcher.EmitItem(p.Name(), core.Sprintf("Collected paper data for %q", p.Query), nil)
 		cfg.Dispatcher.EmitComplete(p.Name(), "Papers collection complete", result)
 	}
 	return result, nil
@@ -90,30 +86,30 @@ func (p *PapersCollector) Collect(ctx context.Context, cfg *Config) (*Result, er
 
 // FormatPaperMarkdown formats paper metadata as markdown.
 func FormatPaperMarkdown(title string, authors []string, date, paperURL, source, abstract string) string {
-	var b strings.Builder
-	fmt.Fprintf(&b, "# %s\n\n", strings.TrimSpace(title))
+	b := core.NewBuilder()
+	b.WriteString(core.Sprintf("# %s\n\n", core.Trim(title)))
 	if len(authors) > 0 {
-		fmt.Fprintf(&b, "- Authors: %s\n", strings.Join(authors, ", "))
+		b.WriteString(core.Sprintf("- Authors: %s\n", core.Join(", ", authors...)))
 	}
 	if date != "" {
-		fmt.Fprintf(&b, "- Date: %s\n", date)
+		b.WriteString(core.Sprintf("- Date: %s\n", date))
 	}
 	if paperURL != "" {
-		fmt.Fprintf(&b, "- URL: %s\n", paperURL)
+		b.WriteString(core.Sprintf("- URL: %s\n", paperURL))
 	}
 	if source != "" {
-		fmt.Fprintf(&b, "- Source: %s\n", source)
+		b.WriteString(core.Sprintf("- Source: %s\n", source))
 	}
 	if abstract != "" {
 		b.WriteString("\n")
-		b.WriteString(strings.TrimSpace(abstract))
+		b.WriteString(core.Trim(abstract))
 		b.WriteString("\n")
 	}
 	return b.String()
 }
 
 func ensureText(v, fallback string) string {
-	if strings.TrimSpace(v) == "" {
+	if core.Trim(v) == "" {
 		return fallback
 	}
 	return v

@@ -5,13 +5,8 @@ package collect
 import (
 	// Note: context.Context is retained as the collector API cancellation contract.
 	"context"
-	// Note: errors.New is retained for stable collection validation errors.
-	"errors"
-	// Note: filepath is retained for OS-specific output and state file paths.
-	"path/filepath"
-	// Note: strings.TrimSpace is retained for output directory validation without broad collector refactors.
-	"strings"
 
+	core "dappco.re/go/core"
 	coreio "dappco.re/go/io"
 )
 
@@ -51,11 +46,11 @@ func NewConfigWithMedium(m coreio.Medium, outputDir string) *Config {
 	if m == nil {
 		m = coreio.NewMockMedium()
 	}
-	if strings.TrimSpace(outputDir) == "" {
+	if core.Trim(outputDir) == "" {
 		outputDir = "collect"
 	}
-	outputDir = filepath.Clean(outputDir)
-	statePath := filepath.Join(outputDir, ".collect-state.json")
+	outputDir = core.CleanPath(outputDir, core.Env("DS"))
+	statePath := core.JoinPath(outputDir, ".collect-state.json")
 	return &Config{
 		Output:     m,
 		OutputDir:  outputDir,
@@ -82,9 +77,9 @@ func MergeResults(source string, results ...*Result) *Result {
 
 func writeResultFile(cfg *Config, source, name, content string) (string, error) {
 	if cfg == nil || cfg.Output == nil {
-		return "", errors.New("collect: output medium is required")
+		return "", core.E("collect.writeResultFile", "output medium is required", nil)
 	}
-	path := filepath.Join(cfg.OutputDir, source, name)
+	path := core.JoinPath(cfg.OutputDir, source, name)
 	if err := cfg.Output.Write(path, content); err != nil {
 		return "", err
 	}

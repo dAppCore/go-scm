@@ -7,10 +7,6 @@ import (
 	"bytes"
 	// Note: context.Context is retained as the collector and fetcher cancellation contract.
 	"context"
-	// Note: errors.New is retained for stable collector validation errors.
-	"errors"
-	// Note: fmt.Fprintf/Sprintf/Errorf are retained for Markdown and HTTP error formatting.
-	"fmt"
 	// Note: io.ReadAll is retained for reading HTTP response bodies.
 	"io"
 	// Note: net/http is retained for fetching forum pages and injectable HTTP client state.
@@ -19,11 +15,10 @@ import (
 	"regexp"
 	// Note: strconv is retained for page number and filename formatting.
 	"strconv"
-	// Note: strings helpers are retained for HTML text normalization and URL/page parsing.
-	"strings"
 	// Note: time is retained for the package-level HTTP client timeout.
 	"time"
 
+	core "dappco.re/go/core"
 	"golang.org/x/net/html"
 )
 
@@ -66,7 +61,7 @@ func (b *BitcoinTalkCollectorWithFetcher) Name() string { return b.BitcoinTalkCo
 // Collect gathers posts from a BitcoinTalk topic.
 func (b *BitcoinTalkCollector) Collect(ctx context.Context, cfg *Config) (*Result, error) {
 	if cfg == nil {
-		return nil, errors.New("collect.BitcoinTalkCollector.Collect: config is required")
+		return nil, core.E("collect.BitcoinTalkCollector.Collect", "config is required", nil)
 	}
 	if ctx == nil {
 		ctx = context.Background()
@@ -85,7 +80,7 @@ func (b *BitcoinTalkCollector) Collect(ctx context.Context, cfg *Config) (*Resul
 
 	if cfg.DryRun {
 		if cfg.Dispatcher != nil {
-			cfg.Dispatcher.EmitProgress(b.Name(), fmt.Sprintf("[dry-run] Would collect topic %s", topicID), nil)
+			cfg.Dispatcher.EmitProgress(b.Name(), core.Sprintf("[dry-run] Would collect topic %s", topicID), nil)
 			cfg.Dispatcher.EmitComplete(b.Name(), "BitcoinTalk dry-run complete", &Result{Source: b.Name()})
 		}
 		return &Result{Source: b.Name()}, nil
@@ -99,7 +94,7 @@ func (b *BitcoinTalkCollector) Collect(ctx context.Context, cfg *Config) (*Resul
 		return ParsePostsFromHTML(html)
 	})
 	if cfg.Dispatcher != nil {
-		cfg.Dispatcher.EmitComplete(b.Name(), fmt.Sprintf("Collected %d posts", result.Items), result)
+		cfg.Dispatcher.EmitComplete(b.Name(), core.Sprintf("Collected %d posts", result.Items), result)
 	}
 	return result, nil
 }
@@ -110,7 +105,7 @@ func (b *BitcoinTalkCollectorWithFetcher) Collect(ctx context.Context, cfg *Conf
 		return b.BitcoinTalkCollector.Collect(ctx, cfg)
 	}
 	if cfg == nil {
-		return nil, errors.New("collect.BitcoinTalkCollectorWithFetcher.Collect: config is required")
+		return nil, core.E("collect.BitcoinTalkCollectorWithFetcher.Collect", "config is required", nil)
 	}
 	if ctx == nil {
 		ctx = context.Background()
@@ -134,7 +129,7 @@ func (b *BitcoinTalkCollectorWithFetcher) Collect(ctx context.Context, cfg *Conf
 	}
 	result := b.collectTopic(ctx, cfg, topicID, b.Fetcher)
 	if cfg.Dispatcher != nil {
-		cfg.Dispatcher.EmitComplete(b.Name(), fmt.Sprintf("Collected %d posts", result.Items), result)
+		cfg.Dispatcher.EmitComplete(b.Name(), core.Sprintf("Collected %d posts", result.Items), result)
 	}
 	return result, nil
 }
@@ -157,7 +152,7 @@ func (b *BitcoinTalkCollector) collectTopic(ctx context.Context, cfg *Config, to
 			if err := cfg.Limiter.Wait(ctx, b.Name()); err != nil {
 				result.Errors++
 				if cfg.Dispatcher != nil {
-					cfg.Dispatcher.EmitError(b.Name(), fmt.Sprintf("Rate limit wait failed for page %d: %v", page, err), nil)
+					cfg.Dispatcher.EmitError(b.Name(), core.Sprintf("Rate limit wait failed for page %d: %v", page, err), nil)
 				}
 				break
 			}
@@ -167,7 +162,7 @@ func (b *BitcoinTalkCollector) collectTopic(ctx context.Context, cfg *Config, to
 		if err != nil {
 			result.Errors++
 			if cfg.Dispatcher != nil {
-				cfg.Dispatcher.EmitError(b.Name(), fmt.Sprintf("Failed to fetch page %d: %v", page, err), nil)
+				cfg.Dispatcher.EmitError(b.Name(), core.Sprintf("Failed to fetch page %d: %v", page, err), nil)
 			}
 			break
 		}
@@ -177,7 +172,7 @@ func (b *BitcoinTalkCollector) collectTopic(ctx context.Context, cfg *Config, to
 		for _, post := range posts {
 			result.Items++
 			md := FormatPostMarkdown(post.Number, post.Author, post.Date, post.Content)
-			name := fmt.Sprintf("%s-page-%d-post-%d.md", topicID, page, post.Number)
+			name := core.Sprintf("%s-page-%d-post-%d.md", topicID, page, post.Number)
 			outPath, err := writeResultFile(cfg, b.Name(), name, md)
 			if err != nil {
 				result.Errors++
@@ -185,7 +180,7 @@ func (b *BitcoinTalkCollector) collectTopic(ctx context.Context, cfg *Config, to
 			}
 			result.Files = append(result.Files, outPath)
 			if cfg.Dispatcher != nil {
-				cfg.Dispatcher.EmitItem(b.Name(), fmt.Sprintf("Post %d by %s", post.Number, post.Author), nil)
+				cfg.Dispatcher.EmitItem(b.Name(), core.Sprintf("Post %d by %s", post.Number, post.Author), nil)
 			}
 		}
 		page++
@@ -201,8 +196,8 @@ func (b *BitcoinTalkCollector) pageURL(topicID string, page int) string {
 	if page <= 1 {
 		return base
 	}
-	if strings.Contains(base, ".0") {
-		return strings.Replace(base, ".0", "."+strconv.Itoa((page-1)*20), 1)
+	if core.Contains(base, ".0") {
+		return replaceFirst(base, ".0", "."+strconv.Itoa((page-1)*20))
 	}
 	return base + "&page=" + strconv.Itoa(page)
 }
@@ -225,7 +220,7 @@ func fetchBitcoinTalkPage(ctx context.Context, url string) (string, error) {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode >= 400 {
-		return "", fmt.Errorf("collect.BitcoinTalkCollector: http %s", resp.Status)
+		return "", core.E("collect.BitcoinTalkCollector", core.Sprintf("http %s", resp.Status), nil)
 	}
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -245,10 +240,10 @@ func extractBitcoinTalkTopicID(url string) string {
 
 // ParsePostsFromHTML parses BitcoinTalk posts from raw HTML content.
 func ParsePostsFromHTML(htmlContent string) ([]btPost, error) {
-	if strings.TrimSpace(htmlContent) == "" {
+	if core.Trim(htmlContent) == "" {
 		return nil, nil
 	}
-	root, err := html.Parse(strings.NewReader(htmlContent))
+	root, err := html.Parse(core.NewReader(htmlContent))
 	if err != nil {
 		return parsePostsFallback(htmlContent), nil
 	}
@@ -263,9 +258,9 @@ func ParsePostsFromHTML(htmlContent string) ([]btPost, error) {
 			post := btPost{Number: len(posts) + 1}
 			post.Author = findTextByClass(n, "author")
 			post.Date = findTextByClass(n, "date")
-			post.Content = strings.TrimSpace(renderTextFragment(n))
+			post.Content = core.Trim(renderTextFragment(n))
 			if post.Content == "" {
-				post.Content = strings.TrimSpace(textContent(n))
+				post.Content = core.Trim(textContent(n))
 			}
 			posts = append(posts, post)
 			return
@@ -279,7 +274,7 @@ func ParsePostsFromHTML(htmlContent string) ([]btPost, error) {
 		return posts, nil
 	}
 
-	plain := strings.TrimSpace(stripTags(htmlContent))
+	plain := core.Trim(stripTags(htmlContent))
 	if plain == "" {
 		return nil, nil
 	}
@@ -288,30 +283,30 @@ func ParsePostsFromHTML(htmlContent string) ([]btPost, error) {
 
 // FormatPostMarkdown formats a post as markdown.
 func FormatPostMarkdown(num int, author, date, content string) string {
-	var b strings.Builder
-	fmt.Fprintf(&b, "## Post %d\n\n", num)
+	b := core.NewBuilder()
+	b.WriteString(core.Sprintf("## Post %d\n\n", num))
 	if author != "" {
-		fmt.Fprintf(&b, "- Author: %s\n", author)
+		b.WriteString(core.Sprintf("- Author: %s\n", author))
 	}
 	if date != "" {
-		fmt.Fprintf(&b, "- Date: %s\n", date)
+		b.WriteString(core.Sprintf("- Date: %s\n", date))
 	}
 	b.WriteString("\n")
-	b.WriteString(strings.TrimSpace(content))
+	b.WriteString(core.Trim(content))
 	b.WriteString("\n")
 	return b.String()
 }
 
 func stripTags(input string) string {
 	re := regexp.MustCompile(`(?is)<[^>]+>`)
-	return strings.TrimSpace(re.ReplaceAllString(input, " "))
+	return core.Trim(re.ReplaceAllString(input, " "))
 }
 
 func extractTagText(block, name string) string {
 	re := regexp.MustCompile(`(?is)<[^>]*class="[^"]*` + regexp.QuoteMeta(name) + `[^"]*"[^>]*>(.*?)</[^>]+>`)
 	match := re.FindStringSubmatch(block)
 	if len(match) == 2 {
-		return strings.TrimSpace(stripTags(match[1]))
+		return core.Trim(stripTags(match[1]))
 	}
 	return ""
 }
@@ -320,7 +315,7 @@ func parsePostsFallback(htmlContent string) []btPost {
 	re := regexp.MustCompile(`(?is)<div[^>]*class="[^"]*post[^"]*"[^>]*>(.*?)</div>`)
 	matches := re.FindAllStringSubmatch(htmlContent, -1)
 	if len(matches) == 0 {
-		plain := strings.TrimSpace(stripTags(htmlContent))
+		plain := core.Trim(stripTags(htmlContent))
 		if plain == "" {
 			return nil
 		}
@@ -333,7 +328,7 @@ func parsePostsFallback(htmlContent string) []btPost {
 			Number:  i + 1,
 			Author:  extractTagText(block, "author"),
 			Date:    extractTagText(block, "date"),
-			Content: strings.TrimSpace(stripTags(block)),
+			Content: core.Trim(stripTags(block)),
 		})
 	}
 	return posts
@@ -344,8 +339,8 @@ func hasClass(node *html.Node, class string) bool {
 		if attr.Key != "class" {
 			continue
 		}
-		for _, part := range strings.Fields(attr.Val) {
-			if strings.EqualFold(part, class) {
+		for _, part := range textFields(attr.Val) {
+			if equalTextFold(part, class) {
 				return true
 			}
 		}
@@ -364,7 +359,7 @@ func findTextByClass(node *html.Node, class string) string {
 			return
 		}
 		if n.Type == html.ElementNode && hasClass(n, class) {
-			found = strings.TrimSpace(renderTextFragment(n))
+			found = core.Trim(renderTextFragment(n))
 			if found != "" {
 				return
 			}
@@ -394,7 +389,7 @@ func textContent(node *html.Node) string {
 	if node == nil {
 		return ""
 	}
-	var b strings.Builder
+	b := core.NewBuilder()
 	var walk func(*html.Node)
 	walk = func(n *html.Node) {
 		if n == nil {
@@ -408,5 +403,5 @@ func textContent(node *html.Node) string {
 		}
 	}
 	walk(node)
-	return strings.TrimSpace(b.String())
+	return core.Trim(b.String())
 }

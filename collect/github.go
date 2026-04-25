@@ -5,12 +5,8 @@ package collect
 import (
 	// Note: context.Context is retained as the collector API cancellation contract.
 	"context"
-	// Note: errors.New is retained for stable collector validation errors.
-	"errors"
-	// Note: fmt.Sprintf is retained for Markdown and dispatcher message formatting in this load-bearing collector.
-	"fmt"
-	// Note: strings helpers are retained for GitHub output path construction.
-	"strings"
+
+	core "dappco.re/go/core"
 )
 
 // GitHubCollector collects issues and/or PRs from GitHub repositories.
@@ -26,7 +22,7 @@ func (g *GitHubCollector) Name() string { return "github" }
 // Collect gathers issues and/or PRs from GitHub repositories.
 func (g *GitHubCollector) Collect(ctx context.Context, cfg *Config) (*Result, error) {
 	if cfg == nil {
-		return nil, errors.New("collect.GitHubCollector.Collect: config is required")
+		return nil, core.E("collect.GitHubCollector.Collect", "config is required", nil)
 	}
 	if ctx == nil {
 		ctx = context.Background()
@@ -52,11 +48,11 @@ func (g *GitHubCollector) Collect(ctx context.Context, cfg *Config) (*Result, er
 			return result, err
 		}
 	}
-	content := fmt.Sprintf("# GitHub Collection\n\n- Org: %s\n- Repo: %s\n- IssuesOnly: %t\n- PRsOnly: %t\n", g.Org, g.Repo, g.IssuesOnly, g.PRsOnly)
+	content := core.Sprintf("# GitHub Collection\n\n- Org: %s\n- Repo: %s\n- IssuesOnly: %t\n- PRsOnly: %t\n", g.Org, g.Repo, g.IssuesOnly, g.PRsOnly)
 	path := "github.md"
 	if g.Org != "" || g.Repo != "" {
-		name := strings.Join([]string{g.Org, g.Repo}, "/")
-		path = strings.Trim(name, "/") + ".md"
+		name := core.Join("/", g.Org, g.Repo)
+		path = core.TrimSuffix(core.TrimPrefix(name, "/"), "/") + ".md"
 	}
 	outPath, err := writeResultFile(cfg, g.Name(), path, content)
 	if err != nil {
@@ -66,7 +62,7 @@ func (g *GitHubCollector) Collect(ctx context.Context, cfg *Config) (*Result, er
 	result.Items = 1
 	result.Files = append(result.Files, outPath)
 	if cfg.Dispatcher != nil {
-		cfg.Dispatcher.EmitItem(g.Name(), fmt.Sprintf("Collected GitHub data for %s/%s", g.Org, g.Repo), nil)
+		cfg.Dispatcher.EmitItem(g.Name(), core.Sprintf("Collected GitHub data for %s/%s", g.Org, g.Repo), nil)
 		cfg.Dispatcher.EmitComplete(g.Name(), "GitHub collection complete", result)
 	}
 	return result, nil

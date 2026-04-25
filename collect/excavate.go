@@ -5,12 +5,10 @@ package collect
 import (
 	// Note: context.Context is retained as the excavator API cancellation contract.
 	"context"
-	// Note: errors.New is retained for stable excavator validation errors.
-	"errors"
-	// Note: fmt.Sprintf is retained for dispatcher progress and summary messages.
-	"fmt"
 	// Note: time.Now is retained behind nowUTC for collection state timestamps.
 	"time"
+
+	core "dappco.re/go/core"
 )
 
 // Excavator runs multiple collectors as a coordinated operation.
@@ -37,7 +35,7 @@ func (e *Excavator) Name() string {
 func (e *Excavator) Run(ctx context.Context, cfg *Config) (*Result, error) {
 	result := &Result{Source: e.Name()}
 	if cfg == nil {
-		return nil, errors.New("collect.Excavator.Run: config is required")
+		return nil, core.E("collect.Excavator.Run", "config is required", nil)
 	}
 	if ctx == nil {
 		ctx = context.Background()
@@ -48,7 +46,7 @@ func (e *Excavator) Run(ctx context.Context, cfg *Config) (*Result, error) {
 	}
 
 	if cfg.Dispatcher != nil {
-		cfg.Dispatcher.EmitStart(e.Name(), fmt.Sprintf("Starting excavation with %d collectors", len(e.Collectors)))
+		cfg.Dispatcher.EmitStart(e.Name(), core.Sprintf("Starting excavation with %d collectors", len(e.Collectors)))
 	}
 
 	if e.Resume && cfg.State != nil {
@@ -60,7 +58,7 @@ func (e *Excavator) Run(ctx context.Context, cfg *Config) (*Result, error) {
 	if e.ScanOnly {
 		for _, c := range e.Collectors {
 			if cfg.Dispatcher != nil {
-				cfg.Dispatcher.EmitProgress(e.Name(), fmt.Sprintf("[scan] Would run collector: %s", c.Name()), nil)
+				cfg.Dispatcher.EmitProgress(e.Name(), core.Sprintf("[scan] Would run collector: %s", c.Name()), nil)
 			}
 		}
 		if cfg.Dispatcher != nil {
@@ -78,7 +76,7 @@ func (e *Excavator) Run(ctx context.Context, cfg *Config) (*Result, error) {
 		}
 
 		if cfg.Dispatcher != nil {
-			cfg.Dispatcher.EmitProgress(e.Name(), fmt.Sprintf("Running collector %d/%d: %s", i+1, len(e.Collectors), c.Name()), nil)
+			cfg.Dispatcher.EmitProgress(e.Name(), core.Sprintf("Running collector %d/%d: %s", i+1, len(e.Collectors), c.Name()), nil)
 		}
 
 		if e.Resume && cfg.State != nil {
@@ -87,7 +85,7 @@ func (e *Excavator) Run(ctx context.Context, cfg *Config) (*Result, error) {
 				if cfg.Dispatcher != nil {
 					cfg.Dispatcher.EmitProgress(
 						e.Name(),
-						fmt.Sprintf("Skipping %s (already collected %d items on %s)", c.Name(), entry.Items, entry.LastRun.Format("2006-01-02T15:04:05Z07:00")),
+						core.Sprintf("Skipping %s (already collected %d items on %s)", c.Name(), entry.Items, entry.LastRun.Format("2006-01-02T15:04:05Z07:00")),
 						nil,
 					)
 				}
@@ -99,7 +97,7 @@ func (e *Excavator) Run(ctx context.Context, cfg *Config) (*Result, error) {
 			if err := cfg.Limiter.Wait(ctx, c.Name()); err != nil {
 				result.Errors++
 				if cfg.Dispatcher != nil {
-					cfg.Dispatcher.EmitError(e.Name(), fmt.Sprintf("Rate limit wait failed for %s: %v", c.Name(), err), nil)
+					cfg.Dispatcher.EmitError(e.Name(), core.Sprintf("Rate limit wait failed for %s: %v", c.Name(), err), nil)
 				}
 				continue
 			}
@@ -109,7 +107,7 @@ func (e *Excavator) Run(ctx context.Context, cfg *Config) (*Result, error) {
 		if err != nil {
 			result.Errors++
 			if cfg.Dispatcher != nil {
-				cfg.Dispatcher.EmitError(e.Name(), fmt.Sprintf("Collector %s failed: %v", c.Name(), err), nil)
+				cfg.Dispatcher.EmitError(e.Name(), core.Sprintf("Collector %s failed: %v", c.Name(), err), nil)
 			}
 			continue
 		}
@@ -133,12 +131,12 @@ func (e *Excavator) Run(ctx context.Context, cfg *Config) (*Result, error) {
 
 	if cfg.State != nil {
 		if err := cfg.State.Save(); err != nil && cfg.Dispatcher != nil {
-			cfg.Dispatcher.EmitError(e.Name(), fmt.Sprintf("Failed to save state: %v", err), nil)
+			cfg.Dispatcher.EmitError(e.Name(), core.Sprintf("Failed to save state: %v", err), nil)
 		}
 	}
 
 	if cfg.Dispatcher != nil {
-		cfg.Dispatcher.EmitComplete(e.Name(), fmt.Sprintf("Excavation complete: %d items, %d errors, %d skipped", result.Items, result.Errors, result.Skipped), result)
+		cfg.Dispatcher.EmitComplete(e.Name(), core.Sprintf("Excavation complete: %d items, %d errors, %d skipped", result.Items, result.Errors, result.Skipped), result)
 	}
 
 	return result, nil

@@ -5,18 +5,14 @@ package collect
 import (
 	// Note: context.Context is retained as the collector API cancellation contract.
 	"context"
-	// Note: errors.New is retained for stable collector validation errors.
-	"errors"
-	// Note: fmt.Fprintf/Sprintf are retained for Markdown and dispatcher message formatting in this collector.
-	"fmt"
 	// Note: math.IsNaN/IsInf are retained for market number formatting.
 	"math"
 	// Note: strconv is retained for bool and float formatting in market summaries.
 	"strconv"
-	// Note: strings helpers are retained for coin/date normalization and Markdown assembly.
-	"strings"
 	// Note: time.Parse is retained for historical date validation.
 	"time"
+
+	core "dappco.re/go/core"
 )
 
 // MarketCollector collects market data from CoinGecko.
@@ -40,7 +36,7 @@ func (m *MarketCollector) Name() string { return "market" }
 // Collect gathers market data from CoinGecko.
 func (m *MarketCollector) Collect(ctx context.Context, cfg *Config) (*Result, error) {
 	if cfg == nil {
-		return nil, errors.New("collect.MarketCollector.Collect: config is required")
+		return nil, core.E("collect.MarketCollector.Collect", "config is required", nil)
 	}
 	if ctx == nil {
 		ctx = context.Background()
@@ -65,28 +61,28 @@ func (m *MarketCollector) Collect(ctx context.Context, cfg *Config) (*Result, er
 			return &Result{Source: m.Name()}, err
 		}
 	}
-	if m.Historical && strings.TrimSpace(m.FromDate) != "" {
-		if _, err := time.Parse("2006-01-02", strings.TrimSpace(m.FromDate)); err != nil {
-			return &Result{Source: m.Name()}, fmt.Errorf("collect.MarketCollector.Collect: invalid from_date %q: %w", m.FromDate, err)
+	if m.Historical && core.Trim(m.FromDate) != "" {
+		if _, err := time.Parse("2006-01-02", core.Trim(m.FromDate)); err != nil {
+			return &Result{Source: m.Name()}, core.E("collect.MarketCollector.Collect", core.Sprintf("invalid from_date %q", m.FromDate), err)
 		}
 	}
 	data := &coinData{
-		Name:         strings.Title(strings.TrimSpace(m.CoinID)),
-		Symbol:       strings.ToUpper(firstToken(m.CoinID)),
+		Name:         titleText(m.CoinID),
+		Symbol:       core.Upper(firstToken(m.CoinID)),
 		CurrentPrice: 1,
 		MarketCap:    1_000_000,
 		Volume:       50_000,
 		Change24H:    0,
 	}
 	content := FormatMarketSummary(data)
-	if m.Historical || strings.TrimSpace(m.FromDate) != "" {
-		var details strings.Builder
+	if m.Historical || core.Trim(m.FromDate) != "" {
+		details := core.NewBuilder()
 		details.WriteString("\n")
 		details.WriteString("- Historical: ")
 		details.WriteString(strconv.FormatBool(m.Historical))
 		details.WriteString("\n")
-		if strings.TrimSpace(m.FromDate) != "" {
-			fmt.Fprintf(&details, "- From date: %s\n", strings.TrimSpace(m.FromDate))
+		if core.Trim(m.FromDate) != "" {
+			details.WriteString(core.Sprintf("- From date: %s\n", core.Trim(m.FromDate)))
 		}
 		content += details.String()
 	}
@@ -100,7 +96,7 @@ func (m *MarketCollector) Collect(ctx context.Context, cfg *Config) (*Result, er
 	}
 	result := &Result{Source: m.Name(), Items: 1, Files: []string{outPath}}
 	if cfg.Dispatcher != nil {
-		cfg.Dispatcher.EmitItem(m.Name(), fmt.Sprintf("Collected market data for %s", m.CoinID), nil)
+		cfg.Dispatcher.EmitItem(m.Name(), core.Sprintf("Collected market data for %s", m.CoinID), nil)
 		cfg.Dispatcher.EmitComplete(m.Name(), "Market collection complete", result)
 	}
 	return result, nil
@@ -111,17 +107,17 @@ func FormatMarketSummary(data *coinData) string {
 	if data == nil {
 		return ""
 	}
-	var b strings.Builder
-	fmt.Fprintf(&b, "# %s (%s)\n\n", data.Name, data.Symbol)
-	fmt.Fprintf(&b, "- Current price: %s\n", formatMoney(data.CurrentPrice))
-	fmt.Fprintf(&b, "- Market cap: %s\n", formatMoney(data.MarketCap))
-	fmt.Fprintf(&b, "- Volume: %s\n", formatMoney(data.Volume))
-	fmt.Fprintf(&b, "- 24h change: %s%%\n", trimFloat(data.Change24H))
+	b := core.NewBuilder()
+	b.WriteString(core.Sprintf("# %s (%s)\n\n", data.Name, data.Symbol))
+	b.WriteString(core.Sprintf("- Current price: %s\n", formatMoney(data.CurrentPrice)))
+	b.WriteString(core.Sprintf("- Market cap: %s\n", formatMoney(data.MarketCap)))
+	b.WriteString(core.Sprintf("- Volume: %s\n", formatMoney(data.Volume)))
+	b.WriteString(core.Sprintf("- 24h change: %s%%\n", trimFloat(data.Change24H)))
 	return b.String()
 }
 
 func firstToken(s string) string {
-	fields := strings.FieldsFunc(s, func(r rune) bool {
+	fields := splitTextBySeparators(s, func(r rune) bool {
 		return r == '-' || r == '_' || r == '/' || r == ' '
 	})
 	if len(fields) == 0 {
