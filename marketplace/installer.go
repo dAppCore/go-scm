@@ -10,12 +10,9 @@ import (
 	"time"
 
 	coreio "dappco.re/go/io"
-	"dappco.re/go/io/store"
 	"dappco.re/go/scm/internal/ax/jsonx"
 	"dappco.re/go/scm/manifest"
 )
-
-const installedModuleGroup = "modules"
 
 type InstalledModule struct {
 	Code        string               `json:"code"`
@@ -31,11 +28,10 @@ type InstalledModule struct {
 type Installer struct {
 	medium     coreio.Medium
 	modulesDir string
-	store      *store.KeyValueStore
 }
 
-func NewInstaller(m coreio.Medium, modulesDir string, st *store.KeyValueStore) *Installer {
-	return &Installer{medium: m, modulesDir: modulesDir, store: st}
+func NewInstaller(m coreio.Medium, modulesDir string, _ ...any) *Installer {
+	return &Installer{medium: m, modulesDir: modulesDir}
 }
 
 func (i *Installer) Install(ctx context.Context, mod Module) error {
@@ -66,18 +62,15 @@ func (i *Installer) Install(ctx context.Context, mod Module) error {
 	if err != nil {
 		return err
 	}
-	if err := i.medium.Write(filepath.Join(i.modulesDir, mod.Code, "module.json"), string(raw)); err != nil {
+	if err := writeMediumFile(i.medium, filepath.Join(i.modulesDir, mod.Code, "module.json"), raw); err != nil {
 		return err
 	}
-	return i.storeInstalledModule(entry)
+	return nil
 }
 
 func (i *Installer) Installed() ([]InstalledModule, error) {
 	if i == nil || i.medium == nil {
 		return nil, nil
-	}
-	if modules, err := i.installedFromStore(); err == nil && len(modules) > 0 {
-		return modules, nil
 	}
 	entries, err := i.medium.List(i.modulesDir)
 	if err != nil {
@@ -88,12 +81,12 @@ func (i *Installer) Installed() ([]InstalledModule, error) {
 		if entry == nil || !entry.IsDir() {
 			continue
 		}
-		raw, err := i.medium.Read(filepath.Join(i.modulesDir, entry.Name(), "module.json"))
+		raw, err := readMediumFile(i.medium, filepath.Join(i.modulesDir, entry.Name(), "module.json"))
 		if err != nil {
 			continue
 		}
 		var mod InstalledModule
-		if err := jsonx.Unmarshal([]byte(raw), &mod); err != nil {
+		if err := jsonx.Unmarshal(raw, &mod); err != nil {
 			continue
 		}
 		out = append(out, mod)
@@ -107,11 +100,6 @@ func (i *Installer) Remove(code string) error {
 	}
 	if err := i.medium.DeleteAll(filepath.Join(i.modulesDir, code)); err != nil {
 		return err
-	}
-	if i.store != nil {
-		if err := i.store.Delete(installedModuleGroup, code); err != nil {
-			return err
-		}
 	}
 	return nil
 }
@@ -129,12 +117,12 @@ func (i *Installer) Update(ctx context.Context, code string) error {
 		return errors.New("marketplace.Installer.Update: medium is required")
 	}
 	path := filepath.Join(i.modulesDir, code, "module.json")
-	raw, err := i.medium.Read(path)
+	raw, err := readMediumFile(i.medium, path)
 	if err != nil {
 		return err
 	}
 	var entry InstalledModule
-	if err := jsonx.Unmarshal([]byte(raw), &entry); err != nil {
+	if err := jsonx.Unmarshal(raw, &entry); err != nil {
 		return err
 	}
 	if strings.TrimSpace(entry.Code) == "" {
@@ -145,46 +133,10 @@ func (i *Installer) Update(ctx context.Context, code string) error {
 	if err != nil {
 		return err
 	}
-	if err := i.medium.Write(path, string(updated)); err != nil {
+	if err := writeMediumFile(i.medium, path, updated); err != nil {
 		return err
 	}
-	return i.storeInstalledModule(entry)
-}
-
-func (i *Installer) storeInstalledModule(entry InstalledModule) error {
-	if i == nil || i.store == nil {
-		return nil
-	}
-	raw, err := jsonx.MarshalIndent(entry, "", "  ")
-	if err != nil {
-		return err
-	}
-	return i.store.Set(installedModuleGroup, entry.Code, string(raw))
-}
-
-func (i *Installer) installedFromStore() ([]InstalledModule, error) {
-	if i == nil || i.store == nil {
-		return nil, nil
-	}
-	entries, err := i.store.GetAll(installedModuleGroup)
-	if err != nil {
-		return nil, err
-	}
-	if len(entries) == 0 {
-		return nil, nil
-	}
-	modules := make([]InstalledModule, 0, len(entries))
-	for _, raw := range entries {
-		var entry InstalledModule
-		if err := jsonx.Unmarshal([]byte(raw), &entry); err != nil {
-			continue
-		}
-		if strings.TrimSpace(entry.Code) == "" {
-			continue
-		}
-		modules = append(modules, entry)
-	}
-	return modules, nil
+	return nil
 }
 
 func versionOrLatest(version string) string {

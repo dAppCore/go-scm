@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	core "dappco.re/go/core"
+	coreio "dappco.re/go/io"
 )
 
 func TestNewCoreServiceRegistersRootAndSubservices(t *testing.T) {
@@ -23,5 +24,27 @@ func TestNewCoreServiceRegistersRootAndSubservices(t *testing.T) {
 	}
 	if !c.Service("git").OK {
 		t.Fatalf("git service was not registered")
+	}
+}
+
+func TestRegistry_WithMedium_Good(t *testing.T) {
+	medium := coreio.NewMemoryMedium()
+
+	registry := NewRegistry(WithMedium(medium))
+	if registry == nil {
+		t.Fatal("expected registry")
+	}
+	if registry.Medium() != medium {
+		t.Fatalf("expected registry medium to be preserved")
+	}
+}
+
+func TestRegistry_WithMedium_Bad_NilMedium(t *testing.T) {
+	registry := NewRegistry(WithMedium(nil))
+	if registry == nil {
+		t.Fatal("expected registry")
+	}
+	if registry.Medium() != nil {
+		t.Fatalf("expected nil medium to be ignored")
 	}
 }

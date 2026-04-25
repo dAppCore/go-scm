@@ -8,18 +8,12 @@ import (
 	"testing"
 
 	coreio "dappco.re/go/io"
-	"dappco.re/go/io/store"
 )
 
-func TestInstallerPersistsInstalledModulesToStore(t *testing.T) {
+func TestInstallerPersistsInstalledModulesToMedium(t *testing.T) {
 	medium := coreio.NewMockMedium()
-	kv, err := store.New(store.Options{Path: ":memory:"})
-	if err != nil {
-		t.Fatalf("new store: %v", err)
-	}
-	defer kv.Close()
 
-	installer := NewInstaller(medium, "modules", kv)
+	installer := NewInstaller(medium, "modules")
 	mod := Module{
 		Code:    "go-io",
 		Name:    "Core I/O",

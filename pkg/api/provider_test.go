@@ -18,7 +18,7 @@ func TestScmProviderRoutesExposeState(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	medium := coreio.NewMockMedium()
-	installer := marketplace.NewInstaller(medium, "modules", nil)
+	installer := marketplace.NewInstaller(medium, "modules")
 	if err := installer.Install(nil, marketplace.Module{
 		Code:    "go-io",
 		Name:    "Core I/O",

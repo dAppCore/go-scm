@@ -8,6 +8,7 @@ import (
 	"errors"
 
 	core "dappco.re/go/core"
+	coreio "dappco.re/go/io"
 	"dappco.re/go/scm/git"
 	"dappco.re/go/scm/repos"
 )
@@ -27,6 +28,43 @@ type Options struct {
 // repo registry, git status, and sync wiring under the Core runtime.
 type Service struct {
 	*core.ServiceRuntime[Options]
+}
+
+// RegistryOption configures a package registry.
+type RegistryOption func(*Registry)
+
+// Registry holds the package registry storage backend.
+type Registry struct {
+	medium coreio.Medium
+}
+
+// NewRegistry creates a package registry using the supplied options.
+func NewRegistry(opts ...RegistryOption) *Registry {
+	r := &Registry{}
+	for _, opt := range opts {
+		if opt != nil {
+			opt(r)
+		}
+	}
+	return r
+}
+
+// WithMedium configures the registry storage backend.
+func WithMedium(m coreio.Medium) RegistryOption {
+	return func(r *Registry) {
+		if r == nil || m == nil {
+			return
+		}
+		r.medium = m
+	}
+}
+
+// Medium returns the registry storage backend.
+func (r *Registry) Medium() coreio.Medium {
+	if r == nil {
+		return nil
+	}
+	return r.medium
 }
 
 // NewCoreService creates a Core service factory that registers the SCM
