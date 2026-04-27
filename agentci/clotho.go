@@ -3,21 +3,19 @@
 package agentci
 
 import (
+	// Note: context.Context is retained as the public cancellation contract for Spinner.Weave.
 	"context"
-	strings "dappco.re/go/core/scm/internal/ax/stringsx"
-	"math"
 
-	"dappco.re/go/core/scm/jobrunner"
+	"dappco.re/go/core"
+	"dappco.re/go/scm/jobrunner"
 )
 
 // RunMode determines the execution strategy for a dispatched task.
 type RunMode string
 
 const (
-	//
-	ModeStandard RunMode = "standard"
-	//
-	ModeDual RunMode = "dual" // The Clotho Protocol — dual-run verification
+	RunModeDirect         RunMode = "direct"
+	RunModeClothoVerified RunMode = "clotho-verified"
 )
 
 // Spinner is the Clotho orchestrator that determines the fate of each task.
@@ -26,125 +24,91 @@ type Spinner struct {
 	Agents map[string]AgentConfig
 }
 
-// NewSpinner creates a new Clotho orchestrator.
-// Usage: NewSpinner(...)
-func NewSpinner(cfg ClothoConfig, agents map[string]AgentConfig) *Spinner {
-	return &Spinner{
-		Config: cfg,
-		Agents: agents,
+func (s *Spinner) resolveAgent(agentName string) (string, AgentConfig, bool) {
+	if s == nil {
+		return "", AgentConfig{}, false
 	}
+
+	if agent, ok := s.Agents[agentName]; ok {
+		return agentName, agent, true
+	}
+
+	for name, cfg := range s.Agents {
+		if equalFold(name, agentName) || equalFold(cfg.ForgejoUser, agentName) {
+			return name, cfg, true
+		}
+	}
+
+	return "", AgentConfig{}, false
+}
+
+// NewSpinner creates a new Clotho orchestrator.
+func NewSpinner(cfg ClothoConfig, agents map[string]AgentConfig) *Spinner {
+	return &Spinner{Config: cfg, Agents: cloneAgents(agents)}
 }
 
 // DeterminePlan decides if a signal requires dual-run verification based on
 // the global strategy, agent configuration, and repository criticality.
-// Usage: DeterminePlan(...)
 func (s *Spinner) DeterminePlan(signal *jobrunner.PipelineSignal, agentName string) RunMode {
-	if s.Config.Strategy != "clotho-verified" {
-		return ModeStandard
+	if s == nil {
+		return RunModeDirect
 	}
 
-	agent, ok := s.Agents[agentName]
-	if !ok {
-		return ModeStandard
-	}
-	if agent.DualRun {
-		return ModeDual
+	_, agent, ok := s.resolveAgent(agentName)
+
+	critical := false
+	if signal != nil {
+		critical = signal.IsDraft ||
+			signal.HasUnresolvedThreads() ||
+			(signal.CheckStatus != "" && !equalFold(signal.CheckStatus, "SUCCESS")) ||
+			(signal.Mergeable != "" && !equalFold(signal.Mergeable, "MERGEABLE")) ||
+			signal.NeedsCoding
 	}
 
-	// Protect critical repos with dual-run (Axiom 1).
-	if signal.RepoName == "core" || strings.Contains(signal.RepoName, "security") {
-		return ModeDual
+	if ok {
+		if agent.DualRun || equalFold(agent.SecurityLevel, "high") {
+			return RunModeClothoVerified
+		}
 	}
 
-	return ModeStandard
-}
-
-// GetVerifierModel returns the model for the secondary "signed" verification run.
-// Usage: GetVerifierModel(...)
-func (s *Spinner) GetVerifierModel(agentName string) string {
-	agent, ok := s.Agents[agentName]
-	if !ok || agent.VerifyModel == "" {
-		return "gemini-1.5-pro"
+	if equalFold(s.Config.Strategy, string(RunModeClothoVerified)) && critical {
+		return RunModeClothoVerified
 	}
-	return agent.VerifyModel
+	return RunModeDirect
 }
 
 // FindByForgejoUser resolves a Forgejo username to the agent config key and config.
-// This decouples agent naming (mythological roles) from Forgejo identity.
-// Usage: FindByForgejoUser(...)
 func (s *Spinner) FindByForgejoUser(forgejoUser string) (string, AgentConfig, bool) {
-	if forgejoUser == "" {
+	if s == nil {
 		return "", AgentConfig{}, false
 	}
-	// Direct match on config key first.
-	if agent, ok := s.Agents[forgejoUser]; ok {
-		return forgejoUser, agent, true
-	}
-	// Search by ForgejoUser field.
 	for name, agent := range s.Agents {
-		if agent.ForgejoUser != "" && agent.ForgejoUser == forgejoUser {
+		if equalFold(name, forgejoUser) || equalFold(agent.ForgejoUser, forgejoUser) {
 			return name, agent, true
 		}
 	}
 	return "", AgentConfig{}, false
 }
 
+// GetVerifierModel returns the model for the secondary "signed" verification run.
+func (s *Spinner) GetVerifierModel(agentName string) string {
+	_, agent, ok := s.resolveAgent(agentName)
+	if !ok {
+		return ""
+	}
+	return agent.VerifyModel
+}
+
 // Weave compares primary and verifier outputs. Returns true if they converge.
-// The comparison is a coarse token-overlap check controlled by the configured
-// validation threshold. It is intentionally deterministic and fast; richer
-// semantic diffing can replace it later without changing the signature.
-// Usage: Weave(...)
 func (s *Spinner) Weave(ctx context.Context, primaryOutput, signedOutput []byte) (bool, error) {
 	if ctx != nil {
-		select {
-		case <-ctx.Done():
-			return false, ctx.Err()
-		default:
+		if err := ctx.Err(); err != nil {
+			return false, err
 		}
 	}
-
-	primary := tokenizeWeaveOutput(primaryOutput)
-	signed := tokenizeWeaveOutput(signedOutput)
-
-	if len(primary) == 0 && len(signed) == 0 {
-		return true, nil
-	}
-
-	threshold := s.Config.ValidationThreshold
-	if threshold <= 0 || threshold > 1 {
-		threshold = 0.85
-	}
-
-	similarity := weaveDiceSimilarity(primary, signed)
-	return similarity >= threshold, nil
+	return core.Trim(string(primaryOutput)) == core.Trim(string(signedOutput)), nil
 }
 
-func tokenizeWeaveOutput(output []byte) []string {
-	fields := strings.Fields(strings.ReplaceAll(string(output), "\r\n", "\n"))
-	if len(fields) == 0 {
-		return nil
-	}
-	return fields
-}
-
-func weaveDiceSimilarity(primary, signed []string) float64 {
-	if len(primary) == 0 || len(signed) == 0 {
-		return 0
-	}
-
-	counts := make(map[string]int, len(primary))
-	for _, token := range primary {
-		counts[token]++
-	}
-
-	common := 0
-	for _, token := range signed {
-		if counts[token] == 0 {
-			continue
-		}
-		counts[token]--
-		common++
-	}
-
-	return math.Min(1, (2*float64(common))/float64(len(primary)+len(signed)))
+func equalFold(left, right string) bool {
+	return core.Lower(left) == core.Lower(right)
 }

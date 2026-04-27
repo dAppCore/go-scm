@@ -3,112 +3,146 @@
 package manifest
 
 import (
-	"crypto/ed25519"
+	"crypto/ed25519" // intrinsic
+	// Note: AX-6 — Build metadata records wall-clock compilation time.
 	"time"
 
-	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
-	json "dappco.re/go/core/scm/internal/ax/jsonx"
-
-	"dappco.re/go/core/io"
-	coreerr "dappco.re/go/core/log"
+	core "dappco.re/go/core"
+	coreio "dappco.re/go/io"
+	"dappco.re/go/scm/internal/ax/filepathx"
 )
 
-// CompiledManifest is the distribution-ready form of a manifest, written as
-// core.json at the repository root (not inside .core/). It embeds the
-// original Manifest and adds build metadata stapled at compile time.
+type CompileOptions struct {
+	Commit  string
+	Tag     string
+	BuiltBy string
+	SignKey ed25519.PrivateKey
+	Build   BuildInfo
+}
+
 type CompiledManifest struct {
 	Manifest `json:",inline" yaml:",inline"`
-
-	// Build metadata — populated by Compile.
-	Commit  string `json:"commit,omitempty" yaml:"commit,omitempty"`
-	Tag     string `json:"tag,omitempty" yaml:"tag,omitempty"`
-	BuiltAt string `json:"built_at,omitempty" yaml:"built_at,omitempty"`
-	BuiltBy string `json:"built_by,omitempty" yaml:"built_by,omitempty"`
+	Commit   string    `json:"commit,omitempty" yaml:"commit,omitempty"`
+	Tag      string    `json:"tag,omitempty" yaml:"tag,omitempty"`
+	BuiltAt  string    `json:"built_at,omitempty" yaml:"built_at,omitempty"`
+	BuiltBy  string    `json:"built_by,omitempty" yaml:"built_by,omitempty"`
+	Build    BuildInfo `json:"build,omitempty" yaml:"build,omitempty"`
 }
 
-// CompileOptions controls how Compile populates the build metadata.
-type CompileOptions struct {
-	Version string             // Optional override for the manifest version
-	Commit  string             // Git commit hash
-	Tag     string             // Git tag (e.g. v1.0.0)
-	BuiltBy string             // Builder identity (e.g. "core build")
-	SignKey ed25519.PrivateKey // Optional — signs before compiling
+func Compile(m *Manifest, info BuildInfo) ([]byte, error) {
+	if err := validateManifest(m); err != nil {
+		return nil, err
+	}
+	cp := *m
+	cp.Build = normalizeBuildInfo(info)
+	return marshalJSON("manifest.Compile", &cp)
 }
 
-// Compile produces a CompiledManifest from a source manifest and build
-// options. If opts.SignKey is provided the manifest is signed first.
-// Usage: Compile(...)
-func Compile(m *Manifest, opts CompileOptions) (*CompiledManifest, error) {
-	if m == nil {
-		return nil, coreerr.E("manifest.Compile", "nil manifest", nil)
+func ParseCoreJSON(data []byte) (*Manifest, error) {
+	var m Manifest
+	if err := unmarshalJSON("manifest.ParseCoreJSON", data, &m); err != nil {
+		return nil, err
 	}
-	if m.Code == "" {
-		return nil, coreerr.E("manifest.Compile", "missing code", nil)
+	if err := validateManifest(&m); err != nil {
+		return nil, err
 	}
-	// Work on a copy to avoid mutating the caller's manifest.
-	mCopy := *m
-	if opts.Version != "" {
-		mCopy.Version = opts.Version
-	}
-	m = &mCopy
+	return &m, nil
+}
 
-	if m.Version == "" {
-		return nil, coreerr.E("manifest.Compile", "missing version", nil)
+func CompileWithOptions(m *Manifest, opts CompileOptions) (*CompiledManifest, error) {
+	if err := validateManifest(m); err != nil {
+		return nil, err
 	}
-
-	// Sign if a key is supplied.
-	if opts.SignKey != nil {
-		if err := Sign(m, opts.SignKey); err != nil {
-			return nil, coreerr.E("manifest.Compile", "sign failed", err)
+	cp := *m
+	if len(opts.SignKey) > 0 && cp.Sign == "" {
+		payload, err := canonicalManifestBytes(&cp)
+		if err != nil {
+			return nil, err
+		}
+		if err := Sign(&cp, payload, opts.SignKey); err != nil {
+			return nil, err
 		}
 	}
-
 	return &CompiledManifest{
-		Manifest: *m,
+		Manifest: cp,
 		Commit:   opts.Commit,
 		Tag:      opts.Tag,
-		BuiltAt:  time.Now().UTC().Format(time.RFC3339),
+		BuiltAt:  time.Now().UTC().Format(time.RFC3339Nano),
 		BuiltBy:  opts.BuiltBy,
+		Build:    normalizeBuildInfo(opts.Build),
 	}, nil
 }
 
-// MarshalJSON serialises a CompiledManifest to JSON bytes.
-// Usage: MarshalJSON(...)
 func MarshalJSON(cm *CompiledManifest) ([]byte, error) {
-	return json.MarshalIndent(cm, "", "  ")
+	if cm == nil {
+		return nil, core.E("manifest.MarshalJSON", "compiled manifest is required", nil)
+	}
+	return marshalJSON("manifest.MarshalJSON", cm)
 }
 
-// ParseCompiled decodes a core.json into a CompiledManifest.
-// Usage: ParseCompiled(...)
 func ParseCompiled(data []byte) (*CompiledManifest, error) {
 	var cm CompiledManifest
-	if err := json.Unmarshal(data, &cm); err != nil {
-		return nil, coreerr.E("manifest.ParseCompiled", "unmarshal failed", err)
+	if err := unmarshalJSON("manifest.ParseCompiled", data, &cm); err != nil {
+		return nil, err
 	}
 	return &cm, nil
 }
 
-const compiledPath = "core.json"
-
-// WriteCompiled writes a CompiledManifest as core.json to the given root
-// directory. The file lives at the distribution root, not inside .core/.
-// Usage: WriteCompiled(...)
-func WriteCompiled(medium io.Medium, root string, cm *CompiledManifest) error {
-	data, err := MarshalJSON(cm)
-	if err != nil {
-		return coreerr.E("manifest.WriteCompiled", "marshal failed", err)
+func LoadCompiled(medium coreio.Medium, root string) (*CompiledManifest, error) {
+	if medium == nil {
+		return nil, core.E("manifest.LoadCompiled", "medium is required", nil)
 	}
-	path := filepath.Join(root, compiledPath)
-	return medium.Write(path, string(data))
+	raw, err := medium.Read(filepathx.Join(root, "core.json"))
+	if err != nil {
+		return nil, err
+	}
+	return ParseCompiled([]byte(raw))
 }
 
-// LoadCompiled reads and parses a core.json from the given root directory.
-// Usage: LoadCompiled(...)
-func LoadCompiled(medium io.Medium, root string) (*CompiledManifest, error) {
-	path := filepath.Join(root, compiledPath)
-	data, err := medium.Read(path)
-	if err != nil {
-		return nil, coreerr.E("manifest.LoadCompiled", "read failed", err)
+func WriteCompiled(medium coreio.Medium, root string, cm *CompiledManifest) error {
+	if medium == nil {
+		return core.E("manifest.WriteCompiled", "medium is required", nil)
 	}
-	return ParseCompiled([]byte(data))
+	if cm == nil {
+		return core.E("manifest.WriteCompiled", "compiled manifest is required", nil)
+	}
+	raw, err := MarshalJSON(cm)
+	if err != nil {
+		return err
+	}
+	return medium.Write(filepathx.Join(root, "core.json"), string(raw))
+}
+
+func normalizeBuildInfo(build BuildInfo) BuildInfo {
+	if len(build.Targets) > 0 {
+		build.Targets = append([]string(nil), build.Targets...)
+	}
+	return build
+}
+
+func marshalJSON(op string, v any) ([]byte, error) {
+	r := core.JSONMarshal(v)
+	if !r.OK {
+		return nil, resultError(op, "marshal JSON", r)
+	}
+	raw, ok := r.Value.([]byte)
+	if !ok {
+		return nil, core.E(op, "marshal JSON returned invalid payload", nil)
+	}
+	return raw, nil
+}
+
+func unmarshalJSON(op string, data []byte, target any) error {
+	r := core.JSONUnmarshal(data, target)
+	if !r.OK {
+		return resultError(op, "unmarshal JSON", r)
+	}
+	return nil
+}
+
+func resultError(op, msg string, r core.Result) error {
+	if err, ok := r.Value.(error); ok {
+		return core.E(op, msg, err)
+	}
+	return core.E(op, msg, nil)
 }

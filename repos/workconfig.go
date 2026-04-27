@@ -3,25 +3,24 @@
 package repos
 
 import (
+	// Note: AX-6 — Config APIs return standard errors for nil storage media.
+	"errors"
+	// Note: AX-6 — Trigger names are matched case-insensitively.
+	"strings"
+	// Note: AX-6 — Work config exposes duration fields and defaults.
 	"time"
 
-	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
-
-	"dappco.re/go/core/io"
-	coreerr "dappco.re/go/core/log"
+	coreio "dappco.re/go/io"
+	"dappco.re/go/scm/internal/ax/filepathx"
 	"gopkg.in/yaml.v3"
 )
 
-// WorkConfig holds sync policy for a workspace.
-// Stored at .core/work.yaml and checked into git (shared across the team).
-type WorkConfig struct {
-	Version  int         `yaml:"version"`
-	Sync     SyncConfig  `yaml:"sync"`
-	Agents   AgentPolicy `yaml:"agents"`
-	Triggers []string    `yaml:"triggers,omitempty"`
+type AgentPolicy struct {
+	Heartbeat     time.Duration `yaml:"heartbeat"`
+	StaleAfter    time.Duration `yaml:"stale_after"`
+	WarnOnOverlap bool          `yaml:"warn_on_overlap"`
 }
 
-// SyncConfig controls how and when repos are synced.
 type SyncConfig struct {
 	Interval     time.Duration `yaml:"interval"`
 	AutoPull     bool          `yaml:"auto_pull"`
@@ -29,84 +28,61 @@ type SyncConfig struct {
 	CloneMissing bool          `yaml:"clone_missing"`
 }
 
-// AgentPolicy controls multi-agent clash prevention.
-type AgentPolicy struct {
-	Heartbeat     time.Duration `yaml:"heartbeat"`
-	StaleAfter    time.Duration `yaml:"stale_after"`
-	WarnOnOverlap bool          `yaml:"warn_on_overlap"`
+type WorkConfig struct {
+	Version  int         `yaml:"version"`
+	Sync     SyncConfig  `yaml:"sync"`
+	Agents   AgentPolicy `yaml:"agents"`
+	Triggers []string    `yaml:"triggers,omitempty"`
 }
 
-// DefaultWorkConfig returns sensible defaults for workspace sync.
-// Usage: DefaultWorkConfig(...)
 func DefaultWorkConfig() *WorkConfig {
 	return &WorkConfig{
 		Version: 1,
-		Sync: SyncConfig{
-			Interval:     5 * time.Minute,
-			AutoPull:     true,
-			AutoPush:     false,
-			CloneMissing: true,
-		},
-		Agents: AgentPolicy{
-			Heartbeat:     2 * time.Minute,
-			StaleAfter:    10 * time.Minute,
-			WarnOnOverlap: true,
-		},
-		Triggers: []string{"on_activate", "on_commit", "scheduled"},
+		Sync:    SyncConfig{Interval: time.Minute, AutoPull: true, AutoPush: true, CloneMissing: true},
+		Agents:  AgentPolicy{Heartbeat: time.Minute, StaleAfter: 5 * time.Minute, WarnOnOverlap: true},
 	}
 }
 
-// LoadWorkConfig reads .core/work.yaml from the given workspace root directory.
-// Returns defaults if the file does not exist.
-// Usage: LoadWorkConfig(...)
-func LoadWorkConfig(m io.Medium, root string) (*WorkConfig, error) {
-	path := filepath.Join(root, ".core", "work.yaml")
-
-	if !m.Exists(path) {
-		return DefaultWorkConfig(), nil
-	}
-
-	content, err := m.Read(path)
-	if err != nil {
-		return nil, coreerr.E("repos.LoadWorkConfig", "failed to read work config", err)
-	}
-
-	wc := DefaultWorkConfig()
-	if err := yaml.Unmarshal([]byte(content), wc); err != nil {
-		return nil, coreerr.E("repos.LoadWorkConfig", "failed to parse work config", err)
-	}
-
-	return wc, nil
-}
-
-// SaveWorkConfig writes .core/work.yaml to the given workspace root directory.
-// Usage: SaveWorkConfig(...)
-func SaveWorkConfig(m io.Medium, root string, wc *WorkConfig) error {
-	coreDir := filepath.Join(root, ".core")
-	if err := m.EnsureDir(coreDir); err != nil {
-		return coreerr.E("repos.SaveWorkConfig", "failed to create .core directory", err)
-	}
-
-	data, err := yaml.Marshal(wc)
-	if err != nil {
-		return coreerr.E("repos.SaveWorkConfig", "failed to marshal work config", err)
-	}
-
-	path := filepath.Join(coreDir, "work.yaml")
-	if err := m.Write(path, string(data)); err != nil {
-		return coreerr.E("repos.SaveWorkConfig", "failed to write work config", err)
-	}
-
-	return nil
-}
-
-// HasTrigger returns true if the given trigger name is in the triggers list.
-// Usage: HasTrigger(...)
 func (wc *WorkConfig) HasTrigger(name string) bool {
-	for _, t := range wc.Triggers {
-		if t == name {
+	if wc == nil {
+		return false
+	}
+	for _, trigger := range wc.Triggers {
+		if strings.EqualFold(trigger, name) {
 			return true
 		}
 	}
 	return false
+}
+
+func LoadWorkConfig(m coreio.Medium, root string) (*WorkConfig, error) {
+	if m == nil {
+		return nil, errors.New("repos.LoadWorkConfig: medium is required")
+	}
+	raw, err := m.Read(filepathx.Join(root, ".core", "work.yaml"))
+	if err != nil {
+		return DefaultWorkConfig(), nil
+	}
+	var wc WorkConfig
+	if err := yaml.Unmarshal([]byte(raw), &wc); err != nil {
+		return nil, err
+	}
+	if wc.Version == 0 {
+		wc.Version = 1
+	}
+	return &wc, nil
+}
+
+func SaveWorkConfig(m coreio.Medium, root string, wc *WorkConfig) error {
+	if m == nil {
+		return errors.New("repos.SaveWorkConfig: medium is required")
+	}
+	if wc == nil {
+		wc = DefaultWorkConfig()
+	}
+	raw, err := yaml.Marshal(wc)
+	if err != nil {
+		return err
+	}
+	return m.Write(filepathx.Join(root, ".core", "work.yaml"), string(raw))
 }

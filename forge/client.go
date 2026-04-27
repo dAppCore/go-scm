@@ -1,82 +1,67 @@
 // SPDX-License-Identifier: EUPL-1.2
 
-// Package forge provides a thin wrapper around the Forgejo Go SDK
-// for managing repositories, issues, and pull requests on a Forgejo instance.
-//
-// Authentication is resolved from config file, environment variables, or flag overrides:
-//
-//  1. ~/.core/config.yaml keys: forge.token, forge.url
-//  2. FORGE_TOKEN + FORGE_URL environment variables (override config file)
-//  3. Flag overrides via core forge config --url/--token (highest priority)
 package forge
 
 import (
-	forgejo "codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2"
+	// Note: errors.New is retained for stable constructor validation errors.
+	"errors"
 
-	"dappco.re/go/core/log"
+	"codeberg.org/forgejo/go-sdk/forgejo"
 )
 
-// Client wraps the Forgejo SDK client with config-based auth.
 type Client struct {
 	api   *forgejo.Client
 	url   string
 	token string
 }
 
-// New creates a new Forgejo API client for the given URL and token.
-// Usage: New(...)
 func New(url, token string) (*Client, error) {
+	if url == "" {
+		return nil, errors.New("forge.New: url is required")
+	}
 	api, err := forgejo.NewClient(url, forgejo.SetToken(token))
 	if err != nil {
-		return nil, log.E("forge.New", "failed to create client", err)
+		return nil, err
 	}
-
 	return &Client{api: api, url: url, token: token}, nil
 }
 
-// API exposes the underlying SDK client for direct access.
-// Usage: API(...)
-func (c *Client) API() *forgejo.Client { return c.api }
-
-// URL returns the Forgejo instance URL.
-// Usage: URL(...)
-func (c *Client) URL() string { return c.url }
-
-// Token returns the Forgejo API token.
-// Usage: Token(...)
-func (c *Client) Token() string { return c.token }
-
-// GetCurrentUser returns the authenticated user's information.
-// Usage: GetCurrentUser(...)
-func (c *Client) GetCurrentUser() (*forgejo.User, error) {
-	user, _, err := c.api.GetMyUserInfo()
-	if err != nil {
-		return nil, log.E("forge.GetCurrentUser", "failed to get current user", err)
+func (c *Client) API() *forgejo.Client {
+	if c == nil {
+		return nil
 	}
-	return user, nil
+	return c.api
 }
 
-// ForkRepo forks a repository. If org is non-empty, forks into that organisation.
-// Usage: ForkRepo(...)
+func (c *Client) URL() string {
+	if c == nil {
+		return ""
+	}
+	return c.url
+}
+
+func (c *Client) Token() string {
+	if c == nil {
+		return ""
+	}
+	return c.token
+}
+
+func (c *Client) GetCurrentUser() (*forgejo.User, error) {
+	user, _, err := c.api.GetMyUserInfo()
+	return user, err
+}
+
+func (c *Client) CreatePullRequest(owner, repo string, opts forgejo.CreatePullRequestOption) (*forgejo.PullRequest, error) {
+	pr, _, err := c.api.CreatePullRequest(owner, repo, opts)
+	return pr, err
+}
+
 func (c *Client) ForkRepo(owner, repo string, org string) (*forgejo.Repository, error) {
 	opts := forgejo.CreateForkOption{}
 	if org != "" {
 		opts.Organization = &org
 	}
-
 	fork, _, err := c.api.CreateFork(owner, repo, opts)
-	if err != nil {
-		return nil, log.E("forge.ForkRepo", "failed to fork repository", err)
-	}
-	return fork, nil
-}
-
-// CreatePullRequest creates a pull request on the given repository.
-// Usage: CreatePullRequest(...)
-func (c *Client) CreatePullRequest(owner, repo string, opts forgejo.CreatePullRequestOption) (*forgejo.PullRequest, error) {
-	pr, _, err := c.api.CreatePullRequest(owner, repo, opts)
-	if err != nil {
-		return nil, log.E("forge.CreatePullRequest", "failed to create pull request", err)
-	}
-	return pr, nil
+	return fork, err
 }

@@ -5,163 +5,283 @@ package git
 import (
 	"context"
 	"iter"
-	"slices"
+	// Note: AX-6 — validatePath requires filepath.Rel; no core relative-path primitive exists.
+	"path/filepath"
+	"sync"
 
-	"dappco.re/go/core"
+	core "dappco.re/go/core"
 )
 
-// Queries for git service
-
-// QueryStatus requests git status for paths.
-type QueryStatus struct {
-	Paths []string
-	Names map[string]string
-}
-
-// QueryDirtyRepos requests repos with uncommitted changes.
-type QueryDirtyRepos struct{}
-
-// QueryAheadRepos requests repos with unpushed commits.
-type QueryAheadRepos struct{}
-
-// Tasks for git service
-
-// TaskPush requests git push for a path.
-type TaskPush struct {
-	Path string
-	Name string
-}
-
-// TaskPull requests git pull for a path.
-type TaskPull struct {
-	Path string
-	Name string
-}
-
-// TaskPushMultiple requests git push for multiple paths.
-type TaskPushMultiple struct {
-	Paths []string
-	Names map[string]string
-}
-
-// ServiceOptions for configuring the git service.
 type ServiceOptions struct {
 	WorkDir string
 }
 
-// Service provides git operations as a Core service.
+type QueryAheadRepos struct{}
+type QueryDirtyRepos struct{}
+type QueryBehindRepos struct{}
+type QueryStatus struct {
+	Paths []string
+	Names map[string]string
+}
+type TaskPull struct {
+	Path string
+	Name string
+}
+type TaskPush struct {
+	Path string
+	Name string
+}
+type TaskPushMultiple struct {
+	Paths []string
+	Names map[string]string
+}
+type TaskPullMultiple struct {
+	Paths []string
+	Names map[string]string
+}
+
 type Service struct {
 	*core.ServiceRuntime[ServiceOptions]
+	mu         sync.RWMutex
 	lastStatus []RepoStatus
 }
 
-// NewService creates a git service factory.
-// Usage: NewService(...)
-func NewService(opts ServiceOptions) func(*core.Core) (any, error) {
-	return func(c *core.Core) (any, error) {
-		return &Service{
-			ServiceRuntime: core.NewServiceRuntime(c, opts),
-		}, nil
+func NewService(opts ServiceOptions) func(*core.Core) core.Result {
+	return func(c *core.Core) core.Result {
+		return core.Result{Value: &Service{ServiceRuntime: core.NewServiceRuntime(c, opts)}, OK: true}
 	}
 }
 
-// OnStartup registers query and task handlers.
-// Usage: OnStartup(...)
-func (s *Service) OnStartup(ctx context.Context) error {
-	s.Core().RegisterQuery(s.handleQuery)
-	s.Core().RegisterTask(s.handleTask)
-	return nil
+func (s *Service) Status() []RepoStatus {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return append([]RepoStatus(nil), s.lastStatus...)
+}
+
+func (s *Service) StatusIter() iter.Seq[RepoStatus] {
+	status := s.Status()
+	return func(yield func(RepoStatus) bool) {
+		for _, st := range status {
+			if !yield(st) {
+				return
+			}
+		}
+	}
+}
+
+func (s *Service) DirtyRepos() []RepoStatus {
+	var out []RepoStatus
+	for _, st := range s.Status() {
+		if st.IsDirty() {
+			out = append(out, st)
+		}
+	}
+	return out
+}
+
+func (s *Service) DirtyReposIter() iter.Seq[RepoStatus] {
+	return func(yield func(RepoStatus) bool) {
+		for _, st := range s.DirtyRepos() {
+			if !yield(st) {
+				return
+			}
+		}
+	}
+}
+
+func (s *Service) AheadRepos() []RepoStatus {
+	var out []RepoStatus
+	for _, st := range s.Status() {
+		if st.HasUnpushed() {
+			out = append(out, st)
+		}
+	}
+	return out
+}
+
+func (s *Service) AheadReposIter() iter.Seq[RepoStatus] {
+	return func(yield func(RepoStatus) bool) {
+		for _, st := range s.AheadRepos() {
+			if !yield(st) {
+				return
+			}
+		}
+	}
+}
+
+func (s *Service) BehindRepos() []RepoStatus {
+	var out []RepoStatus
+	for _, st := range s.Status() {
+		if st.HasUnpulled() {
+			out = append(out, st)
+		}
+	}
+	return out
+}
+
+func (s *Service) BehindReposIter() iter.Seq[RepoStatus] {
+	return func(yield func(RepoStatus) bool) {
+		for _, st := range s.BehindRepos() {
+			if !yield(st) {
+				return
+			}
+		}
+	}
+}
+
+func (s *Service) OnStartup(ctx context.Context) core.Result {
+	if s == nil {
+		return core.Result{OK: true}
+	}
+	if err := ctx.Err(); err != nil {
+		return core.Result{Value: err, OK: false}
+	}
+
+	c := s.Core()
+	if c == nil {
+		return core.Result{Value: core.E("git.Service.OnStartup", "core is required", nil), OK: false}
+	}
+
+	c.RegisterQuery(s.handleQuery)
+	c.RegisterAction(s.handleTaskMessage)
+
+	c.Action("git.push", func(ctx context.Context, opts core.Options) core.Result {
+		return s.runPush(ctx, opts.String("path"))
+	})
+	c.Action("git.pull", func(ctx context.Context, opts core.Options) core.Result {
+		return s.runPull(ctx, opts.String("path"))
+	})
+	c.Action("git.push-multiple", func(ctx context.Context, opts core.Options) core.Result {
+		paths, _ := opts.Get("paths").Value.([]string)
+		names, _ := opts.Get("names").Value.(map[string]string)
+		return s.runPushMultiple(ctx, paths, names)
+	})
+	c.Action("git.pull-multiple", func(ctx context.Context, opts core.Options) core.Result {
+		paths, _ := opts.Get("paths").Value.([]string)
+		names, _ := opts.Get("names").Value.(map[string]string)
+		return s.runPullMultiple(ctx, paths, names)
+	})
+
+	if workDir := s.Options().WorkDir; workDir != "" {
+		s.mu.Lock()
+		s.lastStatus = Status(ctx, StatusOptions{Paths: []string{workDir}})
+		s.mu.Unlock()
+	}
+	return core.Result{OK: true}
 }
 
 func (s *Service) handleQuery(c *core.Core, q core.Query) core.Result {
+	if s == nil {
+		return core.Result{}
+	}
+	ctx := c.Context()
 	switch m := q.(type) {
 	case QueryStatus:
-		statuses := Status(context.Background(), StatusOptions(m))
+		if err := s.validatePaths(m.Paths); err != nil {
+			return c.LogError(err, "git.handleQuery", "path validation failed")
+		}
+		statuses := Status(ctx, StatusOptions(m))
+		s.mu.Lock()
 		s.lastStatus = statuses
+		s.mu.Unlock()
 		return core.Result{Value: statuses, OK: true}
-
 	case QueryDirtyRepos:
 		return core.Result{Value: s.DirtyRepos(), OK: true}
-
 	case QueryAheadRepos:
 		return core.Result{Value: s.AheadRepos(), OK: true}
+	case QueryBehindRepos:
+		return core.Result{Value: s.BehindRepos(), OK: true}
+	default:
+		return core.Result{}
 	}
-	return core.Result{}
 }
 
-func (s *Service) handleTask(c *core.Core, t core.Task) core.Result {
-	switch m := t.(type) {
+func (s *Service) handleTaskMessage(c *core.Core, msg core.Message) core.Result {
+	switch m := msg.(type) {
 	case TaskPush:
-		return core.Result{}.Result(nil, Push(context.Background(), m.Path))
-
+		return s.runPush(c.Context(), m.Path)
 	case TaskPull:
-		return core.Result{}.Result(nil, Pull(context.Background(), m.Path))
-
+		return s.runPull(c.Context(), m.Path)
 	case TaskPushMultiple:
-		results := PushMultiple(context.Background(), m.Paths, m.Names)
-		return core.Result{Value: results, OK: true}
+		return s.runPushMultiple(c.Context(), m.Paths, m.Names)
+	case TaskPullMultiple:
+		return s.runPullMultiple(c.Context(), m.Paths, m.Names)
+	default:
+		return core.Result{}
 	}
-	return core.Result{}
 }
 
-// Status returns last status result.
-// Usage: Status(...)
-func (s *Service) Status() []RepoStatus { return s.lastStatus }
-
-// StatusIter returns an iterator over last status result.
-// Usage: StatusIter(...)
-func (s *Service) StatusIter() iter.Seq[RepoStatus] {
-	return slices.Values(s.lastStatus)
+func (s *Service) runPush(ctx context.Context, path string) core.Result {
+	if err := s.validatePath(path); err != nil {
+		return s.Core().LogError(err, "git.push", "path validation failed")
+	}
+	if err := Push(ctx, path); err != nil {
+		return s.Core().LogError(err, "git.push", "push failed")
+	}
+	return core.Result{OK: true}
 }
 
-// DirtyRepos returns repos with uncommitted changes.
-// Usage: DirtyRepos(...)
-func (s *Service) DirtyRepos() []RepoStatus {
-	var dirty []RepoStatus
-	for _, st := range s.lastStatus {
-		if st.Error == nil && st.IsDirty() {
-			dirty = append(dirty, st)
+func (s *Service) runPull(ctx context.Context, path string) core.Result {
+	if err := s.validatePath(path); err != nil {
+		return s.Core().LogError(err, "git.pull", "path validation failed")
+	}
+	if err := Pull(ctx, path); err != nil {
+		return s.Core().LogError(err, "git.pull", "pull failed")
+	}
+	return core.Result{OK: true}
+}
+
+func (s *Service) runPushMultiple(ctx context.Context, paths []string, names map[string]string) core.Result {
+	if err := s.validatePaths(paths); err != nil {
+		return s.Core().LogError(err, "git.push-multiple", "path validation failed")
+	}
+	results := PushMultiple(ctx, paths, names)
+	for _, result := range results {
+		if result.Error != nil {
+			return core.Result{Value: results, OK: false}
 		}
 	}
-	return dirty
+	return core.Result{Value: results, OK: true}
 }
 
-// DirtyReposIter returns an iterator over repos with uncommitted changes.
-// Usage: DirtyReposIter(...)
-func (s *Service) DirtyReposIter() iter.Seq[RepoStatus] {
-	return func(yield func(RepoStatus) bool) {
-		for _, st := range s.lastStatus {
-			if st.Error == nil && st.IsDirty() {
-				if !yield(st) {
-					return
-				}
-			}
+func (s *Service) runPullMultiple(ctx context.Context, paths []string, names map[string]string) core.Result {
+	if err := s.validatePaths(paths); err != nil {
+		return s.Core().LogError(err, "git.pull-multiple", "path validation failed")
+	}
+	results := PullMultiple(ctx, paths, names)
+	for _, result := range results {
+		if result.Error != nil {
+			return core.Result{Value: results, OK: false}
 		}
 	}
+	return core.Result{Value: results, OK: true}
 }
 
-// AheadRepos returns repos with unpushed commits.
-// Usage: AheadRepos(...)
-func (s *Service) AheadRepos() []RepoStatus {
-	var ahead []RepoStatus
-	for _, st := range s.lastStatus {
-		if st.Error == nil && st.HasUnpushed() {
-			ahead = append(ahead, st)
-		}
+func (s *Service) validatePath(path string) error {
+	ds := core.Env("DS")
+	if core.PathIsAbs(path) {
+		return nil
 	}
-	return ahead
+	workDir := s.Options().WorkDir
+	if workDir == "" {
+		return core.E("git.validatePath", "path must be absolute", nil)
+	}
+	workDir = core.CleanPath(workDir, ds)
+	if !core.PathIsAbs(workDir) {
+		return core.E("git.validatePath", "WorkDir must be absolute", nil)
+	}
+	rel, err := filepath.Rel(workDir, core.CleanPath(path, ds))
+	if err != nil || rel == ".." || core.HasPrefix(rel, ".."+ds) {
+		return core.E("git.validatePath", "path is outside of allowed WorkDir", nil)
+	}
+	return nil
 }
 
-// AheadReposIter returns an iterator over repos with unpushed commits.
-// Usage: AheadReposIter(...)
-func (s *Service) AheadReposIter() iter.Seq[RepoStatus] {
-	return func(yield func(RepoStatus) bool) {
-		for _, st := range s.lastStatus {
-			if st.Error == nil && st.HasUnpushed() {
-				if !yield(st) {
-					return
-				}
-			}
+func (s *Service) validatePaths(paths []string) error {
+	for _, path := range paths {
+		if err := s.validatePath(path); err != nil {
+			return err
 		}
 	}
+	return nil
 }

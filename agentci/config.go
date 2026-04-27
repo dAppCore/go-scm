@@ -1,13 +1,17 @@
 // SPDX-License-Identifier: EUPL-1.2
 
-// Package agentci provides configuration, security, and orchestration for AgentCI dispatch targets.
 package agentci
 
 import (
-	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
+	// Note: errors.New is retained for stable validation errors in the agentci config API.
+	"errors"
+	// Note: fmt.Errorf is retained for wrapped config load/save errors; replacing here would add churn across load-bearing config paths.
+	"fmt"
+	// Note: strings helpers are retained for case-insensitive strategy matching and config error classification.
+	"strings"
 
-	coreerr "dappco.re/go/core/log"
-	"forge.lthn.ai/core/config"
+	"dappco.re/go/config"
+	"gopkg.in/yaml.v3"
 )
 
 // AgentConfig represents a single agent machine in the config file.
@@ -15,10 +19,10 @@ type AgentConfig struct {
 	Host          string   `yaml:"host" mapstructure:"host"`
 	QueueDir      string   `yaml:"queue_dir" mapstructure:"queue_dir"`
 	ForgejoUser   string   `yaml:"forgejo_user" mapstructure:"forgejo_user"`
-	Model         string   `yaml:"model" mapstructure:"model"`                   // primary AI model
-	Runner        string   `yaml:"runner" mapstructure:"runner"`                 // runner binary: claude, codex, gemini
-	VerifyModel   string   `yaml:"verify_model" mapstructure:"verify_model"`     // secondary model for dual-run
-	SecurityLevel string   `yaml:"security_level" mapstructure:"security_level"` // low, high
+	Model         string   `yaml:"model" mapstructure:"model"`
+	Runner        string   `yaml:"runner" mapstructure:"runner"`
+	VerifyModel   string   `yaml:"verify_model" mapstructure:"verify_model"`
+	SecurityLevel string   `yaml:"security_level" mapstructure:"security_level"`
 	Roles         []string `yaml:"roles" mapstructure:"roles"`
 	DualRun       bool     `yaml:"dual_run" mapstructure:"dual_run"`
 	Active        bool     `yaml:"active" mapstructure:"active"`
@@ -26,54 +30,52 @@ type AgentConfig struct {
 
 // ClothoConfig controls the orchestration strategy.
 type ClothoConfig struct {
-	Strategy            string  `yaml:"strategy" mapstructure:"strategy"`                         // direct, clotho-verified
-	ValidationThreshold float64 `yaml:"validation_threshold" mapstructure:"validation_threshold"` // divergence limit (0.0-1.0)
+	Strategy            string  `yaml:"strategy" mapstructure:"strategy"`
+	ValidationThreshold float64 `yaml:"validation_threshold" mapstructure:"validation_threshold"`
 	SigningKeyPath      string  `yaml:"signing_key_path" mapstructure:"signing_key_path"`
+}
+
+func defaultClothoConfig() ClothoConfig {
+	return ClothoConfig{
+		Strategy:            "direct",
+		ValidationThreshold: 0.5,
+	}
 }
 
 // LoadAgents reads agent targets from config and returns a map of AgentConfig.
 // Returns an empty map (not an error) if no agents are configured.
-// Usage: LoadAgents(...)
 func LoadAgents(cfg *config.Config) (map[string]AgentConfig, error) {
-	var agents map[string]AgentConfig
-	if err := cfg.Get("agentci.agents", &agents); err != nil {
-		return map[string]AgentConfig{}, nil
+	agents := make(map[string]AgentConfig)
+	if cfg == nil {
+		return agents, nil
 	}
-
-	// Validate and apply defaults.
-	for name, ac := range agents {
-		if !ac.Active {
-			continue
+	if err := cfg.Get("agents", &agents); err != nil {
+		if isMissingKeyError(err) {
+			return agents, nil
 		}
-		if ac.Host == "" {
-			return nil, coreerr.E("agentci.LoadAgents", "agent "+name+": host is required", nil)
-		}
-		if ac.QueueDir == "" {
-			ac.QueueDir = "/home/claude/ai-work/queue"
-		}
-		if ac.Model == "" {
-			ac.Model = "sonnet"
-		}
-		if ac.Runner == "" {
-			ac.Runner = "claude"
-		}
-		agents[name] = ac
+		return nil, fmt.Errorf("agentci.LoadAgents: get agents: %w", err)
 	}
+	if agents == nil {
+		agents = make(map[string]AgentConfig)
+	}
+	return cloneAgents(agents), nil
+}
 
-	return agents, nil
+// ListAgents returns all configured agents (active and inactive).
+func ListAgents(cfg *config.Config) (map[string]AgentConfig, error) {
+	return LoadAgents(cfg)
 }
 
 // LoadActiveAgents returns only active agents.
-// Usage: LoadActiveAgents(...)
 func LoadActiveAgents(cfg *config.Config) (map[string]AgentConfig, error) {
-	all, err := LoadAgents(cfg)
+	agents, err := LoadAgents(cfg)
 	if err != nil {
 		return nil, err
 	}
 	active := make(map[string]AgentConfig)
-	for name, ac := range all {
-		if ac.Active {
-			active[name] = ac
+	for name, agent := range agents {
+		if agent.Active {
+			active[name] = agent
 		}
 	}
 	return active, nil
@@ -81,73 +83,132 @@ func LoadActiveAgents(cfg *config.Config) (map[string]AgentConfig, error) {
 
 // LoadClothoConfig loads the Clotho orchestrator settings.
 // Returns sensible defaults if no config is present.
-// Usage: LoadClothoConfig(...)
 func LoadClothoConfig(cfg *config.Config) (ClothoConfig, error) {
-	var cc ClothoConfig
-	if err := cfg.Get("agentci.clotho", &cc); err != nil {
-		return ClothoConfig{
-			Strategy:            "direct",
-			ValidationThreshold: 0.85,
-		}, nil
+	clotho := defaultClothoConfig()
+	if cfg == nil {
+		return clotho, nil
 	}
-	if cc.Strategy == "" {
-		cc.Strategy = "direct"
+	var raw map[string]any
+	if err := cfg.Get("clotho", &raw); err != nil {
+		if isMissingKeyError(err) {
+			return clotho, nil
+		}
+		return clotho, fmt.Errorf("agentci.LoadClothoConfig: get clotho: %w", err)
 	}
-	if cc.ValidationThreshold == 0 {
-		cc.ValidationThreshold = 0.85
+	if err := cfg.Get("clotho", &clotho); err != nil {
+		return clotho, fmt.Errorf("agentci.LoadClothoConfig: decode clotho: %w", err)
 	}
-	return cc, nil
+	if raw == nil {
+		raw = map[string]any{}
+	}
+	if clotho.Strategy == "" {
+		clotho.Strategy = defaultClothoConfig().Strategy
+	}
+	if err := validateClothoStrategy(clotho.Strategy); err != nil {
+		return clotho, err
+	}
+	if _, ok := raw["validation_threshold"]; !ok {
+		clotho.ValidationThreshold = defaultClothoConfig().ValidationThreshold
+	}
+	if clotho.ValidationThreshold < 0 || clotho.ValidationThreshold > 1 {
+		return clotho, fmt.Errorf(
+			"agentci.LoadClothoConfig: validation_threshold must be between 0.0 and 1.0, got %v",
+			clotho.ValidationThreshold,
+		)
+	}
+	return clotho, nil
+}
+
+func validateClothoStrategy(strategy string) error {
+	switch {
+	case strategy == "":
+		return nil
+	case strings.EqualFold(strategy, "direct"):
+		return nil
+	case strings.EqualFold(strategy, "clotho-verified"):
+		return nil
+	default:
+		return fmt.Errorf(
+			"agentci.LoadClothoConfig: strategy must be direct or clotho-verified, got %q",
+			strategy,
+		)
+	}
 }
 
 // SaveAgent writes an agent config entry to the config file.
-// Usage: SaveAgent(...)
 func SaveAgent(cfg *config.Config, name string, ac AgentConfig) error {
-	key := fmt.Sprintf("agentci.agents.%s", name)
-	data := map[string]any{
-		"host":         ac.Host,
-		"queue_dir":    ac.QueueDir,
-		"forgejo_user": ac.ForgejoUser,
-		"active":       ac.Active,
-		"dual_run":     ac.DualRun,
+	if cfg == nil {
+		return errors.New("agentci.SaveAgent: config is required")
 	}
-	if ac.Model != "" {
-		data["model"] = ac.Model
+	if name == "" {
+		return errors.New("agentci.SaveAgent: name is required")
 	}
-	if ac.Runner != "" {
-		data["runner"] = ac.Runner
+
+	agents, err := LoadAgents(cfg)
+	if err != nil {
+		return fmt.Errorf("agentci.SaveAgent: load agents: %w", err)
 	}
-	if ac.VerifyModel != "" {
-		data["verify_model"] = ac.VerifyModel
+	if agents == nil {
+		agents = make(map[string]AgentConfig)
 	}
-	if ac.SecurityLevel != "" {
-		data["security_level"] = ac.SecurityLevel
+	agents[name] = ac
+	if err := cfg.Set("agents", agents); err != nil {
+		return fmt.Errorf("agentci.SaveAgent: set agents: %w", err)
 	}
-	if len(ac.Roles) > 0 {
-		data["roles"] = ac.Roles
-	}
-	return cfg.Set(key, data)
+	return cfg.Commit()
 }
 
 // RemoveAgent removes an agent from the config file.
-// Usage: RemoveAgent(...)
 func RemoveAgent(cfg *config.Config, name string) error {
-	var agents map[string]AgentConfig
-	if err := cfg.Get("agentci.agents", &agents); err != nil {
-		return coreerr.E("agentci.RemoveAgent", "no agents configured", nil)
+	if cfg == nil {
+		return errors.New("agentci.RemoveAgent: config is required")
 	}
-	if _, ok := agents[name]; !ok {
-		return coreerr.E("agentci.RemoveAgent", "agent not found: "+name, nil)
+	if name == "" {
+		return errors.New("agentci.RemoveAgent: name is required")
+	}
+
+	agents, err := LoadAgents(cfg)
+	if err != nil {
+		return fmt.Errorf("agentci.RemoveAgent: load agents: %w", err)
 	}
 	delete(agents, name)
-	return cfg.Set("agentci.agents", agents)
+	if err := cfg.Set("agents", agents); err != nil {
+		return fmt.Errorf("agentci.RemoveAgent: set agents: %w", err)
+	}
+	return cfg.Commit()
 }
 
-// ListAgents returns all configured agents (active and inactive).
-// Usage: ListAgents(...)
-func ListAgents(cfg *config.Config) (map[string]AgentConfig, error) {
-	var agents map[string]AgentConfig
-	if err := cfg.Get("agentci.agents", &agents); err != nil {
-		return map[string]AgentConfig{}, nil
+// MarshalYAML makes the config stable when written through generic YAML paths.
+func (a AgentConfig) MarshalYAML() (any, error) {
+	type alias AgentConfig
+	return alias(a), nil
+}
+
+// UnmarshalYAML keeps the model permissive for YAML round-tripping.
+func (a *AgentConfig) UnmarshalYAML(value *yaml.Node) error {
+	type alias AgentConfig
+	var out alias
+	if err := value.Decode(&out); err != nil {
+		return err
 	}
-	return agents, nil
+	*a = AgentConfig(out)
+	return nil
+}
+
+func isMissingKeyError(err error) bool {
+	return err != nil && strings.Contains(err.Error(), "key not found")
+}
+
+func cloneAgents(src map[string]AgentConfig) map[string]AgentConfig {
+	if len(src) == 0 {
+		return make(map[string]AgentConfig)
+	}
+	dst := make(map[string]AgentConfig, len(src))
+	for name, agent := range src {
+		if len(agent.Roles) > 0 {
+			agent.Roles = append([]string(nil), agent.Roles...)
+		}
+		dst[name] = agent
+	}
+	return dst
 }

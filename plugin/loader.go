@@ -3,66 +3,48 @@
 package plugin
 
 import (
-	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
+	// Note: errors.New is retained for stable loader validation errors.
+	"errors"
+	// Note: filepath.Join is retained because plugin manifests are stored on an OS-specific local path layout.
+	"path/filepath"
 
-	"dappco.re/go/core/io"
-	coreerr "dappco.re/go/core/log"
+	coreio "dappco.re/go/io"
 )
 
-// Loader loads plugins from the filesystem.
 type Loader struct {
-	medium  io.Medium
+	medium  coreio.Medium
 	baseDir string
 }
 
-// NewLoader creates a new plugin loader.
-// Usage: NewLoader(...)
-func NewLoader(m io.Medium, baseDir string) *Loader {
-	return &Loader{
-		medium:  m,
-		baseDir: baseDir,
-	}
+func NewLoader(m coreio.Medium, baseDir string) *Loader {
+	return &Loader{medium: m, baseDir: baseDir}
 }
 
-// Discover finds all plugin directories under baseDir and returns their manifests.
-// Directories without a valid plugin.json are silently skipped.
-// Usage: Discover(...)
 func (l *Loader) Discover() ([]*Manifest, error) {
+	if l == nil || l.medium == nil {
+		return nil, nil
+	}
 	entries, err := l.medium.List(l.baseDir)
 	if err != nil {
-		return nil, coreerr.E("plugin.Loader.Discover", "failed to list plugin directory", err)
+		return nil, err
 	}
-
-	var manifests []*Manifest
+	var out []*Manifest
 	for _, entry := range entries {
-		if !entry.IsDir() {
+		if entry == nil || !entry.IsDir() {
 			continue
 		}
-
-		manifest, err := l.LoadPlugin(entry.Name())
+		manifest, err := LoadManifest(l.medium, filepath.Join(l.baseDir, entry.Name(), "plugin.json"))
 		if err != nil {
-			// Skip directories without valid manifests
 			continue
 		}
-
-		manifests = append(manifests, manifest)
+		out = append(out, manifest)
 	}
-
-	return manifests, nil
+	return out, nil
 }
 
-// LoadPlugin loads a single plugin's manifest by name.
-// Usage: LoadPlugin(...)
 func (l *Loader) LoadPlugin(name string) (*Manifest, error) {
-	manifestPath := filepath.Join(l.baseDir, name, "plugin.json")
-	manifest, err := LoadManifest(l.medium, manifestPath)
-	if err != nil {
-		return nil, coreerr.E("plugin.Loader.LoadPlugin", "failed to load plugin: "+name, err)
+	if l == nil || l.medium == nil {
+		return nil, errors.New("plugin.Loader.LoadPlugin: loader is required")
 	}
-
-	if err := manifest.Validate(); err != nil {
-		return nil, coreerr.E("plugin.Loader.LoadPlugin", "invalid plugin manifest: "+name, err)
-	}
-
-	return manifest, nil
+	return LoadManifest(l.medium, filepath.Join(l.baseDir, name, "plugin.json"))
 }

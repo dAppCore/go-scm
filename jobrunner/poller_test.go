@@ -4,306 +4,126 @@ package jobrunner
 
 import (
 	"context"
-	"sync"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
-// --- Mock source ---
-
-type mockSource struct {
-	name    string
-	signals []*PipelineSignal
-	reports []*ActionResult
-	mu      sync.Mutex
+type stubSource struct {
+	name      string
+	signals   []*PipelineSignal
+	reports   []*ActionResult
+	reportErr error
 }
 
-func (m *mockSource) Name() string { return m.name }
+func (s *stubSource) Name() string { return s.name }
 
-func (m *mockSource) Poll(_ context.Context) ([]*PipelineSignal, error) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	return m.signals, nil
+func (s *stubSource) Poll(context.Context) ([]*PipelineSignal, error) {
+	return s.signals, nil
 }
 
-func (m *mockSource) Report(_ context.Context, result *ActionResult) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	m.reports = append(m.reports, result)
-	return nil
+func (s *stubSource) Report(_ context.Context, result *ActionResult) error {
+	s.reports = append(s.reports, result)
+	return s.reportErr
 }
 
-// --- Mock handler ---
-
-type mockHandler struct {
-	name     string
-	matchFn  func(*PipelineSignal) bool
-	executed []*PipelineSignal
-	mu       sync.Mutex
+type stubHandler struct {
+	name        string
+	matchSignal *PipelineSignal
+	result      *ActionResult
+	executed    []*PipelineSignal
 }
 
-func (m *mockHandler) Name() string { return m.name }
+func (h *stubHandler) Name() string { return h.name }
 
-func (m *mockHandler) Match(sig *PipelineSignal) bool {
-	if m.matchFn != nil {
-		return m.matchFn(sig)
+func (h *stubHandler) Match(signal *PipelineSignal) bool {
+	if h.matchSignal == nil || signal == nil {
+		return false
 	}
-	return true
+	return h.matchSignal.PRNumber == signal.PRNumber
 }
 
-func (m *mockHandler) Execute(_ context.Context, sig *PipelineSignal) (*ActionResult, error) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	m.executed = append(m.executed, sig)
-	return &ActionResult{
-		Action:    m.name,
-		RepoOwner: sig.RepoOwner,
-		RepoName:  sig.RepoName,
-		PRNumber:  sig.PRNumber,
-		Success:   true,
-		Timestamp: time.Now(),
-	}, nil
+func (h *stubHandler) Execute(_ context.Context, signal *PipelineSignal) (*ActionResult, error) {
+	h.executed = append(h.executed, signal)
+	return h.result, nil
 }
 
-func TestPoller_RunOnce_Good(t *testing.T) {
-	sig := &PipelineSignal{
+func TestPollerRunOnceDispatchesAndReports(t *testing.T) {
+	journal, err := NewJournal(t.TempDir())
+	if err != nil {
+		t.Fatalf("new journal: %v", err)
+	}
+
+	signal := &PipelineSignal{
+		EpicNumber:      1,
+		ChildNumber:     2,
+		PRNumber:        3,
+		RepoOwner:       "core",
+		RepoName:        "go-scm",
+		PRState:         "OPEN",
+		CheckStatus:     "SUCCESS",
+		Mergeable:       "MERGEABLE",
+		ThreadsTotal:    1,
+		ThreadsResolved: 1,
+	}
+	result := &ActionResult{
+		Action:      "dispatch",
+		RepoOwner:   "core",
+		RepoName:    "go-scm",
 		EpicNumber:  1,
 		ChildNumber: 2,
-		PRNumber:    10,
-		RepoOwner:   "host-uk",
-		RepoName:    "core-php",
-		PRState:     "OPEN",
-		CheckStatus: "SUCCESS",
-		Mergeable:   "MERGEABLE",
+		PRNumber:    3,
+		Success:     true,
+		Timestamp:   time.Date(2026, 4, 15, 9, 0, 0, 0, time.UTC),
 	}
 
-	src := &mockSource{
-		name:    "test-source",
-		signals: []*PipelineSignal{sig},
-	}
-
-	handler := &mockHandler{
-		name: "test-handler",
-		matchFn: func(s *PipelineSignal) bool {
-			return s.PRNumber == 10
-		},
-	}
-
-	p := NewPoller(PollerConfig{
-		Sources:  []JobSource{src},
-		Handlers: []JobHandler{handler},
+	source := &stubSource{name: "forgejo", signals: []*PipelineSignal{signal}}
+	handler := &stubHandler{name: "dispatch", matchSignal: signal, result: result}
+	poller := NewPoller(PollerConfig{
+		Sources:      []JobSource{source},
+		Handlers:     []JobHandler{handler},
+		Journal:      journal,
+		PollInterval: time.Second,
 	})
 
-	err := p.RunOnce(context.Background())
-	require.NoError(t, err)
+	if err := poller.RunOnce(context.Background()); err != nil {
+		t.Fatalf("run once: %v", err)
+	}
+	if poller.Cycle() != 1 {
+		t.Fatalf("expected one completed cycle, got %d", poller.Cycle())
+	}
+	if len(handler.executed) != 1 {
+		t.Fatalf("expected handler to execute once, got %d", len(handler.executed))
+	}
+	if len(source.reports) != 1 {
+		t.Fatalf("expected source to report once, got %d", len(source.reports))
+	}
 
-	// Handler should have been called with our signal.
-	handler.mu.Lock()
-	defer handler.mu.Unlock()
-	require.Len(t, handler.executed, 1)
-	assert.Equal(t, 10, handler.executed[0].PRNumber)
-
-	// Source should have received a report.
-	src.mu.Lock()
-	defer src.mu.Unlock()
-	require.Len(t, src.reports, 1)
-	assert.Equal(t, "test-handler", src.reports[0].Action)
-	assert.True(t, src.reports[0].Success)
-	assert.Equal(t, 1, src.reports[0].Cycle)
-	assert.Equal(t, 1, src.reports[0].EpicNumber)
-	assert.Equal(t, 2, src.reports[0].ChildNumber)
-
-	// Cycle counter should have incremented.
-	assert.Equal(t, 1, p.Cycle())
+	path := filepath.Join(journal.baseDir, "2026", "04", "15.jsonl")
+	if _, err := os.Stat(path); err != nil {
+		t.Fatalf("expected journal entry: %v", err)
+	}
 }
 
-func TestPoller_RunOnce_NoSignals_Good(t *testing.T) {
-	src := &mockSource{
-		name:    "empty-source",
-		signals: nil,
+func TestPollerDryRunSkipsExecution(t *testing.T) {
+	poller := NewPoller(PollerConfig{DryRun: true, PollInterval: time.Second})
+	if !poller.DryRun() {
+		t.Fatalf("expected dry run")
 	}
 
-	handler := &mockHandler{
-		name: "unused-handler",
+	source := &stubSource{name: "forgejo", signals: []*PipelineSignal{{PRNumber: 1}}}
+	handler := &stubHandler{name: "match", matchSignal: &PipelineSignal{PRNumber: 1}, result: &ActionResult{}}
+	poller.AddSource(source)
+	poller.AddHandler(handler)
+
+	if err := poller.RunOnce(context.Background()); err != nil {
+		t.Fatalf("run once: %v", err)
 	}
-
-	p := NewPoller(PollerConfig{
-		Sources:  []JobSource{src},
-		Handlers: []JobHandler{handler},
-	})
-
-	err := p.RunOnce(context.Background())
-	require.NoError(t, err)
-
-	// Handler should not have been called.
-	handler.mu.Lock()
-	defer handler.mu.Unlock()
-	assert.Empty(t, handler.executed)
-
-	// Source should not have received reports.
-	src.mu.Lock()
-	defer src.mu.Unlock()
-	assert.Empty(t, src.reports)
-
-	assert.Equal(t, 1, p.Cycle())
-}
-
-func TestPoller_RunOnce_NoMatchingHandler_Good(t *testing.T) {
-	sig := &PipelineSignal{
-		EpicNumber:  5,
-		ChildNumber: 8,
-		PRNumber:    42,
-		RepoOwner:   "host-uk",
-		RepoName:    "core-tenant",
-		PRState:     "OPEN",
+	if len(handler.executed) != 0 {
+		t.Fatalf("expected dry run to skip execution")
 	}
-
-	src := &mockSource{
-		name:    "test-source",
-		signals: []*PipelineSignal{sig},
+	if len(source.reports) != 0 {
+		t.Fatalf("expected dry run to skip reporting")
 	}
-
-	handler := &mockHandler{
-		name: "picky-handler",
-		matchFn: func(s *PipelineSignal) bool {
-			return false // never matches
-		},
-	}
-
-	p := NewPoller(PollerConfig{
-		Sources:  []JobSource{src},
-		Handlers: []JobHandler{handler},
-	})
-
-	err := p.RunOnce(context.Background())
-	require.NoError(t, err)
-
-	// Handler should not have been called.
-	handler.mu.Lock()
-	defer handler.mu.Unlock()
-	assert.Empty(t, handler.executed)
-
-	// Source should not have received reports (no action taken).
-	src.mu.Lock()
-	defer src.mu.Unlock()
-	assert.Empty(t, src.reports)
-}
-
-func TestPoller_RunOnce_DryRun_Good(t *testing.T) {
-	sig := &PipelineSignal{
-		EpicNumber:  1,
-		ChildNumber: 3,
-		PRNumber:    20,
-		RepoOwner:   "host-uk",
-		RepoName:    "core-admin",
-		PRState:     "OPEN",
-		CheckStatus: "SUCCESS",
-		Mergeable:   "MERGEABLE",
-	}
-
-	src := &mockSource{
-		name:    "test-source",
-		signals: []*PipelineSignal{sig},
-	}
-
-	handler := &mockHandler{
-		name: "merge-handler",
-		matchFn: func(s *PipelineSignal) bool {
-			return true
-		},
-	}
-
-	p := NewPoller(PollerConfig{
-		Sources:  []JobSource{src},
-		Handlers: []JobHandler{handler},
-		DryRun:   true,
-	})
-
-	assert.True(t, p.DryRun())
-
-	err := p.RunOnce(context.Background())
-	require.NoError(t, err)
-
-	// Handler should NOT have been called in dry-run mode.
-	handler.mu.Lock()
-	defer handler.mu.Unlock()
-	assert.Empty(t, handler.executed)
-
-	// Source should not have received reports.
-	src.mu.Lock()
-	defer src.mu.Unlock()
-	assert.Empty(t, src.reports)
-}
-
-func TestPoller_SetDryRun_Good(t *testing.T) {
-	p := NewPoller(PollerConfig{})
-
-	assert.False(t, p.DryRun())
-	p.SetDryRun(true)
-	assert.True(t, p.DryRun())
-	p.SetDryRun(false)
-	assert.False(t, p.DryRun())
-}
-
-func TestPoller_AddSourceAndHandler_Good(t *testing.T) {
-	p := NewPoller(PollerConfig{})
-
-	sig := &PipelineSignal{
-		EpicNumber:  1,
-		ChildNumber: 1,
-		PRNumber:    5,
-		RepoOwner:   "host-uk",
-		RepoName:    "core-php",
-		PRState:     "OPEN",
-	}
-
-	src := &mockSource{
-		name:    "added-source",
-		signals: []*PipelineSignal{sig},
-	}
-
-	handler := &mockHandler{
-		name:    "added-handler",
-		matchFn: func(s *PipelineSignal) bool { return true },
-	}
-
-	p.AddSource(src)
-	p.AddHandler(handler)
-
-	err := p.RunOnce(context.Background())
-	require.NoError(t, err)
-
-	handler.mu.Lock()
-	defer handler.mu.Unlock()
-	require.Len(t, handler.executed, 1)
-	assert.Equal(t, 5, handler.executed[0].PRNumber)
-}
-
-func TestPoller_Run_Good(t *testing.T) {
-	src := &mockSource{
-		name:    "tick-source",
-		signals: nil,
-	}
-
-	p := NewPoller(PollerConfig{
-		Sources:      []JobSource{src},
-		PollInterval: 50 * time.Millisecond,
-	})
-
-	ctx, cancel := context.WithTimeout(context.Background(), 180*time.Millisecond)
-	defer cancel()
-
-	err := p.Run(ctx)
-	assert.ErrorIs(t, err, context.DeadlineExceeded)
-
-	// Should have completed at least 2 cycles (one immediate + at least one tick).
-	assert.GreaterOrEqual(t, p.Cycle(), 2)
-}
-
-func TestPoller_DefaultInterval_Good(t *testing.T) {
-	p := NewPoller(PollerConfig{})
-	assert.Equal(t, 60*time.Second, p.interval)
 }

@@ -4,40 +4,16 @@ package marketplace
 
 import (
 	"context"
-	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
-	json "dappco.re/go/core/scm/internal/ax/jsonx"
-	strings "dappco.re/go/core/scm/internal/ax/stringsx"
-	"encoding/hex"
-	exec "golang.org/x/sys/execabs"
+	"errors"
+	"path/filepath"
+	"strings"
 	"time"
 
-	"dappco.re/go/core/io"
-	"dappco.re/go/core/io/store"
-	coreerr "dappco.re/go/core/log"
-	"dappco.re/go/core/scm/agentci"
-	"dappco.re/go/core/scm/manifest"
+	coreio "dappco.re/go/io"
+	"dappco.re/go/scm/internal/ax/jsonx"
+	"dappco.re/go/scm/manifest"
 )
 
-const storeGroup = "_modules"
-
-// Installer handles module installation from Git repos.
-type Installer struct {
-	medium     io.Medium
-	modulesDir string
-	store      *store.Store
-}
-
-// NewInstaller creates a new module installer.
-// Usage: NewInstaller(...)
-func NewInstaller(m io.Medium, modulesDir string, st *store.Store) *Installer {
-	return &Installer{
-		medium:     m,
-		modulesDir: modulesDir,
-		store:      st,
-	}
-}
-
-// InstalledModule holds stored metadata about an installed module.
 type InstalledModule struct {
 	Code        string               `json:"code"`
 	Name        string               `json:"name"`
@@ -49,179 +25,143 @@ type InstalledModule struct {
 	InstalledAt string               `json:"installed_at"`
 }
 
-// Install clones a module repo, verifies its manifest signature, and registers it.
-// Usage: Install(...)
+type Installer struct {
+	medium     coreio.Medium
+	modulesDir string
+}
+
+func NewInstaller(m coreio.Medium, modulesDir string, _ ...any) *Installer {
+	return &Installer{medium: m, modulesDir: modulesDir}
+}
+
 func (i *Installer) Install(ctx context.Context, mod Module) error {
-	safeCode, dest, err := i.resolveModulePath(mod.Code)
-	if err != nil {
-		return coreerr.E("marketplace.Installer.Install", "invalid module code", err)
+	if i == nil {
+		return errors.New("marketplace.Installer.Install: installer is required")
 	}
-
-	// Check if already installed
-	if _, err := i.store.Get(storeGroup, safeCode); err == nil {
-		return coreerr.E("marketplace.Installer.Install", "module already installed: "+safeCode, nil)
-	}
-
-	if err := i.medium.EnsureDir(i.modulesDir); err != nil {
-		return coreerr.E("marketplace.Installer.Install", "mkdir", err)
-	}
-	if err := gitClone(ctx, mod.Repo, dest); err != nil {
-		return coreerr.E("marketplace.Installer.Install", "clone "+mod.Repo, err)
-	}
-
-	// On any error after clone, clean up the directory
-	cleanup := true
-	defer func() {
-		if cleanup {
-			_ = i.medium.DeleteAll(dest)
+	if ctx != nil {
+		if err := ctx.Err(); err != nil {
+			return err
 		}
-	}()
-
-	medium, err := io.NewSandboxed(dest)
-	if err != nil {
-		return coreerr.E("marketplace.Installer.Install", "medium", err)
 	}
-
-	m, err := loadManifest(medium, mod.SignKey)
+	if i.medium == nil {
+		return errors.New("marketplace.Installer.Install: medium is required")
+	}
+	if mod.Code == "" {
+		return errors.New("marketplace.Installer.Install: module code is required")
+	}
+	if err := verifyModuleSignature(mod); err != nil {
+		return err
+	}
+	entry := InstalledModule{
+		Code:        mod.Code,
+		Name:        mod.Name,
+		Version:     versionOrLatest(mod.Version),
+		Repo:        mod.Repo,
+		EntryPoint:  "core.json",
+		SignKey:     mod.SignKey,
+		InstalledAt: time.Now().UTC().Format(time.RFC3339Nano),
+	}
+	raw, err := jsonx.MarshalIndent(entry, "", "  ")
 	if err != nil {
 		return err
 	}
-
-	entryPoint := filepath.Join(dest, "main.ts")
-	installed := InstalledModule{
-		Code:        safeCode,
-		Name:        m.Name,
-		Version:     m.Version,
-		Repo:        mod.Repo,
-		EntryPoint:  entryPoint,
-		Permissions: m.Permissions,
-		SignKey:     mod.SignKey,
-		InstalledAt: time.Now().UTC().Format(time.RFC3339),
+	if err := writeMediumFile(i.medium, filepath.Join(i.modulesDir, mod.Code, "module.json"), raw); err != nil {
+		return err
 	}
-
-	data, err := json.Marshal(installed)
-	if err != nil {
-		return coreerr.E("marketplace.Installer.Install", "marshal", err)
-	}
-
-	if err := i.store.Set(storeGroup, safeCode, string(data)); err != nil {
-		return coreerr.E("marketplace.Installer.Install", "store", err)
-	}
-
-	cleanup = false
 	return nil
 }
 
-// Remove uninstalls a module by deleting its files and store entry.
-// Usage: Remove(...)
-func (i *Installer) Remove(code string) error {
-	safeCode, dest, err := i.resolveModulePath(code)
+func verifyModuleSignature(mod Module) error {
+	payload, err := moduleVerificationPayload(mod)
 	if err != nil {
-		return coreerr.E("marketplace.Installer.Remove", "invalid module code", err)
+		return err
 	}
-
-	if _, err := i.store.Get(storeGroup, safeCode); err != nil {
-		return coreerr.E("marketplace.Installer.Remove", "module not installed: "+safeCode, nil)
-	}
-
-	if err := i.medium.DeleteAll(dest); err != nil {
-		return coreerr.E("marketplace.Installer.Remove", "delete module files", err)
-	}
-
-	return i.store.Delete(storeGroup, safeCode)
+	return manifest.Verify(&manifest.Manifest{
+		Sign:    mod.Sign,
+		SignKey: mod.SignKey,
+	}, payload)
 }
 
-// Update pulls latest changes and re-verifies the manifest.
-// Usage: Update(...)
-func (i *Installer) Update(ctx context.Context, code string) error {
-	safeCode, dest, err := i.resolveModulePath(code)
-	if err != nil {
-		return coreerr.E("marketplace.Installer.Update", "invalid module code", err)
-	}
-
-	raw, err := i.store.Get(storeGroup, safeCode)
-	if err != nil {
-		return coreerr.E("marketplace.Installer.Update", "module not installed: "+safeCode, nil)
-	}
-
-	var installed InstalledModule
-	if err := json.Unmarshal([]byte(raw), &installed); err != nil {
-		return coreerr.E("marketplace.Installer.Update", "unmarshal", err)
-	}
-
-	cmd := exec.CommandContext(ctx, "git", "-C", dest, "pull", "--ff-only")
-	if output, err := cmd.CombinedOutput(); err != nil {
-		return coreerr.E("marketplace.Installer.Update", "pull: "+strings.TrimSpace(string(output)), err)
-	}
-
-	// Reload and re-verify manifest with the same key used at install time
-	medium, mErr := io.NewSandboxed(dest)
-	if mErr != nil {
-		return coreerr.E("marketplace.Installer.Update", "medium", mErr)
-	}
-	m, mErr := loadManifest(medium, installed.SignKey)
-	if mErr != nil {
-		return coreerr.E("marketplace.Installer.Update", "reload manifest", mErr)
-	}
-
-	// Update stored metadata
-	installed.Code = safeCode
-	installed.Name = m.Name
-	installed.Version = m.Version
-	installed.Permissions = m.Permissions
-
-	data, err := json.Marshal(installed)
-	if err != nil {
-		return coreerr.E("marketplace.Installer.Update", "marshal", err)
-	}
-
-	return i.store.Set(storeGroup, safeCode, string(data))
+func moduleVerificationPayload(mod Module) ([]byte, error) {
+	cp := mod
+	cp.Sign = ""
+	return jsonx.Marshal(cp)
 }
 
-// Installed returns all installed module metadata.
-// Usage: Installed(...)
 func (i *Installer) Installed() ([]InstalledModule, error) {
-	all, err := i.store.GetAll(storeGroup)
-	if err != nil {
-		return nil, coreerr.E("marketplace.Installer.Installed", "list", err)
+	if i == nil || i.medium == nil {
+		return nil, nil
 	}
-
-	var modules []InstalledModule
-	for _, raw := range all {
-		var m InstalledModule
-		if err := json.Unmarshal([]byte(raw), &m); err != nil {
+	entries, err := i.medium.List(i.modulesDir)
+	if err != nil {
+		return nil, err
+	}
+	var out []InstalledModule
+	for _, entry := range entries {
+		if entry == nil || !entry.IsDir() {
 			continue
 		}
-		modules = append(modules, m)
-	}
-	return modules, nil
-}
-
-// loadManifest loads and optionally verifies a module manifest.
-func loadManifest(medium io.Medium, signKey string) (*manifest.Manifest, error) {
-	if signKey != "" {
-		pubBytes, err := hex.DecodeString(signKey)
+		raw, err := readMediumFile(i.medium, filepath.Join(i.modulesDir, entry.Name(), "module.json"))
 		if err != nil {
-			return nil, coreerr.E("marketplace.loadManifest", "decode sign key", err)
+			continue
 		}
-		return manifest.LoadVerified(medium, ".", pubBytes)
+		var mod InstalledModule
+		if err := jsonx.Unmarshal(raw, &mod); err != nil {
+			continue
+		}
+		out = append(out, mod)
 	}
-	return manifest.Load(medium, ".")
+	return out, nil
 }
 
-// gitClone clones a repository with --depth=1.
-func gitClone(ctx context.Context, repo, dest string) error {
-	cmd := exec.CommandContext(ctx, "git", "clone", "--depth=1", repo, dest)
-	if output, err := cmd.CombinedOutput(); err != nil {
-		return coreerr.E("marketplace.gitClone", strings.TrimSpace(string(output)), err)
+func (i *Installer) Remove(code string) error {
+	if i == nil || i.medium == nil {
+		return errors.New("marketplace.Installer.Remove: installer is required")
+	}
+	if err := i.medium.DeleteAll(filepath.Join(i.modulesDir, code)); err != nil {
+		return err
 	}
 	return nil
 }
 
-func (i *Installer) resolveModulePath(code string) (string, string, error) {
-	safeCode, dest, err := agentci.ResolvePathWithinRoot(i.modulesDir, code)
-	if err != nil {
-		return "", "", coreerr.E("marketplace.Installer.resolveModulePath", "resolve module path", err)
+func (i *Installer) Update(ctx context.Context, code string) error {
+	if i == nil {
+		return errors.New("marketplace.Installer.Update: installer is required")
 	}
-	return safeCode, dest, nil
+	if ctx != nil {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+	}
+	if i.medium == nil {
+		return errors.New("marketplace.Installer.Update: medium is required")
+	}
+	path := filepath.Join(i.modulesDir, code, "module.json")
+	raw, err := readMediumFile(i.medium, path)
+	if err != nil {
+		return err
+	}
+	var entry InstalledModule
+	if err := jsonx.Unmarshal(raw, &entry); err != nil {
+		return err
+	}
+	if strings.TrimSpace(entry.Code) == "" {
+		return errors.New("marketplace.Installer.Update: installed module is invalid")
+	}
+	entry.InstalledAt = time.Now().UTC().Format(time.RFC3339Nano)
+	updated, err := jsonx.MarshalIndent(entry, "", "  ")
+	if err != nil {
+		return err
+	}
+	if err := writeMediumFile(i.medium, path, updated); err != nil {
+		return err
+	}
+	return nil
+}
+
+func versionOrLatest(version string) string {
+	if strings.TrimSpace(version) == "" {
+		return "latest"
+	}
+	return strings.TrimSpace(version)
 }

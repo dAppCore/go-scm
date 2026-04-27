@@ -3,40 +3,46 @@
 package forge
 
 import (
+	// Note: iter.Seq2 is retained because the forge client exposes lazy paginated iterators directly.
 	"iter"
 
-	forgejo "codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v2"
-
-	"dappco.re/go/core/log"
+	"codeberg.org/forgejo/go-sdk/forgejo"
 )
 
-// ListOrgRepos returns all repositories for the given organisation.
-// Usage: ListOrgRepos(...)
+func (c *Client) CreateOrgRepo(org string, opts forgejo.CreateRepoOption) (*forgejo.Repository, error) {
+	repo, _, err := c.api.CreateOrgRepo(org, opts)
+	return repo, err
+}
+
+func (c *Client) DeleteRepo(owner, name string) error {
+	_, err := c.api.DeleteRepo(owner, name)
+	return err
+}
+
+func (c *Client) GetRepo(owner, name string) (*forgejo.Repository, error) {
+	repo, _, err := c.api.GetRepo(owner, name)
+	return repo, err
+}
+
 func (c *Client) ListOrgRepos(org string) ([]*forgejo.Repository, error) {
 	var all []*forgejo.Repository
 	page := 1
-
 	for {
 		repos, resp, err := c.api.ListOrgRepos(org, forgejo.ListOrgReposOptions{
 			ListOptions: forgejo.ListOptions{Page: page, PageSize: 50},
 		})
 		if err != nil {
-			return nil, log.E("forge.ListOrgRepos", "failed to list org repos", err)
+			return nil, err
 		}
-
 		all = append(all, repos...)
-
 		if resp == nil || page >= resp.LastPage {
 			break
 		}
 		page++
 	}
-
 	return all, nil
 }
 
-// ListOrgReposIter returns an iterator over repositories for the given organisation.
-// Usage: ListOrgReposIter(...)
 func (c *Client) ListOrgReposIter(org string) iter.Seq2[*forgejo.Repository, error] {
 	return func(yield func(*forgejo.Repository, error) bool) {
 		page := 1
@@ -45,7 +51,7 @@ func (c *Client) ListOrgReposIter(org string) iter.Seq2[*forgejo.Repository, err
 				ListOptions: forgejo.ListOptions{Page: page, PageSize: 50},
 			})
 			if err != nil {
-				yield(nil, log.E("forge.ListOrgRepos", "failed to list org repos", err))
+				yield(nil, err)
 				return
 			}
 			for _, repo := range repos {
@@ -61,33 +67,25 @@ func (c *Client) ListOrgReposIter(org string) iter.Seq2[*forgejo.Repository, err
 	}
 }
 
-// ListUserRepos returns all repositories for the authenticated user.
-// Usage: ListUserRepos(...)
 func (c *Client) ListUserRepos() ([]*forgejo.Repository, error) {
 	var all []*forgejo.Repository
 	page := 1
-
 	for {
 		repos, resp, err := c.api.ListMyRepos(forgejo.ListReposOptions{
 			ListOptions: forgejo.ListOptions{Page: page, PageSize: 50},
 		})
 		if err != nil {
-			return nil, log.E("forge.ListUserRepos", "failed to list user repos", err)
+			return nil, err
 		}
-
 		all = append(all, repos...)
-
 		if resp == nil || page >= resp.LastPage {
 			break
 		}
 		page++
 	}
-
 	return all, nil
 }
 
-// ListUserReposIter returns an iterator over repositories for the authenticated user.
-// Usage: ListUserReposIter(...)
 func (c *Client) ListUserReposIter() iter.Seq2[*forgejo.Repository, error] {
 	return func(yield func(*forgejo.Repository, error) bool) {
 		page := 1
@@ -96,7 +94,7 @@ func (c *Client) ListUserReposIter() iter.Seq2[*forgejo.Repository, error] {
 				ListOptions: forgejo.ListOptions{Page: page, PageSize: 50},
 			})
 			if err != nil {
-				yield(nil, log.E("forge.ListUserRepos", "failed to list user repos", err))
+				yield(nil, err)
 				return
 			}
 			for _, repo := range repos {
@@ -112,47 +110,7 @@ func (c *Client) ListUserReposIter() iter.Seq2[*forgejo.Repository, error] {
 	}
 }
 
-// GetRepo returns a single repository by owner and name.
-// Usage: GetRepo(...)
-func (c *Client) GetRepo(owner, name string) (*forgejo.Repository, error) {
-	repo, _, err := c.api.GetRepo(owner, name)
-	if err != nil {
-		return nil, log.E("forge.GetRepo", "failed to get repo", err)
-	}
-
-	return repo, nil
-}
-
-// CreateOrgRepo creates a new empty repository under an organisation.
-// Usage: CreateOrgRepo(...)
-func (c *Client) CreateOrgRepo(org string, opts forgejo.CreateRepoOption) (*forgejo.Repository, error) {
-	repo, _, err := c.api.CreateOrgRepo(org, opts)
-	if err != nil {
-		return nil, log.E("forge.CreateOrgRepo", "failed to create org repo", err)
-	}
-
-	return repo, nil
-}
-
-// DeleteRepo deletes a repository from Forgejo.
-// Usage: DeleteRepo(...)
-func (c *Client) DeleteRepo(owner, name string) error {
-	_, err := c.api.DeleteRepo(owner, name)
-	if err != nil {
-		return log.E("forge.DeleteRepo", "failed to delete repo", err)
-	}
-
-	return nil
-}
-
-// MigrateRepo migrates a repository from an external service using the Forgejo migration API.
-// Unlike CreateMirror, this supports importing issues, labels, PRs, and more.
-// Usage: MigrateRepo(...)
 func (c *Client) MigrateRepo(opts forgejo.MigrateRepoOption) (*forgejo.Repository, error) {
 	repo, _, err := c.api.MigrateRepo(opts)
-	if err != nil {
-		return nil, log.E("forge.MigrateRepo", "failed to migrate repo", err)
-	}
-
-	return repo, nil
+	return repo, err
 }

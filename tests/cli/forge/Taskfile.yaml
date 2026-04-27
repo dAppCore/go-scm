@@ -1,0 +1,44 @@
+version: "3"
+
+tasks:
+  build:
+    dir: ../../..
+    cmds:
+      - go build ./...
+
+  test:
+    dir: ../../..
+    cmds:
+      - go test -count=1 -race ./...
+
+  vet:
+    dir: ../../..
+    cmds:
+      - go vet ./...
+
+  smoke:
+    dir: ../../..
+    cmds:
+      - |
+        if [ ! -d cmd/forge ]; then
+          echo "Skipping forge smoke: cmd/forge not present"
+          exit 0
+        fi
+        bin="$(mktemp -t forge-smoke.XXXXXX)"
+        trap 'rm -f "$bin"' EXIT
+        go build -o "$bin" ./cmd/forge
+        "$bin" --help >/dev/null
+        "$bin" repos --help >/dev/null
+        "$bin" auth --help >/dev/null
+        if [ -z "${FORGE_URL:-}" ] || [ -z "${FORGE_TOKEN:-}" ]; then
+          echo "Skipping forge authenticated smoke: FORGE_URL/FORGE_TOKEN unset"
+          exit 0
+        fi
+        "$bin" auth >/dev/null
+        "$bin" repos >/dev/null
+
+  default:
+    deps:
+      - build
+      - test
+      - vet

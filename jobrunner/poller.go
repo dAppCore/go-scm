@@ -3,21 +3,16 @@
 package jobrunner
 
 import (
+	// Note: AX-6 — Poller accepts caller cancellation and deadline propagation through context.Context.
 	"context"
+	// Note: AX-6 — sync.RWMutex is structural here because the pinned Core module does not export core.RWMutex.
 	"sync"
+	// Note: AX-6 — Poller cadence is expressed with time.Duration and time.Ticker.
 	"time"
 
-	"dappco.re/go/core/log"
+	// Note: AX-6 — Core supplies structured errors and formatting primitives.
+	core "dappco.re/go/core"
 )
-
-// PollerConfig configures a Poller.
-type PollerConfig struct {
-	Sources      []JobSource
-	Handlers     []JobHandler
-	Journal      *Journal
-	PollInterval time.Duration
-	DryRun       bool
-}
 
 // Poller discovers signals from sources and dispatches them to handlers.
 type Poller struct {
@@ -30,73 +25,91 @@ type Poller struct {
 	cycle    int
 }
 
+// PollerConfig configures a Poller.
+type PollerConfig struct {
+	Sources      []JobSource
+	Handlers     []JobHandler
+	Journal      *Journal
+	PollInterval time.Duration
+	DryRun       bool
+}
+
 // NewPoller creates a Poller from the given config.
-// Usage: NewPoller(...)
 func NewPoller(cfg PollerConfig) *Poller {
 	interval := cfg.PollInterval
 	if interval <= 0 {
-		interval = 60 * time.Second
+		interval = time.Minute
 	}
-
 	return &Poller{
-		sources:  cfg.Sources,
-		handlers: cfg.Handlers,
+		sources:  append([]JobSource(nil), cfg.Sources...),
+		handlers: append([]JobHandler(nil), cfg.Handlers...),
 		journal:  cfg.Journal,
 		interval: interval,
 		dryRun:   cfg.DryRun,
 	}
 }
 
+// AddHandler appends a handler to the poller.
+func (p *Poller) AddHandler(h JobHandler) {
+	if p == nil || h == nil {
+		return
+	}
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.handlers = append(p.handlers, h)
+}
+
+// AddSource appends a source to the poller.
+func (p *Poller) AddSource(s JobSource) {
+	if p == nil || s == nil {
+		return
+	}
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.sources = append(p.sources, s)
+}
+
 // Cycle returns the number of completed poll-dispatch cycles.
-// Usage: Cycle(...)
 func (p *Poller) Cycle() int {
+	if p == nil {
+		return 0
+	}
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 	return p.cycle
 }
 
 // DryRun returns whether dry-run mode is enabled.
-// Usage: DryRun(...)
 func (p *Poller) DryRun() bool {
+	if p == nil {
+		return false
+	}
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 	return p.dryRun
 }
 
 // SetDryRun enables or disables dry-run mode.
-// Usage: SetDryRun(...)
 func (p *Poller) SetDryRun(v bool) {
+	if p == nil {
+		return
+	}
 	p.mu.Lock()
+	defer p.mu.Unlock()
 	p.dryRun = v
-	p.mu.Unlock()
 }
 
-// AddSource appends a source to the poller.
-// Usage: AddSource(...)
-func (p *Poller) AddSource(s JobSource) {
-	p.mu.Lock()
-	p.sources = append(p.sources, s)
-	p.mu.Unlock()
-}
-
-// AddHandler appends a handler to the poller.
-// Usage: AddHandler(...)
-func (p *Poller) AddHandler(h JobHandler) {
-	p.mu.Lock()
-	p.handlers = append(p.handlers, h)
-	p.mu.Unlock()
-}
-
-// Run starts a blocking poll-dispatch loop. It runs one cycle immediately,
-// then repeats on each tick of the configured interval until the context
-// is cancelled.
-// Usage: Run(...)
+// Run starts a blocking poll-dispatch loop.
 func (p *Poller) Run(ctx context.Context) error {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	if err := p.RunOnce(ctx); err != nil {
 		return err
 	}
 
-	ticker := time.NewTicker(p.interval)
+	interval := p.pollInterval()
+	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
 	for {
@@ -111,94 +124,96 @@ func (p *Poller) Run(ctx context.Context) error {
 	}
 }
 
-// RunOnce performs a single poll-dispatch cycle: iterate sources, poll each,
-// find the first matching handler for each signal, and execute it.
-// Usage: RunOnce(...)
+// RunOnce performs a single poll-dispatch cycle.
 func (p *Poller) RunOnce(ctx context.Context) error {
-	p.mu.Lock()
-	p.cycle++
-	cycle := p.cycle
-	dryRun := p.dryRun
-	sources := make([]JobSource, len(p.sources))
-	copy(sources, p.sources)
-	handlers := make([]JobHandler, len(p.handlers))
-	copy(handlers, p.handlers)
-	p.mu.Unlock()
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 
-	log.Info("poller cycle starting", "cycle", cycle, "sources", len(sources), "handlers", len(handlers))
-
-	for _, src := range sources {
-		signals, err := src.Poll(ctx)
-		if err != nil {
-			log.Error("poll failed", "source", src.Name(), "err", err)
+	sources, handlers, journal, dryRun := p.snapshot()
+	for _, source := range sources {
+		if source == nil {
 			continue
 		}
 
-		log.Info("polled source", "source", src.Name(), "signals", len(signals))
+		signals, err := source.Poll(ctx)
+		if err != nil {
+			return core.E("jobrunner.Poller.RunOnce", core.Sprintf("poll %s", source.Name()), err)
+		}
 
-		for _, sig := range signals {
-			handler := p.findHandler(handlers, sig)
+		for _, signal := range signals {
+			if err := ctx.Err(); err != nil {
+				return err
+			}
+			if signal == nil {
+				continue
+			}
+
+			handler := firstMatchingHandler(handlers, signal)
 			if handler == nil {
-				log.Debug("no matching handler", "epic", sig.EpicNumber, "child", sig.ChildNumber)
 				continue
 			}
-
 			if dryRun {
-				log.Info("dry-run: would execute",
-					"handler", handler.Name(),
-					"epic", sig.EpicNumber,
-					"child", sig.ChildNumber,
-					"pr", sig.PRNumber,
-				)
 				continue
 			}
 
-			start := time.Now()
-			result, err := handler.Execute(ctx, sig)
-			elapsed := time.Since(start)
-
+			result, err := handler.Execute(ctx, signal)
 			if err != nil {
-				log.Error("handler execution failed",
-					"handler", handler.Name(),
-					"epic", sig.EpicNumber,
-					"child", sig.ChildNumber,
-					"err", err,
-				)
-				continue
+				return core.E("jobrunner.Poller.RunOnce", core.Sprintf("execute %s", handler.Name()), err)
 			}
-
-			result.Cycle = cycle
-			result.EpicNumber = sig.EpicNumber
-			result.ChildNumber = sig.ChildNumber
-			result.Duration = elapsed
-
-			if p.journal != nil {
-				if jErr := p.journal.Append(sig, result); jErr != nil {
-					log.Error("journal append failed", "err", jErr)
+			if result == nil {
+				return core.E("jobrunner.Poller.RunOnce", "handler returned nil result", nil)
+			}
+			if journal != nil {
+				if err := journal.Append(signal, result); err != nil {
+					return err
 				}
 			}
-
-			if rErr := src.Report(ctx, result); rErr != nil {
-				log.Error("source report failed", "source", src.Name(), "err", rErr)
+			if err := source.Report(ctx, result); err != nil {
+				return core.E("jobrunner.Poller.RunOnce", core.Sprintf("report %s", source.Name()), err)
 			}
-
-			log.Info("handler executed",
-				"handler", handler.Name(),
-				"action", result.Action,
-				"success", result.Success,
-				"duration", elapsed,
-			)
 		}
 	}
 
+	p.mu.Lock()
+	p.cycle++
+	p.mu.Unlock()
 	return nil
 }
 
-// findHandler returns the first handler that matches the signal, or nil.
-func (p *Poller) findHandler(handlers []JobHandler, sig *PipelineSignal) JobHandler {
-	for _, h := range handlers {
-		if h.Match(sig) {
-			return h
+func (p *Poller) snapshot() ([]JobSource, []JobHandler, *Journal, bool) {
+	if p == nil {
+		return nil, nil, nil, false
+	}
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	sources := append([]JobSource(nil), p.sources...)
+	handlers := append([]JobHandler(nil), p.handlers...)
+	return sources, handlers, p.journal, p.dryRun
+}
+
+func (p *Poller) pollInterval() time.Duration {
+	if p == nil {
+		return time.Minute
+	}
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	if p.interval <= 0 {
+		return time.Minute
+	}
+	return p.interval
+}
+
+func firstMatchingHandler(handlers []JobHandler, signal *PipelineSignal) JobHandler {
+	for _, handler := range handlers {
+		if handler == nil {
+			continue
+		}
+		if handler.Match(signal) {
+			return handler
 		}
 	}
 	return nil

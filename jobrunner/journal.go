@@ -3,29 +3,20 @@
 package jobrunner
 
 import (
-	"bufio"
-	"bytes"
-	"regexp"
-	"sort"
+	// Note: AX-6 — Journal appends are serialized by a process-local mutex.
 	"sync"
+	// Note: AX-6 — Journal entries use UTC timestamps and date partitions.
 	"time"
 
-	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
-	json "dappco.re/go/core/scm/internal/ax/jsonx"
-	os "dappco.re/go/core/scm/internal/ax/osx"
-	strings "dappco.re/go/core/scm/internal/ax/stringsx"
-
-	coreio "dappco.re/go/core/io"
-	coreerr "dappco.re/go/core/log"
+	// Note: AX-6 — Core provides JSON, path, filesystem, and structured error primitives.
+	core "dappco.re/go/core"
 )
 
-const (
-	journalDateLayout      = "2006-01-02"
-	journalTimestampLayout = "2006-01-02T15:04:05Z"
-)
-
-// validPathComponent matches safe repo owner/name characters (alphanumeric, hyphen, underscore, dot).
-var validPathComponent = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9._-]*$`)
+// Journal writes ActionResult entries to date-partitioned JSONL files.
+type Journal struct {
+	baseDir string
+	mu      sync.Mutex
+}
 
 // JournalEntry is a single line in the JSONL audit log.
 type JournalEntry struct {
@@ -57,85 +48,44 @@ type ResultSnapshot struct {
 	DurationMs int64  `json:"duration_ms"`
 }
 
-// JournalQueryOptions filters replay results from the journal.
-type JournalQueryOptions struct {
-	RepoOwner    string
-	RepoName     string
-	RepoFullName string
-	Action       string
-	Since        time.Time
-	Until        time.Time
-}
-
-// Journal writes ActionResult entries to date-partitioned JSONL files.
-type Journal struct {
-	baseDir string
-	mu      sync.RWMutex
-}
-
 // NewJournal creates a new Journal rooted at baseDir.
-// Usage: NewJournal(...)
 func NewJournal(baseDir string) (*Journal, error) {
 	if baseDir == "" {
-		return nil, coreerr.E("jobrunner.NewJournal", "base directory is required", nil)
+		return nil, core.E("jobrunner.NewJournal", "baseDir is required", nil)
 	}
-	return &Journal{baseDir: baseDir}, nil
-}
-
-// sanitizePathComponent validates a single path component (owner or repo name)
-// to prevent path traversal attacks. It rejects "..", empty strings, paths
-// containing separators, and any value outside the safe character set.
-func sanitizePathComponent(name string) (string, error) {
-	// Reject empty or whitespace-only values.
-	if name == "" || strings.TrimSpace(name) == "" {
-		return "", coreerr.E("jobrunner.sanitizePathComponent", "invalid path component: "+name, nil)
-	}
-
-	// Reject inputs containing path separators (directory traversal attempt).
-	if strings.ContainsAny(name, `/\`) {
-		return "", coreerr.E("jobrunner.sanitizePathComponent", "path component contains directory separator: "+name, nil)
-	}
-
-	// Use filepath.Clean to normalize (e.g., collapse redundant dots).
-	clean := filepath.Clean(name)
-
-	// Reject traversal components.
-	if clean == "." || clean == ".." {
-		return "", coreerr.E("jobrunner.sanitizePathComponent", "invalid path component: "+name, nil)
-	}
-
-	// Validate against the safe character set.
-	if !validPathComponent.MatchString(clean) {
-		return "", coreerr.E("jobrunner.sanitizePathComponent", "path component contains invalid characters: "+name, nil)
-	}
-
-	return clean, nil
+	return &Journal{baseDir: absoluteJournalPath(baseDir)}, nil
 }
 
 // Append writes a journal entry for the given signal and result.
-// Usage: Append(...)
 func (j *Journal) Append(signal *PipelineSignal, result *ActionResult) error {
-	if signal == nil {
-		return coreerr.E("jobrunner.Journal.Append", "signal is required", nil)
+	if j == nil {
+		return core.E("jobrunner.Journal.Append", "journal is required", nil)
 	}
 	if result == nil {
-		return coreerr.E("jobrunner.Journal.Append", "result is required", nil)
+		return core.E("jobrunner.Journal.Append", "result is required", nil)
+	}
+
+	ts := result.Timestamp
+	if ts.IsZero() {
+		ts = time.Now().UTC()
+	} else {
+		ts = ts.UTC()
 	}
 
 	entry := JournalEntry{
-		Timestamp: result.Timestamp.UTC().Format(journalTimestampLayout),
-		Epic:      signal.EpicNumber,
-		Child:     signal.ChildNumber,
-		PR:        signal.PRNumber,
-		Repo:      signal.RepoFullName(),
+		Timestamp: ts.Format(time.RFC3339Nano),
+		Epic:      result.EpicNumber,
+		Child:     result.ChildNumber,
+		PR:        result.PRNumber,
+		Repo:      repoRef(signal),
 		Action:    result.Action,
 		Signals: SignalSnapshot{
-			PRState:         signal.PRState,
-			IsDraft:         signal.IsDraft,
-			CheckStatus:     signal.CheckStatus,
-			Mergeable:       signal.Mergeable,
-			ThreadsTotal:    signal.ThreadsTotal,
-			ThreadsResolved: signal.ThreadsResolved,
+			PRState:         signalValue(signal, func(s *PipelineSignal) string { return s.PRState }),
+			IsDraft:         signalValue(signal, func(s *PipelineSignal) bool { return s.IsDraft }),
+			CheckStatus:     signalValue(signal, func(s *PipelineSignal) string { return s.CheckStatus }),
+			Mergeable:       signalValue(signal, func(s *PipelineSignal) string { return s.Mergeable }),
+			ThreadsTotal:    signalValue(signal, func(s *PipelineSignal) int { return s.ThreadsTotal }),
+			ThreadsResolved: signalValue(signal, func(s *PipelineSignal) int { return s.ThreadsResolved }),
 		},
 		Result: ResultSnapshot{
 			Success:    result.Success,
@@ -145,253 +95,76 @@ func (j *Journal) Append(signal *PipelineSignal, result *ActionResult) error {
 		Cycle: result.Cycle,
 	}
 
-	data, err := json.Marshal(entry)
-	if err != nil {
-		return coreerr.E("jobrunner.Journal.Append", "marshal journal entry", err)
+	marshalResult := core.JSONMarshal(entry)
+	if !marshalResult.OK {
+		return core.E("jobrunner.Journal.Append", "marshal entry", resultCause(marshalResult))
 	}
-	data = append(data, '\n')
-
-	// Sanitize path components to prevent path traversal (CVE: issue #46).
-	owner, err := sanitizePathComponent(signal.RepoOwner)
-	if err != nil {
-		return coreerr.E("jobrunner.Journal.Append", "invalid repo owner", err)
-	}
-	repo, err := sanitizePathComponent(signal.RepoName)
-	if err != nil {
-		return coreerr.E("jobrunner.Journal.Append", "invalid repo name", err)
+	payload, ok := marshalResult.Value.([]byte)
+	if !ok {
+		return core.E("jobrunner.Journal.Append", "marshal entry returned invalid payload", nil)
 	}
 
-	date := result.Timestamp.UTC().Format(journalDateLayout)
-	dir := filepath.Join(j.baseDir, owner, repo)
-
-	// Resolve to absolute path and verify it stays within baseDir.
-	absBase, err := filepath.Abs(j.baseDir)
-	if err != nil {
-		return coreerr.E("jobrunner.Journal.Append", "resolve base directory", err)
-	}
-	absDir, err := filepath.Abs(dir)
-	if err != nil {
-		return coreerr.E("jobrunner.Journal.Append", "resolve journal directory", err)
-	}
-	if !strings.HasPrefix(absDir, absBase+string(filepath.Separator)) {
-		return coreerr.E("jobrunner.Journal.Append", "journal path escapes base directory", nil)
-	}
+	filePath := core.Path(j.baseDir, ts.Format("2006"), ts.Format("01"), ts.Format("02")+".jsonl")
 
 	j.mu.Lock()
 	defer j.mu.Unlock()
 
-	if err := coreio.Local.EnsureDir(dir); err != nil {
-		return coreerr.E("jobrunner.Journal.Append", "create journal directory", err)
+	fs := (&core.Fs{}).NewUnrestricted()
+	if r := fs.EnsureDir(core.PathDir(filePath)); !r.OK {
+		return core.E("jobrunner.Journal.Append", "create directories", resultCause(r))
+	}
+	if !fs.Exists(filePath) {
+		if r := fs.WriteMode(filePath, "", 0o600); !r.OK {
+			return core.E("jobrunner.Journal.Append", "create journal", resultCause(r))
+		}
 	}
 
-	path := filepath.Join(dir, date+".jsonl")
-	f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
-	if err != nil {
-		return coreerr.E("jobrunner.Journal.Append", "open journal file", err)
+	openResult := fs.Append(filePath)
+	if !openResult.OK {
+		return core.E("jobrunner.Journal.Append", "open journal", resultCause(openResult))
 	}
-	defer func() { _ = f.Close() }()
+	f, ok := openResult.Value.(journalWriteCloser)
+	if !ok {
+		return core.E("jobrunner.Journal.Append", "open journal returned invalid writer", nil)
+	}
+	defer f.Close()
 
-	_, err = f.Write(data)
-	return err
+	if _, err := f.Write(append(payload, '\n')); err != nil {
+		return core.E("jobrunner.Journal.Append", "write journal", err)
+	}
+	return nil
 }
 
-type journalQueryHit struct {
-	entry     JournalEntry
-	timestamp time.Time
-	repo      string
+func absoluteJournalPath(path string) string {
+	if core.PathIsAbs(path) {
+		return core.Path(path)
+	}
+	return core.Path(core.Env("DIR_CWD"), path)
 }
 
-// Query replays journal entries from the archive and applies the requested filters.
-// Usage: Query(...)
-func (j *Journal) Query(opts JournalQueryOptions) ([]JournalEntry, error) {
-	if j == nil {
-		return nil, coreerr.E("jobrunner.Journal.Query", "journal is required", nil)
+func resultCause(r core.Result) error {
+	if err, ok := r.Value.(error); ok {
+		return err
 	}
-
-	j.mu.RLock()
-	defer j.mu.RUnlock()
-
-	ownerFilter, repoFilter, err := normaliseJournalQueryRepo(opts)
-	if err != nil {
-		return nil, coreerr.E("jobrunner.Journal.Query", "normalise repo filter", err)
-	}
-
-	hits, err := j.collectQueryHits(opts, ownerFilter, repoFilter)
-	if err != nil {
-		return nil, err
-	}
-
-	sort.SliceStable(hits, func(i, k int) bool {
-		if hits[i].timestamp.Equal(hits[k].timestamp) {
-			if hits[i].repo == hits[k].repo {
-				if hits[i].entry.Action == hits[k].entry.Action {
-					if hits[i].entry.Epic == hits[k].entry.Epic {
-						if hits[i].entry.Child == hits[k].entry.Child {
-							if hits[i].entry.PR == hits[k].entry.PR {
-								return hits[i].entry.Cycle < hits[k].entry.Cycle
-							}
-							return hits[i].entry.PR < hits[k].entry.PR
-						}
-						return hits[i].entry.Child < hits[k].entry.Child
-					}
-					return hits[i].entry.Epic < hits[k].entry.Epic
-				}
-				return hits[i].entry.Action < hits[k].entry.Action
-			}
-			return hits[i].repo < hits[k].repo
-		}
-		return hits[i].timestamp.Before(hits[k].timestamp)
-	})
-
-	entries := make([]JournalEntry, len(hits))
-	for i, hit := range hits {
-		entries[i] = hit.entry
-	}
-	return entries, nil
+	return nil
 }
 
-func (j *Journal) collectQueryHits(opts JournalQueryOptions, ownerFilter, repoFilter string) ([]journalQueryHit, error) {
-	entries, err := os.ReadDir(j.baseDir)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil, nil
-		}
-		return nil, coreerr.E("jobrunner.Journal.Query", "read journal base directory", err)
-	}
-	sort.Slice(entries, func(i, k int) bool { return entries[i].Name() < entries[k].Name() })
-
-	var hits []journalQueryHit
-	for _, ownerEntry := range entries {
-		if !ownerEntry.IsDir() {
-			continue
-		}
-		owner := ownerEntry.Name()
-		if ownerFilter != "" && owner != ownerFilter {
-			continue
-		}
-
-		repoPath := filepath.Join(j.baseDir, owner)
-		repos, err := os.ReadDir(repoPath)
-		if err != nil {
-			return nil, coreerr.E("jobrunner.Journal.Query", "read owner directory", err)
-		}
-		sort.Slice(repos, func(i, k int) bool { return repos[i].Name() < repos[k].Name() })
-
-		for _, repoEntry := range repos {
-			if !repoEntry.IsDir() {
-				continue
-			}
-			repo := repoEntry.Name()
-			if repoFilter != "" && repo != repoFilter {
-				continue
-			}
-
-			repoDir := filepath.Join(repoPath, repo)
-			files, err := os.ReadDir(repoDir)
-			if err != nil {
-				return nil, coreerr.E("jobrunner.Journal.Query", "read repo directory", err)
-			}
-			sort.Slice(files, func(i, k int) bool { return files[i].Name() < files[k].Name() })
-
-			for _, fileEntry := range files {
-				if fileEntry.IsDir() || !strings.HasSuffix(fileEntry.Name(), ".jsonl") {
-					continue
-				}
-
-				path := filepath.Join(repoDir, fileEntry.Name())
-				fileHits, err := j.readQueryFile(path, opts, owner+"/"+repo)
-				if err != nil {
-					return nil, err
-				}
-				hits = append(hits, fileHits...)
-			}
-		}
-	}
-
-	return hits, nil
+type journalWriteCloser interface {
+	Write([]byte) (int, error)
+	Close() error
 }
 
-func (j *Journal) readQueryFile(path string, opts JournalQueryOptions, repo string) ([]journalQueryHit, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, coreerr.E("jobrunner.Journal.Query", "read journal file", err)
+func repoRef(signal *PipelineSignal) string {
+	if signal == nil {
+		return ""
 	}
-
-	scanner := bufio.NewScanner(bytes.NewReader(data))
-	var hits []journalQueryHit
-	for scanner.Scan() {
-		var entry JournalEntry
-		if err := json.Unmarshal(scanner.Bytes(), &entry); err != nil {
-			return nil, coreerr.E("jobrunner.Journal.Query", "decode journal entry", err)
-		}
-
-		ts, err := time.Parse(journalTimestampLayout, entry.Timestamp)
-		if err != nil {
-			return nil, coreerr.E("jobrunner.Journal.Query", "parse journal timestamp", err)
-		}
-		if !journalEntryMatches(opts, entry, ts) {
-			continue
-		}
-
-		hits = append(hits, journalQueryHit{
-			entry:     entry,
-			timestamp: ts,
-			repo:      repo,
-		})
-	}
-	if err := scanner.Err(); err != nil {
-		return nil, coreerr.E("jobrunner.Journal.Query", "scan journal file", err)
-	}
-
-	return hits, nil
+	return signal.RepoFullName()
 }
 
-func normaliseJournalQueryRepo(opts JournalQueryOptions) (string, string, error) {
-	owner := opts.RepoOwner
-	repo := opts.RepoName
-
-	if opts.RepoFullName != "" {
-		parts := strings.SplitN(opts.RepoFullName, "/", 2)
-		if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
-			return "", "", coreerr.E("jobrunner.normaliseJournalQueryRepo", "repo full name must be owner/repo", nil)
-		}
-		if owner != "" && owner != parts[0] {
-			return "", "", coreerr.E("jobrunner.normaliseJournalQueryRepo", "repo owner does not match repo full name", nil)
-		}
-		if repo != "" && repo != parts[1] {
-			return "", "", coreerr.E("jobrunner.normaliseJournalQueryRepo", "repo name does not match repo full name", nil)
-		}
-		owner = parts[0]
-		repo = parts[1]
+func signalValue[T any](signal *PipelineSignal, fn func(*PipelineSignal) T) T {
+	var zero T
+	if signal == nil {
+		return zero
 	}
-
-	if owner != "" {
-		clean, err := sanitizePathComponent(owner)
-		if err != nil {
-			return "", "", err
-		}
-		owner = clean
-	}
-	if repo != "" {
-		clean, err := sanitizePathComponent(repo)
-		if err != nil {
-			return "", "", err
-		}
-		repo = clean
-	}
-
-	return owner, repo, nil
-}
-
-func journalEntryMatches(opts JournalQueryOptions, entry JournalEntry, ts time.Time) bool {
-	if opts.Action != "" && entry.Action != opts.Action {
-		return false
-	}
-	if !opts.Since.IsZero() && ts.Before(opts.Since) {
-		return false
-	}
-	if !opts.Until.IsZero() && ts.After(opts.Until) {
-		return false
-	}
-	return true
+	return fn(signal)
 }

@@ -1,68 +1,40 @@
 // SPDX-License-Identifier: EUPL-1.2
 
-// Package gitea provides a thin wrapper around the Gitea Go SDK
-// for managing repositories, issues, and pull requests on a Gitea instance.
-//
-// Authentication is resolved from config file, environment variables, or flag overrides:
-//
-//  1. ~/.core/config.yaml keys: gitea.token, gitea.url
-//  2. GITEA_TOKEN + GITEA_URL environment variables (override config file)
-//  3. Flag overrides via core gitea config --url/--token (highest priority)
 package gitea
 
 import (
-	"dappco.re/go/core/log"
+	// Note: errors.New is retained for stable constructor validation errors.
+	"errors"
 
 	"code.gitea.io/sdk/gitea"
 )
 
-// Client wraps the Gitea SDK client with config-based auth.
 type Client struct {
-	api   *gitea.Client
-	url   string
-	token string
+	api *gitea.Client
+	url string
 }
 
-// New creates a new Gitea API client for the given URL and token.
-// Usage: New(...)
 func New(url, token string) (*Client, error) {
+	if url == "" {
+		return nil, errors.New("gitea.New: url is required")
+	}
 	api, err := gitea.NewClient(url, gitea.SetToken(token))
 	if err != nil {
-		return nil, log.E("gitea.New", "failed to create client", err)
+		return nil, err
 	}
-
-	return &Client{api: api, url: url, token: token}, nil
+	return &Client{api: api, url: url}, nil
 }
 
-// API exposes the underlying SDK client for direct access.
-// Usage: API(...)
-func (c *Client) API() *gitea.Client { return c.api }
-
-// URL returns the Gitea instance URL.
-// Usage: URL(...)
-func (c *Client) URL() string { return c.url }
-
-// Token returns the Gitea API token for use in HTTP Authorization headers.
-// The token is used internally and should not be logged or exposed externally.
-// Usage: Token(...)
-func (c *Client) Token() string { return c.token }
-
-// RedactedToken returns a redacted representation of the API token for safe logging.
-// Usage: RedactedToken(...)
-func (c *Client) RedactedToken() string {
-	if len(c.token) <= 8 {
-		return "***"
+func (c *Client) API() *gitea.Client {
+	if c == nil {
+		return nil
 	}
-	return c.token[:4] + "****" + c.token[len(c.token)-4:]
+	return c.api
 }
 
-// GetCurrentUser returns the authenticated user's information.
-// Usage: GetCurrentUser(...)
-func (c *Client) GetCurrentUser() (*gitea.User, error) {
-	user, _, err := c.api.GetMyUserInfo()
-	if err != nil {
-		return nil, log.E("gitea.GetCurrentUser", "failed to get current user", err)
+func (c *Client) URL() string {
+	if c == nil {
+		return ""
 	}
-
-	return user, nil
+	return c.url
 }

@@ -3,58 +3,62 @@
 package manifest
 
 import (
-	"crypto/ed25519"
+	"crypto/ed25519" // intrinsic
 	"encoding/base64"
+	"encoding/json"
+	"errors"
 
-	coreerr "dappco.re/go/core/log"
-	"gopkg.in/yaml.v3"
+	core "dappco.re/go/core"
 )
 
-// signable returns the canonical bytes to sign (manifest without sign field).
-func signable(m *Manifest) ([]byte, error) {
-	tmp := *m
-	tmp.Sign = ""
-	return yaml.Marshal(&tmp)
+func canonicalManifestBytes(m *Manifest) ([]byte, error) {
+	if err := validateManifest(m); err != nil {
+		return nil, err
+	}
+	cp := *m
+	cp.Sign = ""
+	cp.SignKey = ""
+	return json.Marshal(cp)
 }
 
-// Sign computes the ed25519 signature and stores it in m.Sign (base64).
-// Usage: Sign(...)
-func Sign(m *Manifest, priv ed25519.PrivateKey) error {
+func Sign(m *Manifest, payload []byte, priv ed25519.PrivateKey) error {
 	if m == nil {
-		return coreerr.E("manifest.Sign", "nil manifest", nil)
+		return errors.New("manifest.Sign: manifest is required")
 	}
 	if len(priv) != ed25519.PrivateKeySize {
-		return coreerr.E("manifest.Sign", "invalid private key length", nil)
+		return errors.New("manifest.Sign: private key is required")
 	}
-
-	msg, err := signable(m)
-	if err != nil {
-		return coreerr.E("manifest.Sign", "marshal failed", err)
-	}
-	sig := ed25519.Sign(priv, msg)
+	sig := ed25519.Sign(priv, payload)
 	m.Sign = base64.StdEncoding.EncodeToString(sig)
 	return nil
 }
 
-// Verify checks the ed25519 signature in m.Sign against the public key.
-// Usage: Verify(...)
-func Verify(m *Manifest, pub ed25519.PublicKey) (bool, error) {
+func Verify(m *Manifest, payload []byte) error {
 	if m == nil {
-		return false, coreerr.E("manifest.Verify", "nil manifest", nil)
+		return core.E("manifest.Verify", "manifest is required", nil)
+	}
+	if m.SignKey == "" {
+		return core.E("manifest.Verify", "sign key is required", nil)
 	}
 	if m.Sign == "" {
-		return false, coreerr.E("manifest.Verify", "no signature present", nil)
+		return core.E("manifest.Verify", "signature is required", nil)
 	}
-	if len(pub) != ed25519.PublicKeySize {
-		return false, coreerr.E("manifest.Verify", "invalid public key length", nil)
+	pub, err := base64.StdEncoding.DecodeString(m.SignKey)
+	if err != nil {
+		return core.E("manifest.Verify", "decode sign key", err)
 	}
 	sig, err := base64.StdEncoding.DecodeString(m.Sign)
 	if err != nil {
-		return false, coreerr.E("manifest.Verify", "decode failed", err)
+		return core.E("manifest.Verify", "decode signature", err)
 	}
-	msg, err := signable(m)
-	if err != nil {
-		return false, coreerr.E("manifest.Verify", "marshal failed", err)
+	if len(pub) != ed25519.PublicKeySize {
+		return core.E("manifest.Verify", "invalid sign key", nil)
 	}
-	return ed25519.Verify(pub, msg, sig), nil
+	if len(sig) != ed25519.SignatureSize {
+		return core.E("manifest.Verify", "invalid signature", nil)
+	}
+	if !ed25519.Verify(ed25519.PublicKey(pub), payload, sig) {
+		return core.E("manifest.Verify", "signature verification failed", nil)
+	}
+	return nil
 }

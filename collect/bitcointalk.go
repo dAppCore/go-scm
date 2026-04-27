@@ -3,305 +3,43 @@
 package collect
 
 import (
+	// Note: bytes.Buffer is retained for text rendering and Markdown assembly.
+	"bytes"
+	// Note: context.Context is retained as the collector and fetcher cancellation contract.
 	"context"
-	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
-	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
-	strings "dappco.re/go/core/scm/internal/ax/stringsx"
-	"iter"
+	// Note: io.ReadAll is retained for reading HTTP response bodies.
+	"io"
+	// Note: net/http is retained for fetching forum pages and injectable HTTP client state.
 	"net/http"
+	// Note: regexp is retained for topic and HTML fallback parsing; no core equivalent covers compiled regexes.
+	"regexp"
+	// Note: strconv is retained for page number and filename formatting.
+	"strconv"
+	// Note: time is retained for the package-level HTTP client timeout.
 	"time"
 
-	core "dappco.re/go/core/log"
+	core "dappco.re/go/core"
 	"golang.org/x/net/html"
 )
 
-// httpClient is the HTTP client used for all collection requests.
-// Use SetHTTPClient to override for testing.
-var httpClient = &http.Client{
-	Timeout: 30 * time.Second,
+// FetchPageFunc is an injectable function type for fetching pages.
+type FetchPageFunc func(ctx context.Context, url string) ([]btPost, error)
+
+var httpClient = &http.Client{Timeout: 30 * time.Second}
+
+// SetHTTPClient replaces the package-level HTTP client.
+func SetHTTPClient(c *http.Client) {
+	if c != nil {
+		httpClient = c
+	}
 }
 
 // BitcoinTalkCollector collects forum posts from BitcoinTalk.
 type BitcoinTalkCollector struct {
-	// TopicID is the numeric topic identifier.
 	TopicID string
-
-	// URL is a full URL to a BitcoinTalk topic page. If set, TopicID is
-	// extracted from it.
-	URL string
-
-	// Pages limits collection to this many pages. 0 means all pages.
-	Pages int
+	URL     string
+	Pages   int
 }
-
-// Name returns the collector name.
-// Usage: Name(...)
-func (b *BitcoinTalkCollector) Name() string {
-	id := b.TopicID
-	if id == "" && b.URL != "" {
-		id = "url"
-	}
-	return fmt.Sprintf("bitcointalk:%s", id)
-}
-
-// Collect gathers posts from a BitcoinTalk topic.
-// Usage: Collect(...)
-func (b *BitcoinTalkCollector) Collect(ctx context.Context, cfg *Config) (*Result, error) {
-	result := &Result{Source: b.Name()}
-
-	if cfg.Dispatcher != nil {
-		cfg.Dispatcher.EmitStart(b.Name(), "Starting BitcoinTalk collection")
-	}
-
-	topicID := b.TopicID
-	if topicID == "" {
-		return result, core.E("collect.BitcoinTalk.Collect", "topic ID is required", nil)
-	}
-
-	if cfg.DryRun {
-		if cfg.Dispatcher != nil {
-			cfg.Dispatcher.EmitProgress(b.Name(), fmt.Sprintf("[dry-run] Would collect topic %s", topicID), nil)
-		}
-		return result, nil
-	}
-
-	baseDir := filepath.Join(cfg.OutputDir, "bitcointalk", topicID, "posts")
-	if err := cfg.Output.EnsureDir(baseDir); err != nil {
-		return result, core.E("collect.BitcoinTalk.Collect", "failed to create output directory", err)
-	}
-
-	postNum := 0
-	offset := 0
-	pageCount := 0
-	postsPerPage := 20
-
-	for {
-		if ctx.Err() != nil {
-			return result, core.E("collect.BitcoinTalk.Collect", "context cancelled", ctx.Err())
-		}
-
-		if b.Pages > 0 && pageCount >= b.Pages {
-			break
-		}
-
-		if cfg.Limiter != nil {
-			if err := cfg.Limiter.Wait(ctx, "bitcointalk"); err != nil {
-				return result, err
-			}
-		}
-
-		pageURL := fmt.Sprintf("https://bitcointalk.org/index.php?topic=%s.%d", topicID, offset)
-
-		posts, err := b.fetchPage(ctx, pageURL)
-		if err != nil {
-			result.Errors++
-			if cfg.Dispatcher != nil {
-				cfg.Dispatcher.EmitError(b.Name(), fmt.Sprintf("Failed to fetch page at offset %d: %v", offset, err), nil)
-			}
-			break
-		}
-
-		if len(posts) == 0 {
-			break
-		}
-
-		for _, post := range posts {
-			postNum++
-			filePath := filepath.Join(baseDir, fmt.Sprintf("%d.md", postNum))
-			content := formatPostMarkdown(postNum, post)
-
-			if err := cfg.Output.Write(filePath, content); err != nil {
-				result.Errors++
-				continue
-			}
-
-			result.Items++
-			result.Files = append(result.Files, filePath)
-
-			if cfg.Dispatcher != nil {
-				cfg.Dispatcher.EmitItem(b.Name(), fmt.Sprintf("Post %d by %s", postNum, post.Author), nil)
-			}
-		}
-
-		pageCount++
-		offset += postsPerPage
-
-		// If we got fewer posts than expected, we've reached the end
-		if len(posts) < postsPerPage {
-			break
-		}
-	}
-
-	if cfg.Dispatcher != nil {
-		cfg.Dispatcher.EmitComplete(b.Name(), fmt.Sprintf("Collected %d posts", result.Items), result)
-	}
-
-	return result, nil
-}
-
-// btPost represents a parsed BitcoinTalk forum post.
-type btPost struct {
-	Author  string
-	Date    string
-	Content string
-}
-
-// fetchPage fetches and parses a single BitcoinTalk topic page.
-func (b *BitcoinTalkCollector) fetchPage(ctx context.Context, pageURL string) ([]btPost, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, pageURL, nil)
-	if err != nil {
-		return nil, core.E("collect.BitcoinTalk.fetchPage", "failed to create request", err)
-	}
-	req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; CoreCollector/1.0)")
-
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		return nil, core.E("collect.BitcoinTalk.fetchPage", "request failed", err)
-	}
-	defer func() { _ = resp.Body.Close() }()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, core.E("collect.BitcoinTalk.fetchPage",
-			fmt.Sprintf("unexpected status code: %d", resp.StatusCode), nil)
-	}
-
-	doc, err := html.Parse(resp.Body)
-	if err != nil {
-		return nil, core.E("collect.BitcoinTalk.fetchPage", "failed to parse HTML", err)
-	}
-
-	return extractPosts(doc), nil
-}
-
-// extractPosts extracts post data from a parsed HTML document.
-// It looks for the common BitcoinTalk post structure using div.post elements.
-func extractPosts(doc *html.Node) []btPost {
-	var posts []btPost
-	for p := range extractPostsIter(doc) {
-		posts = append(posts, p)
-	}
-	return posts
-}
-
-// extractPostsIter returns an iterator over post data extracted from a parsed HTML document.
-func extractPostsIter(doc *html.Node) iter.Seq[btPost] {
-	return func(yield func(btPost) bool) {
-		var walk func(*html.Node) bool
-		walk = func(n *html.Node) bool {
-			if n.Type == html.ElementNode && n.Data == "div" {
-				for _, attr := range n.Attr {
-					if attr.Key == "class" && strings.Contains(attr.Val, "post") {
-						post := parsePost(n)
-						if post.Content != "" {
-							if !yield(post) {
-								return false
-							}
-						}
-					}
-				}
-			}
-			for c := n.FirstChild; c != nil; c = c.NextSibling {
-				if !walk(c) {
-					return false
-				}
-			}
-			return true
-		}
-		walk(doc)
-	}
-}
-
-// parsePost extracts author, date, and content from a post div.
-func parsePost(node *html.Node) btPost {
-	post := btPost{}
-	var walk func(*html.Node)
-
-	walk = func(n *html.Node) {
-		if n.Type == html.ElementNode {
-			for _, attr := range n.Attr {
-				if attr.Key == "class" {
-					switch {
-					case strings.Contains(attr.Val, "poster_info"):
-						post.Author = extractText(n)
-					case strings.Contains(attr.Val, "headerandpost"):
-						// Look for date in smalltext
-						for c := n.FirstChild; c != nil; c = c.NextSibling {
-							if c.Type == html.ElementNode && c.Data == "div" {
-								for _, a := range c.Attr {
-									if a.Key == "class" && strings.Contains(a.Val, "smalltext") {
-										post.Date = strings.TrimSpace(extractText(c))
-									}
-								}
-							}
-						}
-					case strings.Contains(attr.Val, "inner"):
-						post.Content = strings.TrimSpace(extractText(n))
-					}
-				}
-			}
-		}
-		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			walk(c)
-		}
-	}
-
-	walk(node)
-	return post
-}
-
-// extractText recursively extracts text content from an HTML node.
-func extractText(n *html.Node) string {
-	if n.Type == html.TextNode {
-		return n.Data
-	}
-
-	var b strings.Builder
-	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		text := extractText(c)
-		if text != "" {
-			if b.Len() > 0 && c.Type == html.ElementNode && (c.Data == "br" || c.Data == "p" || c.Data == "div") {
-				b.WriteString("\n")
-			}
-			b.WriteString(text)
-		}
-	}
-	return b.String()
-}
-
-// formatPostMarkdown formats a BitcoinTalk post as markdown.
-func formatPostMarkdown(num int, post btPost) string {
-	var b strings.Builder
-	fmt.Fprintf(&b, "# Post %d by %s\n\n", num, post.Author)
-
-	if post.Date != "" {
-		fmt.Fprintf(&b, "**Date:** %s\n\n", post.Date)
-	}
-
-	b.WriteString(post.Content)
-	b.WriteString("\n")
-
-	return b.String()
-}
-
-// ParsePostsFromHTML parses BitcoinTalk posts from raw HTML content.
-// This is exported for testing purposes.
-// Usage: ParsePostsFromHTML(...)
-func ParsePostsFromHTML(htmlContent string) ([]btPost, error) {
-	doc, err := html.Parse(strings.NewReader(htmlContent))
-	if err != nil {
-		return nil, core.E("collect.ParsePostsFromHTML", "failed to parse HTML", err)
-	}
-	return extractPosts(doc), nil
-}
-
-// FormatPostMarkdown is exported for testing purposes.
-// Usage: FormatPostMarkdown(...)
-func FormatPostMarkdown(num int, author, date, content string) string {
-	return formatPostMarkdown(num, btPost{Author: author, Date: date, Content: content})
-}
-
-// FetchPageFunc is an injectable function type for fetching pages, used in testing.
-type FetchPageFunc func(ctx context.Context, url string) ([]btPost, error)
 
 // BitcoinTalkCollectorWithFetcher wraps BitcoinTalkCollector with a custom fetcher for testing.
 type BitcoinTalkCollectorWithFetcher struct {
@@ -309,9 +47,361 @@ type BitcoinTalkCollectorWithFetcher struct {
 	Fetcher FetchPageFunc
 }
 
-// SetHTTPClient replaces the package-level HTTP client.
-// Use this in tests to inject a custom transport or timeout.
-// Usage: SetHTTPClient(...)
-func SetHTTPClient(c *http.Client) {
-	httpClient = c
+type btPost struct {
+	Number  int
+	Author  string
+	Date    string
+	Content string
+}
+
+func (b *BitcoinTalkCollector) Name() string { return "bitcointalk" }
+
+func (b *BitcoinTalkCollectorWithFetcher) Name() string { return b.BitcoinTalkCollector.Name() }
+
+// Collect gathers posts from a BitcoinTalk topic.
+func (b *BitcoinTalkCollector) Collect(ctx context.Context, cfg *Config) (*Result, error) {
+	if cfg == nil {
+		return nil, core.E("collect.BitcoinTalkCollector.Collect", "config is required", nil)
+	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	topicID := b.TopicID
+	if topicID == "" && b.URL != "" {
+		topicID = extractBitcoinTalkTopicID(b.URL)
+	}
+	if topicID == "" {
+		return &Result{Source: b.Name()}, nil
+	}
+
+	if cfg.Dispatcher != nil {
+		cfg.Dispatcher.EmitStart(b.Name(), "Starting BitcoinTalk collection")
+	}
+
+	if cfg.DryRun {
+		if cfg.Dispatcher != nil {
+			cfg.Dispatcher.EmitProgress(b.Name(), core.Sprintf("[dry-run] Would collect topic %s", topicID), nil)
+			cfg.Dispatcher.EmitComplete(b.Name(), "BitcoinTalk dry-run complete", &Result{Source: b.Name()})
+		}
+		return &Result{Source: b.Name()}, nil
+	}
+
+	result := b.collectTopic(ctx, cfg, topicID, func(ctx context.Context, url string) ([]btPost, error) {
+		html, err := b.fetchPage(ctx, url)
+		if err != nil {
+			return nil, err
+		}
+		return ParsePostsFromHTML(html)
+	})
+	if cfg.Dispatcher != nil {
+		cfg.Dispatcher.EmitComplete(b.Name(), core.Sprintf("Collected %d posts", result.Items), result)
+	}
+	return result, nil
+}
+
+// Collect gathers posts from a BitcoinTalk topic using the injected fetcher.
+func (b *BitcoinTalkCollectorWithFetcher) Collect(ctx context.Context, cfg *Config) (*Result, error) {
+	if b.Fetcher == nil {
+		return b.BitcoinTalkCollector.Collect(ctx, cfg)
+	}
+	if cfg == nil {
+		return nil, core.E("collect.BitcoinTalkCollectorWithFetcher.Collect", "config is required", nil)
+	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	topicID := b.TopicID
+	if topicID == "" && b.URL != "" {
+		topicID = extractBitcoinTalkTopicID(b.URL)
+	}
+	if topicID == "" {
+		return &Result{Source: b.Name()}, nil
+	}
+	if cfg.Dispatcher != nil {
+		cfg.Dispatcher.EmitStart(b.Name(), "Starting BitcoinTalk collection")
+	}
+	if cfg.DryRun {
+		if cfg.Dispatcher != nil {
+			cfg.Dispatcher.EmitProgress(b.Name(), "[dry-run] Would collect topic "+topicID, nil)
+			cfg.Dispatcher.EmitComplete(b.Name(), "BitcoinTalk dry-run complete", &Result{Source: b.Name()})
+		}
+		return &Result{Source: b.Name()}, nil
+	}
+	result := b.collectTopic(ctx, cfg, topicID, b.Fetcher)
+	if cfg.Dispatcher != nil {
+		cfg.Dispatcher.EmitComplete(b.Name(), core.Sprintf("Collected %d posts", result.Items), result)
+	}
+	return result, nil
+}
+
+func (b *BitcoinTalkCollector) collectTopic(ctx context.Context, cfg *Config, topicID string, fetcher func(context.Context, string) ([]btPost, error)) *Result {
+	result := &Result{Source: b.Name()}
+	pages := b.Pages
+	if pages < 0 {
+		pages = 0
+	}
+	page := 1
+	for {
+		if err := ctx.Err(); err != nil {
+			return result
+		}
+		if pages > 0 && page > pages {
+			break
+		}
+		if cfg.Limiter != nil {
+			if err := cfg.Limiter.Wait(ctx, b.Name()); err != nil {
+				result.Errors++
+				if cfg.Dispatcher != nil {
+					cfg.Dispatcher.EmitError(b.Name(), core.Sprintf("Rate limit wait failed for page %d: %v", page, err), nil)
+				}
+				break
+			}
+		}
+		url := b.pageURL(topicID, page)
+		posts, err := fetcher(ctx, url)
+		if err != nil {
+			result.Errors++
+			if cfg.Dispatcher != nil {
+				cfg.Dispatcher.EmitError(b.Name(), core.Sprintf("Failed to fetch page %d: %v", page, err), nil)
+			}
+			break
+		}
+		if len(posts) == 0 {
+			break
+		}
+		for _, post := range posts {
+			result.Items++
+			md := FormatPostMarkdown(post.Number, post.Author, post.Date, post.Content)
+			name := core.Sprintf("%s-page-%d-post-%d.md", topicID, page, post.Number)
+			outPath, err := writeResultFile(cfg, b.Name(), name, md)
+			if err != nil {
+				result.Errors++
+				continue
+			}
+			result.Files = append(result.Files, outPath)
+			if cfg.Dispatcher != nil {
+				cfg.Dispatcher.EmitItem(b.Name(), core.Sprintf("Post %d by %s", post.Number, post.Author), nil)
+			}
+		}
+		page++
+	}
+	return result
+}
+
+func (b *BitcoinTalkCollector) pageURL(topicID string, page int) string {
+	base := b.URL
+	if base == "" {
+		base = "https://bitcointalk.org/index.php?topic=" + topicID + ".0"
+	}
+	if page <= 1 {
+		return base
+	}
+	if core.Contains(base, ".0") {
+		return replaceFirst(base, ".0", "."+strconv.Itoa((page-1)*20))
+	}
+	return base + "&page=" + strconv.Itoa(page)
+}
+
+func (b *BitcoinTalkCollector) fetchPage(ctx context.Context, url string) (string, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	return fetchBitcoinTalkPage(ctx, url)
+}
+
+func fetchBitcoinTalkPage(ctx context.Context, url string) (string, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return "", err
+	}
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode >= 400 {
+		return "", core.E("collect.BitcoinTalkCollector", core.Sprintf("http %s", resp.Status), nil)
+	}
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
+}
+
+func extractBitcoinTalkTopicID(url string) string {
+	re := regexp.MustCompile(`topic=(\d+)`)
+	match := re.FindStringSubmatch(url)
+	if len(match) == 2 {
+		return match[1]
+	}
+	return ""
+}
+
+// ParsePostsFromHTML parses BitcoinTalk posts from raw HTML content.
+func ParsePostsFromHTML(htmlContent string) ([]btPost, error) {
+	if core.Trim(htmlContent) == "" {
+		return nil, nil
+	}
+	root, err := html.Parse(core.NewReader(htmlContent))
+	if err != nil {
+		return parsePostsFallback(htmlContent), nil
+	}
+
+	var posts []btPost
+	var walk func(*html.Node)
+	walk = func(n *html.Node) {
+		if n == nil {
+			return
+		}
+		if n.Type == html.ElementNode && n.Data == "div" && hasClass(n, "post") {
+			post := btPost{Number: len(posts) + 1}
+			post.Author = findTextByClass(n, "author")
+			post.Date = findTextByClass(n, "date")
+			post.Content = core.Trim(renderTextFragment(n))
+			if post.Content == "" {
+				post.Content = core.Trim(textContent(n))
+			}
+			posts = append(posts, post)
+			return
+		}
+		for child := n.FirstChild; child != nil; child = child.NextSibling {
+			walk(child)
+		}
+	}
+	walk(root)
+	if len(posts) > 0 {
+		return posts, nil
+	}
+
+	plain := core.Trim(stripTags(htmlContent))
+	if plain == "" {
+		return nil, nil
+	}
+	return []btPost{{Number: 1, Content: plain}}, nil
+}
+
+// FormatPostMarkdown formats a post as markdown.
+func FormatPostMarkdown(num int, author, date, content string) string {
+	b := core.NewBuilder()
+	b.WriteString(core.Sprintf("## Post %d\n\n", num))
+	if author != "" {
+		b.WriteString(core.Sprintf("- Author: %s\n", author))
+	}
+	if date != "" {
+		b.WriteString(core.Sprintf("- Date: %s\n", date))
+	}
+	b.WriteString("\n")
+	b.WriteString(core.Trim(content))
+	b.WriteString("\n")
+	return b.String()
+}
+
+func stripTags(input string) string {
+	re := regexp.MustCompile(`(?is)<[^>]+>`)
+	return core.Trim(re.ReplaceAllString(input, " "))
+}
+
+func extractTagText(block, name string) string {
+	re := regexp.MustCompile(`(?is)<[^>]*class="[^"]*` + regexp.QuoteMeta(name) + `[^"]*"[^>]*>(.*?)</[^>]+>`)
+	match := re.FindStringSubmatch(block)
+	if len(match) == 2 {
+		return core.Trim(stripTags(match[1]))
+	}
+	return ""
+}
+
+func parsePostsFallback(htmlContent string) []btPost {
+	re := regexp.MustCompile(`(?is)<div[^>]*class="[^"]*post[^"]*"[^>]*>(.*?)</div>`)
+	matches := re.FindAllStringSubmatch(htmlContent, -1)
+	if len(matches) == 0 {
+		plain := core.Trim(stripTags(htmlContent))
+		if plain == "" {
+			return nil
+		}
+		return []btPost{{Number: 1, Content: plain}}
+	}
+	posts := make([]btPost, 0, len(matches))
+	for i, match := range matches {
+		block := match[1]
+		posts = append(posts, btPost{
+			Number:  i + 1,
+			Author:  extractTagText(block, "author"),
+			Date:    extractTagText(block, "date"),
+			Content: core.Trim(stripTags(block)),
+		})
+	}
+	return posts
+}
+
+func hasClass(node *html.Node, class string) bool {
+	for _, attr := range node.Attr {
+		if attr.Key != "class" {
+			continue
+		}
+		for _, part := range textFields(attr.Val) {
+			if equalTextFold(part, class) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func findTextByClass(node *html.Node, class string) string {
+	if node == nil {
+		return ""
+	}
+	var found string
+	var walk func(*html.Node)
+	walk = func(n *html.Node) {
+		if n == nil || found != "" {
+			return
+		}
+		if n.Type == html.ElementNode && hasClass(n, class) {
+			found = core.Trim(renderTextFragment(n))
+			if found != "" {
+				return
+			}
+		}
+		for child := n.FirstChild; child != nil; child = child.NextSibling {
+			walk(child)
+		}
+	}
+	walk(node)
+	return found
+}
+
+func renderTextFragment(node *html.Node) string {
+	if node == nil {
+		return ""
+	}
+	var buf bytes.Buffer
+	for child := node.FirstChild; child != nil; child = child.NextSibling {
+		if err := html.Render(&buf, child); err != nil {
+			return textContent(node)
+		}
+	}
+	return stripTags(buf.String())
+}
+
+func textContent(node *html.Node) string {
+	if node == nil {
+		return ""
+	}
+	b := core.NewBuilder()
+	var walk func(*html.Node)
+	walk = func(n *html.Node) {
+		if n == nil {
+			return
+		}
+		if n.Type == html.TextNode {
+			b.WriteString(n.Data)
+		}
+		for child := n.FirstChild; child != nil; child = child.NextSibling {
+			walk(child)
+		}
+	}
+	walk(node)
+	return core.Trim(b.String())
 }

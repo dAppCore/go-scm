@@ -3,14 +3,13 @@
 package plugin
 
 import (
-	json "dappco.re/go/core/scm/internal/ax/jsonx"
+	// Note: errors.New is retained for stable manifest validation errors.
+	"errors"
 
-	"dappco.re/go/core/io"
-	coreerr "dappco.re/go/core/log"
+	coreio "dappco.re/go/io"
+	"dappco.re/go/scm/internal/ax/jsonx"
 )
 
-// Manifest represents a plugin.json manifest file.
-// Each plugin repository must contain a plugin.json at its root.
 type Manifest struct {
 	Name         string   `json:"name"`
 	Version      string   `json:"version"`
@@ -21,34 +20,27 @@ type Manifest struct {
 	MinVersion   string   `json:"min_version,omitempty"`
 }
 
-// LoadManifest reads and parses a plugin.json file from the given path.
-// Usage: LoadManifest(...)
-func LoadManifest(m io.Medium, path string) (*Manifest, error) {
-	content, err := m.Read(path)
-	if err != nil {
-		return nil, coreerr.E("plugin.LoadManifest", "failed to read manifest", err)
-	}
-
-	var manifest Manifest
-	if err := json.Unmarshal([]byte(content), &manifest); err != nil {
-		return nil, coreerr.E("plugin.LoadManifest", "failed to parse manifest JSON", err)
-	}
-
-	return &manifest, nil
-}
-
-// Validate checks the manifest for required fields.
-// Returns an error if name, version, or entrypoint are missing.
-// Usage: Validate(...)
 func (m *Manifest) Validate() error {
-	if m.Name == "" {
-		return coreerr.E("plugin.Manifest.Validate", "name is required", nil)
+	if m == nil {
+		return errors.New("plugin.Manifest.Validate: manifest is required")
 	}
-	if m.Version == "" {
-		return coreerr.E("plugin.Manifest.Validate", "version is required", nil)
-	}
-	if m.Entrypoint == "" {
-		return coreerr.E("plugin.Manifest.Validate", "entrypoint is required", nil)
+	if m.Name == "" || m.Version == "" || m.Entrypoint == "" {
+		return errors.New("plugin.Manifest.Validate: name, version, and entrypoint are required")
 	}
 	return nil
+}
+
+func LoadManifest(m coreio.Medium, path string) (*Manifest, error) {
+	if m == nil {
+		return nil, errors.New("plugin.LoadManifest: medium is required")
+	}
+	raw, err := m.Read(path)
+	if err != nil {
+		return nil, err
+	}
+	var manifest Manifest
+	if err := jsonx.Unmarshal([]byte(raw), &manifest); err != nil {
+		return nil, err
+	}
+	return &manifest, manifest.Validate()
 }

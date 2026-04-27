@@ -3,24 +3,14 @@
 package repos
 
 import (
+	"errors"
 	"time"
 
-	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
-
-	"dappco.re/go/core/io"
-	coreerr "dappco.re/go/core/log"
+	coreio "dappco.re/go/io"
+	"dappco.re/go/scm/internal/ax/filepathx"
 	"gopkg.in/yaml.v3"
 )
 
-// GitState holds per-machine git sync state for a workspace.
-// Stored at .core/git.yaml and .gitignored (not shared across machines).
-type GitState struct {
-	Version int                      `yaml:"version"`
-	Repos   map[string]*RepoGitState `yaml:"repos,omitempty"`
-	Agents  map[string]*AgentState   `yaml:"agents,omitempty"`
-}
-
-// RepoGitState tracks the last known git state for a single repo.
 type RepoGitState struct {
 	LastPull time.Time `yaml:"last_pull,omitempty"`
 	LastPush time.Time `yaml:"last_push,omitempty"`
@@ -30,161 +20,135 @@ type RepoGitState struct {
 	Behind   int       `yaml:"behind,omitempty"`
 }
 
-// AgentState tracks which agent last touched which repos.
 type AgentState struct {
 	LastSeen time.Time `yaml:"last_seen"`
 	Active   []string  `yaml:"active,omitempty"`
 }
 
-// LoadGitState reads .core/git.yaml from the given workspace root directory.
-// Returns a new empty GitState if the file does not exist.
-// Usage: LoadGitState(...)
-func LoadGitState(m io.Medium, root string) (*GitState, error) {
-	path := filepath.Join(root, ".core", "git.yaml")
-
-	if !m.Exists(path) {
-		return NewGitState(), nil
-	}
-
-	content, err := m.Read(path)
-	if err != nil {
-		return nil, coreerr.E("repos.LoadGitState", "failed to read git state", err)
-	}
-
-	var gs GitState
-	if err := yaml.Unmarshal([]byte(content), &gs); err != nil {
-		return nil, coreerr.E("repos.LoadGitState", "failed to parse git state", err)
-	}
-
-	if gs.Repos == nil {
-		gs.Repos = make(map[string]*RepoGitState)
-	}
-	if gs.Agents == nil {
-		gs.Agents = make(map[string]*AgentState)
-	}
-
-	return &gs, nil
+type GitState struct {
+	Version int                      `yaml:"version"`
+	Repos   map[string]*RepoGitState `yaml:"repos,omitempty"`
+	Agents  map[string]*AgentState   `yaml:"agents,omitempty"`
 }
 
-// SaveGitState writes .core/git.yaml to the given workspace root directory.
-// Usage: SaveGitState(...)
-func SaveGitState(m io.Medium, root string, gs *GitState) error {
-	coreDir := filepath.Join(root, ".core")
-	if err := m.EnsureDir(coreDir); err != nil {
-		return coreerr.E("repos.SaveGitState", "failed to create .core directory", err)
-	}
-
-	data, err := yaml.Marshal(gs)
-	if err != nil {
-		return coreerr.E("repos.SaveGitState", "failed to marshal git state", err)
-	}
-
-	path := filepath.Join(coreDir, "git.yaml")
-	if err := m.Write(path, string(data)); err != nil {
-		return coreerr.E("repos.SaveGitState", "failed to write git state", err)
-	}
-
-	return nil
-}
-
-// NewGitState returns a new empty GitState with version 1.
-// Usage: NewGitState(...)
 func NewGitState() *GitState {
-	return &GitState{
-		Version: 1,
-		Repos:   make(map[string]*RepoGitState),
-		Agents:  make(map[string]*AgentState),
+	return &GitState{Version: 1, Repos: map[string]*RepoGitState{}, Agents: map[string]*AgentState{}}
+}
+
+func (gs *GitState) ensure() {
+	if gs.Repos == nil {
+		gs.Repos = map[string]*RepoGitState{}
 	}
-}
-
-// Touch records a pull timestamp for the named repo.
-// Usage: TouchPull(...)
-func (gs *GitState) TouchPull(name string) {
-	gs.ensureRepo(name).LastPull = time.Now()
-}
-
-// TouchPush records a push timestamp for the named repo.
-// Usage: TouchPush(...)
-func (gs *GitState) TouchPush(name string) {
-	gs.ensureRepo(name).LastPush = time.Now()
-}
-
-// UpdateRepo records the current git status for a repo.
-// Usage: UpdateRepo(...)
-func (gs *GitState) UpdateRepo(name, branch, remote string, ahead, behind int) {
-	r := gs.ensureRepo(name)
-	r.Branch = branch
-	r.Remote = remote
-	r.Ahead = ahead
-	r.Behind = behind
-}
-
-// Heartbeat records an agent's presence and active packages.
-// Usage: Heartbeat(...)
-func (gs *GitState) Heartbeat(agentName string, active []string) {
 	if gs.Agents == nil {
-		gs.Agents = make(map[string]*AgentState)
+		gs.Agents = map[string]*AgentState{}
 	}
-	gs.Agents[agentName] = &AgentState{
-		LastSeen: time.Now(),
-		Active:   active,
+	if gs.Version == 0 {
+		gs.Version = 1
 	}
 }
 
-// StaleAgents returns agent names whose last heartbeat is older than the given duration.
-// Usage: StaleAgents(...)
+func (gs *GitState) TouchPull(name string) {
+	gs.ensure()
+	st := gs.repo(name)
+	st.LastPull = time.Now().UTC()
+}
+func (gs *GitState) TouchPush(name string) {
+	gs.ensure()
+	st := gs.repo(name)
+	st.LastPush = time.Now().UTC()
+}
+
+func (gs *GitState) UpdateRepo(name, branch, remote string, ahead, behind int) {
+	gs.ensure()
+	st := gs.repo(name)
+	st.Branch, st.Remote, st.Ahead, st.Behind = branch, remote, ahead, behind
+}
+
+func (gs *GitState) repo(name string) *RepoGitState {
+	if st, ok := gs.Repos[name]; ok && st != nil {
+		return st
+	}
+	st := &RepoGitState{}
+	gs.Repos[name] = st
+	return st
+}
+
+func (gs *GitState) Heartbeat(agentName string, active []string) {
+	gs.ensure()
+	gs.Agents[agentName] = &AgentState{LastSeen: time.Now().UTC(), Active: append([]string(nil), active...)}
+}
+
 func (gs *GitState) StaleAgents(staleAfter time.Duration) []string {
-	cutoff := time.Now().Add(-staleAfter)
-	var stale []string
+	if gs == nil {
+		return nil
+	}
+	cutoff := time.Now().UTC().Add(-staleAfter)
+	var out []string
 	for name, agent := range gs.Agents {
-		if agent.LastSeen.Before(cutoff) {
-			stale = append(stale, name)
+		if agent == nil || agent.LastSeen.Before(cutoff) {
+			out = append(out, name)
 		}
 	}
-	return stale
+	return out
 }
 
-// ActiveAgentsFor returns agent names that have the given repo in their active list
-// and are not stale.
-// Usage: ActiveAgentsFor(...)
 func (gs *GitState) ActiveAgentsFor(repoName string, staleAfter time.Duration) []string {
-	cutoff := time.Now().Add(-staleAfter)
-	var agents []string
+	if gs == nil {
+		return nil
+	}
+	cutoff := time.Now().UTC().Add(-staleAfter)
+	var out []string
 	for name, agent := range gs.Agents {
-		if agent.LastSeen.Before(cutoff) {
+		if agent == nil || agent.LastSeen.Before(cutoff) {
 			continue
 		}
-		for _, r := range agent.Active {
-			if r == repoName {
-				agents = append(agents, name)
+		for _, active := range agent.Active {
+			if active == repoName {
+				out = append(out, name)
 				break
 			}
 		}
 	}
-	return agents
+	return out
 }
 
-// NeedsPull returns true if the repo has never been pulled or was pulled before the given duration.
-// Usage: NeedsPull(...)
 func (gs *GitState) NeedsPull(name string, maxAge time.Duration) bool {
-	r, ok := gs.Repos[name]
-	if !ok {
+	if gs == nil {
 		return true
 	}
-	if r.LastPull.IsZero() {
+	st, ok := gs.Repos[name]
+	if !ok || st == nil || st.LastPull.IsZero() {
 		return true
 	}
-	return time.Since(r.LastPull) > maxAge
+	return time.Since(st.LastPull) > maxAge
 }
 
-func (gs *GitState) ensureRepo(name string) *RepoGitState {
-	if gs.Repos == nil {
-		gs.Repos = make(map[string]*RepoGitState)
+func LoadGitState(m coreio.Medium, root string) (*GitState, error) {
+	if m == nil {
+		return nil, errors.New("repos.LoadGitState: medium is required")
 	}
-	r, ok := gs.Repos[name]
-	if !ok {
-		r = &RepoGitState{}
-		gs.Repos[name] = r
+	raw, err := m.Read(filepathx.Join(root, ".core", "git.yaml"))
+	if err != nil {
+		return NewGitState(), nil
 	}
-	return r
+	var gs GitState
+	if err := yaml.Unmarshal([]byte(raw), &gs); err != nil {
+		return nil, err
+	}
+	gs.ensure()
+	return &gs, nil
+}
+
+func SaveGitState(m coreio.Medium, root string, gs *GitState) error {
+	if m == nil {
+		return errors.New("repos.SaveGitState: medium is required")
+	}
+	if gs == nil {
+		gs = NewGitState()
+	}
+	raw, err := yaml.Marshal(gs)
+	if err != nil {
+		return err
+	}
+	return m.Write(filepathx.Join(root, ".core", "git.yaml"), string(raw))
 }

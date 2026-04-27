@@ -3,46 +3,50 @@
 package manifest
 
 import (
-	"crypto/ed25519"
-	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
+	"crypto/ed25519" // intrinsic
+	"encoding/base64"
+	"errors"
 
-	"dappco.re/go/core/io"
-	coreerr "dappco.re/go/core/log"
+	coreio "dappco.re/go/io"
+	"dappco.re/go/scm/internal/ax/filepathx"
 	"gopkg.in/yaml.v3"
 )
 
-const manifestPath = ".core/manifest.yaml"
-
-// MarshalYAML serializes a manifest to YAML bytes.
-// Usage: MarshalYAML(...)
-func MarshalYAML(m *Manifest) ([]byte, error) {
-	return yaml.Marshal(m)
-}
-
-// Load reads and parses a .core/manifest.yaml from the given root directory.
-// Usage: Load(...)
-func Load(medium io.Medium, root string) (*Manifest, error) {
-	path := filepath.Join(root, manifestPath)
-	data, err := medium.Read(path)
-	if err != nil {
-		return nil, coreerr.E("manifest.Load", "read failed", err)
+func Load(medium coreio.Medium, root string) (*Manifest, error) {
+	if medium == nil {
+		return nil, errors.New("manifest.Load: medium is required")
 	}
-	return Parse([]byte(data))
+	raw, err := medium.Read(filepathx.Join(root, ".core", "manifest.yaml"))
+	if err != nil {
+		return nil, err
+	}
+	return Parse([]byte(raw))
 }
 
-// LoadVerified reads, parses, and verifies the ed25519 signature.
-// Usage: LoadVerified(...)
-func LoadVerified(medium io.Medium, root string, pub ed25519.PublicKey) (*Manifest, error) {
+func LoadVerified(medium coreio.Medium, root string, pub ed25519.PublicKey) (*Manifest, error) {
 	m, err := Load(medium, root)
 	if err != nil {
 		return nil, err
 	}
-	ok, err := Verify(m, pub)
-	if err != nil {
-		return nil, coreerr.E("manifest.LoadVerified", "verification error", err)
+	verifyManifest := m
+	if len(pub) > 0 {
+		cp := *m
+		cp.SignKey = base64.StdEncoding.EncodeToString(pub)
+		verifyManifest = &cp
 	}
-	if !ok {
-		return nil, coreerr.E("manifest.LoadVerified", "signature verification failed for "+m.Code, nil)
+	payload, err := canonicalManifestBytes(m)
+	if err != nil {
+		return nil, err
+	}
+	if err := Verify(verifyManifest, payload); err != nil {
+		return nil, err
 	}
 	return m, nil
+}
+
+func MarshalYAML(m *Manifest) ([]byte, error) {
+	if m == nil {
+		return nil, errors.New("manifest.MarshalYAML: manifest is required")
+	}
+	return yaml.Marshal(m)
 }

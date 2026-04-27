@@ -1,22 +1,49 @@
 // SPDX-License-Identifier: EUPL-1.2
 
-// Package git provides utilities for git operations across multiple repositories.
 package git
 
 import (
-	"bytes"
 	"context"
-	os "dappco.re/go/core/scm/internal/ax/osx"
-	strings "dappco.re/go/core/scm/internal/ax/stringsx"
-	exec "golang.org/x/sys/execabs"
-	"io"
 	"iter"
-	"slices"
+	// Note: AX-6 — Git operations intentionally spawn the system git binary.
+	"os/exec"
 	"strconv"
-	"sync"
+
+	core "dappco.re/go/core"
 )
 
-// RepoStatus represents the git status of a single repository.
+type GitError struct {
+	Err    error
+	Stderr string
+}
+
+func (e *GitError) Error() string {
+	if e == nil {
+		return ""
+	}
+	if core.Trim(e.Stderr) != "" {
+		return core.Trim(e.Stderr)
+	}
+	if e.Err != nil {
+		return e.Err.Error()
+	}
+	return "git error"
+}
+
+func (e *GitError) Unwrap() error {
+	if e == nil {
+		return nil
+	}
+	return e.Err
+}
+
+type PushResult struct {
+	Name    string
+	Path    string
+	Success bool
+	Error   error
+}
+
 type RepoStatus struct {
 	Name      string
 	Path      string
@@ -29,60 +56,150 @@ type RepoStatus struct {
 	Error     error
 }
 
-// IsDirty returns true if there are uncommitted changes.
-// Usage: IsDirty(...)
-func (s *RepoStatus) IsDirty() bool {
-	return s.Modified > 0 || s.Untracked > 0 || s.Staged > 0
+type SyncResult struct {
+	Name    string
+	Path    string
+	Success bool
+	Error   error
 }
 
-// HasUnpushed returns true if there are commits to push.
-// Usage: HasUnpushed(...)
-func (s *RepoStatus) HasUnpushed() bool {
-	return s.Ahead > 0
-}
-
-// HasUnpulled returns true if there are commits to pull.
-// Usage: HasUnpulled(...)
-func (s *RepoStatus) HasUnpulled() bool {
-	return s.Behind > 0
-}
-
-// StatusOptions configures the status check.
 type StatusOptions struct {
-	// Paths is a list of repo paths to check
 	Paths []string
-	// Names maps paths to display names
 	Names map[string]string
 }
 
-// Status checks git status for multiple repositories in parallel.
-// Usage: Status(...)
-func Status(ctx context.Context, opts StatusOptions) []RepoStatus {
-	var wg sync.WaitGroup
-	results := make([]RepoStatus, len(opts.Paths))
-
-	for i, path := range opts.Paths {
-		wg.Add(1)
-		go func(idx int, repoPath string) {
-			defer wg.Done()
-			name := opts.Names[repoPath]
-			if name == "" {
-				name = repoPath
-			}
-			results[idx] = getStatus(ctx, repoPath, name)
-		}(i, path)
-	}
-
-	wg.Wait()
-	return results
+func (s *RepoStatus) HasUnpulled() bool { return s != nil && s.Behind > 0 }
+func (s *RepoStatus) HasUnpushed() bool { return s != nil && s.Ahead > 0 }
+func (s *RepoStatus) IsDirty() bool {
+	return s != nil && (s.Modified > 0 || s.Untracked > 0 || s.Staged > 0)
 }
 
-// StatusIter returns an iterator over git status for multiple repositories.
-// Usage: StatusIter(...)
-func StatusIter(ctx context.Context, opts StatusOptions) iter.Seq[RepoStatus] {
-	return func(yield func(RepoStatus) bool) {
-		results := Status(ctx, opts)
-		for _, r := range results {
+func IsNonFastForward(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := core.Lower(err.Error())
+	return core.Contains(msg, "non-fast-forward") || core.Contains(msg, "fetch first") || core.Contains(msg, "rejected")
+}
+
+func runGit(ctx context.Context, path string, args ...string) ([]byte, []byte, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	cmd := exec.CommandContext(ctx, "git", append([]string{"-C", path}, args...)...)
+	stdout, stderr := core.NewBuilder(), core.NewBuilder()
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
+	err := cmd.Run()
+	if err != nil {
+		return []byte(stdout.String()), []byte(stderr.String()), &GitError{Err: err, Stderr: stderr.String()}
+	}
+	return []byte(stdout.String()), []byte(stderr.String()), nil
+}
+
+func Pull(ctx context.Context, path string) error {
+	_, _, err := runGit(ctx, path, "pull", "--ff-only")
+	return err
+}
+
+func Push(ctx context.Context, path string) error {
+	_, _, err := runGit(ctx, path, "push")
+	return err
+}
+
+// Sync fetches the default Forge remote and hard-resets the working tree to
+// match the requested branch.
+func Sync(ctx context.Context, path string) error {
+	return SyncWithRemote(ctx, path, "origin", "dev")
+}
+
+// SyncWithRemote fetches a branch from the given remote and resets the local
+// working tree to match it.
+func SyncWithRemote(ctx context.Context, path, remote, branch string) error {
+	if err := ensurePath(path); err != nil {
+		return err
+	}
+	if core.Trim(remote) == "" {
+		remote = "origin"
+	}
+	if core.Trim(branch) == "" {
+		branch = "dev"
+	}
+	if _, _, err := runGit(ctx, path, "fetch", remote, branch); err != nil {
+		return err
+	}
+	_, _, err := runGit(ctx, path, "reset", "--hard", remote+"/"+branch)
+	return err
+}
+
+// SyncMultiple synchronizes a set of local clones and returns a per-repo result.
+func SyncMultiple(ctx context.Context, paths []string, names map[string]string, remote, branch string) []SyncResult {
+	var out []SyncResult
+	for _, path := range paths {
+		name := names[path]
+		if name == "" {
+			name = core.PathBase(path)
+		}
+		r := SyncResult{Name: name, Path: path}
+		if err := SyncWithRemote(ctx, path, remote, branch); err != nil {
+			r.Error = err
+		} else {
+			r.Success = true
+		}
+		out = append(out, r)
+	}
+	return out
+}
+
+func PushMultiple(ctx context.Context, paths []string, names map[string]string) []PushResult {
+	var out []PushResult
+	for _, path := range paths {
+		name := names[path]
+		if name == "" {
+			name = core.PathBase(path)
+		}
+		r := PushResult{Name: name, Path: path}
+		if err := Push(ctx, path); err != nil {
+			r.Error = err
+		} else {
+			r.Success = true
+		}
+		out = append(out, r)
+	}
+	return out
+}
+
+func PullMultiple(ctx context.Context, paths []string, names map[string]string) []PushResult {
+	var out []PushResult
+	for _, path := range paths {
+		name := names[path]
+		if name == "" {
+			name = core.PathBase(path)
+		}
+		r := PushResult{Name: name, Path: path}
+		if err := Pull(ctx, path); err != nil {
+			r.Error = err
+		} else {
+			r.Success = true
+		}
+		out = append(out, r)
+	}
+	return out
+}
+
+func PushMultipleIter(ctx context.Context, paths []string, names map[string]string) iter.Seq[PushResult] {
+	return func(yield func(PushResult) bool) {
+		for _, path := range paths {
+			name := names[path]
+			if name == "" {
+				name = core.PathBase(path)
+			}
+			r := PushResult{Name: name, Path: path}
+			if err := Push(ctx, path); err != nil {
+				r.Error = err
+			} else {
+				r.Success = true
+			}
 			if !yield(r) {
 				return
 			}
@@ -90,209 +207,120 @@ func StatusIter(ctx context.Context, opts StatusOptions) iter.Seq[RepoStatus] {
 	}
 }
 
-// getStatus gets the git status for a single repository.
-func getStatus(ctx context.Context, path, name string) RepoStatus {
-	status := RepoStatus{
-		Name: name,
-		Path: path,
-	}
-
-	// Get current branch
-	branch, err := gitCommand(ctx, path, "rev-parse", "--abbrev-ref", "HEAD")
-	if err != nil {
-		status.Error = err
-		return status
-	}
-	status.Branch = strings.TrimSpace(branch)
-
-	// Get porcelain status
-	porcelain, err := gitCommand(ctx, path, "status", "--porcelain")
-	if err != nil {
-		status.Error = err
-		return status
-	}
-
-	// Parse status output
-	for line := range strings.SplitSeq(porcelain, "\n") {
-		if len(line) < 2 {
-			continue
-		}
-		x, y := line[0], line[1]
-
-		// Untracked
-		if x == '?' && y == '?' {
-			status.Untracked++
-			continue
-		}
-
-		// Staged (index has changes)
-		if x == 'A' || x == 'D' || x == 'R' || x == 'M' {
-			status.Staged++
-		}
-
-		// Modified in working tree
-		if y == 'M' || y == 'D' {
-			status.Modified++
-		}
-	}
-
-	// Get ahead/behind counts
-	ahead, behind := getAheadBehind(ctx, path)
-	status.Ahead = ahead
-	status.Behind = behind
-
-	return status
-}
-
-// getAheadBehind returns the number of commits ahead and behind upstream.
-func getAheadBehind(ctx context.Context, path string) (ahead, behind int) {
-	// Try to get ahead count
-	aheadStr, err := gitCommand(ctx, path, "rev-list", "--count", "@{u}..HEAD")
-	if err == nil {
-		ahead, _ = strconv.Atoi(strings.TrimSpace(aheadStr))
-	}
-
-	// Try to get behind count
-	behindStr, err := gitCommand(ctx, path, "rev-list", "--count", "HEAD..@{u}")
-	if err == nil {
-		behind, _ = strconv.Atoi(strings.TrimSpace(behindStr))
-	}
-
-	return ahead, behind
-}
-
-// Push pushes commits for a single repository.
-// Uses interactive mode to support SSH passphrase prompts.
-// Usage: Push(...)
-func Push(ctx context.Context, path string) error {
-	return gitInteractive(ctx, path, "push")
-}
-
-// Pull pulls changes for a single repository.
-// Uses interactive mode to support SSH passphrase prompts.
-// Usage: Pull(...)
-func Pull(ctx context.Context, path string) error {
-	return gitInteractive(ctx, path, "pull", "--rebase")
-}
-
-// IsNonFastForward checks if an error is a non-fast-forward rejection.
-// Usage: IsNonFastForward(...)
-func IsNonFastForward(err error) bool {
-	if err == nil {
-		return false
-	}
-	msg := err.Error()
-	return strings.Contains(msg, "non-fast-forward") ||
-		strings.Contains(msg, "fetch first") ||
-		strings.Contains(msg, "tip of your current branch is behind")
-}
-
-// gitInteractive runs a git command with terminal attached for user interaction.
-func gitInteractive(ctx context.Context, dir string, args ...string) error {
-	cmd := exec.CommandContext(ctx, "git", args...)
-	cmd.Dir = dir
-
-	// Connect to terminal for SSH passphrase prompts
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-
-	// Capture stderr for error reporting while also showing it
-	var stderr bytes.Buffer
-	cmd.Stderr = io.MultiWriter(os.Stderr, &stderr)
-
-	if err := cmd.Run(); err != nil {
-		if stderr.Len() > 0 {
-			return &GitError{Err: err, Stderr: stderr.String()}
-		}
-		return err
-	}
-
-	return nil
-}
-
-// PushResult represents the result of a push operation.
-type PushResult struct {
-	Name    string
-	Path    string
-	Success bool
-	Error   error
-}
-
-// PushMultiple pushes multiple repositories sequentially.
-// Sequential because SSH passphrase prompts need user interaction.
-// Usage: PushMultiple(...)
-func PushMultiple(ctx context.Context, paths []string, names map[string]string) []PushResult {
-	return slices.Collect(PushMultipleIter(ctx, paths, names))
-}
-
-// PushMultipleIter returns an iterator that pushes repositories sequentially and yields results.
-// Usage: PushMultipleIter(...)
-func PushMultipleIter(ctx context.Context, paths []string, names map[string]string) iter.Seq[PushResult] {
+func PullMultipleIter(ctx context.Context, paths []string, names map[string]string) iter.Seq[PushResult] {
 	return func(yield func(PushResult) bool) {
 		for _, path := range paths {
 			name := names[path]
 			if name == "" {
-				name = path
+				name = core.PathBase(path)
 			}
-
-			result := PushResult{
-				Name: name,
-				Path: path,
-			}
-
-			err := Push(ctx, path)
-			if err != nil {
-				result.Error = err
+			r := PushResult{Name: name, Path: path}
+			if err := Pull(ctx, path); err != nil {
+				r.Error = err
 			} else {
-				result.Success = true
+				r.Success = true
 			}
-
-			if !yield(result) {
+			if !yield(r) {
 				return
 			}
 		}
 	}
 }
 
-// gitCommand runs a git command and returns stdout.
-func gitCommand(ctx context.Context, dir string, args ...string) (string, error) {
-	cmd := exec.CommandContext(ctx, "git", args...)
-	cmd.Dir = dir
-
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-
-	if err := cmd.Run(); err != nil {
-		// Include stderr in error message for better diagnostics
-		if stderr.Len() > 0 {
-			return "", &GitError{Err: err, Stderr: stderr.String()}
+func Status(ctx context.Context, opts StatusOptions) []RepoStatus {
+	var out []RepoStatus
+	for _, path := range opts.Paths {
+		name := opts.Names[path]
+		if name == "" {
+			name = core.PathBase(path)
 		}
-		return "", err
+		st := RepoStatus{Name: name, Path: path}
+		outText, _, err := runGit(ctx, path, "status", "--porcelain", "--branch")
+		if err != nil {
+			st.Error = err
+			out = append(out, st)
+			continue
+		}
+		parseStatus(string(outText), &st)
+		out = append(out, st)
 	}
-
-	return stdout.String(), nil
+	return out
 }
 
-// GitError wraps a git command error with stderr output.
-type GitError struct {
-	Err    error
-	Stderr string
-}
-
-// Error returns the git error message, preferring stderr output.
-// Usage: Error(...)
-func (e *GitError) Error() string {
-	// Return just the stderr message, trimmed
-	msg := strings.TrimSpace(e.Stderr)
-	if msg != "" {
-		return msg
+func StatusIter(ctx context.Context, opts StatusOptions) iter.Seq[RepoStatus] {
+	return func(yield func(RepoStatus) bool) {
+		for _, path := range opts.Paths {
+			name := opts.Names[path]
+			if name == "" {
+				name = core.PathBase(path)
+			}
+			st := RepoStatus{Name: name, Path: path}
+			out, _, err := runGit(ctx, path, "status", "--porcelain", "--branch")
+			if err != nil {
+				st.Error = err
+				if !yield(st) {
+					return
+				}
+				continue
+			}
+			parseStatus(string(out), &st)
+			if !yield(st) {
+				return
+			}
+		}
 	}
-	return e.Err.Error()
 }
 
-// Unwrap returns the underlying error for error chain inspection.
-// Usage: Unwrap(...)
-func (e *GitError) Unwrap() error {
-	return e.Err
+func parseStatus(output string, st *RepoStatus) {
+	for _, line := range core.Split(output, "\n") {
+		line = core.Trim(line)
+		switch {
+		case core.HasPrefix(line, "## "):
+			parseBranchLine(core.TrimPrefix(line, "## "), st)
+		case len(line) >= 2:
+			switch {
+			case line[0] == '?' && line[1] == '?':
+				st.Untracked++
+			case line[0] != ' ' && line[0] != '?':
+				st.Staged++
+			case line[1] != ' ':
+				st.Modified++
+			}
+		}
+	}
+}
+
+func parseBranchLine(line string, st *RepoStatus) {
+	parts := core.Split(line, "...")
+	if len(parts) > 0 {
+		st.Branch = core.Trim(parts[0])
+	}
+	if len(parts) < 2 {
+		return
+	}
+	rest := parts[1]
+	if rangeParts := core.SplitN(rest, "[", 2); len(rangeParts) == 2 {
+		ranges := core.TrimSuffix(rangeParts[1], "]")
+		for _, part := range core.Split(ranges, ",") {
+			part = core.Trim(part)
+			switch {
+			case core.HasPrefix(part, "ahead "):
+				st.Ahead = parseCount(core.TrimPrefix(part, "ahead "))
+			case core.HasPrefix(part, "behind "):
+				st.Behind = parseCount(core.TrimPrefix(part, "behind "))
+			}
+		}
+	}
+}
+
+func ensurePath(path string) error {
+	if core.Trim(path) == "" {
+		return core.E("", "git path is required", nil)
+	}
+	return nil
+}
+
+func parseCount(raw string) int {
+	n, _ := strconv.Atoi(core.Trim(raw))
+	return n
 }

@@ -1,389 +1,309 @@
 // SPDX-License-Identifier: EUPL-1.2
 
-// Package repos provides functionality for managing multi-repo workspaces.
-// It reads a repos.yaml registry file that defines repositories, their types,
-// dependencies, and metadata.
 package repos
 
 import (
-	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
-	os "dappco.re/go/core/scm/internal/ax/osx"
-	strings "dappco.re/go/core/scm/internal/ax/stringsx"
+	// Note: AX-6 — Git sync operations propagate cancellation through context.Context.
+	"context"
+	// Note: AX-6 — Registry discovery uses fs.ErrNotExist as the filesystem sentinel.
+	"io/fs"
+	// Note: AX-6 — Registry listing must be deterministic across map iteration (no core sort primitive).
 	"sort"
 
-	"dappco.re/go/core/io"
-	coreerr "dappco.re/go/core/log"
+	core "dappco.re/go/core"
+	coreio "dappco.re/go/io"
+	"dappco.re/go/scm/git"
+	"dappco.re/go/scm/internal/ax/filepathx"
+	"dappco.re/go/scm/internal/ax/osx"
 	"gopkg.in/yaml.v3"
 )
 
-// Registry represents a collection of repositories defined in repos.yaml.
-type Registry struct {
-	Version  int              `yaml:"version"`
-	Org      string           `yaml:"org"`
-	BasePath string           `yaml:"base_path"`
-	Repos    map[string]*Repo `yaml:"repos"`
-	Defaults RegistryDefaults `yaml:"defaults"`
-	medium   io.Medium        `yaml:"-"`
-}
+type RepoType string
 
-// RegistryDefaults contains default values applied to all repos.
 type RegistryDefaults struct {
 	CI      string `yaml:"ci"`
 	License string `yaml:"license"`
 	Branch  string `yaml:"branch"`
 }
 
-// RepoType indicates the role of a repository in the ecosystem.
-type RepoType string
-
-// Repository type constants for ecosystem classification.
-const (
-	// RepoTypeFoundation indicates core foundation packages.
-	//
-	RepoTypeFoundation RepoType = "foundation"
-	// RepoTypeModule indicates reusable module packages.
-	//
-	RepoTypeModule RepoType = "module"
-	// RepoTypeProduct indicates end-user product applications.
-	//
-	RepoTypeProduct RepoType = "product"
-	// RepoTypeTemplate indicates starter templates.
-	//
-	RepoTypeTemplate RepoType = "template"
-)
-
-// Repo represents a single repository in the registry.
 type Repo struct {
-	Name        string   `yaml:"-"` // Set from map key
-	Type        string   `yaml:"type"`
-	DependsOn   []string `yaml:"depends_on"`
-	Description string   `yaml:"description"`
-	Docs        bool     `yaml:"docs"`
-	CI          string   `yaml:"ci"`
-	Domain      string   `yaml:"domain,omitempty"`
-	Clone       *bool    `yaml:"clone,omitempty"` // nil = true, false = skip cloning
-
-	// Computed fields
-	Path     string    `yaml:"path,omitempty"` // Full path to repo directory (optional, defaults to base_path/name)
-	registry *Registry `yaml:"-"`
+	Name        string    `yaml:"-"`
+	Type        string    `yaml:"type"`
+	DependsOn   []string  `yaml:"depends_on"`
+	Description string    `yaml:"description"`
+	Docs        bool      `yaml:"docs"`
+	CI          string    `yaml:"ci"`
+	Domain      string    `yaml:"domain,omitempty"`
+	Clone       *bool     `yaml:"clone,omitempty"`
+	Path        string    `yaml:"path,omitempty"`
+	registry    *Registry `yaml:"-"`
 }
 
-// LoadRegistry reads and parses a repos.yaml file from the given medium.
-// The path should be a valid path for the provided medium.
-//
-//	reg, err := repos.LoadRegistry(io.Local, ".core/repos.yaml")
-//
-// Usage: LoadRegistry(...)
-func LoadRegistry(m io.Medium, path string) (*Registry, error) {
-	content, err := m.Read(path)
-	if err != nil {
-		return nil, coreerr.E("repos.LoadRegistry", "failed to read registry file", err)
-	}
-	data := []byte(content)
-
-	var reg Registry
-	if err := yaml.Unmarshal(data, &reg); err != nil {
-		return nil, coreerr.E("repos.LoadRegistry", "failed to parse registry file", err)
-	}
-
-	reg.medium = m
-
-	// Expand base path
-	reg.BasePath = expandPath(reg.BasePath)
-
-	// Set computed fields on each repo
-	for name, repo := range reg.Repos {
-		repo.Name = name
-		if repo.Path == "" {
-			repo.Path = filepath.Join(reg.BasePath, name)
-		} else {
-			repo.Path = expandPath(repo.Path)
-		}
-		repo.registry = &reg
-
-		// Apply defaults if not set
-		if repo.CI == "" {
-			repo.CI = reg.Defaults.CI
-		}
-	}
-
-	return &reg, nil
+type Registry struct {
+	Version  int              `yaml:"version"`
+	Org      string           `yaml:"org"`
+	BasePath string           `yaml:"base_path"`
+	Repos    map[string]*Repo `yaml:"repos"`
+	Defaults RegistryDefaults `yaml:"defaults"`
+	medium   coreio.Medium    `yaml:"-"`
 }
 
-// FindRegistry searches for repos.yaml in common locations.
-// It checks: current directory, parent directories, and home directory.
-// This function is primarily intended for use with io.Local or other local-like filesystems.
-//
-//	path, err := repos.FindRegistry(io.Local)
-//
-// Usage: FindRegistry(...)
-func FindRegistry(m io.Medium) (string, error) {
-	// Check current directory and parents
-	dir, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
-
-	for {
-		// Check repos.yaml (existing)
-		candidate := filepath.Join(dir, "repos.yaml")
-		if m.Exists(candidate) {
-			return candidate, nil
-		}
-		// Check .core/repos.yaml (new)
-		candidate = filepath.Join(dir, ".core", "repos.yaml")
-		if m.Exists(candidate) {
-			return candidate, nil
-		}
-
-		parent := filepath.Dir(dir)
-		if parent == dir {
-			break
-		}
-		dir = parent
-	}
-
-	// Check home directory common locations
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", err
-	}
-
-	commonPaths := []string{
-		filepath.Join(home, "Code", "host-uk", ".core", "repos.yaml"),
-		filepath.Join(home, "Code", "host-uk", "repos.yaml"),
-		filepath.Join(home, ".config", "core", "repos.yaml"),
-	}
-
-	for _, p := range commonPaths {
-		if m.Exists(p) {
-			return p, nil
-		}
-	}
-
-	return "", coreerr.E("repos.FindRegistry", "repos.yaml not found", nil)
+// SyncResult reports the outcome of syncing a registry repo clone.
+type SyncResult struct {
+	Name    string
+	Path    string
+	Success bool
+	Error   error
 }
 
-// ScanDirectory creates a Registry by scanning a directory for git repos.
-// This is used as a fallback when no repos.yaml is found.
-// The dir should be a valid path for the provided medium.
-//
-//	reg, err := repos.ScanDirectory(io.Local, "/home/user/Code/core")
-//
-// Usage: ScanDirectory(...)
-func ScanDirectory(m io.Medium, dir string) (*Registry, error) {
-	entries, err := m.List(dir)
-	if err != nil {
-		return nil, coreerr.E("repos.ScanDirectory", "failed to read directory", err)
+func (repo *Repo) Exists() bool {
+	if repo == nil || repo.Path == "" {
+		return false
 	}
-
-	reg := &Registry{
-		Version:  1,
-		BasePath: dir,
-		Repos:    make(map[string]*Repo),
-		medium:   m,
-	}
-
-	// Try to detect org from git remote
-	for _, entry := range entries {
-		if !entry.IsDir() {
-			continue
-		}
-
-		repoPath := filepath.Join(dir, entry.Name())
-		gitPath := filepath.Join(repoPath, ".git")
-
-		if !m.IsDir(gitPath) {
-			continue // Not a git repo
-		}
-
-		repo := &Repo{
-			Name:     entry.Name(),
-			Path:     repoPath,
-			Type:     "module", // Default type
-			registry: reg,
-		}
-
-		reg.Repos[entry.Name()] = repo
-
-		// Try to detect org from first repo's remote
-		if reg.Org == "" {
-			reg.Org = detectOrg(m, repoPath)
-		}
-	}
-
-	return reg, nil
+	_, err := osx.Stat(repo.Path)
+	return err == nil
 }
 
-// detectOrg tries to extract the GitHub org from a repo's origin remote.
-func detectOrg(m io.Medium, repoPath string) string {
-	// Try to read git remote
-	configPath := filepath.Join(repoPath, ".git", "config")
-	content, err := m.Read(configPath)
-	if err != nil {
-		return ""
+func (repo *Repo) IsGitRepo() bool {
+	if repo == nil || repo.Path == "" {
+		return false
 	}
-	// Look for patterns like github.com:org/repo or github.com/org/repo
-	for _, line := range strings.Split(content, "\n") {
-		line = strings.TrimSpace(line)
-		if !strings.HasPrefix(line, "url = ") {
-			continue
-		}
-		url := strings.TrimPrefix(line, "url = ")
-
-		// git@github.com:org/repo.git
-		if strings.Contains(url, "github.com:") {
-			parts := strings.Split(url, ":")
-			if len(parts) >= 2 {
-				orgRepo := strings.TrimSuffix(parts[1], ".git")
-				orgParts := strings.Split(orgRepo, "/")
-				if len(orgParts) >= 1 {
-					return orgParts[0]
-				}
-			}
-		}
-
-		// https://github.com/org/repo.git
-		if strings.Contains(url, "github.com/") {
-			parts := strings.Split(url, "github.com/")
-			if len(parts) >= 2 {
-				orgRepo := strings.TrimSuffix(parts[1], ".git")
-				orgParts := strings.Split(orgRepo, "/")
-				if len(orgParts) >= 1 {
-					return orgParts[0]
-				}
-			}
-		}
-	}
-
-	return ""
+	_, err := osx.Stat(filepathx.Join(repo.Path, ".git"))
+	return err == nil
 }
 
-// List returns all repos in the registry.
-//
-//	repos := reg.List()
-//
-// Usage: List(...)
 func (r *Registry) List() []*Repo {
-	repos := make([]*Repo, 0, len(r.Repos))
-	for _, repo := range r.Repos {
-		repos = append(repos, repo)
-	}
-	sort.Slice(repos, func(i, j int) bool {
-		return repos[i].Name < repos[j].Name
-	})
-	return repos
-}
-
-// Get returns a repo by name.
-//
-//	repo, ok := reg.Get("go-io")
-//
-// Usage: Get(...)
-func (r *Registry) Get(name string) (*Repo, bool) {
-	repo, ok := r.Repos[name]
-	return repo, ok
-}
-
-// ByType returns repos filtered by type.
-//
-//	goRepos := reg.ByType("go")
-//
-// Usage: ByType(...)
-func (r *Registry) ByType(t string) []*Repo {
-	var repos []*Repo
-	for _, repo := range r.Repos {
-		if repo.Type == t {
-			repos = append(repos, repo)
-		}
-	}
-	sort.Slice(repos, func(i, j int) bool {
-		return repos[i].Name < repos[j].Name
-	})
-	return repos
-}
-
-// TopologicalOrder returns repos sorted by dependency order.
-// Foundation repos come first, then modules, then products.
-//
-//	ordered, err := reg.TopologicalOrder()
-//
-// Usage: TopologicalOrder(...)
-func (r *Registry) TopologicalOrder() ([]*Repo, error) {
-	// Build dependency graph
-	visited := make(map[string]bool)
-	visiting := make(map[string]bool)
-	var result []*Repo
-
-	var visit func(name string) error
-	visit = func(name string) error {
-		if visited[name] {
-			return nil
-		}
-		if visiting[name] {
-			return coreerr.E("repos.Registry.TopologicalOrder", "circular dependency detected: "+name, nil)
-		}
-
-		repo, ok := r.Repos[name]
-		if !ok {
-			return coreerr.E("repos.Registry.TopologicalOrder", "unknown repo: "+name, nil)
-		}
-
-		visiting[name] = true
-		for _, dep := range repo.DependsOn {
-			if err := visit(dep); err != nil {
-				return err
-			}
-		}
-		visiting[name] = false
-		visited[name] = true
-		result = append(result, repo)
+	if r == nil || len(r.Repos) == 0 {
 		return nil
 	}
-
 	names := make([]string, 0, len(r.Repos))
 	for name := range r.Repos {
 		names = append(names, name)
 	}
 	sort.Strings(names)
-
+	out := make([]*Repo, 0, len(names))
 	for _, name := range names {
-		if err := visit(name); err != nil {
+		repo := r.Repos[name]
+		if repo == nil {
+			continue
+		}
+		cp := *repo
+		cp.Name = name
+		cp.registry = r
+		if cp.Path == "" {
+			cp.Path = filepathx.Join(r.BasePath, name)
+		}
+		out = append(out, &cp)
+	}
+	return out
+}
+
+func (r *Registry) Get(name string) (*Repo, bool) {
+	if r == nil {
+		return nil, false
+	}
+	repo, ok := r.Repos[name]
+	if !ok || repo == nil {
+		return nil, false
+	}
+	cp := *repo
+	cp.Name = name
+	cp.registry = r
+	if cp.Path == "" {
+		cp.Path = filepathx.Join(r.BasePath, name)
+	}
+	return &cp, true
+}
+
+func (r *Registry) ByType(t string) []*Repo {
+	var out []*Repo
+	for _, repo := range r.List() {
+		if core.Lower(repo.Type) == core.Lower(t) {
+			out = append(out, repo)
+		}
+	}
+	return out
+}
+
+func (r *Registry) TopologicalOrder() ([]*Repo, error) {
+	// Simple dependency ordering with deterministic fallback.
+	repos := r.List()
+	if len(repos) == 0 {
+		return nil, nil
+	}
+	byName := make(map[string]*Repo, len(repos))
+	for _, repo := range repos {
+		byName[repo.Name] = repo
+	}
+	var ordered []*Repo
+	seen := map[string]bool{}
+	var visit func(string, map[string]bool) error
+	visit = func(name string, stack map[string]bool) error {
+		if seen[name] {
+			return nil
+		}
+		if stack[name] {
+			return core.E("repos.Registry.TopologicalOrder", "dependency cycle", nil)
+		}
+		repo := byName[name]
+		if repo == nil {
+			return nil
+		}
+		if stack == nil {
+			stack = make(map[string]bool)
+		}
+		stack[name] = true
+		for _, dep := range repo.DependsOn {
+			if err := visit(dep, stack); err != nil {
+				return err
+			}
+		}
+		delete(stack, name)
+		seen[name] = true
+		ordered = append(ordered, repo)
+		return nil
+	}
+	for _, repo := range repos {
+		if err := visit(repo.Name, nil); err != nil {
 			return nil, err
 		}
 	}
-
-	return result, nil
+	return ordered, nil
 }
 
-// Exists checks if the repo directory exists on disk.
-// Usage: Exists(...)
-func (repo *Repo) Exists() bool {
-	return repo.getMedium().IsDir(repo.Path)
-}
-
-// IsGitRepo checks if the repo directory contains a .git folder.
-// Usage: IsGitRepo(...)
-func (repo *Repo) IsGitRepo() bool {
-	gitPath := filepath.Join(repo.Path, ".git")
-	return repo.getMedium().IsDir(gitPath)
-}
-
-func (repo *Repo) getMedium() io.Medium {
-	if repo.registry != nil && repo.registry.medium != nil {
-		return repo.registry.medium
+func LoadRegistry(m coreio.Medium, path string) (*Registry, error) {
+	if m == nil {
+		return nil, core.E("repos.LoadRegistry", "medium is required", nil)
 	}
-	return io.Local
-}
-
-// expandPath expands ~ to home directory.
-func expandPath(path string) string {
-	if strings.HasPrefix(path, "~/") {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			return path
+	raw, err := m.Read(path)
+	if err != nil {
+		return &Registry{Version: 1, Repos: map[string]*Repo{}, medium: m}, nil
+	}
+	var r Registry
+	if err := yaml.Unmarshal([]byte(raw), &r); err != nil {
+		return nil, err
+	}
+	if r.Repos == nil {
+		r.Repos = make(map[string]*Repo)
+	}
+	for name, repo := range r.Repos {
+		if repo == nil {
+			continue
 		}
-		return filepath.Join(home, path[2:])
+		repo.Name = name
+		repo.registry = &r
+		if repo.Path == "" {
+			repo.Path = filepathx.Join(r.BasePath, name)
+		}
 	}
-	return path
+	r.medium = m
+	return &r, nil
+}
+
+func FindRegistry(m coreio.Medium) (string, error) {
+	if m == nil {
+		return "", core.E("repos.FindRegistry", "medium is required", nil)
+	}
+	candidates := []string{"repos.yaml", filepathx.Join(".core", "repos.yaml")}
+	if env := core.Trim(osx.Getenv("CORE_REPOS")); env != "" {
+		for _, candidate := range core.Split(env, core.Env("PS")) {
+			candidate = core.Trim(candidate)
+			if candidate != "" {
+				candidates = append([]string{candidate}, candidates...)
+			}
+		}
+	}
+	if cwd, err := osx.Getwd(); err == nil {
+		dir := cwd
+		for {
+			candidates = append(candidates, filepathx.Join(dir, ".core", "repos.yaml"))
+			parent := filepathx.Dir(dir)
+			if parent == dir {
+				break
+			}
+			dir = parent
+		}
+	}
+	if home, err := osx.UserHomeDir(); err == nil {
+		candidates = append(candidates, filepathx.Join(home, ".core", "repos.yaml"))
+	}
+	for _, candidate := range candidates {
+		if m.Exists(candidate) {
+			return candidate, nil
+		}
+	}
+	return "", fs.ErrNotExist
+}
+
+func ScanDirectory(m coreio.Medium, dir string) (*Registry, error) {
+	if m == nil {
+		return nil, core.E("repos.ScanDirectory", "medium is required", nil)
+	}
+	entries, err := m.List(dir)
+	if err != nil {
+		return nil, err
+	}
+	reg := &Registry{Version: 1, BasePath: dir, Repos: make(map[string]*Repo), medium: m}
+	for _, entry := range entries {
+		if entry == nil || !entry.IsDir() {
+			continue
+		}
+		name := entry.Name()
+		if !m.IsDir(filepathx.Join(dir, name)) {
+			continue
+		}
+		reg.Repos[name] = &Repo{Name: name, Path: filepathx.Join(dir, name), registry: reg}
+	}
+	return reg, nil
+}
+
+func (r *Registry) Save(path string) error {
+	if r == nil {
+		return core.E("repos.Registry.Save", "registry is required", nil)
+	}
+	raw, err := yaml.Marshal(r)
+	if err != nil {
+		return err
+	}
+	if r.medium != nil {
+		return r.medium.Write(path, string(raw))
+	}
+	return osx.WriteFile(path, raw, 0o600)
+}
+
+// SyncRepo fetches and resets a named repo to match its Forge remote branch.
+func (r *Registry) SyncRepo(ctx context.Context, name, remote, branch string) error {
+	if r == nil {
+		return core.E("repos.Registry.SyncRepo", "registry is required", nil)
+	}
+	repo, ok := r.Get(name)
+	if !ok {
+		return core.E("repos.Registry.SyncRepo", core.Sprintf("repo %q not found", name), nil)
+	}
+	if repo.Path == "" {
+		return core.E("repos.Registry.SyncRepo", core.Sprintf("repo %q has no path", name), nil)
+	}
+	return git.SyncWithRemote(ctx, repo.Path, remote, branch)
+}
+
+// SyncAll synchronizes every repo in the registry.
+func (r *Registry) SyncAll(ctx context.Context, remote, branch string) []SyncResult {
+	if r == nil {
+		return nil
+	}
+	repos := r.List()
+	out := make([]SyncResult, 0, len(repos))
+	for _, repo := range repos {
+		if repo == nil {
+			continue
+		}
+		result := SyncResult{Name: repo.Name, Path: repo.Path}
+		if err := git.SyncWithRemote(ctx, repo.Path, remote, branch); err != nil {
+			result.Error = err
+		} else {
+			result.Success = true
+		}
+		out = append(out, result)
+	}
+	return out
 }

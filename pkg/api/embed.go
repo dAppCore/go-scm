@@ -2,10 +2,30 @@
 
 package api
 
-import "embed"
+import (
+	"embed"
+	"io/fs"
+	"net/http"
+)
 
-// Assets holds the built UI bundle (core-scm.js and related files).
-// The directory is populated by running `npm run build` in the ui/ directory.
-//
-//go:embed all:ui/dist
-var Assets embed.FS
+//go:embed ui/*
+var uiAssets embed.FS
+
+var embeddedUI = mustEmbeddedUI()
+var embeddedIndexHTML = mustReadEmbeddedIndex()
+
+func mustEmbeddedUI() http.FileSystem {
+	sub, err := fs.Sub(uiAssets, "ui")
+	if err != nil {
+		panic(err)
+	}
+	return http.FS(sub)
+}
+
+func mustReadEmbeddedIndex() []byte {
+	raw, err := uiAssets.ReadFile("ui/index.html")
+	if err != nil {
+		panic(err)
+	}
+	return raw
+}

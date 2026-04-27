@@ -3,345 +3,215 @@
 package collect
 
 import (
+	// Note: bytes.Buffer is retained for efficient Markdown assembly in processors.
+	"bytes"
+	// Note: context.Context is retained as the processor API cancellation contract.
 	"context"
-	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
-	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
-	json "dappco.re/go/core/scm/internal/ax/jsonx"
-	strings "dappco.re/go/core/scm/internal/ax/stringsx"
-	"maps"
-	"slices"
+	// Note: encoding/json is retained for JSON and JSONL pretty-print processing.
+	"encoding/json"
+	// Note: regexp is retained for HTML conversion patterns; no core equivalent covers compiled regexes.
+	"regexp"
 
-	core "dappco.re/go/core/log"
-	"golang.org/x/net/html"
+	core "dappco.re/go/core"
+)
+
+var (
+	htmlAnchorRe = regexp.MustCompile(`(?is)<a[^>]*href=(?:"([^"]+)"|'([^']+)')[^>]*>(.*?)</a>`)
+	htmlTagRe    = regexp.MustCompile(`(?is)<[^>]+>`)
 )
 
 // Processor converts collected data to clean markdown.
 type Processor struct {
-	// Source identifies the data source directory to process.
 	Source string
-
-	// Dir is the directory containing files to process.
-	Dir string
+	Dir    string
 }
 
-// Name returns the processor name.
-// Usage: Name(...)
-func (p *Processor) Name() string {
-	return fmt.Sprintf("process:%s", p.Source)
-}
+func (p *Processor) Name() string { return "process" }
 
-// Process reads files from the source directory, converts HTML or JSON
-// to clean markdown, and writes the results to the output directory.
-// Usage: Process(...)
+// Process reads files from the source directory, converts HTML or JSON to clean markdown, and writes the results.
 func (p *Processor) Process(ctx context.Context, cfg *Config) (*Result, error) {
-	result := &Result{Source: p.Name()}
-
-	if p.Dir == "" {
-		return result, core.E("collect.Processor.Process", "directory is required", nil)
+	if cfg == nil {
+		return nil, core.E("collect.Processor.Process", "config is required", nil)
 	}
-
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	if ctx != nil {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+	}
 	if cfg.Dispatcher != nil {
-		cfg.Dispatcher.EmitStart(p.Name(), fmt.Sprintf("Processing files in %s", p.Dir))
+		cfg.Dispatcher.EmitStart(p.Name(), "Starting processing")
 	}
 
+	dir := p.Dir
+	if core.Trim(dir) == "" {
+		dir = p.Source
+	}
+	if dir == "" {
+		return &Result{Source: p.Name()}, nil
+	}
 	if cfg.DryRun {
 		if cfg.Dispatcher != nil {
-			cfg.Dispatcher.EmitProgress(p.Name(), fmt.Sprintf("[dry-run] Would process files in %s", p.Dir), nil)
+			cfg.Dispatcher.EmitProgress(p.Name(), "[dry-run] Would process files", nil)
+			cfg.Dispatcher.EmitComplete(p.Name(), "Process dry-run complete", &Result{Source: p.Name()})
 		}
-		return result, nil
+		return &Result{Source: p.Name()}, nil
+	}
+	if cfg.Output == nil {
+		return nil, core.E("collect.Processor.Process", "output medium is required", nil)
 	}
 
-	entries, err := cfg.Output.List(p.Dir)
+	entries, err := cfg.Output.List(dir)
 	if err != nil {
-		return result, core.E("collect.Processor.Process", "failed to list directory", err)
+		return nil, err
 	}
-
-	outputDir := filepath.Join(cfg.OutputDir, "processed", p.Source)
-	if err := cfg.Output.EnsureDir(outputDir); err != nil {
-		return result, core.E("collect.Processor.Process", "failed to create output directory", err)
-	}
-
+	result := &Result{Source: p.Name()}
 	for _, entry := range entries {
-		if ctx.Err() != nil {
-			return result, core.E("collect.Processor.Process", "context cancelled", ctx.Err())
-		}
-
-		if entry.IsDir() {
+		if entry == nil || entry.IsDir() {
 			continue
 		}
-
+		if ctx != nil {
+			if err := ctx.Err(); err != nil {
+				return result, err
+			}
+		}
 		name := entry.Name()
-		srcPath := filepath.Join(p.Dir, name)
-
-		content, err := cfg.Output.Read(srcPath)
+		if cfg.Dispatcher != nil {
+			cfg.Dispatcher.EmitProgress(p.Name(), core.Sprintf("Processing %s", name), nil)
+		}
+		raw, err := cfg.Output.Read(core.JoinPath(dir, name))
 		if err != nil {
 			result.Errors++
+			if cfg.Dispatcher != nil {
+				cfg.Dispatcher.EmitError(p.Name(), core.Sprintf("Failed to read %s: %v", name, err), nil)
+			}
 			continue
 		}
-
-		var processed string
-		ext := strings.ToLower(filepath.Ext(name))
-
-		switch ext {
+		var md string
+		switch core.Lower(core.PathExt(name)) {
 		case ".html", ".htm":
-			processed, err = htmlToMarkdown(content)
-			if err != nil {
-				result.Errors++
-				if cfg.Dispatcher != nil {
-					cfg.Dispatcher.EmitError(p.Name(), fmt.Sprintf("Failed to convert %s: %v", name, err), nil)
-				}
-				continue
-			}
-		case ".json":
-			processed, err = jsonToMarkdown(content)
-			if err != nil {
-				result.Errors++
-				if cfg.Dispatcher != nil {
-					cfg.Dispatcher.EmitError(p.Name(), fmt.Sprintf("Failed to convert %s: %v", name, err), nil)
-				}
-				continue
-			}
-		case ".md":
-			// Already markdown, just clean up
-			processed = strings.TrimSpace(content)
+			md, err = HTMLToMarkdown(raw)
+		case ".json", ".jsonl":
+			md, err = JSONToMarkdown(raw)
 		default:
-			result.Skipped++
-			continue
+			md = raw
 		}
-
-		// Write with .md extension
-		outName := strings.TrimSuffix(name, ext) + ".md"
-		outPath := filepath.Join(outputDir, outName)
-
-		if err := cfg.Output.Write(outPath, processed); err != nil {
+		if err != nil {
 			result.Errors++
+			if cfg.Dispatcher != nil {
+				cfg.Dispatcher.EmitError(p.Name(), core.Sprintf("Failed to convert %s: %v", name, err), nil)
+			}
 			continue
 		}
-
+		outName := core.TrimSuffix(name, core.PathExt(name)) + ".md"
+		outPath, err := writeResultFile(cfg, p.Name(), outName, md)
+		if err != nil {
+			result.Errors++
+			if cfg.Dispatcher != nil {
+				cfg.Dispatcher.EmitError(p.Name(), core.Sprintf("Failed to write %s: %v", outName, err), nil)
+			}
+			continue
+		}
 		result.Items++
 		result.Files = append(result.Files, outPath)
-
 		if cfg.Dispatcher != nil {
-			cfg.Dispatcher.EmitItem(p.Name(), fmt.Sprintf("Processed: %s", name), nil)
+			cfg.Dispatcher.EmitItem(p.Name(), core.Sprintf("Processed %s", name), nil)
 		}
 	}
-
 	if cfg.Dispatcher != nil {
-		cfg.Dispatcher.EmitComplete(p.Name(), fmt.Sprintf("Processed %d files", result.Items), result)
+		cfg.Dispatcher.EmitComplete(p.Name(), core.Sprintf("Processed %d files", result.Items), result)
 	}
-
 	return result, nil
 }
 
-// htmlToMarkdown converts HTML content to clean markdown.
-func htmlToMarkdown(content string) (string, error) {
-	doc, err := html.Parse(strings.NewReader(content))
-	if err != nil {
-		return "", core.E("collect.htmlToMarkdown", "failed to parse HTML", err)
-	}
-
-	var b strings.Builder
-	nodeToMarkdown(&b, doc, 0)
-	return strings.TrimSpace(b.String()), nil
-}
-
-// nodeToMarkdown recursively converts an HTML node tree to markdown.
-func nodeToMarkdown(b *strings.Builder, n *html.Node, depth int) {
-	switch n.Type {
-	case html.TextNode:
-		text := n.Data
-		if strings.TrimSpace(text) != "" {
-			b.WriteString(text)
-		}
-	case html.ElementNode:
-		switch n.Data {
-		case "h1":
-			b.WriteString("\n# ")
-			writeChildrenText(b, n)
-			b.WriteString("\n\n")
-			return
-		case "h2":
-			b.WriteString("\n## ")
-			writeChildrenText(b, n)
-			b.WriteString("\n\n")
-			return
-		case "h3":
-			b.WriteString("\n### ")
-			writeChildrenText(b, n)
-			b.WriteString("\n\n")
-			return
-		case "h4":
-			b.WriteString("\n#### ")
-			writeChildrenText(b, n)
-			b.WriteString("\n\n")
-			return
-		case "h5":
-			b.WriteString("\n##### ")
-			writeChildrenText(b, n)
-			b.WriteString("\n\n")
-			return
-		case "h6":
-			b.WriteString("\n###### ")
-			writeChildrenText(b, n)
-			b.WriteString("\n\n")
-			return
-		case "p":
-			b.WriteString("\n")
-			for c := n.FirstChild; c != nil; c = c.NextSibling {
-				nodeToMarkdown(b, c, depth)
-			}
-			b.WriteString("\n")
-			return
-		case "br":
-			b.WriteString("\n")
-			return
-		case "strong", "b":
-			b.WriteString("**")
-			writeChildrenText(b, n)
-			b.WriteString("**")
-			return
-		case "em", "i":
-			b.WriteString("*")
-			writeChildrenText(b, n)
-			b.WriteString("*")
-			return
-		case "code":
-			b.WriteString("`")
-			writeChildrenText(b, n)
-			b.WriteString("`")
-			return
-		case "pre":
-			b.WriteString("\n```\n")
-			writeChildrenText(b, n)
-			b.WriteString("\n```\n")
-			return
-		case "a":
-			var href string
-			for _, attr := range n.Attr {
-				if attr.Key == "href" {
-					href = attr.Val
-				}
-			}
-			text := getChildrenText(n)
-			if href != "" {
-				fmt.Fprintf(b, "[%s](%s)", text, href)
-			} else {
-				b.WriteString(text)
-			}
-			return
-		case "ul":
-			b.WriteString("\n")
-		case "ol":
-			b.WriteString("\n")
-			counter := 1
-			for c := n.FirstChild; c != nil; c = c.NextSibling {
-				if c.Type == html.ElementNode && c.Data == "li" {
-					fmt.Fprintf(b, "%d. ", counter)
-					for gc := c.FirstChild; gc != nil; gc = gc.NextSibling {
-						nodeToMarkdown(b, gc, depth+1)
-					}
-					b.WriteString("\n")
-					counter++
-				}
-			}
-			return
-		case "li":
-			b.WriteString("- ")
-			for c := n.FirstChild; c != nil; c = c.NextSibling {
-				nodeToMarkdown(b, c, depth+1)
-			}
-			b.WriteString("\n")
-			return
-		case "blockquote":
-			b.WriteString("\n> ")
-			text := getChildrenText(n)
-			b.WriteString(strings.ReplaceAll(text, "\n", "\n> "))
-			b.WriteString("\n")
-			return
-		case "hr":
-			b.WriteString("\n---\n")
-			return
-		case "script", "style", "head":
-			return
-		}
-	}
-
-	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		nodeToMarkdown(b, c, depth)
-	}
-}
-
-// writeChildrenText writes the text content of all children.
-func writeChildrenText(b *strings.Builder, n *html.Node) {
-	b.WriteString(getChildrenText(n))
-}
-
-// getChildrenText returns the concatenated text content of all children.
-func getChildrenText(n *html.Node) string {
-	var b strings.Builder
-	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		if c.Type == html.TextNode {
-			b.WriteString(c.Data)
-		} else {
-			b.WriteString(getChildrenText(c))
-		}
-	}
-	return b.String()
-}
-
-// jsonToMarkdown converts JSON content to a formatted markdown document.
-func jsonToMarkdown(content string) (string, error) {
-	var data any
-	if err := json.Unmarshal([]byte(content), &data); err != nil {
-		return "", core.E("collect.jsonToMarkdown", "failed to parse JSON", err)
-	}
-
-	var b strings.Builder
-	b.WriteString("# Data\n\n")
-	jsonValueToMarkdown(&b, data, 0)
-	return strings.TrimSpace(b.String()), nil
-}
-
-// jsonValueToMarkdown recursively formats a JSON value as markdown.
-func jsonValueToMarkdown(b *strings.Builder, data any, depth int) {
-	switch v := data.(type) {
-	case map[string]any:
-		for _, key := range slices.Sorted(maps.Keys(v)) {
-			val := v[key]
-			indent := strings.Repeat("  ", depth)
-			switch child := val.(type) {
-			case map[string]any, []any:
-				fmt.Fprintf(b, "%s- **%s:**\n", indent, key)
-				jsonValueToMarkdown(b, child, depth+1)
-			default:
-				fmt.Fprintf(b, "%s- **%s:** %v\n", indent, key, val)
-			}
-		}
-	case []any:
-		for i, item := range v {
-			indent := strings.Repeat("  ", depth)
-			switch child := item.(type) {
-			case map[string]any, []any:
-				fmt.Fprintf(b, "%s- Item %d:\n", indent, i+1)
-				jsonValueToMarkdown(b, child, depth+1)
-			default:
-				fmt.Fprintf(b, "%s- %v\n", indent, item)
-			}
-		}
-	default:
-		indent := strings.Repeat("  ", depth)
-		fmt.Fprintf(b, "%s%v\n", indent, data)
-	}
-}
-
 // HTMLToMarkdown is exported for testing.
-// Usage: HTMLToMarkdown(...)
 func HTMLToMarkdown(content string) (string, error) {
-	return htmlToMarkdown(content)
+	if core.Trim(content) == "" {
+		return "", nil
+	}
+	out := content
+	replacements := []struct {
+		pattern *regexp.Regexp
+		value   string
+	}{
+		{regexp.MustCompile(`(?is)<h1[^>]*>`), "# "},
+		{regexp.MustCompile(`(?is)</h1>`), "\n\n"},
+		{regexp.MustCompile(`(?is)<h2[^>]*>`), "## "},
+		{regexp.MustCompile(`(?is)</h2>`), "\n\n"},
+		{regexp.MustCompile(`(?is)<h3[^>]*>`), "### "},
+		{regexp.MustCompile(`(?is)</h3>`), "\n\n"},
+		{regexp.MustCompile(`(?is)<p[^>]*>`), ""},
+		{regexp.MustCompile(`(?is)</p>`), "\n\n"},
+		{regexp.MustCompile(`(?is)<br\s*/?>`), "\n"},
+		{regexp.MustCompile(`(?is)<strong[^>]*>`), "**"},
+		{regexp.MustCompile(`(?is)</strong>`), "**"},
+		{regexp.MustCompile(`(?is)<em[^>]*>`), "*"},
+		{regexp.MustCompile(`(?is)</em>`), "*"},
+	}
+	for _, repl := range replacements {
+		out = repl.pattern.ReplaceAllString(out, repl.value)
+	}
+	out = htmlAnchorRe.ReplaceAllStringFunc(out, func(s string) string {
+		match := htmlAnchorRe.FindStringSubmatch(s)
+		if len(match) != 4 {
+			return s
+		}
+		href := match[1]
+		if href == "" {
+			href = match[2]
+		}
+		text := core.Trim(match[3])
+		if href == "" {
+			return text
+		}
+		return "[" + text + "](" + href + ")"
+	})
+	out = htmlTagRe.ReplaceAllString(out, "")
+	return core.Trim(out), nil
 }
 
 // JSONToMarkdown is exported for testing.
-// Usage: JSONToMarkdown(...)
 func JSONToMarkdown(content string) (string, error) {
-	return jsonToMarkdown(content)
+	if core.Trim(content) == "" {
+		return "", nil
+	}
+	buf := &bytes.Buffer{}
+	buf.WriteString("```json\n")
+	var value any
+	if err := json.Unmarshal([]byte(content), &value); err == nil {
+		enc := json.NewEncoder(buf)
+		enc.SetIndent("", "  ")
+		if err := enc.Encode(value); err != nil {
+			return "", err
+		}
+	} else {
+		lines := core.Split(content, "\n")
+		enc := json.NewEncoder(buf)
+		enc.SetIndent("", "  ")
+		encoded := false
+		for _, line := range lines {
+			line = core.Trim(line)
+			if line == "" {
+				continue
+			}
+			var lineValue any
+			if err := json.Unmarshal([]byte(line), &lineValue); err != nil {
+				return "", err
+			}
+			if encoded {
+				buf.WriteString("\n")
+			}
+			if err := enc.Encode(lineValue); err != nil {
+				return "", err
+			}
+			encoded = true
+		}
+		if !encoded {
+			return "", nil
+		}
+	}
+	buf.WriteString("```\n")
+	return core.Trim(buf.String()), nil
 }

@@ -3,99 +3,92 @@
 package gitea
 
 import (
-	os "dappco.re/go/core/scm/internal/ax/osx"
+	// Note: errors.New is retained for stable config validation errors.
+	"errors"
+	// Note: os is retained for environment and home-directory config discovery before a Core runtime exists.
+	"os"
+	// Note: filepath is retained for OS-specific config file paths.
+	"path/filepath"
 
-	"dappco.re/go/core/log"
-	"dappco.re/go/core/config"
+	"gopkg.in/yaml.v3"
 )
 
 const (
-	// ConfigKeyURL is the config key for the Gitea instance URL.
-	//
-	ConfigKeyURL = "gitea.url"
-	// ConfigKeyToken is the config key for the Gitea API token.
-	//
+	ConfigKeyURL   = "gitea.url"
 	ConfigKeyToken = "gitea.token"
-
-	// DefaultURL is the default Gitea instance URL.
-	//
-	DefaultURL = "https://gitea.snider.dev"
+	DefaultURL     = "https://gitea.snider.dev"
 )
 
-// NewFromConfig creates a Gitea client using the standard config resolution:
-//
-//  1. ~/.core/config.yaml keys: gitea.token, gitea.url
-//  2. GITEA_TOKEN + GITEA_URL environment variables (override config file)
-//  3. Provided flag overrides (highest priority; pass empty to skip)
-//
-// Usage: NewFromConfig(...)
-func NewFromConfig(flagURL, flagToken string) (*Client, error) {
-	url, token, err := ResolveConfig(flagURL, flagToken)
-	if err != nil {
-		return nil, err
-	}
-
-	if token == "" {
-		return nil, log.E("gitea.NewFromConfig", "no API token configured (set GITEA_TOKEN or run: core gitea config --token TOKEN)", nil)
-	}
-
-	return New(url, token)
-}
-
-// ResolveConfig resolves the Gitea URL and token from all config sources.
-// Flag values take highest priority, then env vars, then config file.
-// Usage: ResolveConfig(...)
 func ResolveConfig(flagURL, flagToken string) (url, token string, err error) {
-	// Start with config file values
-	cfg, cfgErr := config.New()
-	if cfgErr == nil {
-		_ = cfg.Get(ConfigKeyURL, &url)
-		_ = cfg.Get(ConfigKeyToken, &token)
+	home, homeErr := os.UserHomeDir()
+	if homeErr == nil {
+		path := filepath.Join(home, ".core", "config.yaml")
+		if raw, readErr := os.ReadFile(path); readErr == nil {
+			var data map[string]any
+			if yamlErr := yaml.Unmarshal(raw, &data); yamlErr == nil {
+				if giteaCfg, ok := data["gitea"].(map[string]any); ok {
+					if v, ok := giteaCfg["url"].(string); ok {
+						url = v
+					}
+					if v, ok := giteaCfg["token"].(string); ok {
+						token = v
+					}
+				}
+			}
+		}
 	}
 
-	// Overlay environment variables
-	if envURL := os.Getenv("GITEA_URL"); envURL != "" {
-		url = envURL
+	if v := os.Getenv("GITEA_URL"); v != "" {
+		url = v
 	}
-	if envToken := os.Getenv("GITEA_TOKEN"); envToken != "" {
-		token = envToken
+	if v := os.Getenv("GITEA_TOKEN"); v != "" {
+		token = v
 	}
-
-	// Overlay flag values (highest priority)
 	if flagURL != "" {
 		url = flagURL
 	}
 	if flagToken != "" {
 		token = flagToken
 	}
-
-	// Default URL if nothing configured
 	if url == "" {
 		url = DefaultURL
 	}
-
 	return url, token, nil
 }
 
-// SaveConfig persists the Gitea URL and/or token to the config file.
-// Usage: SaveConfig(...)
-func SaveConfig(url, token string) error {
-	cfg, err := config.New()
+func NewFromConfig(flagURL, flagToken string) (*Client, error) {
+	url, token, err := ResolveConfig(flagURL, flagToken)
 	if err != nil {
-		return log.E("gitea.SaveConfig", "failed to load config", err)
+		return nil, err
 	}
+	if token == "" {
+		return nil, errors.New("gitea.NewFromConfig: no API token configured")
+	}
+	return New(url, token)
+}
 
+func SaveConfig(url, token string) error {
+	if url == "" && token == "" {
+		return errors.New("gitea.SaveConfig: url or token required")
+	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
+	path := filepath.Join(home, ".core", "config.yaml")
+	payload := map[string]any{"gitea": map[string]any{}}
 	if url != "" {
-		if err := cfg.Set(ConfigKeyURL, url); err != nil {
-			return log.E("gitea.SaveConfig", "failed to save URL", err)
-		}
+		payload["gitea"].(map[string]any)["url"] = url
 	}
-
 	if token != "" {
-		if err := cfg.Set(ConfigKeyToken, token); err != nil {
-			return log.E("gitea.SaveConfig", "failed to save token", err)
-		}
+		payload["gitea"].(map[string]any)["token"] = token
 	}
-
-	return nil
+	raw, err := yaml.Marshal(payload)
+	if err != nil {
+		return err
+	}
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return err
+	}
+	return os.WriteFile(path, raw, 0o600)
 }

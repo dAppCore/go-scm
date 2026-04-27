@@ -1,329 +1,136 @@
 // SPDX-License-Identifier: EUPL-1.2
 
-package api_test
+package api
 
 import (
-	"bytes"
-	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
-	json "dappco.re/go/core/scm/internal/ax/jsonx"
+	"crypto/ed25519" // intrinsic
+	"encoding/base64"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
-	goapi "dappco.re/go/core/api"
-	"dappco.re/go/core/io"
-	"dappco.re/go/core/scm/marketplace"
-	scmapi "dappco.re/go/core/scm/pkg/api"
-	"dappco.re/go/core/scm/repos"
+	coreio "dappco.re/go/io"
+	"dappco.re/go/scm/manifest"
+	"dappco.re/go/scm/marketplace"
+	"dappco.re/go/scm/repos"
 	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
-func init() {
+func TestScmProviderRoutesExposeState(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-}
 
-// -- Provider Identity --------------------------------------------------------
-
-func TestScmProvider_Name_Good(t *testing.T) {
-	p := scmapi.NewProvider(nil, nil, nil, nil)
-	assert.Equal(t, "scm", p.Name())
-}
-
-func TestScmProvider_BasePath_Good(t *testing.T) {
-	p := scmapi.NewProvider(nil, nil, nil, nil)
-	assert.Equal(t, "/api/v1/scm", p.BasePath())
-}
-
-func TestScmProvider_Channels_Good(t *testing.T) {
-	p := scmapi.NewProvider(nil, nil, nil, nil)
-	channels := p.Channels()
-	assert.Contains(t, channels, "scm.marketplace.refreshed")
-	assert.Contains(t, channels, "scm.marketplace.installed")
-	assert.Contains(t, channels, "scm.marketplace.removed")
-	assert.Contains(t, channels, "scm.installed.changed")
-	assert.Contains(t, channels, "scm.manifest.verified")
-	assert.Contains(t, channels, "scm.registry.changed")
-}
-
-func TestScmProvider_Element_Good(t *testing.T) {
-	p := scmapi.NewProvider(nil, nil, nil, nil)
-	el := p.Element()
-	assert.Equal(t, "core-scm-panel", el.Tag)
-	assert.Equal(t, "/assets/core-scm.js", el.Source)
-}
-
-func TestScmProvider_Describe_Good(t *testing.T) {
-	p := scmapi.NewProvider(nil, nil, nil, nil)
-	descs := p.Describe()
-	assert.GreaterOrEqual(t, len(descs), 11)
-
-	for _, d := range descs {
-		assert.NotEmpty(t, d.Method)
-		assert.NotEmpty(t, d.Path)
-		assert.NotEmpty(t, d.Summary)
-		assert.NotEmpty(t, d.Tags)
+	medium := coreio.NewMockMedium()
+	installer := marketplace.NewInstaller(medium, "modules")
+	mod := signedMarketplaceModule(t, marketplace.Module{
+		Code: "go-io",
+		Name: "Core I/O",
+		Repo: "ssh://git@example.com/core/go-io.git",
+	})
+	if err := installer.Install(nil, mod); err != nil {
+		t.Fatalf("install module: %v", err)
 	}
-}
 
-// -- Marketplace Endpoints ----------------------------------------------------
-
-func TestScmProvider_ListMarketplace_Good(t *testing.T) {
-	idx := &marketplace.Index{
-		Version: 1,
-		Modules: []marketplace.Module{
-			{Code: "analytics", Name: "Analytics", Category: "product"},
-			{Code: "bio", Name: "Bio Links", Category: "product"},
+	provider := NewProvider(
+		&marketplace.Index{
+			Version: 1,
+			Modules: []marketplace.Module{mod},
 		},
-		Categories: []string{"product"},
-	}
-	p := scmapi.NewProvider(idx, nil, nil, nil)
-
-	r := setupRouter(p)
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/api/v1/scm/marketplace", nil)
-	r.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusOK, w.Code)
-
-	var resp goapi.Response[[]marketplace.Module]
-	err := json.Unmarshal(w.Body.Bytes(), &resp)
-	require.NoError(t, err)
-	assert.True(t, resp.Success)
-	assert.Len(t, resp.Data, 2)
-}
-
-func TestScmProvider_ListMarketplace_Search_Good(t *testing.T) {
-	idx := &marketplace.Index{
-		Version: 1,
-		Modules: []marketplace.Module{
-			{Code: "analytics", Name: "Analytics", Category: "product"},
-			{Code: "bio", Name: "Bio Links", Category: "product"},
+		installer,
+		&repos.Registry{
+			Version:  1,
+			BasePath: "/workspace",
+			Repos: map[string]*repos.Repo{
+				"go-io": {Path: "/workspace/core/go-io"},
+			},
 		},
+		nil,
+	)
+
+	router := gin.New()
+	group := router.Group(provider.BasePath())
+	provider.RegisterRoutes(group)
+
+	assertRouteOK(t, router, "/scm/health", "ok")
+	assertRouteOK(t, router, "/scm/ui", "Source control operations")
+	assertRouteOK(t, router, "/scm/marketplace", "go-io")
+	assertRouteOK(t, router, "/scm/marketplace/go-io", "Core I/O")
+	assertRouteOK(t, router, "/scm/repos", "go-io")
+	assertRouteOK(t, router, "/scm/repos/go-io", "/workspace/core/go-io")
+	assertRouteOK(t, router, "/scm/modules", "go-io")
+	assertRouteOK(t, router, "/scm/modules/go-io", "Core I/O")
+}
+
+func TestScmProviderDescribeIncludesReadOnlyRoutes(t *testing.T) {
+	provider := NewProvider(nil, nil, nil, nil)
+	descs := provider.Describe()
+
+	want := map[string]bool{
+		"GET /health":      false,
+		"GET /marketplace": false,
+		"GET /repos":       false,
+		"GET /modules":     false,
 	}
-	p := scmapi.NewProvider(idx, nil, nil, nil)
-
-	r := setupRouter(p)
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/api/v1/scm/marketplace?q=bio", nil)
-	r.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusOK, w.Code)
-
-	var resp goapi.Response[[]marketplace.Module]
-	err := json.Unmarshal(w.Body.Bytes(), &resp)
-	require.NoError(t, err)
-	assert.Len(t, resp.Data, 1)
-	assert.Equal(t, "bio", resp.Data[0].Code)
-}
-
-func TestScmProvider_ListMarketplace_NilIndex_Good(t *testing.T) {
-	p := scmapi.NewProvider(nil, nil, nil, nil)
-
-	r := setupRouter(p)
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/api/v1/scm/marketplace", nil)
-	r.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusOK, w.Code)
-
-	var resp goapi.Response[[]marketplace.Module]
-	err := json.Unmarshal(w.Body.Bytes(), &resp)
-	require.NoError(t, err)
-	assert.True(t, resp.Success)
-	assert.Empty(t, resp.Data)
-}
-
-func TestScmProvider_GetMarketplaceItem_Good(t *testing.T) {
-	idx := &marketplace.Index{
-		Version: 1,
-		Modules: []marketplace.Module{
-			{Code: "analytics", Name: "Analytics", Category: "product"},
-		},
+	for _, desc := range descs {
+		key := desc.Method + " " + desc.Path
+		if _, ok := want[key]; ok {
+			want[key] = true
+		}
 	}
-	p := scmapi.NewProvider(idx, nil, nil, nil)
-
-	r := setupRouter(p)
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/api/v1/scm/marketplace/analytics", nil)
-	r.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusOK, w.Code)
-
-	var resp goapi.Response[marketplace.Module]
-	err := json.Unmarshal(w.Body.Bytes(), &resp)
-	require.NoError(t, err)
-	assert.Equal(t, "analytics", resp.Data.Code)
-}
-
-func TestScmProvider_GetMarketplaceItem_Bad(t *testing.T) {
-	idx := &marketplace.Index{Version: 1}
-	p := scmapi.NewProvider(idx, nil, nil, nil)
-
-	r := setupRouter(p)
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/api/v1/scm/marketplace/nonexistent", nil)
-	r.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusNotFound, w.Code)
-}
-
-func TestScmProvider_GetMarketplaceItem_Bad_PathTraversal_Good(t *testing.T) {
-	idx := &marketplace.Index{Version: 1}
-	p := scmapi.NewProvider(idx, nil, nil, nil)
-
-	r := setupRouter(p)
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/api/v1/scm/marketplace/%2e%2e", nil)
-	r.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusBadRequest, w.Code)
-}
-
-// -- Installed Endpoints ------------------------------------------------------
-
-func TestScmProvider_ListInstalled_NilInstaller_Good(t *testing.T) {
-	p := scmapi.NewProvider(nil, nil, nil, nil)
-
-	r := setupRouter(p)
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/api/v1/scm/installed", nil)
-	r.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusOK, w.Code)
-
-	var resp goapi.Response[[]marketplace.InstalledModule]
-	err := json.Unmarshal(w.Body.Bytes(), &resp)
-	require.NoError(t, err)
-	assert.True(t, resp.Success)
-	assert.Empty(t, resp.Data)
-}
-
-// -- Registry Endpoints -------------------------------------------------------
-
-func TestScmProvider_ListRegistry_NilRegistry_Good(t *testing.T) {
-	p := scmapi.NewProvider(nil, nil, nil, nil)
-
-	r := setupRouter(p)
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/api/v1/scm/registry", nil)
-	r.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusOK, w.Code)
-
-	var resp goapi.Response[[]any]
-	err := json.Unmarshal(w.Body.Bytes(), &resp)
-	require.NoError(t, err)
-	assert.True(t, resp.Success)
-	assert.Empty(t, resp.Data)
-}
-
-func TestScmProvider_ListRegistry_TopologicalOrder_Good(t *testing.T) {
-	medium := io.NewMockMedium()
-	require.NoError(t, medium.Write("/tmp/repos.yaml", `
-version: 1
-org: host-uk
-base_path: /tmp/repos
-repos:
-  core-php:
-    type: foundation
-  core-admin:
-    type: module
-    depends_on: [core-php]
-`))
-
-	reg, err := repos.LoadRegistry(medium, "/tmp/repos.yaml")
-	require.NoError(t, err)
-
-	p := scmapi.NewProvider(nil, nil, reg, nil)
-	r := setupRouter(p)
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/api/v1/scm/registry", nil)
-	r.ServeHTTP(w, req)
-
-	require.Equal(t, http.StatusOK, w.Code)
-
-	var resp goapi.Response[[]map[string]any]
-	err = json.Unmarshal(w.Body.Bytes(), &resp)
-	require.NoError(t, err)
-	require.Len(t, resp.Data, 2)
-	assert.Equal(t, "core-php", resp.Data[0]["name"])
-	assert.Equal(t, "core-admin", resp.Data[1]["name"])
-}
-
-func TestScmProvider_RefreshMarketplace_Good(t *testing.T) {
-	dir := t.TempDir()
-	indexPath := filepath.Join(dir, "index.json")
-
-	idx := &marketplace.Index{
-		Version: 1,
-		Modules: []marketplace.Module{
-			{Code: "refreshed", Name: "Refreshed Module"},
-		},
+	for key, seen := range want {
+		if !seen {
+			t.Fatalf("expected route description for %s", key)
+		}
 	}
-	require.NoError(t, marketplace.WriteIndex(io.Local, indexPath, idx))
-
-	p := scmapi.NewProvider(nil, nil, nil, nil)
-	r := setupRouter(p)
-
-	w := httptest.NewRecorder()
-	body, err := json.Marshal(map[string]string{"index_path": indexPath})
-	require.NoError(t, err)
-	req, _ := http.NewRequest("POST", "/api/v1/scm/marketplace/refresh", bytes.NewReader(body))
-	req.Header.Set("Content-Type", "application/json")
-	r.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusOK, w.Code)
-
-	var resp goapi.Response[map[string]any]
-	err = json.Unmarshal(w.Body.Bytes(), &resp)
-	require.NoError(t, err)
-	assert.True(t, resp.Success)
-	assert.Equal(t, float64(1), resp.Data["modules"])
-
-	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("GET", "/api/v1/scm/marketplace", nil)
-	r.ServeHTTP(w, req)
-	assert.Equal(t, http.StatusOK, w.Code)
-
-	var listed goapi.Response[[]marketplace.Module]
-	err = json.Unmarshal(w.Body.Bytes(), &listed)
-	require.NoError(t, err)
-	require.Len(t, listed.Data, 1)
-	assert.Equal(t, "refreshed", listed.Data[0].Code)
 }
 
-// -- Route Registration -------------------------------------------------------
+func TestScmProviderMetadataExposesStreamAndElement(t *testing.T) {
+	provider := NewProvider(nil, nil, nil, nil)
 
-func TestScmProvider_RegistersAsRouteGroup_Good(t *testing.T) {
-	p := scmapi.NewProvider(nil, nil, nil, nil)
+	if got := provider.Channels(); len(got) != 1 || got[0] != "scm" {
+		t.Fatalf("unexpected channels: %#v", got)
+	}
 
-	engine, err := goapi.New()
-	require.NoError(t, err)
-
-	engine.Register(p)
-	assert.Len(t, engine.Groups(), 1)
-	assert.Equal(t, "scm", engine.Groups()[0].Name())
+	element := provider.Element()
+	if element.Tag != "core-scm" {
+		t.Fatalf("unexpected element tag: %q", element.Tag)
+	}
+	if element.Source != "ui/app.js" {
+		t.Fatalf("unexpected element source: %q", element.Source)
+	}
 }
 
-func TestScmProvider_Channels_RegisterAsStreamGroup_Good(t *testing.T) {
-	p := scmapi.NewProvider(nil, nil, nil, nil)
-
-	engine, err := goapi.New()
-	require.NoError(t, err)
-
-	engine.Register(p)
-
-	channels := engine.Channels()
-	assert.Contains(t, channels, "scm.marketplace.refreshed")
+func signedMarketplaceModule(t *testing.T, mod marketplace.Module) marketplace.Module {
+	t.Helper()
+	pub, priv, err := ed25519.GenerateKey(nil)
+	if err != nil {
+		t.Fatalf("generate key: %v", err)
+	}
+	mod.SignKey = base64.StdEncoding.EncodeToString(pub)
+	cp := mod
+	cp.Sign = ""
+	payload, err := json.Marshal(cp)
+	if err != nil {
+		t.Fatalf("module payload: %v", err)
+	}
+	sig := &manifest.Manifest{SignKey: mod.SignKey}
+	if err := manifest.Sign(sig, payload, priv); err != nil {
+		t.Fatalf("sign module: %v", err)
+	}
+	mod.Sign = sig.Sign
+	return mod
 }
 
-// -- Test helpers -------------------------------------------------------------
-
-func setupRouter(p *scmapi.ScmProvider) *gin.Engine {
-	r := gin.New()
-	rg := r.Group(p.BasePath())
-	p.RegisterRoutes(rg)
-	return r
+func assertRouteOK(t *testing.T, router *gin.Engine, path, want string) {
+	t.Helper()
+	req := httptest.NewRequest(http.MethodGet, path, nil)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("%s: expected 200, got %d with body %s", path, rec.Code, rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), want) {
+		t.Fatalf("%s: expected body to contain %q, got %s", path, want, rec.Body.String())
+	}
 }

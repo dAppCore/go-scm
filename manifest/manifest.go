@@ -3,11 +3,39 @@
 package manifest
 
 import (
-	coreerr "dappco.re/go/core/log"
+	// Note: AX-6 — Slot and daemon names must be returned deterministically (no core sort primitive).
+	"sort"
+
+	core "dappco.re/go/core"
 	"gopkg.in/yaml.v3"
 )
 
-// Manifest represents a .core/manifest.yaml application manifest.
+type Permissions struct {
+	Read  []string `yaml:"read" json:"read"`
+	Write []string `yaml:"write" json:"write"`
+	Net   []string `yaml:"net" json:"net"`
+	Run   []string `yaml:"run" json:"run"`
+}
+
+type ElementSpec struct {
+	Tag    string `yaml:"tag" json:"tag"`
+	Source string `yaml:"source" json:"source"`
+}
+
+type DaemonSpec struct {
+	Binary  string   `yaml:"binary,omitempty" json:"binary,omitempty"`
+	Args    []string `yaml:"args,omitempty" json:"args,omitempty"`
+	Health  string   `yaml:"health,omitempty" json:"health,omitempty"`
+	Default bool     `yaml:"default,omitempty" json:"default,omitempty"`
+}
+
+// BuildInfo captures metadata added when the manifest is compiled into core.json.
+type BuildInfo struct {
+	Targets   []string `yaml:"targets,omitempty" json:"targets,omitempty"`
+	Checksums string   `yaml:"checksums,omitempty" json:"checksums,omitempty"`
+	SHA256    string   `yaml:"sha256,omitempty" json:"sha256,omitempty"`
+}
+
 type Manifest struct {
 	Code        string            `yaml:"code" json:"code"`
 	Name        string            `yaml:"name" json:"name"`
@@ -16,114 +44,99 @@ type Manifest struct {
 	Author      string            `yaml:"author,omitempty" json:"author,omitempty"`
 	Licence     string            `yaml:"licence,omitempty" json:"licence,omitempty"`
 	Sign        string            `yaml:"sign,omitempty" json:"sign,omitempty"`
+	SignKey     string            `yaml:"sign_key,omitempty" json:"sign_key,omitempty"`
 	Layout      string            `yaml:"layout,omitempty" json:"layout,omitempty"`
 	Slots       map[string]string `yaml:"slots,omitempty" json:"slots,omitempty"`
 
-	// Provider fields — used by runtime provider loading.
-	Namespace string       `yaml:"namespace,omitempty" json:"namespace,omitempty"` // API route prefix, e.g. /api/v1/cool-widget
-	Port      int          `yaml:"port,omitempty" json:"port,omitempty"`           // Listen port (0 = auto-assign)
-	Binary    string       `yaml:"binary,omitempty" json:"binary,omitempty"`       // Path to provider binary (relative to provider dir)
-	Args      []string     `yaml:"args,omitempty" json:"args,omitempty"`           // Additional CLI args for the binary
-	Element   *ElementSpec `yaml:"element,omitempty" json:"element,omitempty"`     // Custom element for GUI rendering
-	Spec      string       `yaml:"spec,omitempty" json:"spec,omitempty"`           // Path to OpenAPI spec file
-
+	Namespace   string                `yaml:"namespace,omitempty" json:"namespace,omitempty"`
+	Port        int                   `yaml:"port,omitempty" json:"port,omitempty"`
+	Binary      string                `yaml:"binary,omitempty" json:"binary,omitempty"`
+	Args        []string              `yaml:"args,omitempty" json:"args,omitempty"`
+	Element     *ElementSpec          `yaml:"element,omitempty" json:"element,omitempty"`
+	Spec        string                `yaml:"spec,omitempty" json:"spec,omitempty"`
 	Permissions Permissions           `yaml:"permissions,omitempty" json:"permissions,omitempty"`
 	Modules     []string              `yaml:"modules,omitempty" json:"modules,omitempty"`
 	Daemons     map[string]DaemonSpec `yaml:"daemons,omitempty" json:"daemons,omitempty"`
+	Build       BuildInfo             `yaml:"build,omitempty" json:"build,omitempty"`
 }
 
-// ElementSpec describes a web component for GUI rendering.
-type ElementSpec struct {
-	// Tag is the custom element tag name, e.g. "core-cool-widget".
-	Tag string `yaml:"tag" json:"tag"`
-
-	// Source is the path to the JS bundle (relative to provider dir).
-	Source string `yaml:"source" json:"source"`
-}
-
-// IsProvider returns true if this manifest declares provider fields
-// (namespace and binary), indicating it is a runtime provider.
-// Usage: IsProvider(...)
-func (m *Manifest) IsProvider() bool {
-	return m.Namespace != "" && m.Binary != ""
-}
-
-// Permissions declares the I/O capabilities a module requires.
-type Permissions struct {
-	Read  []string `yaml:"read" json:"read"`
-	Write []string `yaml:"write" json:"write"`
-	Net   []string `yaml:"net" json:"net"`
-	Run   []string `yaml:"run" json:"run"`
-}
-
-// DaemonSpec describes a long-running process managed by the runtime.
-type DaemonSpec struct {
-	Binary  string   `yaml:"binary,omitempty" json:"binary,omitempty"`
-	Args    []string `yaml:"args,omitempty" json:"args,omitempty"`
-	Health  string   `yaml:"health,omitempty" json:"health,omitempty"`
-	Default bool     `yaml:"default,omitempty" json:"default,omitempty"`
-}
-
-// Parse decodes YAML bytes into a Manifest.
-//
-//	m, err := manifest.Parse(yamlBytes)
-//
-// Usage: Parse(...)
 func Parse(data []byte) (*Manifest, error) {
 	var m Manifest
 	if err := yaml.Unmarshal(data, &m); err != nil {
-		return nil, coreerr.E("manifest.Parse", "unmarshal failed", err)
+		return nil, err
 	}
 	return &m, nil
 }
 
-// SlotNames returns a deduplicated list of component names from slots.
-// Usage: SlotNames(...)
-func (m *Manifest) SlotNames() []string {
-	seen := make(map[string]bool)
-	var names []string
-	for _, name := range m.Slots {
-		if !seen[name] {
-			seen[name] = true
-			names = append(names, name)
-		}
+func (m *Manifest) IsProvider() bool {
+	if m == nil {
+		return false
 	}
-	return names
+	return core.Trim(m.Namespace) != "" && core.Trim(m.Binary) != ""
 }
 
-// DefaultDaemon returns the name, spec, and true for the default daemon.
-// A daemon is the default if it has Default:true, or if it is the only daemon
-// in the map. If multiple daemons have Default:true, returns false (ambiguous).
-// Returns empty values and false if no default can be determined.
-// Usage: DefaultDaemon(...)
+func (m *Manifest) SlotNames() []string {
+	if m == nil || len(m.Slots) == 0 {
+		return nil
+	}
+	seen := make(map[string]struct{}, len(m.Slots))
+	out := make([]string, 0, len(m.Slots))
+	for _, v := range m.Slots {
+		v = core.Trim(v)
+		if v == "" {
+			continue
+		}
+		if _, ok := seen[v]; ok {
+			continue
+		}
+		seen[v] = struct{}{}
+		out = append(out, v)
+	}
+	sort.Strings(out)
+	return out
+}
+
 func (m *Manifest) DefaultDaemon() (string, DaemonSpec, bool) {
-	if len(m.Daemons) == 0 {
+	if m == nil || len(m.Daemons) == 0 {
 		return "", DaemonSpec{}, false
 	}
-
-	// Look for an explicit default; reject ambiguous multiple defaults.
-	var defaultName string
-	var defaultSpec DaemonSpec
-	for name, spec := range m.Daemons {
-		if spec.Default {
-			if defaultName != "" {
-				// Multiple defaults — ambiguous.
-				return "", DaemonSpec{}, false
-			}
-			defaultName = name
-			defaultSpec = spec
-		}
-	}
-	if defaultName != "" {
-		return defaultName, defaultSpec, true
-	}
-
-	// If exactly one daemon exists, treat it as the implicit default.
 	if len(m.Daemons) == 1 {
 		for name, spec := range m.Daemons {
 			return name, spec, true
 		}
 	}
-
+	var (
+		foundName string
+		foundSpec DaemonSpec
+		found     bool
+	)
+	for name, spec := range m.Daemons {
+		if !spec.Default {
+			continue
+		}
+		if found {
+			return "", DaemonSpec{}, false
+		}
+		foundName, foundSpec, found = name, spec, true
+	}
+	if found {
+		return foundName, foundSpec, true
+	}
 	return "", DaemonSpec{}, false
+}
+
+func validateManifest(m *Manifest) error {
+	if m == nil {
+		return core.E("", "manifest is required", nil)
+	}
+	if core.Trim(m.Code) == "" {
+		return core.E("", "manifest code is required", nil)
+	}
+	if core.Trim(m.Name) == "" {
+		return core.E("", "manifest name is required", nil)
+	}
+	if core.Trim(m.Version) == "" {
+		return core.E("", "manifest version is required", nil)
+	}
+	return nil
 }

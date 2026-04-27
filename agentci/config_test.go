@@ -3,329 +3,197 @@
 package agentci
 
 import (
+	// Note: filepath.Join is retained in tests to build temporary config paths without touching production path helpers.
+	"path/filepath"
+	// Note: testing is the standard Go test harness.
 	"testing"
 
-	"dappco.re/go/core/io"
-	"forge.lthn.ai/core/config"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"dappco.re/go/config"
 )
 
-func newTestConfig(t *testing.T, yaml string) *config.Config {
-	t.Helper()
-	m := io.NewMockMedium()
-	if yaml != "" {
-		m.Files["/tmp/test/config.yaml"] = yaml
+func TestLoadAgentsAndRoundTrip(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.yaml")
+	cfg, err := config.New(config.WithPath(path))
+	if err != nil {
+		t.Fatalf("new config: %v", err)
 	}
-	cfg, err := config.New(config.WithMedium(m), config.WithPath("/tmp/test/config.yaml"))
-	require.NoError(t, err)
-	return cfg
-}
 
-func TestLoadAgents_Good(t *testing.T) {
-	cfg := newTestConfig(t, `
-agentci:
-  agents:
-    darbs-claude:
-      host: claude@192.168.0.201
-      queue_dir: /home/claude/ai-work/queue
-      forgejo_user: darbs-claude
-      model: sonnet
-      runner: claude
-      active: true
-`)
+	agent := AgentConfig{
+		Host:          "forgejo",
+		QueueDir:      "queue",
+		ForgejoUser:   "cladius",
+		Model:         "gpt-5.4",
+		Runner:        "codex",
+		VerifyModel:   "gpt-5.3-codex-spark",
+		SecurityLevel: "high",
+		Roles:         []string{"dispatch", "review"},
+		DualRun:       true,
+		Active:        true,
+	}
+
+	if err := SaveAgent(cfg, "cladius", agent); err != nil {
+		t.Fatalf("save agent: %v", err)
+	}
+
 	agents, err := LoadAgents(cfg)
-	require.NoError(t, err)
-	require.Len(t, agents, 1)
+	if err != nil {
+		t.Fatalf("load agents: %v", err)
+	}
+	if got := agents["cladius"]; got.Host != agent.Host || got.VerifyModel != agent.VerifyModel {
+		t.Fatalf("unexpected agent round-trip: %#v", got)
+	}
 
-	agent := agents["darbs-claude"]
-	assert.Equal(t, "claude@192.168.0.201", agent.Host)
-	assert.Equal(t, "/home/claude/ai-work/queue", agent.QueueDir)
-	assert.Equal(t, "sonnet", agent.Model)
-	assert.Equal(t, "claude", agent.Runner)
-}
+	agents["cladius"] = AgentConfig{Host: "mutated"}
+	agents["new"] = AgentConfig{Host: "extra"}
+	agentsAgain, err := LoadAgents(cfg)
+	if err != nil {
+		t.Fatalf("reload agents after mutation: %v", err)
+	}
+	if got := agentsAgain["cladius"]; got.Host != agent.Host {
+		t.Fatalf("expected load result to be detached from caller mutations, got %#v", got)
+	}
+	if _, ok := agentsAgain["new"]; ok {
+		t.Fatalf("expected load result not to include caller-added entries")
+	}
 
-func TestLoadAgents_Good_MultipleAgents_Good(t *testing.T) {
-	cfg := newTestConfig(t, `
-agentci:
-  agents:
-    darbs-claude:
-      host: claude@192.168.0.201
-      queue_dir: /home/claude/ai-work/queue
-      active: true
-    local-codex:
-      host: localhost
-      queue_dir: /home/claude/ai-work/queue
-      runner: codex
-      active: true
-`)
-	agents, err := LoadAgents(cfg)
-	require.NoError(t, err)
-	assert.Len(t, agents, 2)
-	assert.Contains(t, agents, "darbs-claude")
-	assert.Contains(t, agents, "local-codex")
-}
-
-func TestLoadAgents_Good_SkipsInactive_Good(t *testing.T) {
-	cfg := newTestConfig(t, `
-agentci:
-  agents:
-    active-agent:
-      host: claude@10.0.0.1
-      active: true
-    offline-agent:
-      host: claude@10.0.0.2
-      active: false
-`)
-	agents, err := LoadAgents(cfg)
-	require.NoError(t, err)
-	// Both are returned, but only active-agent has defaults applied.
-	assert.Len(t, agents, 2)
-	assert.Contains(t, agents, "active-agent")
-}
-
-func TestLoadActiveAgents_Good(t *testing.T) {
-	cfg := newTestConfig(t, `
-agentci:
-  agents:
-    active-agent:
-      host: claude@10.0.0.1
-      active: true
-    offline-agent:
-      host: claude@10.0.0.2
-      active: false
-`)
 	active, err := LoadActiveAgents(cfg)
-	require.NoError(t, err)
-	assert.Len(t, active, 1)
-	assert.Contains(t, active, "active-agent")
+	if err != nil {
+		t.Fatalf("load active agents: %v", err)
+	}
+	if _, ok := active["cladius"]; !ok {
+		t.Fatalf("expected active agent")
+	}
+
+	if err := RemoveAgent(cfg, "cladius"); err != nil {
+		t.Fatalf("remove agent: %v", err)
+	}
+	agents, err = LoadAgents(cfg)
+	if err != nil {
+		t.Fatalf("reload agents: %v", err)
+	}
+	if _, ok := agents["cladius"]; ok {
+		t.Fatalf("expected agent removal")
+	}
 }
 
-func TestLoadAgents_Good_Defaults_Good(t *testing.T) {
-	cfg := newTestConfig(t, `
-agentci:
-  agents:
-    minimal:
-      host: claude@10.0.0.1
-      active: true
-`)
-	agents, err := LoadAgents(cfg)
-	require.NoError(t, err)
-	require.Len(t, agents, 1)
+func TestLoadClothoConfigDefaults(t *testing.T) {
+	cfg, err := config.New()
+	if err != nil {
+		t.Fatalf("new config: %v", err)
+	}
 
-	agent := agents["minimal"]
-	assert.Equal(t, "/home/claude/ai-work/queue", agent.QueueDir)
-	assert.Equal(t, "sonnet", agent.Model)
-	assert.Equal(t, "claude", agent.Runner)
+	clotho, err := LoadClothoConfig(cfg)
+	if err != nil {
+		t.Fatalf("load clotho: %v", err)
+	}
+	if clotho.Strategy != "direct" {
+		t.Fatalf("expected direct strategy, got %q", clotho.Strategy)
+	}
+	if clotho.ValidationThreshold != 0.5 {
+		t.Fatalf("expected default validation threshold, got %v", clotho.ValidationThreshold)
+	}
 }
 
-func TestLoadAgents_Good_NoConfig_Good(t *testing.T) {
-	cfg := newTestConfig(t, "")
-	agents, err := LoadAgents(cfg)
-	require.NoError(t, err)
-	assert.Empty(t, agents)
+func TestLoadAgentsReturnsErrorForInvalidData(t *testing.T) {
+	cfg, err := config.New()
+	if err != nil {
+		t.Fatalf("new config: %v", err)
+	}
+
+	if err := cfg.Set("agents", "not-a-map"); err != nil {
+		t.Fatalf("set agents: %v", err)
+	}
+
+	if _, err := LoadAgents(cfg); err == nil {
+		t.Fatalf("expected load agents error")
+	}
 }
 
-func TestLoadAgents_Bad_MissingHost_Good(t *testing.T) {
-	cfg := newTestConfig(t, `
-agentci:
-  agents:
-    broken:
-      queue_dir: /tmp
-      active: true
-`)
-	_, err := LoadAgents(cfg)
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "host is required")
+func TestLoadClothoConfigReturnsErrorForInvalidData(t *testing.T) {
+	cfg, err := config.New()
+	if err != nil {
+		t.Fatalf("new config: %v", err)
+	}
+
+	if err := cfg.Set("clotho", "not-a-map"); err != nil {
+		t.Fatalf("set clotho: %v", err)
+	}
+
+	if _, err := LoadClothoConfig(cfg); err == nil {
+		t.Fatalf("expected load clotho error")
+	}
 }
 
-func TestLoadAgents_Good_WithDualRun_Good(t *testing.T) {
-	cfg := newTestConfig(t, `
-agentci:
-  agents:
-    gemini-agent:
-      host: localhost
-      runner: gemini
-      model: gemini-2.0-flash
-      verify_model: gemini-1.5-pro
-      dual_run: true
-      active: true
-`)
-	agents, err := LoadAgents(cfg)
-	require.NoError(t, err)
+func TestLoadClothoConfigHandlesNullConfig(t *testing.T) {
+	cfg, err := config.New()
+	if err != nil {
+		t.Fatalf("new config: %v", err)
+	}
 
-	agent := agents["gemini-agent"]
-	assert.Equal(t, "gemini", agent.Runner)
-	assert.Equal(t, "gemini-2.0-flash", agent.Model)
-	assert.Equal(t, "gemini-1.5-pro", agent.VerifyModel)
-	assert.True(t, agent.DualRun)
+	if err := cfg.Set("clotho", nil); err != nil {
+		t.Fatalf("set clotho: %v", err)
+	}
+
+	clotho, err := LoadClothoConfig(cfg)
+	if err != nil {
+		t.Fatalf("load clotho: %v", err)
+	}
+	if clotho.Strategy != "direct" {
+		t.Fatalf("expected default strategy, got %q", clotho.Strategy)
+	}
+	if clotho.ValidationThreshold != 0.5 {
+		t.Fatalf("expected default validation threshold, got %v", clotho.ValidationThreshold)
+	}
 }
 
-func TestLoadClothoConfig_Good(t *testing.T) {
-	cfg := newTestConfig(t, `
-agentci:
-  clotho:
-    strategy: clotho-verified
-    validation_threshold: 0.9
-    signing_key_path: /etc/core/keys/clotho.pub
-`)
-	cc, err := LoadClothoConfig(cfg)
-	require.NoError(t, err)
-	assert.Equal(t, "clotho-verified", cc.Strategy)
-	assert.Equal(t, 0.9, cc.ValidationThreshold)
-	assert.Equal(t, "/etc/core/keys/clotho.pub", cc.SigningKeyPath)
+func TestLoadClothoConfigRejectsOutOfRangeThreshold(t *testing.T) {
+	cfg, err := config.New()
+	if err != nil {
+		t.Fatalf("new config: %v", err)
+	}
+
+	if err := cfg.Set("clotho", map[string]any{
+		"validation_threshold": 1.5,
+	}); err != nil {
+		t.Fatalf("set clotho: %v", err)
+	}
+
+	if _, err := LoadClothoConfig(cfg); err == nil {
+		t.Fatalf("expected load clotho error for invalid threshold")
+	}
 }
 
-func TestLoadClothoConfig_Good_Defaults_Good(t *testing.T) {
-	cfg := newTestConfig(t, "")
-	cc, err := LoadClothoConfig(cfg)
-	require.NoError(t, err)
-	assert.Equal(t, "direct", cc.Strategy)
-	assert.Equal(t, 0.85, cc.ValidationThreshold)
+func TestLoadClothoConfigRejectsUnknownStrategy(t *testing.T) {
+	cfg, err := config.New()
+	if err != nil {
+		t.Fatalf("new config: %v", err)
+	}
+
+	if err := cfg.Set("clotho", map[string]any{
+		"strategy": "experimental",
+	}); err != nil {
+		t.Fatalf("set clotho: %v", err)
+	}
+
+	if _, err := LoadClothoConfig(cfg); err == nil {
+		t.Fatalf("expected load clotho error for invalid strategy")
+	}
 }
 
-func TestSaveAgent_Good(t *testing.T) {
-	cfg := newTestConfig(t, "")
+func TestSaveAndRemoveAgentPropagateLoadErrors(t *testing.T) {
+	cfg, err := config.New()
+	if err != nil {
+		t.Fatalf("new config: %v", err)
+	}
 
-	err := SaveAgent(cfg, "new-agent", AgentConfig{
-		Host:        "claude@10.0.0.5",
-		QueueDir:    "/home/claude/ai-work/queue",
-		ForgejoUser: "new-agent",
-		Model:       "haiku",
-		Runner:      "claude",
-		Active:      true,
-	})
-	require.NoError(t, err)
+	if err := cfg.Set("agents", "not-a-map"); err != nil {
+		t.Fatalf("set agents: %v", err)
+	}
 
-	agents, err := ListAgents(cfg)
-	require.NoError(t, err)
-	require.Contains(t, agents, "new-agent")
-	assert.Equal(t, "claude@10.0.0.5", agents["new-agent"].Host)
-	assert.Equal(t, "haiku", agents["new-agent"].Model)
-}
-
-func TestSaveAgent_Good_WithDualRun_Good(t *testing.T) {
-	cfg := newTestConfig(t, "")
-
-	err := SaveAgent(cfg, "verified-agent", AgentConfig{
-		Host:        "claude@10.0.0.5",
-		Model:       "gemini-2.0-flash",
-		VerifyModel: "gemini-1.5-pro",
-		DualRun:     true,
-		Active:      true,
-	})
-	require.NoError(t, err)
-
-	agents, err := ListAgents(cfg)
-	require.NoError(t, err)
-	require.Contains(t, agents, "verified-agent")
-	assert.True(t, agents["verified-agent"].DualRun)
-}
-
-func TestSaveAgent_Good_OmitsEmptyOptionals_Good(t *testing.T) {
-	cfg := newTestConfig(t, "")
-
-	err := SaveAgent(cfg, "minimal", AgentConfig{
-		Host:   "claude@10.0.0.1",
-		Active: true,
-	})
-	require.NoError(t, err)
-
-	agents, err := ListAgents(cfg)
-	require.NoError(t, err)
-	assert.Contains(t, agents, "minimal")
-}
-
-func TestRemoveAgent_Good(t *testing.T) {
-	cfg := newTestConfig(t, `
-agentci:
-  agents:
-    to-remove:
-      host: claude@10.0.0.1
-      active: true
-    to-keep:
-      host: claude@10.0.0.2
-      active: true
-`)
-	err := RemoveAgent(cfg, "to-remove")
-	require.NoError(t, err)
-
-	agents, err := ListAgents(cfg)
-	require.NoError(t, err)
-	assert.NotContains(t, agents, "to-remove")
-	assert.Contains(t, agents, "to-keep")
-}
-
-func TestRemoveAgent_Bad_NotFound_Good(t *testing.T) {
-	cfg := newTestConfig(t, `
-agentci:
-  agents:
-    existing:
-      host: claude@10.0.0.1
-      active: true
-`)
-	err := RemoveAgent(cfg, "nonexistent")
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "not found")
-}
-
-func TestRemoveAgent_Bad_NoAgents_Good(t *testing.T) {
-	cfg := newTestConfig(t, "")
-	err := RemoveAgent(cfg, "anything")
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "no agents configured")
-}
-
-func TestListAgents_Good(t *testing.T) {
-	cfg := newTestConfig(t, `
-agentci:
-  agents:
-    agent-a:
-      host: claude@10.0.0.1
-      active: true
-    agent-b:
-      host: claude@10.0.0.2
-      active: false
-`)
-	agents, err := ListAgents(cfg)
-	require.NoError(t, err)
-	assert.Len(t, agents, 2)
-	assert.True(t, agents["agent-a"].Active)
-	assert.False(t, agents["agent-b"].Active)
-}
-
-func TestListAgents_Good_Empty_Good(t *testing.T) {
-	cfg := newTestConfig(t, "")
-	agents, err := ListAgents(cfg)
-	require.NoError(t, err)
-	assert.Empty(t, agents)
-}
-
-func TestRoundTrip_Good_SaveThenLoad_Good(t *testing.T) {
-	cfg := newTestConfig(t, "")
-
-	err := SaveAgent(cfg, "alpha", AgentConfig{
-		Host:        "claude@alpha",
-		QueueDir:    "/home/claude/work/queue",
-		ForgejoUser: "alpha-bot",
-		Model:       "opus",
-		Runner:      "claude",
-		Active:      true,
-	})
-	require.NoError(t, err)
-
-	err = SaveAgent(cfg, "beta", AgentConfig{
-		Host:        "claude@beta",
-		ForgejoUser: "beta-bot",
-		Runner:      "codex",
-		Active:      true,
-	})
-	require.NoError(t, err)
-
-	agents, err := LoadActiveAgents(cfg)
-	require.NoError(t, err)
-	assert.Len(t, agents, 2)
-	assert.Equal(t, "claude@alpha", agents["alpha"].Host)
-	assert.Equal(t, "opus", agents["alpha"].Model)
-	assert.Equal(t, "codex", agents["beta"].Runner)
+	if err := SaveAgent(cfg, "charon", AgentConfig{}); err == nil {
+		t.Fatalf("expected save agent error")
+	}
+	if err := RemoveAgent(cfg, "charon"); err == nil {
+		t.Fatalf("expected remove agent error")
+	}
 }

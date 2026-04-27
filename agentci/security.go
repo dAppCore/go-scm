@@ -3,36 +3,34 @@
 package agentci
 
 import (
+	// Note: context.Context is retained as the public cancellation contract for SSH command construction.
 	"context"
-	strings "dappco.re/go/core/scm/internal/ax/stringsx"
-	exec "golang.org/x/sys/execabs"
-	"path"
+	"os/exec" // Note: AX-6 — process invocation via os/exec is intrinsic for SSH exec.Cmd construction returned by this public API.
+	// Note: regexp is retained for path-element allowlist validation; no core equivalent covers compiled regexes.
 	"regexp"
 
-	coreerr "dappco.re/go/core/log"
-	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
+	core "dappco.re/go/core"
 )
 
 var safeNameRegex = regexp.MustCompile(`^[a-zA-Z0-9\-\_\.]+$`)
 
 // SanitizePath ensures a filename or directory name is safe and prevents path traversal.
-// Returns the validated basename.
+// Returns the validated input unchanged.
 // Usage: SanitizePath(...)
 func SanitizePath(input string) (string, error) {
 	if input == "" {
-		return "", coreerr.E("agentci.SanitizePath", "path element is required", nil)
+		return "", core.E("agentci.SanitizePath", "path element is required", nil)
 	}
-	safeName := filepath.Base(input)
-	if safeName == "." || safeName == ".." {
-		return "", coreerr.E("agentci.SanitizePath", "invalid path element: "+input, nil)
+	if input == "." || input == ".." {
+		return "", core.E("agentci.SanitizePath", core.Sprintf("invalid path element: %s", input), nil)
 	}
-	if strings.ContainsAny(safeName, `/\`) {
-		return "", coreerr.E("agentci.SanitizePath", "path separators are not allowed: "+input, nil)
+	if core.Contains(input, "/") || core.Contains(input, `\`) {
+		return "", core.E("agentci.SanitizePath", core.Sprintf("path separators are not allowed: %s", input), nil)
 	}
-	if !safeNameRegex.MatchString(safeName) {
-		return "", coreerr.E("agentci.SanitizePath", "invalid characters in path element: "+input, nil)
+	if !safeNameRegex.MatchString(input) {
+		return "", core.E("agentci.SanitizePath", core.Sprintf("invalid characters in path element: %s", input), nil)
 	}
-	return safeName, nil
+	return input, nil
 }
 
 // ValidatePathElement validates a single local path element and returns its safe form.
@@ -43,7 +41,7 @@ func ValidatePathElement(input string) (string, error) {
 		return "", err
 	}
 	if safeName != input {
-		return "", coreerr.E("agentci.ValidatePathElement", "path separators are not allowed: "+input, nil)
+		return "", core.E("agentci.ValidatePathElement", core.Sprintf("path separators are not allowed: %s", input), nil)
 	}
 	return safeName, nil
 }
@@ -51,21 +49,28 @@ func ValidatePathElement(input string) (string, error) {
 // ResolvePathWithinRoot resolves a validated path element beneath a root directory.
 // Usage: ResolvePathWithinRoot(...)
 func ResolvePathWithinRoot(root string, input string) (string, string, error) {
+	if core.Trim(root) == "" {
+		return "", "", core.E("agentci.ResolvePathWithinRoot", "root is required", nil)
+	}
+
 	safeName, err := ValidatePathElement(input)
 	if err != nil {
-		return "", "", coreerr.E("agentci.ResolvePathWithinRoot", "invalid path element", err)
+		return "", "", core.E("agentci.ResolvePathWithinRoot", "invalid path element", err)
 	}
 
-	absRoot, err := filepath.Abs(root)
-	if err != nil {
-		return "", "", coreerr.E("agentci.ResolvePathWithinRoot", "resolve root", err)
+	absRoot := absoluteLocalPath(root)
+	resolved := cleanLocalPath(core.Join(localPathSeparator(), absRoot, safeName))
+	cleanRoot := cleanLocalPath(absRoot)
+	if cleanRoot == localPathSeparator() {
+		if !core.HasPrefix(resolved, cleanRoot) {
+			return "", "", core.E("agentci.ResolvePathWithinRoot", "resolved path escaped root", nil)
+		}
+		return safeName, resolved, nil
 	}
 
-	resolved := filepath.Clean(filepath.Join(absRoot, safeName))
-	cleanRoot := filepath.Clean(absRoot)
-	rootPrefix := cleanRoot + string(filepath.Separator)
-	if resolved != cleanRoot && !strings.HasPrefix(resolved, rootPrefix) {
-		return "", "", coreerr.E("agentci.ResolvePathWithinRoot", "resolved path escaped root", nil)
+	rootPrefix := core.Concat(cleanRoot, localPathSeparator())
+	if resolved != cleanRoot && !core.HasPrefix(resolved, rootPrefix) {
+		return "", "", core.E("agentci.ResolvePathWithinRoot", "resolved path escaped root", nil)
 	}
 
 	return safeName, resolved, nil
@@ -74,11 +79,11 @@ func ResolvePathWithinRoot(root string, input string) (string, string, error) {
 // ValidateRemoteDir validates a remote directory path used over SSH.
 // Usage: ValidateRemoteDir(...)
 func ValidateRemoteDir(dir string) (string, error) {
-	if strings.TrimSpace(dir) == "" {
-		return "", coreerr.E("agentci.ValidateRemoteDir", "directory is required", nil)
+	if core.Trim(dir) == "" {
+		return "", core.E("agentci.ValidateRemoteDir", "directory is required", nil)
 	}
-	if strings.ContainsAny(dir, `\`) {
-		return "", coreerr.E("agentci.ValidateRemoteDir", "backslashes are not allowed", nil)
+	if core.Contains(dir, `\`) {
+		return "", core.E("agentci.ValidateRemoteDir", "backslashes are not allowed", nil)
 	}
 
 	switch dir {
@@ -86,37 +91,38 @@ func ValidateRemoteDir(dir string) (string, error) {
 		return dir, nil
 	}
 
-	cleaned := path.Clean(dir)
 	prefix := ""
-	rest := cleaned
+	rest := dir
 
-	if strings.HasPrefix(dir, "~/") {
+	if core.HasPrefix(dir, "~/") {
 		prefix = "~/"
-		rest = strings.TrimPrefix(cleaned, "~/")
+		rest = core.TrimPrefix(dir, "~/")
 	}
-	if strings.HasPrefix(dir, "/") {
+	if core.HasPrefix(dir, "/") {
 		prefix = "/"
-		rest = strings.TrimPrefix(cleaned, "/")
+		rest = core.TrimPrefix(dir, "/")
 	}
 
-	if rest == "." || rest == ".." || strings.HasPrefix(rest, "../") {
-		return "", coreerr.E("agentci.ValidateRemoteDir", "directory escaped root", nil)
-	}
-
-	for _, part := range strings.Split(rest, "/") {
+	for _, part := range core.Split(rest, "/") {
 		if part == "" {
 			continue
 		}
+		if part == "." || part == ".." {
+			return "", core.E("agentci.ValidateRemoteDir", "directory escaped root", nil)
+		}
 		if _, err := ValidatePathElement(part); err != nil {
-			return "", coreerr.E("agentci.ValidateRemoteDir", "invalid directory segment", err)
+			return "", core.E("agentci.ValidateRemoteDir", "invalid directory segment", err)
 		}
 	}
 
 	if rest == "" || rest == "." {
+		if prefix == "~/" {
+			return "~", nil
+		}
 		return prefix, nil
 	}
 
-	return prefix + rest, nil
+	return cleanRemotePath(dir), nil
 }
 
 // JoinRemotePath joins validated remote path elements using forward slashes.
@@ -124,32 +130,35 @@ func ValidateRemoteDir(dir string) (string, error) {
 func JoinRemotePath(base string, parts ...string) (string, error) {
 	safeBase, err := ValidateRemoteDir(base)
 	if err != nil {
-		return "", coreerr.E("agentci.JoinRemotePath", "invalid base directory", err)
+		return "", core.E("agentci.JoinRemotePath", "invalid base directory", err)
+	}
+	if len(parts) == 0 {
+		return safeBase, nil
 	}
 
 	cleanParts := make([]string, 0, len(parts))
 	for _, part := range parts {
 		safePart, partErr := ValidatePathElement(part)
 		if partErr != nil {
-			return "", coreerr.E("agentci.JoinRemotePath", "invalid path element", partErr)
+			return "", core.E("agentci.JoinRemotePath", "invalid path element", partErr)
 		}
 		cleanParts = append(cleanParts, safePart)
 	}
 
 	if safeBase == "~" {
-		return path.Join("~", path.Join(cleanParts...)), nil
+		return joinRemotePath("~", joinRemotePath(cleanParts...)), nil
 	}
-	if strings.HasPrefix(safeBase, "~/") {
-		return "~/" + path.Join(strings.TrimPrefix(safeBase, "~/"), path.Join(cleanParts...)), nil
+	if core.HasPrefix(safeBase, "~/") {
+		return core.Concat("~/", joinRemotePath(core.TrimPrefix(safeBase, "~/"), joinRemotePath(cleanParts...))), nil
 	}
-	return path.Join(append([]string{safeBase}, cleanParts...)...), nil
+	return joinRemotePath(append([]string{safeBase}, cleanParts...)...), nil
 }
 
 // EscapeShellArg wraps a string in single quotes for safe remote shell insertion.
 // Prefer exec.Command arguments over constructing shell strings where possible.
 // Usage: EscapeShellArg(...)
 func EscapeShellArg(arg string) string {
-	return "'" + strings.ReplaceAll(arg, "'", "'\\''") + "'"
+	return core.Concat("'", core.Replace(arg, "'", "'\\''"), "'")
 }
 
 // SecureSSHCommand creates an SSH exec.Cmd with strict host key checking and batch mode.
@@ -180,5 +189,37 @@ func MaskToken(token string) string {
 	if len(token) < 8 {
 		return "*****"
 	}
-	return token[:4] + "****" + token[len(token)-4:]
+	return core.Concat(token[:4], "****", token[len(token)-4:])
+}
+
+func localPathSeparator() string {
+	ds := core.Env("DS")
+	if ds == "" {
+		return "/"
+	}
+	return ds
+}
+
+func cleanLocalPath(p string) string {
+	return core.CleanPath(p, localPathSeparator())
+}
+
+func absoluteLocalPath(p string) string {
+	if core.PathIsAbs(p) {
+		return cleanLocalPath(p)
+	}
+
+	cwd := core.Env("DIR_CWD")
+	if cwd == "" {
+		cwd = "."
+	}
+	return cleanLocalPath(core.Join(localPathSeparator(), cwd, p))
+}
+
+func cleanRemotePath(p string) string {
+	return core.CleanPath(p, "/")
+}
+
+func joinRemotePath(parts ...string) string {
+	return cleanRemotePath(core.JoinPath(parts...))
 }

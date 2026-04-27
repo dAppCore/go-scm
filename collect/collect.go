@@ -1,123 +1,87 @@
 // SPDX-License-Identifier: EUPL-1.2
 
-// Package collect provides a data collection subsystem for gathering information
-// from multiple sources including GitHub, BitcoinTalk, CoinGecko, and academic
-// paper repositories. It supports rate limiting, incremental state tracking,
-// and event-driven progress reporting.
 package collect
 
 import (
+	// Note: context.Context is retained as the collector API cancellation contract.
 	"context"
-	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
-	fmt "dappco.re/go/core/scm/internal/ax/fmtx"
 
-	"dappco.re/go/core/io"
-	core "dappco.re/go/core/log"
+	core "dappco.re/go/core"
+	coreio "dappco.re/go/io"
 )
 
 // Collector is the interface all collection sources implement.
 type Collector interface {
-	// Name returns a human-readable name for this collector.
 	Name() string
-
-	// Collect gathers data from the source and writes it to the configured output.
 	Collect(ctx context.Context, cfg *Config) (*Result, error)
 }
 
 // Config holds shared configuration for all collectors.
 type Config struct {
-	// Output is the storage medium for writing collected data.
-	Output io.Medium
-
-	// OutputDir is the base directory for all collected data.
-	OutputDir string
-
-	// Limiter provides per-source rate limiting.
-	Limiter *RateLimiter
-
-	// State tracks collection progress for incremental runs.
-	State *State
-
-	// Dispatcher manages event dispatch for progress reporting.
+	Output     coreio.Medium
+	OutputDir  string
+	Limiter    *RateLimiter
+	State      *State
 	Dispatcher *Dispatcher
-
-	// Verbose enables detailed logging output.
-	Verbose bool
-
-	// DryRun simulates collection without writing files.
-	DryRun bool
+	Verbose    bool
+	DryRun     bool
 }
 
 // Result holds the output of a collection run.
 type Result struct {
-	// Source identifies which collector produced this result.
-	Source string
-
-	// Items is the number of items successfully collected.
-	Items int
-
-	// Errors is the number of errors encountered during collection.
-	Errors int
-
-	// Skipped is the number of items skipped (e.g. already collected).
+	Source  string
+	Items   int
+	Errors  int
 	Skipped int
-
-	// Files lists the paths of all files written.
-	Files []string
+	Files   []string
 }
 
 // NewConfig creates a Config with sensible defaults.
-// It initialises a MockMedium for output if none is provided,
-// sets up a rate limiter, state tracker, and event dispatcher.
-// Usage: NewConfig(...)
 func NewConfig(outputDir string) *Config {
-	m := io.NewMockMedium()
-	return &Config{
-		Output:     m,
-		OutputDir:  outputDir,
-		Limiter:    NewRateLimiter(),
-		State:      NewState(m, filepath.Join(outputDir, ".collect-state.json")),
-		Dispatcher: NewDispatcher(),
-	}
+	return NewConfigWithMedium(coreio.NewMockMedium(), outputDir)
 }
 
 // NewConfigWithMedium creates a Config using the specified storage medium.
-// Usage: NewConfigWithMedium(...)
-func NewConfigWithMedium(m io.Medium, outputDir string) *Config {
+func NewConfigWithMedium(m coreio.Medium, outputDir string) *Config {
+	if m == nil {
+		m = coreio.NewMockMedium()
+	}
+	if core.Trim(outputDir) == "" {
+		outputDir = "collect"
+	}
+	outputDir = core.CleanPath(outputDir, core.Env("DS"))
+	statePath := core.JoinPath(outputDir, ".collect-state.json")
 	return &Config{
 		Output:     m,
 		OutputDir:  outputDir,
 		Limiter:    NewRateLimiter(),
-		State:      NewState(m, filepath.Join(outputDir, ".collect-state.json")),
+		State:      NewState(m, statePath),
 		Dispatcher: NewDispatcher(),
 	}
 }
 
-// verboseProgress emits a progress event when verbose mode is enabled.
-// Usage: verboseProgress(cfg, "excavator", "loading state")
-func verboseProgress(cfg *Config, source, message string) {
-	if cfg == nil || !cfg.Verbose {
-		return
-	}
-	if cfg.Dispatcher != nil {
-		cfg.Dispatcher.EmitProgress(source, message, nil)
-		return
-	}
-	core.Warn(fmt.Sprintf("%s: %s", source, message))
-}
-
 // MergeResults combines multiple results into a single aggregated result.
-// Usage: MergeResults(...)
 func MergeResults(source string, results ...*Result) *Result {
 	merged := &Result{Source: source}
-	for _, r := range results {
-		if r == nil {
+	for _, result := range results {
+		if result == nil {
 			continue
 		}
-		merged.Items += r.Items
-		merged.Errors += r.Errors
-		merged.Skipped += r.Skipped
-		merged.Files = append(merged.Files, r.Files...)
+		merged.Items += result.Items
+		merged.Errors += result.Errors
+		merged.Skipped += result.Skipped
+		merged.Files = append(merged.Files, result.Files...)
 	}
 	return merged
+}
+
+func writeResultFile(cfg *Config, source, name, content string) (string, error) {
+	if cfg == nil || cfg.Output == nil {
+		return "", core.E("collect.writeResultFile", "output medium is required", nil)
+	}
+	path := core.JoinPath(cfg.OutputDir, source, name)
+	if err := cfg.Output.Write(path, content); err != nil {
+		return "", err
+	}
+	return path, nil
 }

@@ -3,125 +3,95 @@
 package plugin
 
 import (
-	"cmp"
-	filepath "dappco.re/go/core/scm/internal/ax/filepathx"
-	json "dappco.re/go/core/scm/internal/ax/jsonx"
-	"slices"
+	// Note: AX-6 — Registry listing must be deterministic across map iteration (no core sort primitive).
+	"sort"
 
-	"dappco.re/go/core/io"
-	coreerr "dappco.re/go/core/log"
+	core "dappco.re/go/core"
+	coreio "dappco.re/go/io"
+	"dappco.re/go/scm/internal/ax/jsonx"
 )
 
-const registryFilename = "registry.json"
-
-// Registry manages installed plugins.
-// Plugin metadata is stored in a registry.json file under the base path.
 type Registry struct {
-	medium   io.Medium
-	basePath string // e.g., ~/.core/plugins/
+	medium   coreio.Medium
+	basePath string
 	plugins  map[string]*PluginConfig
 }
 
-// NewRegistry creates a new plugin registry.
-// Usage: NewRegistry(...)
-func NewRegistry(m io.Medium, basePath string) *Registry {
-	return &Registry{
-		medium:   m,
-		basePath: basePath,
-		plugins:  make(map[string]*PluginConfig),
-	}
+func NewRegistry(m coreio.Medium, basePath string) *Registry {
+	return &Registry{medium: m, basePath: basePath, plugins: map[string]*PluginConfig{}}
 }
 
-// List returns all installed plugins sorted by name.
-// Usage: List(...)
-func (r *Registry) List() []*PluginConfig {
-	result := make([]*PluginConfig, 0, len(r.plugins))
-	for _, cfg := range r.plugins {
-		result = append(result, cfg)
-	}
-	slices.SortFunc(result, func(a, b *PluginConfig) int {
-		return cmp.Compare(a.Name, b.Name)
-	})
-	return result
-}
-
-// Get returns a plugin by name.
-// The second return value indicates whether the plugin was found.
-// Usage: Get(...)
-func (r *Registry) Get(name string) (*PluginConfig, bool) {
-	cfg, ok := r.plugins[name]
-	return cfg, ok
-}
-
-// Add registers a plugin in the registry.
-// Usage: Add(...)
 func (r *Registry) Add(cfg *PluginConfig) error {
-	if cfg.Name == "" {
-		return coreerr.E("plugin.Registry.Add", "plugin name is required", nil)
+	if r == nil || cfg == nil {
+		return core.E("plugin.Registry.Add", "config is required", nil)
+	}
+	if r.plugins == nil {
+		r.plugins = map[string]*PluginConfig{}
 	}
 	r.plugins[cfg.Name] = cfg
 	return nil
 }
 
-// Remove unregisters a plugin from the registry.
-// Usage: Remove(...)
+func (r *Registry) Get(name string) (*PluginConfig, bool) {
+	if r == nil {
+		return nil, false
+	}
+	cfg, ok := r.plugins[name]
+	return cfg, ok
+}
+
+func (r *Registry) List() []*PluginConfig {
+	if r == nil {
+		return nil
+	}
+	names := make([]string, 0, len(r.plugins))
+	for name := range r.plugins {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	out := make([]*PluginConfig, 0, len(names))
+	for _, name := range names {
+		out = append(out, r.plugins[name])
+	}
+	return out
+}
+
+func (r *Registry) Load() error {
+	if r == nil || r.medium == nil {
+		return nil
+	}
+	raw, err := r.medium.Read(r.basePath + "/registry.json")
+	if err != nil {
+		return nil
+	}
+	var data struct {
+		Plugins map[string]*PluginConfig `json:"plugins"`
+	}
+	if err := jsonx.Unmarshal([]byte(raw), &data); err != nil {
+		return err
+	}
+	r.plugins = data.Plugins
+	if r.plugins == nil {
+		r.plugins = map[string]*PluginConfig{}
+	}
+	return nil
+}
+
 func (r *Registry) Remove(name string) error {
-	if _, ok := r.plugins[name]; !ok {
-		return coreerr.E("plugin.Registry.Remove", "plugin not found: "+name, nil)
+	if r == nil {
+		return core.E("plugin.Registry.Remove", "registry is required", nil)
 	}
 	delete(r.plugins, name)
 	return nil
 }
 
-// registryPath returns the full path to the registry file.
-func (r *Registry) registryPath() string {
-	return filepath.Join(r.basePath, registryFilename)
-}
-
-// Load reads the plugin registry from disk.
-// If the registry file does not exist, the registry starts empty.
-// Usage: Load(...)
-func (r *Registry) Load() error {
-	path := r.registryPath()
-
-	if !r.medium.IsFile(path) {
-		// No registry file yet; start with empty registry
-		r.plugins = make(map[string]*PluginConfig)
+func (r *Registry) Save() error {
+	if r == nil || r.medium == nil {
 		return nil
 	}
-
-	content, err := r.medium.Read(path)
+	raw, err := jsonx.MarshalIndent(map[string]any{"plugins": r.plugins}, "", "  ")
 	if err != nil {
-		return coreerr.E("plugin.Registry.Load", "failed to read registry", err)
+		return err
 	}
-
-	var plugins map[string]*PluginConfig
-	if err := json.Unmarshal([]byte(content), &plugins); err != nil {
-		return coreerr.E("plugin.Registry.Load", "failed to parse registry", err)
-	}
-
-	if plugins == nil {
-		plugins = make(map[string]*PluginConfig)
-	}
-	r.plugins = plugins
-	return nil
-}
-
-// Save writes the plugin registry to disk.
-// Usage: Save(...)
-func (r *Registry) Save() error {
-	if err := r.medium.EnsureDir(r.basePath); err != nil {
-		return coreerr.E("plugin.Registry.Save", "failed to create plugin directory", err)
-	}
-
-	data, err := json.MarshalIndent(r.plugins, "", "  ")
-	if err != nil {
-		return coreerr.E("plugin.Registry.Save", "failed to marshal registry", err)
-	}
-
-	if err := r.medium.Write(r.registryPath(), string(data)); err != nil {
-		return coreerr.E("plugin.Registry.Save", "failed to write registry", err)
-	}
-
-	return nil
+	return r.medium.Write(r.basePath+"/registry.json", string(raw))
 }

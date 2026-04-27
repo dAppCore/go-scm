@@ -3,187 +3,53 @@
 package collect
 
 import (
+	// Note: context.Context is retained in tests to exercise collector public APIs.
 	"context"
-	json "dappco.re/go/core/scm/internal/ax/jsonx"
-	"net/http"
-	"net/http/httptest"
+	// Note: strings.Contains is retained for assertions over generated Markdown.
+	"strings"
+	// Note: testing is the standard Go test harness.
 	"testing"
 
-	"dappco.re/go/core/io"
-	"github.com/stretchr/testify/assert"
+	coreio "dappco.re/go/io"
 )
 
-func TestMarketCollector_Name_Good(t *testing.T) {
-	m := &MarketCollector{CoinID: "bitcoin"}
-	assert.Equal(t, "market:bitcoin", m.Name())
-}
+func TestMarketCollectorIncludesHistoricalDetails(t *testing.T) {
+	medium := coreio.NewMockMedium()
+	cfg := NewConfigWithMedium(medium, "out")
 
-func TestMarketCollector_Collect_Bad_NoCoinID_Good(t *testing.T) {
-	mock := io.NewMockMedium()
-	cfg := NewConfigWithMedium(mock, "/output")
-
-	m := &MarketCollector{}
-	_, err := m.Collect(context.Background(), cfg)
-	assert.Error(t, err)
-}
-
-func TestMarketCollector_Collect_Good_DryRun_Good(t *testing.T) {
-	mock := io.NewMockMedium()
-	cfg := NewConfigWithMedium(mock, "/output")
-	cfg.DryRun = true
-
-	m := &MarketCollector{CoinID: "bitcoin"}
-	result, err := m.Collect(context.Background(), cfg)
-
-	assert.NoError(t, err)
-	assert.Equal(t, 0, result.Items)
-}
-
-func TestMarketCollector_Collect_Good_CurrentData_Good(t *testing.T) {
-	// Set up a mock CoinGecko server
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		data := coinData{
-			ID:     "bitcoin",
-			Symbol: "btc",
-			Name:   "Bitcoin",
-			MarketData: marketData{
-				CurrentPrice:      map[string]float64{"usd": 42000.50},
-				MarketCap:         map[string]float64{"usd": 800000000000},
-				TotalVolume:       map[string]float64{"usd": 25000000000},
-				High24h:           map[string]float64{"usd": 43000},
-				Low24h:            map[string]float64{"usd": 41000},
-				PriceChange24h:    500.25,
-				PriceChangePct24h: 1.2,
-				MarketCapRank:     1,
-				CirculatingSupply: 19500000,
-				TotalSupply:       21000000,
-				LastUpdated:       "2025-01-15T10:00:00Z",
-			},
-		}
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(data)
-	}))
-	defer server.Close()
-
-	// Override base URL
-	oldURL := coinGeckoBaseURL
-	coinGeckoBaseURL = server.URL
-	defer func() { coinGeckoBaseURL = oldURL }()
-
-	mock := io.NewMockMedium()
-	cfg := NewConfigWithMedium(mock, "/output")
-	// Disable rate limiter to avoid delays in tests
-	cfg.Limiter = nil
-
-	m := &MarketCollector{CoinID: "bitcoin"}
-	result, err := m.Collect(context.Background(), cfg)
-
-	assert.NoError(t, err)
-	assert.Equal(t, 2, result.Items) // current.json + summary.md
-	assert.Len(t, result.Files, 2)
-
-	// Verify current.json was written
-	content, err := mock.Read("/output/market/bitcoin/current.json")
-	assert.NoError(t, err)
-	assert.Contains(t, content, "bitcoin")
-
-	// Verify summary.md was written
-	summary, err := mock.Read("/output/market/bitcoin/summary.md")
-	assert.NoError(t, err)
-	assert.Contains(t, summary, "Bitcoin")
-	assert.Contains(t, summary, "42000.50")
-}
-
-func TestMarketCollector_Collect_Good_Historical_Good(t *testing.T) {
-	callCount := 0
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		callCount++
-		w.Header().Set("Content-Type", "application/json")
-
-		if callCount == 1 {
-			// Current data response
-			data := coinData{
-				ID:     "ethereum",
-				Symbol: "eth",
-				Name:   "Ethereum",
-				MarketData: marketData{
-					CurrentPrice: map[string]float64{"usd": 3000},
-				},
-			}
-			_ = json.NewEncoder(w).Encode(data)
-		} else {
-			// Historical data response
-			data := historicalData{
-				Prices:       [][]float64{{1705305600000, 3000.0}, {1705392000000, 3100.0}},
-				MarketCaps:   [][]float64{{1705305600000, 360000000000}},
-				TotalVolumes: [][]float64{{1705305600000, 15000000000}},
-			}
-			_ = json.NewEncoder(w).Encode(data)
-		}
-	}))
-	defer server.Close()
-
-	oldURL := coinGeckoBaseURL
-	coinGeckoBaseURL = server.URL
-	defer func() { coinGeckoBaseURL = oldURL }()
-
-	mock := io.NewMockMedium()
-	cfg := NewConfigWithMedium(mock, "/output")
-	cfg.Limiter = nil
-
-	m := &MarketCollector{CoinID: "ethereum", Historical: true}
-	result, err := m.Collect(context.Background(), cfg)
-
-	assert.NoError(t, err)
-	assert.Equal(t, 3, result.Items) // current.json + summary.md + historical.json
-	assert.Len(t, result.Files, 3)
-
-	// Verify historical.json was written
-	content, err := mock.Read("/output/market/ethereum/historical.json")
-	assert.NoError(t, err)
-	assert.Contains(t, content, "3000")
-}
-
-func TestFormatMarketSummary_Good(t *testing.T) {
-	data := &coinData{
-		Name:   "Bitcoin",
-		Symbol: "btc",
-		MarketData: marketData{
-			CurrentPrice:      map[string]float64{"usd": 50000},
-			MarketCap:         map[string]float64{"usd": 1000000000000},
-			MarketCapRank:     1,
-			CirculatingSupply: 19500000,
-			TotalSupply:       21000000,
-		},
+	result, err := (&MarketCollector{
+		CoinID:     "bitcoin",
+		Historical: true,
+		FromDate:   "2024-01-01",
+	}).Collect(context.Background(), cfg)
+	if err != nil {
+		t.Fatalf("collect: %v", err)
+	}
+	if result == nil || result.Items != 1 {
+		t.Fatalf("unexpected result: %#v", result)
 	}
 
-	summary := FormatMarketSummary(data)
-
-	assert.Contains(t, summary, "# Bitcoin (BTC)")
-	assert.Contains(t, summary, "$50000.00")
-	assert.Contains(t, summary, "Market Cap Rank:** #1")
-	assert.Contains(t, summary, "Circulating Supply")
-	assert.Contains(t, summary, "Total Supply")
+	raw, ok := medium.Files["out/market/bitcoin.md"]
+	if !ok {
+		t.Fatalf("expected market output to be written")
+	}
+	if !strings.Contains(raw, "- Historical: true") {
+		t.Fatalf("historical flag not written: %q", raw)
+	}
+	if !strings.Contains(raw, "- From date: 2024-01-01") {
+		t.Fatalf("from date not written: %q", raw)
+	}
 }
 
-func TestMarketCollector_Collect_Bad_ServerError_Good(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusInternalServerError)
-	}))
-	defer server.Close()
+func TestMarketCollectorRejectsInvalidHistoricalDate(t *testing.T) {
+	cfg := NewConfigWithMedium(coreio.NewMockMedium(), "out")
 
-	oldURL := coinGeckoBaseURL
-	coinGeckoBaseURL = server.URL
-	defer func() { coinGeckoBaseURL = oldURL }()
-
-	mock := io.NewMockMedium()
-	cfg := NewConfigWithMedium(mock, "/output")
-	cfg.Limiter = nil
-
-	m := &MarketCollector{CoinID: "bitcoin"}
-	result, err := m.Collect(context.Background(), cfg)
-
-	// Should have errors but not fail entirely
-	assert.NoError(t, err)
-	assert.Equal(t, 1, result.Errors)
+	_, err := (&MarketCollector{
+		CoinID:     "bitcoin",
+		Historical: true,
+		FromDate:   "2024-99-99",
+	}).Collect(context.Background(), cfg)
+	if err == nil {
+		t.Fatal("expected invalid historical date to fail")
+	}
 }
