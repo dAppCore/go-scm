@@ -3,10 +3,13 @@
 package manifest
 
 import (
-	"crypto/ed25519" // intrinsic
+	"crypto/ed25519"
 	"encoding/base64"
 	"encoding/json"
 	"testing"
+
+	core "dappco.re/go"
+	coreio "dappco.re/go/io"
 )
 
 func TestManifest_Compile_Good(t *testing.T) {
@@ -139,4 +142,361 @@ func TestManifest_Verify_Bad_TamperedPayload(t *testing.T) {
 	if err := Verify(m, []byte(`{"code":"go-io","version":"0.3.1"}`)); err == nil {
 		t.Fatal("expected tampered payload verification to fail")
 	}
+}
+
+func ax7Manifest() *Manifest {
+	return &Manifest{Code: "go-scm", Name: "Core SCM", Version: "0.9.0"}
+}
+
+func TestManifestV090_Parse_Good(t *core.T) {
+	m, err := Parse([]byte("code: go-scm\nname: Core SCM\nversion: 0.9.0\n"))
+	core.AssertNoError(t, err)
+	core.AssertEqual(t, "go-scm", m.Code)
+}
+
+func TestManifestV090_Parse_Bad(t *core.T) {
+	_, err := Parse([]byte("code: ["))
+	core.AssertError(
+		t, err,
+	)
+}
+
+func TestManifestV090_Parse_Ugly(t *core.T) {
+	m, err := Parse(nil)
+	core.AssertNoError(t, err)
+	core.AssertEqual(t, "", m.Code)
+}
+
+func TestManifestV090_Manifest_IsProvider_Good(t *core.T) {
+	m := &Manifest{Namespace: "scm", Binary: "scm-provider"}
+	core.AssertTrue(
+		t, m.IsProvider(),
+	)
+}
+
+func TestManifestV090_Manifest_IsProvider_Bad(t *core.T) {
+	m := &Manifest{Namespace: "scm"}
+	core.AssertFalse(
+		t, m.IsProvider(),
+	)
+}
+
+func TestManifestV090_Manifest_IsProvider_Ugly(t *core.T) {
+	var m *Manifest
+	core.AssertFalse(
+		t, m.IsProvider(),
+	)
+}
+
+func TestManifestV090_Manifest_SlotNames_Good(t *core.T) {
+	m := &Manifest{Slots: map[string]string{"b": "write", "a": "read"}}
+	got := m.SlotNames()
+	core.AssertEqual(t, []string{"read", "write"}, got)
+}
+
+func TestManifestV090_Manifest_SlotNames_Bad(t *core.T) {
+	m := &Manifest{}
+	got := m.SlotNames()
+	core.AssertNil(t, got)
+}
+
+func TestManifestV090_Manifest_SlotNames_Ugly(t *core.T) {
+	m := &Manifest{Slots: map[string]string{"a": "read", "b": " read ", "c": ""}}
+	got := m.SlotNames()
+	core.AssertEqual(t, []string{"read"}, got)
+}
+
+func TestManifestV090_Manifest_DefaultDaemon_Good(t *core.T) {
+	m := &Manifest{Daemons: map[string]DaemonSpec{"api": {Binary: "scm-api"}}}
+	name, spec, ok := m.DefaultDaemon()
+	core.AssertTrue(t, ok)
+	core.AssertEqual(t, "api", name)
+	core.AssertEqual(t, "scm-api", spec.Binary)
+}
+
+func TestManifestV090_Manifest_DefaultDaemon_Bad(t *core.T) {
+	m := &Manifest{}
+	name, _, ok := m.DefaultDaemon()
+	core.AssertFalse(t, ok)
+	core.AssertEqual(t, "", name)
+}
+
+func TestManifestV090_Manifest_DefaultDaemon_Ugly(t *core.T) {
+	m := &Manifest{Daemons: map[string]DaemonSpec{
+		"a": {Default: true},
+		"b": {Default: true},
+	}}
+	name, _, ok := m.DefaultDaemon()
+	core.AssertFalse(t, ok)
+	core.AssertEqual(t, "", name)
+}
+
+func TestManifestV090_Compile_Good(t *core.T) {
+	raw, err := Compile(ax7Manifest(), BuildInfo{SHA256: "abc123"})
+	core.AssertNoError(t, err)
+	core.AssertContains(t, string(raw), "abc123")
+}
+
+func TestManifestV090_Compile_Bad(t *core.T) {
+	_, err := Compile(&Manifest{Name: "Core SCM", Version: "0.9.0"}, BuildInfo{})
+	core.AssertError(
+		t, err,
+	)
+}
+
+func TestManifestV090_Compile_Ugly(t *core.T) {
+	_, err := Compile(nil, BuildInfo{})
+	core.AssertError(
+		t, err,
+	)
+}
+
+func TestManifestV090_ParseCoreJSON_Good(t *core.T) {
+	raw, err := Compile(ax7Manifest(), BuildInfo{Targets: []string{"linux/amd64"}})
+	core.RequireNoError(t, err)
+	m, err := ParseCoreJSON(raw)
+	core.AssertNoError(t, err)
+	core.AssertEqual(t, "go-scm", m.Code)
+}
+
+func TestManifestV090_ParseCoreJSON_Bad(t *core.T) {
+	_, err := ParseCoreJSON([]byte(`{"code":`))
+	core.AssertError(t, err)
+}
+
+func TestManifestV090_ParseCoreJSON_Ugly(t *core.T) {
+	_, err := ParseCoreJSON([]byte(`{}`))
+	core.AssertError(
+		t, err,
+	)
+}
+
+func TestManifestV090_CompileWithOptions_Good(t *core.T) {
+	cm, err := CompileWithOptions(ax7Manifest(), CompileOptions{Commit: "abc123", Tag: "v0.9.0"})
+	core.AssertNoError(t, err)
+	core.AssertEqual(t, "abc123", cm.Commit)
+	core.AssertEqual(t, "v0.9.0", cm.Tag)
+}
+
+func TestManifestV090_CompileWithOptions_Bad(t *core.T) {
+	_, err := CompileWithOptions(&Manifest{Code: "go-scm"}, CompileOptions{})
+	core.AssertError(
+		t, err,
+	)
+}
+
+func TestManifestV090_CompileWithOptions_Ugly(t *core.T) {
+	_, priv, err := ed25519.GenerateKey(nil)
+	core.RequireNoError(t, err)
+	cm, err := CompileWithOptions(ax7Manifest(), CompileOptions{SignKey: priv})
+	core.AssertNoError(t, err)
+	core.AssertTrue(t, cm.Sign != "")
+}
+
+func TestManifestV090_MarshalJSON_Good(t *core.T) {
+	cm, err := CompileWithOptions(ax7Manifest(), CompileOptions{Commit: "abc123"})
+	core.RequireNoError(t, err)
+	raw, err := MarshalJSON(cm)
+	core.AssertNoError(t, err)
+	core.AssertContains(t, string(raw), "abc123")
+}
+
+func TestManifestV090_MarshalJSON_Bad(t *core.T) {
+	_, err := MarshalJSON(nil)
+	core.AssertError(
+		t, err,
+	)
+}
+
+func TestManifestV090_MarshalJSON_Ugly(t *core.T) {
+	raw, err := MarshalJSON(&CompiledManifest{})
+	core.AssertNoError(t, err)
+	core.AssertContains(t, string(raw), "code")
+}
+
+func TestManifestV090_ParseCompiled_Good(t *core.T) {
+	cm, err := CompileWithOptions(ax7Manifest(), CompileOptions{Commit: "abc123"})
+	core.RequireNoError(t, err)
+	raw, err := MarshalJSON(cm)
+	core.RequireNoError(t, err)
+	got, err := ParseCompiled(raw)
+	core.AssertNoError(t, err)
+	core.AssertEqual(t, "abc123", got.Commit)
+}
+
+func TestManifestV090_ParseCompiled_Bad(t *core.T) {
+	_, err := ParseCompiled([]byte(`{"code":`))
+	core.AssertError(t, err)
+}
+
+func TestManifestV090_ParseCompiled_Ugly(t *core.T) {
+	got, err := ParseCompiled([]byte(`{}`))
+	core.AssertNoError(t, err)
+	core.AssertEqual(t, "", got.Code)
+}
+
+func TestManifestV090_LoadCompiled_Good(t *core.T) {
+	medium := coreio.NewMemoryMedium()
+	cm, err := CompileWithOptions(ax7Manifest(), CompileOptions{Commit: "abc123"})
+	core.RequireNoError(t, err)
+	core.RequireNoError(t, WriteCompiled(medium, ".", cm))
+	got, err := LoadCompiled(medium, ".")
+	core.AssertNoError(t, err)
+	core.AssertEqual(t, "abc123", got.Commit)
+}
+
+func TestManifestV090_LoadCompiled_Bad(t *core.T) {
+	_, err := LoadCompiled(nil, ".")
+	core.AssertError(
+		t, err,
+	)
+}
+
+func TestManifestV090_LoadCompiled_Ugly(t *core.T) {
+	medium := coreio.NewMemoryMedium()
+	_, err := LoadCompiled(medium, "missing")
+	core.AssertError(t, err)
+}
+
+func TestManifestV090_WriteCompiled_Good(t *core.T) {
+	medium := coreio.NewMemoryMedium()
+	cm, err := CompileWithOptions(ax7Manifest(), CompileOptions{})
+	core.RequireNoError(t, err)
+	err = WriteCompiled(medium, "pkg", cm)
+	core.AssertNoError(t, err)
+	raw, readErr := medium.Read("pkg/core.json")
+	core.AssertNoError(t, readErr)
+	core.AssertContains(t, raw, "go-scm")
+}
+
+func TestManifestV090_WriteCompiled_Bad(t *core.T) {
+	err := WriteCompiled(nil, ".", &CompiledManifest{})
+	core.AssertError(
+		t, err,
+	)
+}
+
+func TestManifestV090_WriteCompiled_Ugly(t *core.T) {
+	medium := coreio.NewMemoryMedium()
+	err := WriteCompiled(medium, ".", nil)
+	core.AssertError(t, err)
+}
+
+func TestManifestV090_Load_Good(t *core.T) {
+	medium := coreio.NewMemoryMedium()
+	core.RequireNoError(t, medium.Write(".core/manifest.yaml", "code: go-scm\nname: Core SCM\nversion: 0.9.0\n"))
+	m, err := Load(medium, ".")
+	core.AssertNoError(t, err)
+	core.AssertEqual(t, "go-scm", m.Code)
+}
+
+func TestManifestV090_Load_Bad(t *core.T) {
+	_, err := Load(nil, ".")
+	core.AssertError(
+		t, err,
+	)
+}
+
+func TestManifestV090_Load_Ugly(t *core.T) {
+	medium := coreio.NewMemoryMedium()
+	_, err := Load(medium, "missing")
+	core.AssertError(t, err)
+}
+
+func TestManifestV090_LoadVerified_Good(t *core.T) {
+	pub, priv, err := ed25519.GenerateKey(nil)
+	core.RequireNoError(t, err)
+	m := ax7Manifest()
+	payload, err := canonicalManifestBytes(m)
+	core.RequireNoError(t, err)
+	m.SignKey = base64.StdEncoding.EncodeToString(pub)
+	core.RequireNoError(t, Sign(m, payload, priv))
+	raw, err := MarshalYAML(m)
+	core.RequireNoError(t, err)
+	medium := coreio.NewMemoryMedium()
+	core.RequireNoError(t, medium.Write(".core/manifest.yaml", string(raw)))
+	got, err := LoadVerified(medium, ".", pub)
+	core.AssertNoError(t, err)
+	core.AssertEqual(t, "go-scm", got.Code)
+}
+
+func TestManifestV090_LoadVerified_Bad(t *core.T) {
+	medium := coreio.NewMemoryMedium()
+	core.RequireNoError(t, medium.Write(".core/manifest.yaml", "code: go-scm\nname: Core SCM\nversion: 0.9.0\n"))
+	_, err := LoadVerified(medium, ".", nil)
+	core.AssertError(t, err)
+}
+
+func TestManifestV090_LoadVerified_Ugly(t *core.T) {
+	_, err := LoadVerified(nil, ".", nil)
+	core.AssertError(
+		t, err,
+	)
+}
+
+func TestManifestV090_MarshalYAML_Good(t *core.T) {
+	raw, err := MarshalYAML(ax7Manifest())
+	core.AssertNoError(t, err)
+	core.AssertContains(t, string(raw), "go-scm")
+}
+
+func TestManifestV090_MarshalYAML_Bad(t *core.T) {
+	_, err := MarshalYAML(nil)
+	core.AssertError(
+		t, err,
+	)
+}
+
+func TestManifestV090_MarshalYAML_Ugly(t *core.T) {
+	raw, err := MarshalYAML(&Manifest{Slots: map[string]string{"default": "read"}})
+	core.AssertNoError(t, err)
+	core.AssertContains(t, string(raw), "slots")
+}
+
+func TestManifestV090_Sign_Good(t *core.T) {
+	_, priv, err := ed25519.GenerateKey(nil)
+	core.RequireNoError(t, err)
+	m := ax7Manifest()
+	err = Sign(m, []byte("payload"), priv)
+	core.AssertNoError(t, err)
+	core.AssertTrue(t, m.Sign != "")
+}
+
+func TestManifestV090_Sign_Bad(t *core.T) {
+	err := Sign(nil, []byte("payload"), nil)
+	core.AssertError(
+		t, err,
+	)
+}
+
+func TestManifestV090_Sign_Ugly(t *core.T) {
+	m := ax7Manifest()
+	err := Sign(m, []byte("payload"), ed25519.PrivateKey([]byte("short")))
+	core.AssertError(t, err)
+}
+
+func TestManifestV090_Verify_Good(t *core.T) {
+	pub, priv, err := ed25519.GenerateKey(nil)
+	core.RequireNoError(t, err)
+	m := ax7Manifest()
+	m.SignKey = base64.StdEncoding.EncodeToString(pub)
+	payload := []byte("payload")
+	core.RequireNoError(t, Sign(m, payload, priv))
+	err = Verify(m, payload)
+	core.AssertNoError(t, err)
+}
+
+func TestManifestV090_Verify_Bad(t *core.T) {
+	err := Verify(nil, []byte("payload"))
+	core.AssertError(
+		t, err,
+	)
+}
+
+func TestManifestV090_Verify_Ugly(t *core.T) {
+	m := ax7Manifest()
+	m.SignKey = "not-base64"
+	m.Sign = "not-base64"
+	err := Verify(m, []byte("payload"))
+	core.AssertError(t, err)
 }

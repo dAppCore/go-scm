@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	coreio "dappco.re/go/io"
 )
 
@@ -93,4 +93,85 @@ func TestScm_WithMedium_Ugly(t *testing.T) {
 	if registry.Medium() != medium {
 		t.Fatalf("expected nil medium option not to clear an existing medium")
 	}
+}
+
+func TestScm_NewRegistry_Good(t *core.T) {
+	medium := coreio.NewMemoryMedium()
+	registry := NewRegistry(WithMedium(medium))
+	core.AssertNotNil(t, registry)
+	core.AssertEqual(t, medium, registry.Medium())
+}
+
+func TestScm_NewRegistry_Bad(t *core.T) {
+	registry := NewRegistry(nil)
+	core.AssertNotNil(t, registry)
+	core.AssertNil(t, registry.Medium())
+}
+
+func TestScm_NewRegistry_Ugly(t *core.T) {
+	medium := coreio.NewMemoryMedium()
+	registry := NewRegistry(WithMedium(nil), WithMedium(medium))
+	core.AssertNotNil(t, registry)
+	core.AssertEqual(t, medium, registry.Medium())
+}
+
+func TestScm_Registry_Medium_Good(t *core.T) {
+	medium := coreio.NewMemoryMedium()
+	registry := NewRegistry(WithMedium(medium))
+	got := registry.Medium()
+	core.AssertEqual(t, medium, got)
+}
+
+func TestScm_Registry_Medium_Bad(t *core.T) {
+	registry := NewRegistry()
+	got := registry.Medium()
+	core.AssertNil(t, got)
+}
+
+func TestScm_Registry_Medium_Ugly(t *core.T) {
+	var registry *Registry
+	got := registry.Medium()
+	core.AssertNil(t, got)
+}
+
+func TestScm_Service_OnStartup_Good(t *core.T) {
+	service := &Service{}
+	result := service.OnStartup(context.Background())
+	core.AssertTrue(t, result.OK)
+}
+
+func TestScm_Service_OnStartup_Bad(t *core.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	service := &Service{}
+	result := service.OnStartup(ctx)
+	core.AssertFalse(t, result.OK)
+	core.AssertErrorIs(t, result.Value.(error), context.Canceled)
+}
+
+func TestScm_Service_OnStartup_Ugly(t *core.T) {
+	var service *Service
+	result := service.OnStartup(context.Background())
+	core.AssertTrue(t, result.OK)
+}
+
+func TestScm_Service_OnShutdown_Good(t *core.T) {
+	service := &Service{}
+	result := service.OnShutdown(context.Background())
+	core.AssertTrue(t, result.OK)
+}
+
+func TestScm_Service_OnShutdown_Bad(t *core.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	service := &Service{}
+	result := service.OnShutdown(ctx)
+	core.AssertFalse(t, result.OK)
+	core.AssertErrorIs(t, result.Value.(error), context.Canceled)
+}
+
+func TestScm_Service_OnShutdown_Ugly(t *core.T) {
+	var service *Service
+	result := service.OnShutdown(context.Background())
+	core.AssertTrue(t, result.OK)
 }

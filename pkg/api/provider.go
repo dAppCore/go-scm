@@ -6,9 +6,9 @@ import (
 	// Note: AX-6 — Provider routes expose HTTP status codes at the Gin boundary.
 	"net/http"
 
+	core "dappco.re/go"
 	"dappco.re/go/api"
 	coreprovider "dappco.re/go/api/pkg/provider"
-	core "dappco.re/go/core"
 	coreio "dappco.re/go/io"
 	"dappco.re/go/scm/marketplace"
 	"dappco.re/go/scm/repos"

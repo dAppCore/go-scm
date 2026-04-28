@@ -12,7 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"dappco.re/go/scm/manifest"
 )
 
@@ -24,7 +24,7 @@ const usage = "usage: scm verify [--root=DIR] [--in=core.json] [--manifest=FILE]
 // against the canonical package manifest payload.
 func Register(app *core.Core) core.Result {
 	if app == nil {
-		return core.Result{Value: core.E("cmd.verify.Register", "core app is required", nil), OK: false}
+		return core.Fail(core.E("cmd.verify.Register", "core app is required", nil))
 	}
 	return app.Command("verify", core.Command{Action: run})
 }
@@ -32,7 +32,7 @@ func Register(app *core.Core) core.Result {
 func run(opts core.Options) core.Result {
 	if wantsHelp(opts) {
 		core.Print(nil, usage)
-		return core.Result{OK: true}
+		return core.Ok(nil)
 	}
 
 	root := option(opts, "root", ".")
@@ -59,7 +59,7 @@ func run(opts core.Options) core.Result {
 	}
 
 	core.Print(nil, "verified %s", source)
-	return core.Result{OK: true}
+	return core.Ok(nil)
 }
 
 func loadManifest(opts core.Options, defaultInput string) (*manifest.Manifest, string, error) {
@@ -133,5 +133,5 @@ func wantsHelp(opts core.Options) bool {
 }
 
 func failed(err error) core.Result {
-	return core.Result{Value: err, OK: false}
+	return core.Fail(err)
 }

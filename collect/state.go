@@ -12,7 +12,7 @@ import (
 	// Note: time.Time is retained for state timestamps serialized to disk.
 	"time"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	coreio "dappco.re/go/io"
 )
 

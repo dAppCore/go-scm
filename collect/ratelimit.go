@@ -14,7 +14,7 @@ import (
 	// Note: time is retained for limiter delay calculations and timers.
 	"time"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 )
 
 // RateLimiter tracks per-source rate limiting to avoid overwhelming APIs.

@@ -176,12 +176,16 @@ func TestResolvePathWithinRoot_Good_Subdirectory_Good(t *testing.T) {
 
 func TestResolvePathWithinRoot_Bad_EscapesRoot(t *testing.T) {
 	_, _, err := ResolvePathWithinRoot("/var/lib", "../core")
-	checkError(t, err)
+	checkError(
+		t, err,
+	)
 }
 
 func TestResolvePathWithinRoot_Bad_EmptyRoot(t *testing.T) {
 	_, _, err := ResolvePathWithinRoot("", "core")
-	checkError(t, err)
+	checkError(
+		t, err,
+	)
 }
 
 func TestSecureSSHCommand_Good(t *testing.T) {

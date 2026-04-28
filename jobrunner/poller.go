@@ -11,7 +11,7 @@ import (
 	"time"
 
 	// Note: AX-6 — Core supplies structured errors and formatting primitives.
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 )
 
 // Poller discovers signals from sources and dispatches them to handlers.

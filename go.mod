@@ -1,13 +1,12 @@
 module dappco.re/go/scm
 
-go 1.26.0
+go 1.26.2
 
 require (
 	code.gitea.io/sdk/gitea v0.24.1
 	codeberg.org/forgejo/go-sdk v0.0.0
-	dappco.re/go/config v0.8.0-alpha.1
-	dappco.re/go/core v0.8.0-alpha.1
 	dappco.re/go/api v0.8.0-alpha.1
+	dappco.re/go/config v0.8.0-alpha.1
 	dappco.re/go/io v0.8.0-alpha.1
 	dappco.re/go/ws v0.8.0-alpha.1
 	github.com/gin-gonic/gin v1.12.0
@@ -16,6 +15,18 @@ require (
 )
 
 require (
+	dappco.re/go/inference v0.8.0-alpha.1 // indirect
+	github.com/fsnotify/fsnotify v1.9.0 // indirect
+	github.com/sagikazarmark/locafero v0.12.0 // indirect
+	github.com/spf13/afero v1.15.0 // indirect
+	github.com/spf13/cast v1.10.0 // indirect
+	github.com/spf13/pflag v1.0.10 // indirect
+	github.com/spf13/viper v1.21.0 // indirect
+	github.com/subosito/gotenv v1.6.0 // indirect
+)
+
+require (
+	dappco.re/go v0.9.0
 	dappco.re/go/log v0.8.0-alpha.1 // indirect
 	github.com/42wim/httpsig v1.2.4 // indirect
 	github.com/99designs/gqlgen v0.17.88 // indirect
@@ -33,7 +44,6 @@ require (
 	github.com/coreos/go-oidc/v3 v3.17.0 // indirect
 	github.com/davidmz/go-pageant v1.0.2 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
-	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.13 // indirect
 	github.com/gin-contrib/authz v1.0.6 // indirect
 	github.com/gin-contrib/cors v1.7.6 // indirect
@@ -81,12 +91,10 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
-	github.com/ncruces/go-strftime v1.0.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
 	github.com/quic-go/quic-go v0.59.0 // indirect
 	github.com/redis/go-redis/v9 v9.18.0 // indirect
-	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/sosodev/duration v1.4.0 // indirect
 	github.com/swaggo/files v1.0.1 // indirect
 	github.com/swaggo/gin-swagger v1.6.1 // indirect
@@ -112,10 +120,32 @@ require (
 	golang.org/x/text v0.36.0 // indirect
 	golang.org/x/tools v0.43.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
-	modernc.org/libc v1.70.0 // indirect
-	modernc.org/mathutil v1.7.1 // indirect
-	modernc.org/memory v1.11.0 // indirect
-	modernc.org/sqlite v1.47.0 // indirect
 )
 
 replace codeberg.org/forgejo/go-sdk => ./third_party/forgejo
+
+replace dappco.re/go/api => ../api
+
+replace dappco.re/go/config => ../go-config
+
+replace dappco.re/go/io => ../go-io
+
+replace dappco.re/go/ws => ../go-ws
+
+replace dappco.re/go/log => ../go-log
+
+replace dappco.re/go => ../go
+
+replace dappco.re/go/cli => ../cli
+
+replace dappco.re/go/inference => ../go-inference
+
+replace dappco.re/go/process => ../go-process
+
+replace dappco.re/go/proxy => ../go-proxy
+
+replace dappco.re/go/miner => ../go-miner
+
+replace dappco.re/go/i18n => ../go-i18n
+
+replace dappco.re/go/scm => .

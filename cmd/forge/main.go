@@ -3,7 +3,7 @@
 package main
 
 import (
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"dappco.re/go/scm/forge"
 )
 
@@ -24,38 +24,38 @@ func newApp() *core.Core {
 func auth(opts core.Options) core.Result {
 	if wantsHelp(opts) {
 		core.Print(nil, "usage: forge auth [--url=URL] [--token=TOKEN]")
-		return core.Result{OK: true}
+		return core.Ok(nil)
 	}
 
 	client, err := forge.NewFromConfig(opts.String("url"), opts.String("token"))
 	if err != nil {
-		return core.Result{Value: err, OK: false}
+		return core.Fail(err)
 	}
 	user, err := client.GetCurrentUser()
 	if err != nil {
-		return core.Result{Value: err, OK: false}
+		return core.Fail(err)
 	}
 	if user != nil {
 		core.Print(nil, "%s", user.UserName)
 	}
-	return core.Result{OK: true}
+	return core.Ok(nil)
 }
 
 func repos(opts core.Options) core.Result {
 	if wantsHelp(opts) {
 		core.Print(nil, "usage: forge repos [--org=ORG] [--url=URL] [--token=TOKEN]")
-		return core.Result{OK: true}
+		return core.Ok(nil)
 	}
 
 	client, err := forge.NewFromConfig(opts.String("url"), opts.String("token"))
 	if err != nil {
-		return core.Result{Value: err, OK: false}
+		return core.Fail(err)
 	}
 
 	if org := opts.String("org"); org != "" {
 		repositories, err := client.ListOrgRepos(org)
 		if err != nil {
-			return core.Result{Value: err, OK: false}
+			return core.Fail(err)
 		}
 		for _, repo := range repositories {
 			if repo == nil {
@@ -63,12 +63,12 @@ func repos(opts core.Options) core.Result {
 			}
 			core.Print(nil, "%s", repo.FullName)
 		}
-		return core.Result{OK: true}
+		return core.Ok(nil)
 	}
 
 	repositories, err := client.ListUserRepos()
 	if err != nil {
-		return core.Result{Value: err, OK: false}
+		return core.Fail(err)
 	}
 	for _, repo := range repositories {
 		if repo == nil {
@@ -76,7 +76,7 @@ func repos(opts core.Options) core.Result {
 		}
 		core.Print(nil, "%s", repo.FullName)
 	}
-	return core.Result{OK: true}
+	return core.Ok(nil)
 }
 
 func wantsHelp(opts core.Options) bool {

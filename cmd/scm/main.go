@@ -3,7 +3,7 @@
 package main
 
 import (
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	scm "dappco.re/go/scm"
 	compilecmd "dappco.re/go/scm/cmd/compile"
 	pkgcmd "dappco.re/go/scm/cmd/pkg"
@@ -37,6 +37,6 @@ func health(app *core.Core) core.CommandAction {
 		core.Print(nil, "scm %s", app.App().Version)
 		core.Print(nil, "services: %d", len(app.Services()))
 		core.Print(nil, "commands: %d", len(app.Commands()))
-		return core.Result{OK: true}
+		return core.Ok(nil)
 	}
 }

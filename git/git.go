@@ -9,7 +9,7 @@ import (
 	"os/exec"
 	"strconv"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 )
 
 type GitError struct {
@@ -98,6 +98,9 @@ func runGit(ctx context.Context, path string, args ...string) ([]byte, []byte, e
 }
 
 func Pull(ctx context.Context, path string) error {
+	if err := ensurePath(path); err != nil {
+		return err
+	}
 	_, _, err := runGit(ctx, path, "pull", "--ff-only")
 	return err
 }
