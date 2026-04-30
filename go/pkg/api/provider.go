@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	core "dappco.re/go"
-	coreio "dappco.re/go/io"
 	"dappco.re/go/scm/marketplace"
 	"dappco.re/go/scm/repos"
 	"dappco.re/go/ws"
@@ -19,7 +18,6 @@ type ScmProvider struct {
 	installer *marketplace.Installer
 	registry  *repos.Registry
 	hub       *ws.Hub
-	medium    coreio.Medium
 }
 
 type elementSpec struct {

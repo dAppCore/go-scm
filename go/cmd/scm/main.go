@@ -22,12 +22,12 @@ func newApp() *core.Core {
 	)
 	app.App().Version = "dev"
 
-	app.Command("health", core.Command{Action: health(app)})
-	app.Command("dev/health", core.Command{Action: health(app)})
-	compilecmd.Register(app)
-	signcmd.Register(app)
-	verifycmd.Register(app)
-	pkgcmd.Register(app)
+	_ = app.Command("health", core.Command{Action: health(app)})
+	_ = app.Command("dev/health", core.Command{Action: health(app)})
+	_ = compilecmd.Register(app)
+	_ = signcmd.Register(app)
+	_ = verifycmd.Register(app)
+	_ = pkgcmd.Register(app)
 
 	return app
 }

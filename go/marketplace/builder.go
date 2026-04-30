@@ -34,11 +34,7 @@ func (b *Builder) BuildFromDirs(dirs ...string) (*Index, error) {
 			}
 			root := filepath.Join(dir, entry.Name())
 			if m, err := loadManifestFromRoot(root); err == nil && m != nil {
-				if b.BaseURL != "" && m.Code != "" {
-					// repo path is derived below in BuildFromManifests
-				}
 				manifests = append(manifests, m)
-				continue
 			}
 		}
 	}

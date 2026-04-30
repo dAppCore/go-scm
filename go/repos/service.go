@@ -245,17 +245,6 @@ func (s *Service) loadRegistryAt(root string) (*Registry, error) {
 	return merged, nil
 }
 
-func (s *Service) registryPath(root string) (string, error) {
-	paths, err := s.registryPaths(root)
-	if err != nil {
-		return "", err
-	}
-	if len(paths) == 0 {
-		return "", fs.ErrNotExist
-	}
-	return paths[0], nil
-}
-
 func (s *Service) registryPaths(root string) ([]string, error) {
 	if s == nil {
 		return nil, core.E("repos.Service.registryPaths", "service is required", nil)

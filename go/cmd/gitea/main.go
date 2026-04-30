@@ -18,8 +18,8 @@ func newApp() *core.Core {
 	app := core.New(core.WithOption("name", "gitea"))
 	app.App().Version = "dev"
 
-	app.Command("repos", core.Command{Action: repos})
-	app.Command("issues", core.Command{Action: issues})
+	_ = app.Command("repos", core.Command{Action: repos})
+	_ = app.Command("issues", core.Command{Action: issues})
 
 	return app
 }

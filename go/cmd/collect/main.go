@@ -17,9 +17,9 @@ func newApp() *core.Core {
 	app := core.New(core.WithOption("name", "collect"))
 	app.App().Version = "dev"
 
-	app.Command("github", core.Command{Action: github})
-	app.Command("market", core.Command{Action: market})
-	app.Command("papers", core.Command{Action: papers})
+	_ = app.Command("github", core.Command{Action: github})
+	_ = app.Command("market", core.Command{Action: market})
+	_ = app.Command("papers", core.Command{Action: papers})
 
 	return app
 }

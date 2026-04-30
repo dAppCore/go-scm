@@ -20,7 +20,7 @@ func Join(elems []string, sep string) string   { return strings.Join(elems, sep)
 func LastIndex(s, substr string) int           { return strings.LastIndex(s, substr) }
 func NewReader(s string) *bytes.Reader         { return bytes.NewReader([]byte(s)) }
 func Repeat(s string, count int) string        { return strings.Repeat(s, count) }
-func Replace(s, old, new string, _ int) string { return strings.Replace(s, old, new, -1) }
+func Replace(s, old, new string, _ int) string { return strings.ReplaceAll(s, old, new) }
 func ReplaceAll(s, old, new string) string     { return strings.ReplaceAll(s, old, new) }
 func Split(s, sep string) []string             { return strings.Split(s, sep) }
 func SplitN(s, sep string, n int) []string     { return strings.SplitN(s, sep, n) }

@@ -15,8 +15,8 @@ func newApp() *core.Core {
 	app := core.New(core.WithOption("name", "forge"))
 	app.App().Version = "dev"
 
-	app.Command("auth", core.Command{Action: auth})
-	app.Command("repos", core.Command{Action: repos})
+	_ = app.Command("auth", core.Command{Action: auth})
+	_ = app.Command("repos", core.Command{Action: repos})
 
 	return app
 }
