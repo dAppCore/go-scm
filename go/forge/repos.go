@@ -1,0 +1,66 @@
+// SPDX-License-Identifier: EUPL-1.2
+
+package forge
+
+import (
+	// Note: iter.Seq2 is retained because the forge client exposes lazy paginated iterators directly.
+	"iter"
+
+	"codeberg.org/forgejo/go-sdk/forgejo"
+)
+
+func (c *Client) CreateOrgRepo(org string, opts forgejo.CreateRepoOption) (*forgejo.Repository, error) {
+	repo, _, err := c.api.CreateOrgRepo(org, opts)
+	return repo, err
+}
+
+func (c *Client) DeleteRepo(owner, name string) error {
+	_, err := c.api.DeleteRepo(owner, name)
+	return err
+}
+
+func (c *Client) GetRepo(owner, name string) (*forgejo.Repository, error) {
+	repo, _, err := c.api.GetRepo(owner, name)
+	return repo, err
+}
+
+func (c *Client) ListOrgRepos(org string) ([]*forgejo.Repository, error) {
+	return collectForgePages(func(page int) ([]*forgejo.Repository, *forgeResponse, error) {
+		return c.api.ListOrgRepos(org, forgejo.ListOrgReposOptions{
+			ListOptions: forgejo.ListOptions{Page: page, PageSize: 50},
+		})
+	})
+}
+
+func (c *Client) ListOrgReposIter(org string) iter.Seq2[*forgejo.Repository, error] {
+	return func(yield func(*forgejo.Repository, error) bool) {
+		yieldForgePages(yield, func(page int) ([]*forgejo.Repository, *forgeResponse, error) {
+			return c.api.ListOrgRepos(org, forgejo.ListOrgReposOptions{
+				ListOptions: forgejo.ListOptions{Page: page, PageSize: 50},
+			})
+		})
+	}
+}
+
+func (c *Client) ListUserRepos() ([]*forgejo.Repository, error) {
+	return collectForgePages(func(page int) ([]*forgejo.Repository, *forgeResponse, error) {
+		return c.api.ListMyRepos(forgejo.ListReposOptions{
+			ListOptions: forgejo.ListOptions{Page: page, PageSize: 50},
+		})
+	})
+}
+
+func (c *Client) ListUserReposIter() iter.Seq2[*forgejo.Repository, error] {
+	return func(yield func(*forgejo.Repository, error) bool) {
+		yieldForgePages(yield, func(page int) ([]*forgejo.Repository, *forgeResponse, error) {
+			return c.api.ListMyRepos(forgejo.ListReposOptions{
+				ListOptions: forgejo.ListOptions{Page: page, PageSize: 50},
+			})
+		})
+	}
+}
+
+func (c *Client) MigrateRepo(opts forgejo.MigrateRepoOption) (*forgejo.Repository, error) {
+	repo, _, err := c.api.MigrateRepo(opts)
+	return repo, err
+}

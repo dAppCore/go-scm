@@ -1,0 +1,37 @@
+---
+version: "3"
+
+tasks:
+  build:
+    dir: ../../..
+    cmds:
+      - go build ./...
+
+  test:
+    dir: ../../..
+    cmds:
+      - go test -count=1 -race ./...
+
+  vet:
+    dir: ../../..
+    cmds:
+      - go vet ./...
+
+  smoke:
+    dir: ../../..
+    cmds:
+      - |
+        if [ ! -d cmd/collect ]; then
+          echo "Skipping collect smoke: cmd/collect not present"
+          exit 0
+        fi
+        bin="$(mktemp -t collect-smoke.XXXXXX)"
+        trap 'rm -f "$bin"' EXIT
+        go build -o "$bin" ./cmd/collect
+        "$bin" --help >/dev/null
+
+  default:
+    deps:
+      - build
+      - test
+      - vet
