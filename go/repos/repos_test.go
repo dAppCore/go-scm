@@ -19,7 +19,7 @@ const (
 	sonarReposTestReposYaml = "repos.yaml"
 )
 
-func ax7ReposRegistry() *Registry {
+func testReposRegistry() *Registry {
 	return &Registry{
 		Version:  1,
 		BasePath: "/work",
@@ -30,7 +30,7 @@ func ax7ReposRegistry() *Registry {
 	}
 }
 
-func ax7ReposGitCommand(t *core.T, dir string, args ...string) {
+func testReposGitCommand(t *core.T, dir string, args ...string) {
 	t.Helper()
 	cmd := exec.Command("git", args...)
 	cmd.Dir = dir
@@ -40,19 +40,19 @@ func ax7ReposGitCommand(t *core.T, dir string, args ...string) {
 	}
 }
 
-func ax7ReposGitRepo(t *core.T) string {
+func testReposGitRepo(t *core.T) string {
 	root := t.TempDir()
 	remote := filepath.Join(root, "remote.git")
 	work := filepath.Join(root, "work")
-	ax7ReposGitCommand(t, root, "init", "--bare", remote)
-	ax7ReposGitCommand(t, root, "clone", remote, work)
-	ax7ReposGitCommand(t, work, "config", "user.name", "AX7")
-	ax7ReposGitCommand(t, work, "config", "user.email", "ax7@example.test")
-	ax7ReposGitCommand(t, work, "checkout", "-b", "dev")
+	testReposGitCommand(t, root, "init", "--bare", remote)
+	testReposGitCommand(t, root, "clone", remote, work)
+	testReposGitCommand(t, work, "config", "user.name", "AX7")
+	testReposGitCommand(t, work, "config", "user.email", "ax7@example.test")
+	testReposGitCommand(t, work, "checkout", "-b", "dev")
 	core.RequireNoError(t, os.WriteFile(filepath.Join(work, "README.md"), []byte("ready\n"), 0o600))
-	ax7ReposGitCommand(t, work, "add", "README.md")
-	ax7ReposGitCommand(t, work, "commit", "-m", "initial")
-	ax7ReposGitCommand(t, work, "push", "-u", "origin", "dev")
+	testReposGitCommand(t, work, "add", "README.md")
+	testReposGitCommand(t, work, "commit", "-m", "initial")
+	testReposGitCommand(t, work, "push", "-u", "origin", "dev")
 	return work
 }
 
@@ -95,7 +95,7 @@ func TestRepos_Repo_IsGitRepo_Ugly(t *core.T) {
 }
 
 func TestRepos_Registry_List_Good(t *core.T) {
-	got := ax7ReposRegistry().List()
+	got := testReposRegistry().List()
 	core.AssertLen(t, got, 2)
 	core.AssertEqual(t, "api", got[0].Name)
 	core.AssertEqual(t, "/work/api", got[0].Path)
@@ -114,14 +114,14 @@ func TestRepos_Registry_List_Ugly(t *core.T) {
 }
 
 func TestRepos_Registry_Get_Good(t *core.T) {
-	repo, ok := ax7ReposRegistry().Get("api")
+	repo, ok := testReposRegistry().Get("api")
 	core.AssertTrue(t, ok)
 	core.AssertEqual(t, "api", repo.Name)
 	core.AssertEqual(t, "/work/api", repo.Path)
 }
 
 func TestRepos_Registry_Get_Bad(t *core.T) {
-	_, ok := ax7ReposRegistry().Get("missing")
+	_, ok := testReposRegistry().Get("missing")
 	core.AssertFalse(
 		t, ok,
 	)
@@ -134,13 +134,13 @@ func TestRepos_Registry_Get_Ugly(t *core.T) {
 }
 
 func TestRepos_Registry_ByType_Good(t *core.T) {
-	got := ax7ReposRegistry().ByType("SERVICE")
+	got := testReposRegistry().ByType("SERVICE")
 	core.AssertLen(t, got, 1)
 	core.AssertEqual(t, "api", got[0].Name)
 }
 
 func TestRepos_Registry_ByType_Bad(t *core.T) {
-	got := ax7ReposRegistry().ByType("missing")
+	got := testReposRegistry().ByType("missing")
 	core.AssertEmpty(
 		t, got,
 	)
@@ -153,7 +153,7 @@ func TestRepos_Registry_ByType_Ugly(t *core.T) {
 }
 
 func TestRepos_Registry_TopologicalOrder_Good(t *core.T) {
-	got, err := ax7ReposRegistry().TopologicalOrder()
+	got, err := testReposRegistry().TopologicalOrder()
 	core.AssertNoError(t, err)
 	core.AssertEqual(t, "core", got[0].Name)
 	core.AssertEqual(t, "api", got[1].Name)
@@ -243,7 +243,7 @@ func TestRepos_ScanDirectory_Ugly(t *core.T) {
 
 func TestRepos_Registry_Save_Good(t *core.T) {
 	medium := coreio.NewMockMedium()
-	registry := ax7ReposRegistry()
+	registry := testReposRegistry()
 	registry.medium = medium
 	err := registry.Save(sonarReposTestReposYaml)
 	core.AssertNoError(t, err)
@@ -259,21 +259,21 @@ func TestRepos_Registry_Save_Bad(t *core.T) {
 }
 
 func TestRepos_Registry_Save_Ugly(t *core.T) {
-	registry := ax7ReposRegistry()
+	registry := testReposRegistry()
 	path := filepath.Join(t.TempDir(), sonarReposTestReposYaml)
 	err := registry.Save(path)
 	core.AssertNoError(t, err)
 }
 
 func TestRepos_Registry_SyncRepo_Good(t *core.T) {
-	repoPath := ax7ReposGitRepo(t)
+	repoPath := testReposGitRepo(t)
 	registry := &Registry{Repos: map[string]*Repo{"demo": {Path: repoPath}}}
 	err := registry.SyncRepo(context.Background(), "demo", "origin", "dev")
 	core.AssertNoError(t, err)
 }
 
 func TestRepos_Registry_SyncRepo_Bad(t *core.T) {
-	err := ax7ReposRegistry().SyncRepo(context.Background(), "missing", "origin", "dev")
+	err := testReposRegistry().SyncRepo(context.Background(), "missing", "origin", "dev")
 	core.AssertError(
 		t, err,
 	)
@@ -286,7 +286,7 @@ func TestRepos_Registry_SyncRepo_Ugly(t *core.T) {
 }
 
 func TestRepos_Registry_SyncAll_Good(t *core.T) {
-	repoPath := ax7ReposGitRepo(t)
+	repoPath := testReposGitRepo(t)
 	registry := &Registry{Repos: map[string]*Repo{"demo": {Path: repoPath}}}
 	got := registry.SyncAll(context.Background(), "origin", "dev")
 	core.AssertLen(t, got, 1)

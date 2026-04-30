@@ -25,7 +25,7 @@ const (
 	sonarHandlersTestTickParent      = "tick-parent"
 )
 
-func ax7HandlersForgeClient(t *core.T) *coreforge.Client {
+func testHandlersForgeClient(t *core.T) *coreforge.Client {
 	t.Helper()
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/api/v1/version" {
@@ -42,7 +42,7 @@ func ax7HandlersForgeClient(t *core.T) *coreforge.Client {
 	return client
 }
 
-func ax7HandlersSignal() *jobrunner.PipelineSignal {
+func testHandlersSignal() *jobrunner.PipelineSignal {
 	return &jobrunner.PipelineSignal{
 		EpicNumber:      1,
 		ChildNumber:     2,
@@ -60,13 +60,13 @@ func ax7HandlersSignal() *jobrunner.PipelineSignal {
 	}
 }
 
-func ax7HandlersCanceled() context.Context {
+func testHandlersCanceled() context.Context {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 	return ctx
 }
 
-func ax7HandlersFakeSSH(t *core.T) {
+func testHandlersFakeSSH(t *core.T) {
 	t.Helper()
 	dir := t.TempDir()
 	path := filepath.Join(dir, "ssh")
@@ -74,14 +74,14 @@ func ax7HandlersFakeSSH(t *core.T) {
 	t.Setenv("PATH", dir)
 }
 
-func ax7HandlersSpinner() *agentci.Spinner {
+func testHandlersSpinner() *agentci.Spinner {
 	return agentci.NewSpinner(agentci.ClothoConfig{}, map[string]agentci.AgentConfig{
 		"codex": {ForgejoUser: sonarHandlersTestCodexBot, Host: "worker.example.test", QueueDir: "~/queue"},
 	})
 }
 
 func TestHandlers_NewCompletionHandler_Good(t *core.T) {
-	client := ax7HandlersForgeClient(t)
+	client := testHandlersForgeClient(t)
 	handler := NewCompletionHandler(client)
 	core.AssertEqual(t, client, handler.forge)
 }
@@ -100,7 +100,7 @@ func TestHandlers_NewCompletionHandler_Ugly(t *core.T) {
 }
 
 func TestHandlers_NewDismissReviewsHandler_Good(t *core.T) {
-	client := ax7HandlersForgeClient(t)
+	client := testHandlersForgeClient(t)
 	handler := NewDismissReviewsHandler(client)
 	core.AssertEqual(t, client, handler.forge)
 }
@@ -120,7 +120,7 @@ func TestHandlers_NewDismissReviewsHandler_Ugly(t *core.T) {
 }
 
 func TestHandlers_NewDispatchHandler_Good(t *core.T) {
-	spinner := ax7HandlersSpinner()
+	spinner := testHandlersSpinner()
 	handler := NewDispatchHandler(nil, sonarHandlersTestHttpForgeTest, "token", spinner)
 	core.AssertEqual(t, sonarHandlersTestHttpForgeTest, handler.forgeURL)
 	core.AssertEqual(t, spinner, handler.spinner)
@@ -133,13 +133,13 @@ func TestHandlers_NewDispatchHandler_Bad(t *core.T) {
 }
 
 func TestHandlers_NewDispatchHandler_Ugly(t *core.T) {
-	handler := NewDispatchHandler(nil, sonarHandlersTestHttpForgeTest, "", ax7HandlersSpinner())
+	handler := NewDispatchHandler(nil, sonarHandlersTestHttpForgeTest, "", testHandlersSpinner())
 	got := handler.Name()
 	core.AssertEqual(t, "dispatch", got)
 }
 
 func TestHandlers_NewEnableAutoMergeHandler_Good(t *core.T) {
-	client := ax7HandlersForgeClient(t)
+	client := testHandlersForgeClient(t)
 	handler := NewEnableAutoMergeHandler(client)
 	core.AssertEqual(t, client, handler.forge)
 }
@@ -159,7 +159,7 @@ func TestHandlers_NewEnableAutoMergeHandler_Ugly(t *core.T) {
 }
 
 func TestHandlers_NewPublishDraftHandler_Good(t *core.T) {
-	client := ax7HandlersForgeClient(t)
+	client := testHandlersForgeClient(t)
 	handler := NewPublishDraftHandler(client)
 	core.AssertEqual(t, client, handler.forge)
 }
@@ -179,7 +179,7 @@ func TestHandlers_NewPublishDraftHandler_Ugly(t *core.T) {
 }
 
 func TestHandlers_NewSendFixCommandHandler_Good(t *core.T) {
-	client := ax7HandlersForgeClient(t)
+	client := testHandlersForgeClient(t)
 	handler := NewSendFixCommandHandler(client)
 	core.AssertEqual(t, client, handler.forge)
 }
@@ -199,7 +199,7 @@ func TestHandlers_NewSendFixCommandHandler_Ugly(t *core.T) {
 }
 
 func TestHandlers_NewTickParentHandler_Good(t *core.T) {
-	client := ax7HandlersForgeClient(t)
+	client := testHandlersForgeClient(t)
 	handler := NewTickParentHandler(client)
 	core.AssertEqual(t, client, handler.forge)
 }
@@ -398,7 +398,7 @@ func TestHandlers_DispatchHandler_Match_Bad(t *core.T) {
 }
 
 func TestHandlers_DispatchHandler_Match_Ugly(t *core.T) {
-	handler := NewDispatchHandler(nil, "", "", ax7HandlersSpinner())
+	handler := NewDispatchHandler(nil, "", "", testHandlersSpinner())
 	got := handler.Match(&jobrunner.PipelineSignal{NeedsCoding: true, Assignee: "missing"})
 	core.AssertFalse(t, got)
 }
@@ -476,15 +476,15 @@ func TestHandlers_TickParentHandler_Match_Ugly(t *core.T) {
 }
 
 func TestHandlers_CompletionHandler_Execute_Good(t *core.T) {
-	handler := NewCompletionHandler(ax7HandlersForgeClient(t))
-	result, err := handler.Execute(context.Background(), ax7HandlersSignal())
+	handler := NewCompletionHandler(testHandlersForgeClient(t))
+	result, err := handler.Execute(context.Background(), testHandlersSignal())
 	core.AssertError(t, err)
 	core.AssertEqual(t, "completion", result.Action)
 }
 
 func TestHandlers_CompletionHandler_Execute_Bad(t *core.T) {
 	handler := NewCompletionHandler(nil)
-	result, err := handler.Execute(ax7HandlersCanceled(), ax7HandlersSignal())
+	result, err := handler.Execute(testHandlersCanceled(), testHandlersSignal())
 	core.AssertError(t, err)
 	core.AssertFalse(t, result.Success)
 }
@@ -497,15 +497,15 @@ func TestHandlers_CompletionHandler_Execute_Ugly(t *core.T) {
 }
 
 func TestHandlers_DismissReviewsHandler_Execute_Good(t *core.T) {
-	handler := NewDismissReviewsHandler(ax7HandlersForgeClient(t))
-	result, err := handler.Execute(context.Background(), ax7HandlersSignal())
+	handler := NewDismissReviewsHandler(testHandlersForgeClient(t))
+	result, err := handler.Execute(context.Background(), testHandlersSignal())
 	core.AssertError(t, err)
 	core.AssertEqual(t, sonarHandlersTestDismissReviews, result.Action)
 }
 
 func TestHandlers_DismissReviewsHandler_Execute_Bad(t *core.T) {
 	handler := NewDismissReviewsHandler(nil)
-	result, err := handler.Execute(ax7HandlersCanceled(), ax7HandlersSignal())
+	result, err := handler.Execute(testHandlersCanceled(), testHandlersSignal())
 	core.AssertError(t, err)
 	core.AssertFalse(t, result.Success)
 }
@@ -518,16 +518,16 @@ func TestHandlers_DismissReviewsHandler_Execute_Ugly(t *core.T) {
 }
 
 func TestHandlers_DispatchHandler_Execute_Good(t *core.T) {
-	ax7HandlersFakeSSH(t)
-	handler := NewDispatchHandler(nil, sonarHandlersTestHttpForgeTest, "token", ax7HandlersSpinner())
-	result, err := handler.Execute(context.Background(), ax7HandlersSignal())
+	testHandlersFakeSSH(t)
+	handler := NewDispatchHandler(nil, sonarHandlersTestHttpForgeTest, "token", testHandlersSpinner())
+	result, err := handler.Execute(context.Background(), testHandlersSignal())
 	core.AssertNoError(t, err)
 	core.AssertTrue(t, result.Success)
 }
 
 func TestHandlers_DispatchHandler_Execute_Bad(t *core.T) {
 	handler := NewDispatchHandler(nil, "", "", nil)
-	result, err := handler.Execute(context.Background(), ax7HandlersSignal())
+	result, err := handler.Execute(context.Background(), testHandlersSignal())
 	core.AssertError(t, err)
 	core.AssertFalse(t, result.Success)
 }
@@ -540,15 +540,15 @@ func TestHandlers_DispatchHandler_Execute_Ugly(t *core.T) {
 }
 
 func TestHandlers_EnableAutoMergeHandler_Execute_Good(t *core.T) {
-	handler := NewEnableAutoMergeHandler(ax7HandlersForgeClient(t))
-	result, err := handler.Execute(context.Background(), ax7HandlersSignal())
+	handler := NewEnableAutoMergeHandler(testHandlersForgeClient(t))
+	result, err := handler.Execute(context.Background(), testHandlersSignal())
 	core.AssertNoError(t, err)
 	core.AssertEqual(t, sonarHandlersTestEnableAutoMerge, result.Action)
 }
 
 func TestHandlers_EnableAutoMergeHandler_Execute_Bad(t *core.T) {
 	handler := NewEnableAutoMergeHandler(nil)
-	result, err := handler.Execute(ax7HandlersCanceled(), ax7HandlersSignal())
+	result, err := handler.Execute(testHandlersCanceled(), testHandlersSignal())
 	core.AssertError(t, err)
 	core.AssertFalse(t, result.Success)
 }
@@ -561,8 +561,8 @@ func TestHandlers_EnableAutoMergeHandler_Execute_Ugly(t *core.T) {
 }
 
 func TestHandlers_PublishDraftHandler_Execute_Good(t *core.T) {
-	handler := NewPublishDraftHandler(ax7HandlersForgeClient(t))
-	signal := ax7HandlersSignal()
+	handler := NewPublishDraftHandler(testHandlersForgeClient(t))
+	signal := testHandlersSignal()
 	signal.IsDraft = true
 	result, err := handler.Execute(context.Background(), signal)
 	core.AssertError(t, err)
@@ -571,7 +571,7 @@ func TestHandlers_PublishDraftHandler_Execute_Good(t *core.T) {
 
 func TestHandlers_PublishDraftHandler_Execute_Bad(t *core.T) {
 	handler := NewPublishDraftHandler(nil)
-	result, err := handler.Execute(ax7HandlersCanceled(), ax7HandlersSignal())
+	result, err := handler.Execute(testHandlersCanceled(), testHandlersSignal())
 	core.AssertError(t, err)
 	core.AssertFalse(t, result.Success)
 }
@@ -584,8 +584,8 @@ func TestHandlers_PublishDraftHandler_Execute_Ugly(t *core.T) {
 }
 
 func TestHandlers_SendFixCommandHandler_Execute_Good(t *core.T) {
-	handler := NewSendFixCommandHandler(ax7HandlersForgeClient(t))
-	signal := ax7HandlersSignal()
+	handler := NewSendFixCommandHandler(testHandlersForgeClient(t))
+	signal := testHandlersSignal()
 	signal.Mergeable = "CONFLICTING"
 	result, err := handler.Execute(context.Background(), signal)
 	core.AssertError(t, err)
@@ -594,7 +594,7 @@ func TestHandlers_SendFixCommandHandler_Execute_Good(t *core.T) {
 
 func TestHandlers_SendFixCommandHandler_Execute_Bad(t *core.T) {
 	handler := NewSendFixCommandHandler(nil)
-	result, err := handler.Execute(ax7HandlersCanceled(), ax7HandlersSignal())
+	result, err := handler.Execute(testHandlersCanceled(), testHandlersSignal())
 	core.AssertError(t, err)
 	core.AssertFalse(t, result.Success)
 }
@@ -607,15 +607,15 @@ func TestHandlers_SendFixCommandHandler_Execute_Ugly(t *core.T) {
 }
 
 func TestHandlers_TickParentHandler_Execute_Good(t *core.T) {
-	handler := NewTickParentHandler(ax7HandlersForgeClient(t))
-	result, err := handler.Execute(context.Background(), ax7HandlersSignal())
+	handler := NewTickParentHandler(testHandlersForgeClient(t))
+	result, err := handler.Execute(context.Background(), testHandlersSignal())
 	core.AssertError(t, err)
 	core.AssertEqual(t, sonarHandlersTestTickParent, result.Action)
 }
 
 func TestHandlers_TickParentHandler_Execute_Bad(t *core.T) {
 	handler := NewTickParentHandler(nil)
-	result, err := handler.Execute(ax7HandlersCanceled(), ax7HandlersSignal())
+	result, err := handler.Execute(testHandlersCanceled(), testHandlersSignal())
 	core.AssertError(t, err)
 	core.AssertFalse(t, result.Success)
 }

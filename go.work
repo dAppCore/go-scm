@@ -6,7 +6,7 @@ go 1.26.2
 use (
 	./go
 	./external/go
-	./external/config
+	./external/config/go
 	./external/io
 	./external/ws
 	./external/log

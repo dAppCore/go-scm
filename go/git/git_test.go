@@ -60,7 +60,7 @@ func runGitCmd(t *testing.T, dir string, name string, args ...string) {
 	}
 }
 
-func ax7GitCommand(t *core.T, dir string, args ...string) {
+func testGitCommand(t *core.T, dir string, args ...string) {
 	t.Helper()
 	cmd := exec.Command("git", args...)
 	cmd.Dir = dir
@@ -70,19 +70,19 @@ func ax7GitCommand(t *core.T, dir string, args ...string) {
 	}
 }
 
-func ax7GitRepo(t *core.T) string {
+func testGitRepo(t *core.T) string {
 	root := t.TempDir()
 	remote := filepath.Join(root, "remote.git")
 	work := filepath.Join(root, "work")
-	ax7GitCommand(t, root, "init", "--bare", remote)
-	ax7GitCommand(t, root, "clone", remote, work)
-	ax7GitCommand(t, work, "config", "user.name", "AX7")
-	ax7GitCommand(t, work, "config", "user.email", "ax7@example.test")
-	ax7GitCommand(t, work, "checkout", "-b", "dev")
+	testGitCommand(t, root, "init", "--bare", remote)
+	testGitCommand(t, root, "clone", remote, work)
+	testGitCommand(t, work, "config", "user.name", "AX7")
+	testGitCommand(t, work, "config", "user.email", "ax7@example.test")
+	testGitCommand(t, work, "checkout", "-b", "dev")
 	core.RequireNoError(t, os.WriteFile(filepath.Join(work, "README.md"), []byte("ready\n"), 0o600))
-	ax7GitCommand(t, work, "add", "README.md")
-	ax7GitCommand(t, work, "commit", "-m", "initial")
-	ax7GitCommand(t, work, "push", "-u", "origin", "dev")
+	testGitCommand(t, work, "add", "README.md")
+	testGitCommand(t, work, "commit", "-m", "initial")
+	testGitCommand(t, work, "push", "-u", "origin", "dev")
 	return work
 }
 
@@ -202,7 +202,7 @@ func TestGit_IsNonFastForward_Ugly(t *core.T) {
 }
 
 func TestGit_Pull_Good(t *core.T) {
-	repo := ax7GitRepo(t)
+	repo := testGitRepo(t)
 	err := Pull(context.Background(), repo)
 	core.AssertNoError(t, err)
 }
@@ -217,12 +217,12 @@ func TestGit_Pull_Bad(t *core.T) {
 func TestGit_Pull_Ugly(t *core.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	err := Pull(ctx, ax7GitRepo(t))
+	err := Pull(ctx, testGitRepo(t))
 	core.AssertError(t, err)
 }
 
 func TestGit_Push_Good(t *core.T) {
-	repo := ax7GitRepo(t)
+	repo := testGitRepo(t)
 	err := Push(context.Background(), repo)
 	core.AssertNoError(t, err)
 }
@@ -237,12 +237,12 @@ func TestGit_Push_Bad(t *core.T) {
 func TestGit_Push_Ugly(t *core.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	err := Push(ctx, ax7GitRepo(t))
+	err := Push(ctx, testGitRepo(t))
 	core.AssertError(t, err)
 }
 
 func TestGit_Sync_Good(t *core.T) {
-	repo := ax7GitRepo(t)
+	repo := testGitRepo(t)
 	err := Sync(context.Background(), repo)
 	core.AssertNoError(t, err)
 }
@@ -257,12 +257,12 @@ func TestGit_Sync_Bad(t *core.T) {
 func TestGit_Sync_Ugly(t *core.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	err := Sync(ctx, ax7GitRepo(t))
+	err := Sync(ctx, testGitRepo(t))
 	core.AssertError(t, err)
 }
 
 func TestGit_SyncWithRemote_Good(t *core.T) {
-	repo := ax7GitRepo(t)
+	repo := testGitRepo(t)
 	err := SyncWithRemote(context.Background(), repo, "origin", "dev")
 	core.AssertNoError(t, err)
 }
@@ -275,13 +275,13 @@ func TestGit_SyncWithRemote_Bad(t *core.T) {
 }
 
 func TestGit_SyncWithRemote_Ugly(t *core.T) {
-	repo := ax7GitRepo(t)
+	repo := testGitRepo(t)
 	err := SyncWithRemote(context.Background(), repo, "", "")
 	core.AssertNoError(t, err)
 }
 
 func TestGit_SyncMultiple_Good(t *core.T) {
-	repo := ax7GitRepo(t)
+	repo := testGitRepo(t)
 	got := SyncMultiple(context.Background(), []string{repo}, map[string]string{repo: "demo"}, "origin", "dev")
 	core.AssertLen(t, got, 1)
 	core.AssertTrue(t, got[0].Success)
@@ -301,7 +301,7 @@ func TestGit_SyncMultiple_Ugly(t *core.T) {
 }
 
 func TestGit_PushMultiple_Good(t *core.T) {
-	repo := ax7GitRepo(t)
+	repo := testGitRepo(t)
 	got := PushMultiple(context.Background(), []string{repo}, map[string]string{repo: "demo"})
 	core.AssertLen(t, got, 1)
 	core.AssertTrue(t, got[0].Success)
@@ -321,7 +321,7 @@ func TestGit_PushMultiple_Ugly(t *core.T) {
 }
 
 func TestGit_PullMultiple_Good(t *core.T) {
-	repo := ax7GitRepo(t)
+	repo := testGitRepo(t)
 	got := PullMultiple(context.Background(), []string{repo}, map[string]string{repo: "demo"})
 	core.AssertLen(t, got, 1)
 	core.AssertTrue(t, got[0].Success)
@@ -341,7 +341,7 @@ func TestGit_PullMultiple_Ugly(t *core.T) {
 }
 
 func TestGit_PushMultipleIter_Good(t *core.T) {
-	repo := ax7GitRepo(t)
+	repo := testGitRepo(t)
 	var got []PushResult
 	for result := range PushMultipleIter(context.Background(), []string{repo}, map[string]string{repo: "demo"}) {
 		got = append(got, result)
@@ -368,7 +368,7 @@ func TestGit_PushMultipleIter_Ugly(t *core.T) {
 }
 
 func TestGit_PullMultipleIter_Good(t *core.T) {
-	repo := ax7GitRepo(t)
+	repo := testGitRepo(t)
 	var got []PushResult
 	for result := range PullMultipleIter(context.Background(), []string{repo}, map[string]string{repo: "demo"}) {
 		got = append(got, result)
@@ -395,7 +395,7 @@ func TestGit_PullMultipleIter_Ugly(t *core.T) {
 }
 
 func TestGit_Status_Good(t *core.T) {
-	repo := ax7GitRepo(t)
+	repo := testGitRepo(t)
 	core.RequireNoError(t, os.WriteFile(filepath.Join(repo, "new.txt"), []byte("new\n"), 0o600))
 	got := Status(context.Background(), StatusOptions{Paths: []string{repo}, Names: map[string]string{repo: "demo"}})
 	core.AssertLen(t, got, 1)
@@ -417,7 +417,7 @@ func TestGit_Status_Ugly(t *core.T) {
 }
 
 func TestGit_StatusIter_Good(t *core.T) {
-	repo := ax7GitRepo(t)
+	repo := testGitRepo(t)
 	var got []RepoStatus
 	for status := range StatusIter(context.Background(), StatusOptions{Paths: []string{repo}}) {
 		got = append(got, status)

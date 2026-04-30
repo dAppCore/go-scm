@@ -8,7 +8,6 @@ import (
 
 	core "dappco.re/go"
 	coreio "dappco.re/go/io"
-	"dappco.re/go/scm/internal/ax/jsonx"
 )
 
 type Registry struct {
@@ -67,8 +66,8 @@ func (r *Registry) Load() error {
 	var data struct {
 		Plugins map[string]*PluginConfig `json:"plugins"`
 	}
-	if err := jsonx.Unmarshal([]byte(raw), &data); err != nil {
-		return err
+	if r := core.JSONUnmarshal([]byte(raw), &data); !r.OK {
+		return core.E("plugin.Registry.Load", "decode registry", nil)
 	}
 	r.plugins = data.Plugins
 	if r.plugins == nil {
@@ -89,9 +88,9 @@ func (r *Registry) Save() error {
 	if r == nil || r.medium == nil {
 		return nil
 	}
-	raw, err := jsonx.MarshalIndent(map[string]any{"plugins": r.plugins}, "", "  ")
-	if err != nil {
-		return err
+	marshalResult := core.JSONMarshalIndent(map[string]any{"plugins": r.plugins}, "", "  ")
+	if !marshalResult.OK {
+		return core.E("plugin.Registry.Save", "encode registry", nil)
 	}
-	return r.medium.Write(r.basePath+"/registry.json", string(raw))
+	return r.medium.Write(r.basePath+"/registry.json", string(marshalResult.Value.([]byte)))
 }

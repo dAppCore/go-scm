@@ -5,13 +5,11 @@ package repos
 import (
 	// Note: AX-6 — Config APIs return standard errors for nil storage media.
 	"errors"
-	// Note: AX-6 — Trigger names are matched case-insensitively.
-	"strings"
 	// Note: AX-6 — Work config exposes duration fields and defaults.
 	"time"
 
+	core "dappco.re/go"
 	coreio "dappco.re/go/io"
-	"dappco.re/go/scm/internal/ax/filepathx"
 	"gopkg.in/yaml.v3"
 )
 
@@ -48,7 +46,7 @@ func (wc *WorkConfig) HasTrigger(name string) bool {
 		return false
 	}
 	for _, trigger := range wc.Triggers {
-		if strings.EqualFold(trigger, name) {
+		if core.Lower(trigger) == core.Lower(name) {
 			return true
 		}
 	}
@@ -59,7 +57,7 @@ func LoadWorkConfig(m coreio.Medium, root string) (*WorkConfig, error) {
 	if m == nil {
 		return nil, errors.New("repos.LoadWorkConfig: medium is required")
 	}
-	raw, err := m.Read(filepathx.Join(root, ".core", "work.yaml"))
+	raw, err := m.Read(core.PathJoin(root, ".core", "work.yaml"))
 	if err != nil {
 		return DefaultWorkConfig(), nil
 	}
@@ -84,5 +82,5 @@ func SaveWorkConfig(m coreio.Medium, root string, wc *WorkConfig) error {
 	if err != nil {
 		return err
 	}
-	return m.Write(filepathx.Join(root, ".core", "work.yaml"), string(raw))
+	return m.Write(core.PathJoin(root, ".core", "work.yaml"), string(raw))
 }

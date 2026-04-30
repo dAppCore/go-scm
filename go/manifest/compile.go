@@ -9,7 +9,6 @@ import (
 
 	core "dappco.re/go"
 	coreio "dappco.re/go/io"
-	"dappco.re/go/scm/internal/ax/filepathx"
 )
 
 type CompileOptions struct {
@@ -92,7 +91,7 @@ func LoadCompiled(medium coreio.Medium, root string) (*CompiledManifest, error) 
 	if medium == nil {
 		return nil, core.E("manifest.LoadCompiled", "medium is required", nil)
 	}
-	raw, err := medium.Read(filepathx.Join(root, "core.json"))
+	raw, err := medium.Read(core.PathJoin(root, "core.json"))
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +109,7 @@ func WriteCompiled(medium coreio.Medium, root string, cm *CompiledManifest) erro
 	if err != nil {
 		return err
 	}
-	return medium.Write(filepathx.Join(root, "core.json"), string(raw))
+	return medium.Write(core.PathJoin(root, "core.json"), string(raw))
 }
 
 func normalizeBuildInfo(build BuildInfo) BuildInfo {

@@ -153,7 +153,7 @@ func TestManifest_Verify_Bad_TamperedPayload(t *testing.T) {
 	}
 }
 
-func ax7Manifest() *Manifest {
+func testManifestFixture() *Manifest {
 	return &Manifest{Code: sonarManifestTestGoScm, Name: "Core SCM", Version: "0.9.0"}
 }
 
@@ -241,7 +241,7 @@ func TestManifestV090_Manifest_DefaultDaemon_Ugly(t *core.T) {
 }
 
 func TestManifestV090_Compile_Good(t *core.T) {
-	raw, err := Compile(ax7Manifest(), BuildInfo{SHA256: "abc123"})
+	raw, err := Compile(testManifestFixture(), BuildInfo{SHA256: "abc123"})
 	core.AssertNoError(t, err)
 	core.AssertContains(t, string(raw), "abc123")
 }
@@ -261,7 +261,7 @@ func TestManifestV090_Compile_Ugly(t *core.T) {
 }
 
 func TestManifestV090_ParseCoreJSON_Good(t *core.T) {
-	raw, err := Compile(ax7Manifest(), BuildInfo{Targets: []string{sonarManifestTestLinuxAmd64}})
+	raw, err := Compile(testManifestFixture(), BuildInfo{Targets: []string{sonarManifestTestLinuxAmd64}})
 	core.RequireNoError(t, err)
 	m, err := ParseCoreJSON(raw)
 	core.AssertNoError(t, err)
@@ -281,7 +281,7 @@ func TestManifestV090_ParseCoreJSON_Ugly(t *core.T) {
 }
 
 func TestManifestV090_CompileWithOptions_Good(t *core.T) {
-	cm, err := CompileWithOptions(ax7Manifest(), CompileOptions{Commit: "abc123", Tag: "v0.9.0"})
+	cm, err := CompileWithOptions(testManifestFixture(), CompileOptions{Commit: "abc123", Tag: "v0.9.0"})
 	core.AssertNoError(t, err)
 	core.AssertEqual(t, "abc123", cm.Commit)
 	core.AssertEqual(t, "v0.9.0", cm.Tag)
@@ -297,13 +297,13 @@ func TestManifestV090_CompileWithOptions_Bad(t *core.T) {
 func TestManifestV090_CompileWithOptions_Ugly(t *core.T) {
 	_, priv, err := ed25519.GenerateKey(nil)
 	core.RequireNoError(t, err)
-	cm, err := CompileWithOptions(ax7Manifest(), CompileOptions{SignKey: priv})
+	cm, err := CompileWithOptions(testManifestFixture(), CompileOptions{SignKey: priv})
 	core.AssertNoError(t, err)
 	core.AssertTrue(t, cm.Sign != "")
 }
 
 func TestManifestV090_MarshalJSON_Good(t *core.T) {
-	cm, err := CompileWithOptions(ax7Manifest(), CompileOptions{Commit: "abc123"})
+	cm, err := CompileWithOptions(testManifestFixture(), CompileOptions{Commit: "abc123"})
 	core.RequireNoError(t, err)
 	raw, err := MarshalJSON(cm)
 	core.AssertNoError(t, err)
@@ -324,7 +324,7 @@ func TestManifestV090_MarshalJSON_Ugly(t *core.T) {
 }
 
 func TestManifestV090_ParseCompiled_Good(t *core.T) {
-	cm, err := CompileWithOptions(ax7Manifest(), CompileOptions{Commit: "abc123"})
+	cm, err := CompileWithOptions(testManifestFixture(), CompileOptions{Commit: "abc123"})
 	core.RequireNoError(t, err)
 	raw, err := MarshalJSON(cm)
 	core.RequireNoError(t, err)
@@ -346,7 +346,7 @@ func TestManifestV090_ParseCompiled_Ugly(t *core.T) {
 
 func TestManifestV090_LoadCompiled_Good(t *core.T) {
 	medium := coreio.NewMemoryMedium()
-	cm, err := CompileWithOptions(ax7Manifest(), CompileOptions{Commit: "abc123"})
+	cm, err := CompileWithOptions(testManifestFixture(), CompileOptions{Commit: "abc123"})
 	core.RequireNoError(t, err)
 	core.RequireNoError(t, WriteCompiled(medium, ".", cm))
 	got, err := LoadCompiled(medium, ".")
@@ -369,7 +369,7 @@ func TestManifestV090_LoadCompiled_Ugly(t *core.T) {
 
 func TestManifestV090_WriteCompiled_Good(t *core.T) {
 	medium := coreio.NewMemoryMedium()
-	cm, err := CompileWithOptions(ax7Manifest(), CompileOptions{})
+	cm, err := CompileWithOptions(testManifestFixture(), CompileOptions{})
 	core.RequireNoError(t, err)
 	err = WriteCompiled(medium, "pkg", cm)
 	core.AssertNoError(t, err)
@@ -415,7 +415,7 @@ func TestManifestV090_Load_Ugly(t *core.T) {
 func TestManifestV090_LoadVerified_Good(t *core.T) {
 	pub, priv, err := ed25519.GenerateKey(nil)
 	core.RequireNoError(t, err)
-	m := ax7Manifest()
+	m := testManifestFixture()
 	payload, err := canonicalManifestBytes(m)
 	core.RequireNoError(t, err)
 	m.SignKey = base64.StdEncoding.EncodeToString(pub)
@@ -444,7 +444,7 @@ func TestManifestV090_LoadVerified_Ugly(t *core.T) {
 }
 
 func TestManifestV090_MarshalYAML_Good(t *core.T) {
-	raw, err := MarshalYAML(ax7Manifest())
+	raw, err := MarshalYAML(testManifestFixture())
 	core.AssertNoError(t, err)
 	core.AssertContains(t, string(raw), sonarManifestTestGoScm)
 }
@@ -465,7 +465,7 @@ func TestManifestV090_MarshalYAML_Ugly(t *core.T) {
 func TestManifestV090_Sign_Good(t *core.T) {
 	_, priv, err := ed25519.GenerateKey(nil)
 	core.RequireNoError(t, err)
-	m := ax7Manifest()
+	m := testManifestFixture()
 	err = Sign(m, []byte("payload"), priv)
 	core.AssertNoError(t, err)
 	core.AssertTrue(t, m.Sign != "")
@@ -479,7 +479,7 @@ func TestManifestV090_Sign_Bad(t *core.T) {
 }
 
 func TestManifestV090_Sign_Ugly(t *core.T) {
-	m := ax7Manifest()
+	m := testManifestFixture()
 	err := Sign(m, []byte("payload"), ed25519.PrivateKey([]byte("short")))
 	core.AssertError(t, err)
 }
@@ -487,7 +487,7 @@ func TestManifestV090_Sign_Ugly(t *core.T) {
 func TestManifestV090_Verify_Good(t *core.T) {
 	pub, priv, err := ed25519.GenerateKey(nil)
 	core.RequireNoError(t, err)
-	m := ax7Manifest()
+	m := testManifestFixture()
 	m.SignKey = base64.StdEncoding.EncodeToString(pub)
 	payload := []byte("payload")
 	core.RequireNoError(t, Sign(m, payload, priv))
@@ -503,7 +503,7 @@ func TestManifestV090_Verify_Bad(t *core.T) {
 }
 
 func TestManifestV090_Verify_Ugly(t *core.T) {
-	m := ax7Manifest()
+	m := testManifestFixture()
 	m.SignKey = "not-base64"
 	m.Sign = "not-base64"
 	err := Verify(m, []byte("payload"))

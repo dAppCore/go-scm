@@ -31,7 +31,7 @@ func (c ax7Collector) Collect(context.Context, *Config) (*Result, error) {
 	return c.result, c.err
 }
 
-func ax7CollectConfig() *Config {
+func testCollectConfig() *Config {
 	cfg := NewConfigWithMedium(coreio.NewMockMedium(), "collect")
 	cfg.Limiter.SetDelay("github", 0)
 	cfg.Limiter.SetDelay("bitcointalk", 0)
@@ -41,7 +41,7 @@ func ax7CollectConfig() *Config {
 	return cfg
 }
 
-func ax7FakeGH(t *core.T, body string) {
+func testFakeGH(t *core.T, body string) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "gh")
 	script := "#!/bin/sh\nprintf '%s\\n' '" + body + "'\n"
@@ -124,11 +124,11 @@ func TestCollect_NewDispatcher_Bad(t *core.T) {
 
 func TestCollect_NewDispatcher_Ugly(t *core.T) {
 	dispatcher := NewDispatcher()
-	ax7RegisterStartHandler(dispatcher)
+	testRegisterStartHandler(dispatcher)
 	core.AssertLen(t, dispatcher.handlers[EventStart], 1)
 }
 
-func ax7RegisterStartHandler(dispatcher *Dispatcher) {
+func testRegisterStartHandler(dispatcher *Dispatcher) {
 	dispatcher.On(EventStart, func(Event) {
 		// Empty handler verifies registration without side effects.
 	})
@@ -419,7 +419,7 @@ func TestCollect_GitHubCollector_Name_Ugly(t *core.T) {
 }
 
 func TestCollect_GitHubCollector_Collect_Good(t *core.T) {
-	cfg := ax7CollectConfig()
+	cfg := testCollectConfig()
 	result, err := (&GitHubCollector{Org: "core", Repo: "go-scm"}).Collect(context.Background(), cfg)
 	core.AssertNoError(t, err)
 	core.AssertEqual(t, 1, result.Items)
@@ -436,7 +436,7 @@ func TestCollect_GitHubCollector_Collect_Bad(t *core.T) {
 func TestCollect_GitHubCollector_Collect_Ugly(t *core.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	_, err := (&GitHubCollector{}).Collect(ctx, ax7CollectConfig())
+	_, err := (&GitHubCollector{}).Collect(ctx, testCollectConfig())
 	core.AssertErrorIs(t, err, context.Canceled)
 }
 
@@ -461,7 +461,7 @@ func TestCollect_Excavator_Name_Ugly(t *core.T) {
 }
 
 func TestCollect_Excavator_Run_Good(t *core.T) {
-	cfg := ax7CollectConfig()
+	cfg := testCollectConfig()
 	excavator := &Excavator{Collectors: []Collector{ax7Collector{name: "mock", result: &Result{Items: 2}}}}
 	result, err := excavator.Run(context.Background(), cfg)
 	core.AssertNoError(t, err)
@@ -476,7 +476,7 @@ func TestCollect_Excavator_Run_Bad(t *core.T) {
 }
 
 func TestCollect_Excavator_Run_Ugly(t *core.T) {
-	cfg := ax7CollectConfig()
+	cfg := testCollectConfig()
 	excavator := &Excavator{ScanOnly: true, Collectors: []Collector{ax7Collector{name: "mock", result: &Result{Items: 2}}}}
 	result, err := excavator.Run(context.Background(), cfg)
 	core.AssertNoError(t, err)
@@ -567,7 +567,7 @@ func TestCollect_RateLimiter_GetDelay_Ugly(t *core.T) {
 }
 
 func TestCollect_RateLimiter_CheckGitHubRateLimit_Good(t *core.T) {
-	ax7FakeGH(t, "10 100")
+	testFakeGH(t, "10 100")
 	limiter := NewRateLimiter()
 	used, limit, err := limiter.CheckGitHubRateLimit()
 	core.AssertNoError(t, err)
@@ -590,7 +590,7 @@ func TestCollect_RateLimiter_CheckGitHubRateLimit_Ugly(t *core.T) {
 }
 
 func TestCollect_RateLimiter_CheckGitHubRateLimitCtx_Good(t *core.T) {
-	ax7FakeGH(t, "80 100")
+	testFakeGH(t, "80 100")
 	limiter := NewRateLimiter()
 	used, limit, err := limiter.CheckGitHubRateLimitCtx(context.Background())
 	core.AssertNoError(t, err)
@@ -636,7 +636,7 @@ func TestCollect_Processor_Name_Ugly(t *core.T) {
 }
 
 func TestCollect_Processor_Process_Good(t *core.T) {
-	cfg := ax7CollectConfig()
+	cfg := testCollectConfig()
 	core.RequireNoError(t, cfg.Output.Write("raw/page.html", "<h1>Hello</h1>"))
 	result, err := (&Processor{Source: "raw"}).Process(context.Background(), cfg)
 	core.AssertNoError(t, err)
@@ -654,7 +654,7 @@ func TestCollect_Processor_Process_Bad(t *core.T) {
 func TestCollect_Processor_Process_Ugly(t *core.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	_, err := (&Processor{Source: "raw"}).Process(ctx, ax7CollectConfig())
+	_, err := (&Processor{Source: "raw"}).Process(ctx, testCollectConfig())
 	core.AssertErrorIs(t, err, context.Canceled)
 }
 
@@ -739,7 +739,7 @@ func TestCollect_BitcoinTalkCollector_Name_Ugly(t *core.T) {
 }
 
 func TestCollect_BitcoinTalkCollector_Collect_Good(t *core.T) {
-	cfg := ax7CollectConfig()
+	cfg := testCollectConfig()
 	cfg.DryRun = true
 	result, err := (&BitcoinTalkCollector{TopicID: "1"}).Collect(context.Background(), cfg)
 	core.AssertNoError(t, err)
@@ -754,7 +754,7 @@ func TestCollect_BitcoinTalkCollector_Collect_Bad(t *core.T) {
 }
 
 func TestCollect_BitcoinTalkCollector_Collect_Ugly(t *core.T) {
-	result, err := (&BitcoinTalkCollector{}).Collect(context.Background(), ax7CollectConfig())
+	result, err := (&BitcoinTalkCollector{}).Collect(context.Background(), testCollectConfig())
 	core.AssertNoError(t, err)
 	core.AssertEqual(t, 0, result.Items)
 }
@@ -781,7 +781,7 @@ func TestCollect_BitcoinTalkCollectorWithFetcher_Name_Ugly(t *core.T) {
 }
 
 func TestCollect_BitcoinTalkCollectorWithFetcher_Collect_Good(t *core.T) {
-	cfg := ax7CollectConfig()
+	cfg := testCollectConfig()
 	collector := &BitcoinTalkCollectorWithFetcher{
 		BitcoinTalkCollector: BitcoinTalkCollector{TopicID: "1", Pages: 1},
 		Fetcher: func(context.Context, string) ([]btPost, error) {
@@ -807,7 +807,7 @@ func TestCollect_BitcoinTalkCollectorWithFetcher_Collect_Ugly(t *core.T) {
 			return nil, errors.New("fetch failed")
 		},
 	}
-	result, err := collector.Collect(context.Background(), ax7CollectConfig())
+	result, err := collector.Collect(context.Background(), testCollectConfig())
 	core.AssertNoError(t, err)
 	core.AssertEqual(t, 1, result.Errors)
 }
@@ -872,7 +872,7 @@ func TestCollect_PapersCollector_Name_Ugly(t *core.T) {
 }
 
 func TestCollect_PapersCollector_Collect_Good(t *core.T) {
-	cfg := ax7CollectConfig()
+	cfg := testCollectConfig()
 	result, err := (&PapersCollector{Source: PaperSourceArXiv, Query: "zk"}).Collect(context.Background(), cfg)
 	core.AssertNoError(t, err)
 	core.AssertEqual(t, 1, result.Items)
@@ -888,7 +888,7 @@ func TestCollect_PapersCollector_Collect_Bad(t *core.T) {
 func TestCollect_PapersCollector_Collect_Ugly(t *core.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	_, err := (&PapersCollector{}).Collect(ctx, ax7CollectConfig())
+	_, err := (&PapersCollector{}).Collect(ctx, testCollectConfig())
 	core.AssertErrorIs(t, err, context.Canceled)
 }
 
@@ -932,7 +932,7 @@ func TestCollect_MarketCollector_Name_Ugly(t *core.T) {
 }
 
 func TestCollect_MarketCollector_Collect_Good(t *core.T) {
-	cfg := ax7CollectConfig()
+	cfg := testCollectConfig()
 	result, err := (&MarketCollector{CoinID: "bitcoin"}).Collect(context.Background(), cfg)
 	core.AssertNoError(t, err)
 	core.AssertEqual(t, 1, result.Items)
@@ -946,7 +946,7 @@ func TestCollect_MarketCollector_Collect_Bad(t *core.T) {
 }
 
 func TestCollect_MarketCollector_Collect_Ugly(t *core.T) {
-	_, err := (&MarketCollector{Historical: true, FromDate: "bad-date"}).Collect(context.Background(), ax7CollectConfig())
+	_, err := (&MarketCollector{Historical: true, FromDate: "bad-date"}).Collect(context.Background(), testCollectConfig())
 	core.AssertError(
 		t, err,
 	)

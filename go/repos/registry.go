@@ -13,8 +13,6 @@ import (
 	core "dappco.re/go"
 	coreio "dappco.re/go/io"
 	"dappco.re/go/scm/git"
-	"dappco.re/go/scm/internal/ax/filepathx"
-	"dappco.re/go/scm/internal/ax/osx"
 	"gopkg.in/yaml.v3"
 )
 
@@ -66,16 +64,14 @@ func (repo *Repo) Exists() bool {
 	if repo == nil || repo.Path == "" {
 		return false
 	}
-	_, err := osx.Stat(repo.Path)
-	return err == nil
+	return core.Stat(repo.Path).OK
 }
 
 func (repo *Repo) IsGitRepo() bool {
 	if repo == nil || repo.Path == "" {
 		return false
 	}
-	_, err := osx.Stat(filepathx.Join(repo.Path, ".git"))
-	return err == nil
+	return core.Stat(core.PathJoin(repo.Path, ".git")).OK
 }
 
 func (r *Registry) List() []*Repo {
@@ -97,7 +93,7 @@ func (r *Registry) List() []*Repo {
 		cp.Name = name
 		cp.registry = r
 		if cp.Path == "" {
-			cp.Path = filepathx.Join(r.BasePath, name)
+			cp.Path = core.PathJoin(r.BasePath, name)
 		}
 		out = append(out, &cp)
 	}
@@ -116,7 +112,7 @@ func (r *Registry) Get(name string) (*Repo, bool) {
 	cp.Name = name
 	cp.registry = r
 	if cp.Path == "" {
-		cp.Path = filepathx.Join(r.BasePath, name)
+		cp.Path = core.PathJoin(r.BasePath, name)
 	}
 	return &cp, true
 }
@@ -209,7 +205,7 @@ func LoadRegistry(m coreio.Medium, path string) (*Registry, error) {
 		repo.Name = name
 		repo.registry = &r
 		if repo.Path == "" {
-			repo.Path = filepathx.Join(r.BasePath, name)
+			repo.Path = core.PathJoin(r.BasePath, name)
 		}
 	}
 	r.medium = m
@@ -229,17 +225,17 @@ func FindRegistry(m coreio.Medium) (string, error) {
 }
 
 func registryCandidates() []string {
-	candidates := []string{sonarRegistryReposYaml, filepathx.Join(".core", sonarRegistryReposYaml)}
+	candidates := []string{sonarRegistryReposYaml, core.PathJoin(".core", sonarRegistryReposYaml)}
 	candidates = prependEnvRegistryCandidates(candidates)
 	candidates = append(candidates, cwdRegistryCandidates()...)
-	if home, err := osx.UserHomeDir(); err == nil {
-		candidates = append(candidates, filepathx.Join(home, ".core", sonarRegistryReposYaml))
+	if homeResult := core.UserHomeDir(); homeResult.OK {
+		candidates = append(candidates, core.PathJoin(homeResult.Value.(string), ".core", sonarRegistryReposYaml))
 	}
 	return candidates
 }
 
 func prependEnvRegistryCandidates(candidates []string) []string {
-	env := core.Trim(osx.Getenv("CORE_REPOS"))
+	env := core.Trim(core.Getenv("CORE_REPOS"))
 	if env == "" {
 		return candidates
 	}
@@ -253,14 +249,15 @@ func prependEnvRegistryCandidates(candidates []string) []string {
 }
 
 func cwdRegistryCandidates() []string {
-	cwd, err := osx.Getwd()
-	if err != nil {
+	cwdResult := core.Getwd()
+	if !cwdResult.OK {
 		return nil
 	}
+	cwd := cwdResult.Value.(string)
 	var candidates []string
-	for dir := cwd; ; dir = filepathx.Dir(dir) {
-		candidates = append(candidates, filepathx.Join(dir, ".core", sonarRegistryReposYaml))
-		if parent := filepathx.Dir(dir); parent == dir {
+	for dir := cwd; ; dir = core.PathDir(dir) {
+		candidates = append(candidates, core.PathJoin(dir, ".core", sonarRegistryReposYaml))
+		if parent := core.PathDir(dir); parent == dir {
 			return candidates
 		}
 	}
@@ -280,10 +277,10 @@ func ScanDirectory(m coreio.Medium, dir string) (*Registry, error) {
 			continue
 		}
 		name := entry.Name()
-		if !m.IsDir(filepathx.Join(dir, name)) {
+		if !m.IsDir(core.PathJoin(dir, name)) {
 			continue
 		}
-		reg.Repos[name] = &Repo{Name: name, Path: filepathx.Join(dir, name), registry: reg}
+		reg.Repos[name] = &Repo{Name: name, Path: core.PathJoin(dir, name), registry: reg}
 	}
 	return reg, nil
 }
@@ -299,7 +296,11 @@ func (r *Registry) Save(path string) error {
 	if r.medium != nil {
 		return r.medium.Write(path, string(raw))
 	}
-	return osx.WriteFile(path, raw, 0o600)
+	writeResult := core.WriteFile(path, raw, 0o600)
+	if !writeResult.OK {
+		return core.E("repos.Registry.Save", "write registry", nil)
+	}
+	return nil
 }
 
 // SyncRepo fetches and resets a named repo to match its Forge remote branch.

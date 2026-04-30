@@ -7,8 +7,8 @@ import (
 	"encoding/base64"
 	"errors"
 
+	core "dappco.re/go"
 	coreio "dappco.re/go/io"
-	"dappco.re/go/scm/internal/ax/filepathx"
 	"gopkg.in/yaml.v3"
 )
 
@@ -16,7 +16,7 @@ func Load(medium coreio.Medium, root string) (*Manifest, error) {
 	if medium == nil {
 		return nil, errors.New("manifest.Load: medium is required")
 	}
-	raw, err := medium.Read(filepathx.Join(root, ".core", "manifest.yaml"))
+	raw, err := medium.Read(core.PathJoin(root, ".core", "manifest.yaml"))
 	if err != nil {
 		return nil, err
 	}

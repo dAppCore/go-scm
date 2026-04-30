@@ -6,8 +6,8 @@ import (
 	"errors"
 	"time"
 
+	core "dappco.re/go"
 	coreio "dappco.re/go/io"
-	"dappco.re/go/scm/internal/ax/filepathx"
 	"gopkg.in/yaml.v3"
 )
 
@@ -127,7 +127,7 @@ func LoadGitState(m coreio.Medium, root string) (*GitState, error) {
 	if m == nil {
 		return nil, errors.New("repos.LoadGitState: medium is required")
 	}
-	raw, err := m.Read(filepathx.Join(root, ".core", "git.yaml"))
+	raw, err := m.Read(core.PathJoin(root, ".core", "git.yaml"))
 	if err != nil {
 		return NewGitState(), nil
 	}
@@ -150,5 +150,5 @@ func SaveGitState(m coreio.Medium, root string, gs *GitState) error {
 	if err != nil {
 		return err
 	}
-	return m.Write(filepathx.Join(root, ".core", "git.yaml"), string(raw))
+	return m.Write(core.PathJoin(root, ".core", "git.yaml"), string(raw))
 }

@@ -6,8 +6,8 @@ import (
 	"errors"
 	"io/fs"
 
+	core "dappco.re/go"
 	coreio "dappco.re/go/io"
-	"dappco.re/go/scm/internal/ax/jsonx"
 )
 
 type mediumReadFile interface {
@@ -49,11 +49,11 @@ func WriteIndexToMedium(m coreio.Medium, path string, idx *Index) error {
 	if idx == nil {
 		return errors.New("marketplace.WriteIndexToMedium: index is required")
 	}
-	raw, err := jsonx.MarshalIndent(idx, "", "  ")
-	if err != nil {
-		return err
+	marshalResult := core.JSONMarshalIndent(idx, "", "  ")
+	if !marshalResult.OK {
+		return core.E("marketplace.WriteIndexToMedium", "encode index", nil)
 	}
-	return writeMediumFile(m, path, raw)
+	return writeMediumFile(m, path, marshalResult.Value.([]byte))
 }
 
 func readMediumFile(m coreio.Medium, path string) ([]byte, error) {

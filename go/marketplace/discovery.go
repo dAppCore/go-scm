@@ -3,10 +3,9 @@
 package marketplace
 
 import (
-	"path/filepath"
 	"sort"
 
-	"dappco.re/go/scm/internal/ax/osx"
+	core "dappco.re/go"
 	"dappco.re/go/scm/manifest"
 	"gopkg.in/yaml.v3"
 )
@@ -80,25 +79,26 @@ func (r *ProviderRegistryFile) Remove(code string) {
 }
 
 func DiscoverProviders(dir string) ([]DiscoveredProvider, error) {
-	absDir, err := filepath.Abs(dir)
-	if err == nil {
-		dir = absDir
+	absResult := core.PathAbs(dir)
+	if absResult.OK {
+		dir = absResult.Value.(string)
 	}
-	entries, err := osx.ReadDir(dir)
-	if err != nil {
-		return nil, err
+	readDirResult := core.ReadDir(core.DirFS(dir), ".")
+	if !readDirResult.OK {
+		return nil, core.E("marketplace.DiscoverProviders", "read provider directory", nil)
 	}
+	entries := readDirResult.Value.([]core.FsDirEntry)
 	var out []DiscoveredProvider
 	for _, entry := range entries {
 		if entry == nil || !entry.IsDir() {
 			continue
 		}
-		root := filepath.Join(dir, entry.Name())
-		raw, err := osx.ReadFile(filepath.Join(root, ".core", "manifest.yaml"))
-		if err != nil {
+		root := core.PathJoin(dir, entry.Name())
+		readResult := core.ReadFile(core.PathJoin(root, ".core", "manifest.yaml"))
+		if !readResult.OK {
 			continue
 		}
-		m, err := manifest.Parse(raw)
+		m, err := manifest.Parse(readResult.Value.([]byte))
 		if err != nil || m == nil || !m.IsProvider() {
 			continue
 		}
@@ -108,12 +108,12 @@ func DiscoverProviders(dir string) ([]DiscoveredProvider, error) {
 }
 
 func LoadProviderRegistry(path string) (*ProviderRegistryFile, error) {
-	raw, err := osx.ReadFile(path)
-	if err != nil {
+	readResult := core.ReadFile(path)
+	if !readResult.OK {
 		return &ProviderRegistryFile{Version: 1, Providers: map[string]ProviderRegistryEntry{}}, nil
 	}
 	var reg ProviderRegistryFile
-	if err := yaml.Unmarshal(raw, &reg); err != nil {
+	if err := yaml.Unmarshal(readResult.Value.([]byte), &reg); err != nil {
 		return nil, err
 	}
 	if reg.Version == 0 {
@@ -133,5 +133,9 @@ func SaveProviderRegistry(path string, reg *ProviderRegistryFile) error {
 	if err != nil {
 		return err
 	}
-	return osx.WriteFile(path, raw, 0o600)
+	writeResult := core.WriteFile(path, raw, 0o600)
+	if !writeResult.OK {
+		return core.E("marketplace.SaveProviderRegistry", "write provider registry", nil)
+	}
+	return nil
 }

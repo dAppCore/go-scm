@@ -6,8 +6,8 @@ import (
 	// Note: errors.New is retained for stable manifest validation errors.
 	"errors"
 
+	core "dappco.re/go"
 	coreio "dappco.re/go/io"
-	"dappco.re/go/scm/internal/ax/jsonx"
 )
 
 type Manifest struct {
@@ -39,8 +39,8 @@ func LoadManifest(m coreio.Medium, path string) (*Manifest, error) {
 		return nil, err
 	}
 	var manifest Manifest
-	if err := jsonx.Unmarshal([]byte(raw), &manifest); err != nil {
-		return nil, err
+	if r := core.JSONUnmarshal([]byte(raw), &manifest); !r.OK {
+		return nil, core.E("plugin.LoadManifest", "decode manifest", nil)
 	}
 	return &manifest, manifest.Validate()
 }
