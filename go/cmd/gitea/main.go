@@ -4,24 +4,33 @@ package main
 
 import (
 	"strconv"
-	"strings"
 
 	core "dappco.re/go"
 	"dappco.re/go/scm/gitea"
 )
 
 func main() {
-	newApp().Run()
+	result := newApp()
+	if !result.OK {
+		core.Error("gitea setup failed", "err", result.Value)
+		core.Exit(1)
+		return
+	}
+	result.Value.(*core.Core).Run()
 }
 
-func newApp() *core.Core {
+func newApp() core.Result {
 	app := core.New(core.WithOption("name", "gitea"))
 	app.App().Version = "dev"
 
-	_ = app.Command("repos", core.Command{Action: repos})
-	_ = app.Command("issues", core.Command{Action: issues})
+	if r := app.Command("repos", core.Command{Action: repos}); !r.OK {
+		return r
+	}
+	if r := app.Command("issues", core.Command{Action: issues}); !r.OK {
+		return r
+	}
 
-	return app
+	return core.Ok(app)
 }
 
 func repos(opts core.Options) core.Result {
@@ -97,11 +106,11 @@ func issues(opts core.Options) core.Result {
 }
 
 func splitRepo(value string) (string, string) {
-	parts := strings.SplitN(value, "/", 2)
+	parts := core.SplitN(value, "/", 2)
 	if len(parts) != 2 {
 		return "", ""
 	}
-	return strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1])
+	return core.Trim(parts[0]), core.Trim(parts[1])
 }
 
 func intOption(opts core.Options, key string) int {

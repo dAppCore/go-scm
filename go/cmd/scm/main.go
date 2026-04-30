@@ -12,24 +12,42 @@ import (
 )
 
 func main() {
-	newApp().Run()
+	result := newApp()
+	if !result.OK {
+		core.Error("scm setup failed", "err", result.Value)
+		core.Exit(1)
+		return
+	}
+	result.Value.(*core.Core).Run()
 }
 
-func newApp() *core.Core {
+func newApp() core.Result {
 	app := core.New(
 		core.WithOption("name", "scm"),
 		core.WithService(scm.NewCoreService(scm.Options{})),
 	)
 	app.App().Version = "dev"
 
-	_ = app.Command("health", core.Command{Action: health(app)})
-	_ = app.Command("dev/health", core.Command{Action: health(app)})
-	_ = compilecmd.Register(app)
-	_ = signcmd.Register(app)
-	_ = verifycmd.Register(app)
-	_ = pkgcmd.Register(app)
+	if r := app.Command("health", core.Command{Action: health(app)}); !r.OK {
+		return r
+	}
+	if r := app.Command("dev/health", core.Command{Action: health(app)}); !r.OK {
+		return r
+	}
+	if r := compilecmd.Register(app); !r.OK {
+		return r
+	}
+	if r := signcmd.Register(app); !r.OK {
+		return r
+	}
+	if r := verifycmd.Register(app); !r.OK {
+		return r
+	}
+	if r := pkgcmd.Register(app); !r.OK {
+		return r
+	}
 
-	return app
+	return core.Ok(app)
 }
 
 func health(app *core.Core) core.CommandAction {

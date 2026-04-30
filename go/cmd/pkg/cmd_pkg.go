@@ -4,10 +4,7 @@
 package pkg
 
 import (
-	"os"
-	"path/filepath"
 	"sort"
-	"strings"
 
 	core "dappco.re/go"
 	"dappco.re/go/scm/manifest"
@@ -24,40 +21,39 @@ func Register(app *core.Core) core.Result {
 	if app == nil {
 		return core.Fail(core.E("cmd.pkg.Register", "core app is required", nil))
 	}
-	return app.Command("pkg", core.Command{Action: run})
+	return app.Command("pkg", core.Command{Action: run(app)})
 }
 
-func run(opts core.Options) core.Result {
-	if wantsHelp(opts) {
-		core.Print(nil, usage)
+func run(app *core.Core) core.CommandAction {
+	return func(opts core.Options) core.Result {
+		if wantsHelp(opts) {
+			core.Print(nil, usage)
+			return core.Ok(nil)
+		}
+
+		root := option(opts, "root", ".")
+		dirs := packageDirs(opts, root)
+		idx, err := buildIndex(app, dirs, opts.String("base-url"), opts.String("org"))
+		if err != nil {
+			return failed(err)
+		}
+
+		outPath := option(opts, "out", core.PathJoin(root, "marketplace", "index.json"))
+		if err := writeIndex(app, outPath, idx); err != nil {
+			return failed(err)
+		}
+
+		core.Print(nil, "%s", outPath)
 		return core.Ok(nil)
 	}
-
-	root := option(opts, "root", ".")
-	dirs := packageDirs(opts, root)
-	idx, err := buildIndex(dirs, opts.String("base-url"), opts.String("org"))
-	if err != nil {
-		return failed(err)
-	}
-
-	outPath := option(opts, "out", filepath.Join(root, "marketplace", "index.json"))
-	if err := mkdirParent(outPath); err != nil {
-		return failed(err)
-	}
-	if err := marketplace.WriteIndex(outPath, idx); err != nil {
-		return failed(err)
-	}
-
-	core.Print(nil, "%s", outPath)
-	return core.Ok(nil)
 }
 
-func buildIndex(dirs []string, baseURL, org string) (*marketplace.Index, error) {
+func buildIndex(app *core.Core, dirs []string, baseURL, org string) (*marketplace.Index, error) {
 	var manifests []*manifest.Manifest
 	var collectionDirs []string
 
 	for _, dir := range dirs {
-		m, err := loadPackageManifest(dir)
+		m, err := loadPackageManifest(app, dir)
 		if err == nil {
 			manifests = append(manifests, m)
 			continue
@@ -85,15 +81,15 @@ func buildIndex(dirs []string, baseURL, org string) (*marketplace.Index, error) 
 	return idx, nil
 }
 
-func loadPackageManifest(root string) (*manifest.Manifest, error) {
-	if raw, err := os.ReadFile(filepath.Join(root, "core.json")); err == nil {
+func loadPackageManifest(app *core.Core, root string) (*manifest.Manifest, error) {
+	if raw, err := readFile(app, core.PathJoin(root, "core.json")); err == nil {
 		cm, err := manifest.ParseCompiled(raw)
 		if err != nil {
 			return nil, err
 		}
 		return &cm.Manifest, nil
 	}
-	raw, err := os.ReadFile(filepath.Join(root, ".core", "manifest.yaml"))
+	raw, err := readFile(app, core.PathJoin(root, ".core", "manifest.yaml"))
 	if err != nil {
 		return nil, err
 	}
@@ -104,10 +100,10 @@ func packageDirs(opts core.Options, root string) []string {
 	if dirs := splitList(opts.String("dirs")); len(dirs) > 0 {
 		return dirs
 	}
-	if dir := strings.TrimSpace(opts.String("dir")); dir != "" {
+	if dir := core.Trim(opts.String("dir")); dir != "" {
 		return []string{dir}
 	}
-	if arg := strings.TrimSpace(opts.String("_arg")); arg != "" {
+	if arg := core.Trim(opts.String("_arg")); arg != "" {
 		return []string{arg}
 	}
 	return []string{root}
@@ -117,7 +113,7 @@ func uniqueCategories(existing, extra []string) []string {
 	seen := map[string]struct{}{}
 	out := make([]string, 0, len(existing)+len(extra))
 	for _, category := range append(existing, extra...) {
-		category = strings.TrimSpace(category)
+		category = core.Trim(category)
 		if category == "" {
 			continue
 		}
@@ -131,13 +127,13 @@ func uniqueCategories(existing, extra []string) []string {
 }
 
 func applyRepoDefaults(idx *marketplace.Index, baseURL, org string) {
-	if idx == nil || strings.TrimSpace(baseURL) == "" {
+	if idx == nil || core.Trim(baseURL) == "" {
 		return
 	}
-	if strings.TrimSpace(org) == "" {
+	if core.Trim(org) == "" {
 		org = "core"
 	}
-	baseURL = strings.TrimRight(baseURL, "/")
+	baseURL = trimRightSlash(baseURL)
 	for i := range idx.Modules {
 		if idx.Modules[i].Repo == "" && idx.Modules[i].Code != "" {
 			idx.Modules[i].Repo = baseURL + "/" + org + "/" + idx.Modules[i].Code
@@ -156,32 +152,24 @@ func sortIndex(idx *marketplace.Index) {
 }
 
 func option(opts core.Options, key, fallback string) string {
-	if value := strings.TrimSpace(opts.String(key)); value != "" {
+	if value := core.Trim(opts.String(key)); value != "" {
 		return value
 	}
 	return fallback
 }
 
 func splitList(value string) []string {
-	if strings.TrimSpace(value) == "" {
+	if core.Trim(value) == "" {
 		return nil
 	}
-	parts := strings.Split(value, ",")
+	parts := core.Split(value, ",")
 	out := make([]string, 0, len(parts))
 	for _, part := range parts {
-		if part = strings.TrimSpace(part); part != "" {
+		if part = core.Trim(part); part != "" {
 			out = append(out, part)
 		}
 	}
 	return out
-}
-
-func mkdirParent(path string) error {
-	dir := filepath.Dir(path)
-	if dir == "." || dir == "" {
-		return nil
-	}
-	return os.MkdirAll(dir, 0o755)
 }
 
 func wantsHelp(opts core.Options) bool {
@@ -190,4 +178,51 @@ func wantsHelp(opts core.Options) bool {
 
 func failed(err error) core.Result {
 	return core.Fail(err)
+}
+
+func writeIndex(app *core.Core, path string, idx *marketplace.Index) error {
+	if idx == nil {
+		return core.E("cmd.pkg.writeIndex", "index is required", nil)
+	}
+	r := core.JSONMarshalIndent(idx, "", "  ")
+	if !r.OK {
+		return resultError("cmd.pkg.writeIndex", "marshal index", r)
+	}
+	raw, ok := r.Value.([]byte)
+	if !ok {
+		return core.E("cmd.pkg.writeIndex", "marshal returned invalid payload", nil)
+	}
+	if writeResult := app.Fs().WriteMode(path, string(raw), 0o600); !writeResult.OK {
+		return resultError("cmd.pkg.writeIndex", "write index", writeResult)
+	}
+	return nil
+}
+
+func readFile(app *core.Core, path string) ([]byte, error) {
+	if app == nil {
+		return nil, core.E("cmd.pkg.readFile", "core app is required", nil)
+	}
+	r := app.Fs().Read(path)
+	if !r.OK {
+		return nil, resultError("cmd.pkg.readFile", "read file", r)
+	}
+	raw, ok := r.Value.(string)
+	if !ok {
+		return nil, core.E("cmd.pkg.readFile", "read returned invalid payload", nil)
+	}
+	return []byte(raw), nil
+}
+
+func resultError(op, msg string, r core.Result) error {
+	if err, ok := r.Value.(error); ok {
+		return core.E(op, msg, err)
+	}
+	return core.E(op, msg, nil)
+}
+
+func trimRightSlash(value string) string {
+	for core.HasSuffix(value, "/") {
+		value = core.TrimSuffix(value, "/")
+	}
+	return value
 }

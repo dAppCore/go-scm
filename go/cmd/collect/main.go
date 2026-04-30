@@ -10,18 +10,30 @@ import (
 )
 
 func main() {
-	newApp().Run()
+	result := newApp()
+	if !result.OK {
+		core.Error("collect setup failed", "err", result.Value)
+		core.Exit(1)
+		return
+	}
+	result.Value.(*core.Core).Run()
 }
 
-func newApp() *core.Core {
+func newApp() core.Result {
 	app := core.New(core.WithOption("name", "collect"))
 	app.App().Version = "dev"
 
-	_ = app.Command("github", core.Command{Action: github})
-	_ = app.Command("market", core.Command{Action: market})
-	_ = app.Command("papers", core.Command{Action: papers})
+	if r := app.Command("github", core.Command{Action: github}); !r.OK {
+		return r
+	}
+	if r := app.Command("market", core.Command{Action: market}); !r.OK {
+		return r
+	}
+	if r := app.Command("papers", core.Command{Action: papers}); !r.OK {
+		return r
+	}
 
-	return app
+	return core.Ok(app)
 }
 
 func github(opts core.Options) core.Result {

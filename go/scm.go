@@ -6,8 +6,6 @@ package scm
 import (
 	// Note: AX-6 — Core lifecycle hooks use context.Context directly.
 	"context"
-	// Note: AX-6 — Constructor failures return standard error values through core.Result.
-	"errors"
 
 	core "dappco.re/go"
 	coreio "dappco.re/go/io"
@@ -74,7 +72,7 @@ func (r *Registry) Medium() coreio.Medium {
 func NewCoreService(opts Options) func(*core.Core) core.Result {
 	return func(c *core.Core) core.Result {
 		if c == nil {
-			return core.Fail(errors.New("scm.NewCoreService: core is required"))
+			return core.Fail(core.E("scm.NewCoreService", "core is required", nil))
 		}
 		if result := registerReposService(c, opts); !result.OK {
 			return result

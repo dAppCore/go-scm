@@ -5,8 +5,6 @@ package git
 import (
 	"context"
 	"iter"
-	// Note: AX-6 — validatePath requires filepath.Rel; no core relative-path primitive exists.
-	"path/filepath"
 	"sync"
 
 	core "dappco.re/go"
@@ -277,8 +275,13 @@ func (s *Service) validatePath(path string) error {
 	if !core.PathIsAbs(workDir) {
 		return core.E(sonarServiceGitValidatepath, "WorkDir must be absolute", nil)
 	}
-	rel, err := filepath.Rel(workDir, core.CleanPath(path, ds))
-	if err != nil || rel == ".." || core.HasPrefix(rel, ".."+ds) {
+	relResult := core.PathRel(workDir, core.CleanPath(path, ds))
+	rel, _ := relResult.Value.(string)
+	if !relResult.OK {
+		err, _ := relResult.Value.(error)
+		return core.E(sonarServiceGitValidatepath, "path is outside of allowed WorkDir", err)
+	}
+	if rel == ".." || core.HasPrefix(rel, ".."+ds) {
 		return core.E(sonarServiceGitValidatepath, "path is outside of allowed WorkDir", nil)
 	}
 	return nil
