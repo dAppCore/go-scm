@@ -131,7 +131,7 @@ func (j *Journal) Append(signal *PipelineSignal, result *ActionResult) error  /*
 	if !ok {
 		return core.E(sonarJournalJobrunnerJournalAppend, "open journal returned invalid writer", nil)
 	}
-	defer f.Close
+	defer f.Close()
 
 	if _, err := f.Write(append(payload, '\n')); err != nil {
 		return core.E(sonarJournalJobrunnerJournalAppend, "write journal", err)
