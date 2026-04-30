@@ -1,3 +1,4 @@
+---
 version: "3"
 
 tasks:
@@ -31,7 +32,8 @@ tasks:
         "$bin" repos --help >/dev/null
         "$bin" issues --help >/dev/null
         if [ -z "${GITEA_TOKEN:-}" ] || [ -z "${GITEA_SMOKE_REPO:-}" ]; then
-          echo "Skipping gitea authenticated smoke: GITEA_TOKEN/GITEA_SMOKE_REPO unset"
+          echo "Skipping gitea authenticated smoke: \
+          GITEA_TOKEN/GITEA_SMOKE_REPO unset"
           exit 0
         fi
         "$bin" repos >/dev/null

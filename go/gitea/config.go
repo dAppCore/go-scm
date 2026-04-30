@@ -20,23 +20,7 @@ const (
 )
 
 func ResolveConfig(flagURL, flagToken string) (url, token string, err error) {
-	home, homeErr := os.UserHomeDir()
-	if homeErr == nil {
-		path := filepath.Join(home, ".core", "config.yaml")
-		if raw, readErr := os.ReadFile(path); readErr == nil {
-			var data map[string]any
-			if yamlErr := yaml.Unmarshal(raw, &data); yamlErr == nil {
-				if giteaCfg, ok := data["gitea"].(map[string]any); ok {
-					if v, ok := giteaCfg["url"].(string); ok {
-						url = v
-					}
-					if v, ok := giteaCfg["token"].(string); ok {
-						token = v
-					}
-				}
-			}
-		}
-	}
+	url, token = loadGiteaConfigValues()
 
 	if v := os.Getenv("GITEA_URL"); v != "" {
 		url = v
@@ -54,6 +38,25 @@ func ResolveConfig(flagURL, flagToken string) (url, token string, err error) {
 		url = DefaultURL
 	}
 	return url, token, nil
+}
+
+func loadGiteaConfigValues() (string, string) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", ""
+	}
+	raw, err := os.ReadFile(filepath.Join(home, ".core", "config.yaml"))
+	if err != nil {
+		return "", ""
+	}
+	var data map[string]any
+	if err := yaml.Unmarshal(raw, &data); err != nil {
+		return "", ""
+	}
+	giteaCfg, _ := data["gitea"].(map[string]any)
+	url, _ := giteaCfg["url"].(string)
+	token, _ := giteaCfg["token"].(string)
+	return url, token
 }
 
 func NewFromConfig(flagURL, flagToken string) (*Client, error) {

@@ -1,4 +1,4 @@
-const status = document.getElementById("status");
-if (status) {
-  status.textContent = "Embedded UI loaded";
+const statusElement = document.getElementById("status");
+if (statusElement) {
+  statusElement.textContent = "Embedded UI loaded";
 }

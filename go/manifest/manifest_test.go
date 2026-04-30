@@ -12,16 +12,25 @@ import (
 	coreio "dappco.re/go/io"
 )
 
+const (
+	sonarManifestTestCodeGoScmNameCore = "code: go-scm\nname: Core SCM\nversion: 0.9.0\n"
+	sonarManifestTestCoreIO            = "Core I/O"
+	sonarManifestTestCoreManifestYaml  = ".core/manifest.yaml"
+	sonarManifestTestGoScm             = "go-scm"
+	sonarManifestTestLinuxAmd64        = "linux/amd64"
+	sonarManifestTestSignV             = "sign: %v"
+)
+
 func TestManifest_Compile_Good(t *testing.T) {
 	m := &Manifest{
 		Code:        "go-io",
-		Name:        "Core I/O",
+		Name:        sonarManifestTestCoreIO,
 		Description: "I/O provider",
 		Version:     "0.3.0",
 		Modules:     []string{"scm"},
 	}
 	info := BuildInfo{
-		Targets:   []string{"linux/amd64", "darwin/arm64"},
+		Targets:   []string{sonarManifestTestLinuxAmd64, "darwin/arm64"},
 		Checksums: "checksums.txt",
 		SHA256:    "7b1f",
 	}
@@ -50,7 +59,7 @@ func TestManifest_Compile_Good(t *testing.T) {
 }
 
 func TestManifest_Compile_Bad_InvalidManifest(t *testing.T) {
-	_, err := Compile(&Manifest{Name: "Core I/O", Version: "0.3.0"}, BuildInfo{})
+	_, err := Compile(&Manifest{Name: sonarManifestTestCoreIO, Version: "0.3.0"}, BuildInfo{})
 	if err == nil {
 		t.Fatal("expected invalid manifest error")
 	}
@@ -59,10 +68,10 @@ func TestManifest_Compile_Bad_InvalidManifest(t *testing.T) {
 func TestManifest_ParseCoreJSON_Good(t *testing.T) {
 	raw, err := Compile(&Manifest{
 		Code:    "go-io",
-		Name:    "Core I/O",
+		Name:    sonarManifestTestCoreIO,
 		Version: "0.3.0",
 	}, BuildInfo{
-		Targets:   []string{"linux/amd64"},
+		Targets:   []string{sonarManifestTestLinuxAmd64},
 		Checksums: "checksums.txt",
 		SHA256:    "7b1f",
 	})
@@ -77,7 +86,7 @@ func TestManifest_ParseCoreJSON_Good(t *testing.T) {
 	if got.Code != "go-io" || got.Build.SHA256 != "7b1f" {
 		t.Fatalf("unexpected parsed manifest: %#v", got)
 	}
-	if len(got.Build.Targets) != 1 || got.Build.Targets[0] != "linux/amd64" {
+	if len(got.Build.Targets) != 1 || got.Build.Targets[0] != sonarManifestTestLinuxAmd64 {
 		t.Fatalf("unexpected parsed build targets: %#v", got.Build.Targets)
 	}
 }
@@ -98,7 +107,7 @@ func TestManifest_Verify_Good(t *testing.T) {
 	payload := []byte(`{"code":"go-io","version":"0.3.0"}`)
 
 	if err := Sign(m, payload, priv); err != nil {
-		t.Fatalf("sign: %v", err)
+		t.Fatalf(sonarManifestTestSignV, err)
 	}
 	if m.Sign == "" {
 		t.Fatal("expected signature to be populated")
@@ -121,7 +130,7 @@ func TestManifest_Verify_Bad_WrongKey(t *testing.T) {
 	payload := []byte(`{"code":"go-io","version":"0.3.0"}`)
 
 	if err := Sign(m, payload, priv); err != nil {
-		t.Fatalf("sign: %v", err)
+		t.Fatalf(sonarManifestTestSignV, err)
 	}
 	if err := Verify(m, payload); err == nil {
 		t.Fatal("expected wrong key verification to fail")
@@ -137,7 +146,7 @@ func TestManifest_Verify_Bad_TamperedPayload(t *testing.T) {
 	payload := []byte(`{"code":"go-io","version":"0.3.0"}`)
 
 	if err := Sign(m, payload, priv); err != nil {
-		t.Fatalf("sign: %v", err)
+		t.Fatalf(sonarManifestTestSignV, err)
 	}
 	if err := Verify(m, []byte(`{"code":"go-io","version":"0.3.1"}`)); err == nil {
 		t.Fatal("expected tampered payload verification to fail")
@@ -145,13 +154,13 @@ func TestManifest_Verify_Bad_TamperedPayload(t *testing.T) {
 }
 
 func ax7Manifest() *Manifest {
-	return &Manifest{Code: "go-scm", Name: "Core SCM", Version: "0.9.0"}
+	return &Manifest{Code: sonarManifestTestGoScm, Name: "Core SCM", Version: "0.9.0"}
 }
 
 func TestManifestV090_Parse_Good(t *core.T) {
-	m, err := Parse([]byte("code: go-scm\nname: Core SCM\nversion: 0.9.0\n"))
+	m, err := Parse([]byte(sonarManifestTestCodeGoScmNameCore))
 	core.AssertNoError(t, err)
-	core.AssertEqual(t, "go-scm", m.Code)
+	core.AssertEqual(t, sonarManifestTestGoScm, m.Code)
 }
 
 func TestManifestV090_Parse_Bad(t *core.T) {
@@ -252,11 +261,11 @@ func TestManifestV090_Compile_Ugly(t *core.T) {
 }
 
 func TestManifestV090_ParseCoreJSON_Good(t *core.T) {
-	raw, err := Compile(ax7Manifest(), BuildInfo{Targets: []string{"linux/amd64"}})
+	raw, err := Compile(ax7Manifest(), BuildInfo{Targets: []string{sonarManifestTestLinuxAmd64}})
 	core.RequireNoError(t, err)
 	m, err := ParseCoreJSON(raw)
 	core.AssertNoError(t, err)
-	core.AssertEqual(t, "go-scm", m.Code)
+	core.AssertEqual(t, sonarManifestTestGoScm, m.Code)
 }
 
 func TestManifestV090_ParseCoreJSON_Bad(t *core.T) {
@@ -279,7 +288,7 @@ func TestManifestV090_CompileWithOptions_Good(t *core.T) {
 }
 
 func TestManifestV090_CompileWithOptions_Bad(t *core.T) {
-	_, err := CompileWithOptions(&Manifest{Code: "go-scm"}, CompileOptions{})
+	_, err := CompileWithOptions(&Manifest{Code: sonarManifestTestGoScm}, CompileOptions{})
 	core.AssertError(
 		t, err,
 	)
@@ -366,7 +375,7 @@ func TestManifestV090_WriteCompiled_Good(t *core.T) {
 	core.AssertNoError(t, err)
 	raw, readErr := medium.Read("pkg/core.json")
 	core.AssertNoError(t, readErr)
-	core.AssertContains(t, raw, "go-scm")
+	core.AssertContains(t, raw, sonarManifestTestGoScm)
 }
 
 func TestManifestV090_WriteCompiled_Bad(t *core.T) {
@@ -384,10 +393,10 @@ func TestManifestV090_WriteCompiled_Ugly(t *core.T) {
 
 func TestManifestV090_Load_Good(t *core.T) {
 	medium := coreio.NewMemoryMedium()
-	core.RequireNoError(t, medium.Write(".core/manifest.yaml", "code: go-scm\nname: Core SCM\nversion: 0.9.0\n"))
+	core.RequireNoError(t, medium.Write(sonarManifestTestCoreManifestYaml, sonarManifestTestCodeGoScmNameCore))
 	m, err := Load(medium, ".")
 	core.AssertNoError(t, err)
-	core.AssertEqual(t, "go-scm", m.Code)
+	core.AssertEqual(t, sonarManifestTestGoScm, m.Code)
 }
 
 func TestManifestV090_Load_Bad(t *core.T) {
@@ -414,15 +423,15 @@ func TestManifestV090_LoadVerified_Good(t *core.T) {
 	raw, err := MarshalYAML(m)
 	core.RequireNoError(t, err)
 	medium := coreio.NewMemoryMedium()
-	core.RequireNoError(t, medium.Write(".core/manifest.yaml", string(raw)))
+	core.RequireNoError(t, medium.Write(sonarManifestTestCoreManifestYaml, string(raw)))
 	got, err := LoadVerified(medium, ".", pub)
 	core.AssertNoError(t, err)
-	core.AssertEqual(t, "go-scm", got.Code)
+	core.AssertEqual(t, sonarManifestTestGoScm, got.Code)
 }
 
 func TestManifestV090_LoadVerified_Bad(t *core.T) {
 	medium := coreio.NewMemoryMedium()
-	core.RequireNoError(t, medium.Write(".core/manifest.yaml", "code: go-scm\nname: Core SCM\nversion: 0.9.0\n"))
+	core.RequireNoError(t, medium.Write(sonarManifestTestCoreManifestYaml, sonarManifestTestCodeGoScmNameCore))
 	_, err := LoadVerified(medium, ".", nil)
 	core.AssertError(t, err)
 }
@@ -437,7 +446,7 @@ func TestManifestV090_LoadVerified_Ugly(t *core.T) {
 func TestManifestV090_MarshalYAML_Good(t *core.T) {
 	raw, err := MarshalYAML(ax7Manifest())
 	core.AssertNoError(t, err)
-	core.AssertContains(t, string(raw), "go-scm")
+	core.AssertContains(t, string(raw), sonarManifestTestGoScm)
 }
 
 func TestManifestV090_MarshalYAML_Bad(t *core.T) {

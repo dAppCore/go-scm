@@ -14,23 +14,7 @@ import (
 )
 
 func ResolveConfig(flagURL, flagToken string) (url, token string, err error) {
-	home, homeErr := os.UserHomeDir()
-	if homeErr == nil {
-		path := filepath.Join(home, ".core", "config.yaml")
-		if raw, readErr := os.ReadFile(path); readErr == nil {
-			var data map[string]any
-			if yamlErr := yaml.Unmarshal(raw, &data); yamlErr == nil {
-				if forge, ok := data["forge"].(map[string]any); ok {
-					if v, ok := forge["url"].(string); ok {
-						url = v
-					}
-					if v, ok := forge["token"].(string); ok {
-						token = v
-					}
-				}
-			}
-		}
-	}
+	url, token = loadForgeConfigValues()
 	if v := os.Getenv("FORGE_URL"); v != "" {
 		url = v
 	}
@@ -47,6 +31,25 @@ func ResolveConfig(flagURL, flagToken string) (url, token string, err error) {
 		return url, token, errors.New("forge.ResolveConfig: forge url and token are required")
 	}
 	return url, token, nil
+}
+
+func loadForgeConfigValues() (string, string) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", ""
+	}
+	raw, err := os.ReadFile(filepath.Join(home, ".core", "config.yaml"))
+	if err != nil {
+		return "", ""
+	}
+	var data map[string]any
+	if err := yaml.Unmarshal(raw, &data); err != nil {
+		return "", ""
+	}
+	forge, _ := data["forge"].(map[string]any)
+	url, _ := forge["url"].(string)
+	token, _ := forge["token"].(string)
+	return url, token
 }
 
 func NewFromConfig(flagURL, flagToken string) (*Client, error) {

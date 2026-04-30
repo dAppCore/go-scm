@@ -3,6 +3,7 @@
 package api
 
 import (
+	"context"
 	"crypto/ed25519"
 	"encoding/base64"
 	"encoding/json"
@@ -19,6 +20,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const (
+	sonarProviderTestCoreIO  = "Core I/O"
+	sonarProviderTestCoreScm = "core-scm"
+	sonarProviderTestUiAppJs = "ui/app.js"
+)
+
 func TestScmProviderRoutesExposeState(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
@@ -26,10 +33,11 @@ func TestScmProviderRoutesExposeState(t *testing.T) {
 	installer := marketplace.NewInstaller(medium, "modules")
 	mod := signedMarketplaceModule(t, marketplace.Module{
 		Code: "go-io",
-		Name: "Core I/O",
+		Name: sonarProviderTestCoreIO,
 		Repo: "ssh://git@example.com/core/go-io.git",
 	})
-	if err := installer.Install(nil, mod); err != nil {
+	var ctx context.Context
+	if err := installer.Install(ctx, mod); err != nil {
 		t.Fatalf("install module: %v", err)
 	}
 
@@ -56,11 +64,11 @@ func TestScmProviderRoutesExposeState(t *testing.T) {
 	assertRouteOK(t, router, "/scm/health", "ok")
 	assertRouteOK(t, router, "/scm/ui", "Source control operations")
 	assertRouteOK(t, router, "/scm/marketplace", "go-io")
-	assertRouteOK(t, router, "/scm/marketplace/go-io", "Core I/O")
+	assertRouteOK(t, router, "/scm/marketplace/go-io", sonarProviderTestCoreIO)
 	assertRouteOK(t, router, "/scm/repos", "go-io")
 	assertRouteOK(t, router, "/scm/repos/go-io", "/workspace/core/go-io")
 	assertRouteOK(t, router, "/scm/modules", "go-io")
-	assertRouteOK(t, router, "/scm/modules/go-io", "Core I/O")
+	assertRouteOK(t, router, "/scm/modules/go-io", sonarProviderTestCoreIO)
 }
 
 func TestScmProviderMetadataExposesStreamAndElement(t *testing.T) {
@@ -71,10 +79,10 @@ func TestScmProviderMetadataExposesStreamAndElement(t *testing.T) {
 	}
 
 	element := provider.Element()
-	if element.Tag != "core-scm" {
+	if element.Tag != sonarProviderTestCoreScm {
 		t.Fatalf("unexpected element tag: %q", element.Tag)
 	}
-	if element.Source != "ui/app.js" {
+	if element.Source != sonarProviderTestUiAppJs {
 		t.Fatalf("unexpected element source: %q", element.Source)
 	}
 }
@@ -212,18 +220,18 @@ func TestProvider_ScmProvider_Channels_Ugly(t *core.T) {
 func TestProvider_ScmProvider_Element_Good(t *core.T) {
 	provider := NewProvider(nil, nil, nil, nil)
 	got := provider.Element()
-	core.AssertEqual(t, "core-scm", got.Tag)
-	core.AssertEqual(t, "ui/app.js", got.Source)
+	core.AssertEqual(t, sonarProviderTestCoreScm, got.Tag)
+	core.AssertEqual(t, sonarProviderTestUiAppJs, got.Source)
 }
 
 func TestProvider_ScmProvider_Element_Bad(t *core.T) {
 	provider := &ScmProvider{}
 	got := provider.Element()
-	core.AssertEqual(t, "core-scm", got.Tag)
+	core.AssertEqual(t, sonarProviderTestCoreScm, got.Tag)
 }
 
 func TestProvider_ScmProvider_Element_Ugly(t *core.T) {
 	var provider *ScmProvider
 	got := provider.Element()
-	core.AssertEqual(t, "ui/app.js", got.Source)
+	core.AssertEqual(t, sonarProviderTestUiAppJs, got.Source)
 }

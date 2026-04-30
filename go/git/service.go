@@ -12,6 +12,13 @@ import (
 	core "dappco.re/go"
 )
 
+const (
+	sonarServiceGitPull              = "git.pull"
+	sonarServiceGitPush              = "git.push"
+	sonarServiceGitValidatepath      = "git.validatePath"
+	sonarServicePathValidationFailed = "path validation failed"
+)
+
 type ServiceOptions struct {
 	WorkDir string
 }
@@ -145,10 +152,10 @@ func (s *Service) OnStartup(ctx context.Context) core.Result {
 	c.RegisterQuery(s.handleQuery)
 	c.RegisterAction(s.handleTaskMessage)
 
-	c.Action("git.push", func(ctx context.Context, opts core.Options) core.Result {
+	c.Action(sonarServiceGitPush, func(ctx context.Context, opts core.Options) core.Result {
 		return s.runPush(ctx, opts.String("path"))
 	})
-	c.Action("git.pull", func(ctx context.Context, opts core.Options) core.Result {
+	c.Action(sonarServiceGitPull, func(ctx context.Context, opts core.Options) core.Result {
 		return s.runPull(ctx, opts.String("path"))
 	})
 	c.Action("git.push-multiple", func(ctx context.Context, opts core.Options) core.Result {
@@ -178,7 +185,7 @@ func (s *Service) handleQuery(c *core.Core, q core.Query) core.Result {
 	switch m := q.(type) {
 	case QueryStatus:
 		if err := s.validatePaths(m.Paths); err != nil {
-			return c.LogError(err, "git.handleQuery", "path validation failed")
+			return c.LogError(err, "git.handleQuery", sonarServicePathValidationFailed)
 		}
 		statuses := Status(ctx, StatusOptions(m))
 		s.mu.Lock()
@@ -213,27 +220,27 @@ func (s *Service) handleTaskMessage(c *core.Core, msg core.Message) core.Result 
 
 func (s *Service) runPush(ctx context.Context, path string) core.Result {
 	if err := s.validatePath(path); err != nil {
-		return s.Core().LogError(err, "git.push", "path validation failed")
+		return s.Core().LogError(err, sonarServiceGitPush, sonarServicePathValidationFailed)
 	}
 	if err := Push(ctx, path); err != nil {
-		return s.Core().LogError(err, "git.push", "push failed")
+		return s.Core().LogError(err, sonarServiceGitPush, "push failed")
 	}
 	return core.Ok(nil)
 }
 
 func (s *Service) runPull(ctx context.Context, path string) core.Result {
 	if err := s.validatePath(path); err != nil {
-		return s.Core().LogError(err, "git.pull", "path validation failed")
+		return s.Core().LogError(err, sonarServiceGitPull, sonarServicePathValidationFailed)
 	}
 	if err := Pull(ctx, path); err != nil {
-		return s.Core().LogError(err, "git.pull", "pull failed")
+		return s.Core().LogError(err, sonarServiceGitPull, "pull failed")
 	}
 	return core.Ok(nil)
 }
 
 func (s *Service) runPushMultiple(ctx context.Context, paths []string, names map[string]string) core.Result {
 	if err := s.validatePaths(paths); err != nil {
-		return s.Core().LogError(err, "git.push-multiple", "path validation failed")
+		return s.Core().LogError(err, "git.push-multiple", sonarServicePathValidationFailed)
 	}
 	results := PushMultiple(ctx, paths, names)
 	for _, result := range results {
@@ -246,7 +253,7 @@ func (s *Service) runPushMultiple(ctx context.Context, paths []string, names map
 
 func (s *Service) runPullMultiple(ctx context.Context, paths []string, names map[string]string) core.Result {
 	if err := s.validatePaths(paths); err != nil {
-		return s.Core().LogError(err, "git.pull-multiple", "path validation failed")
+		return s.Core().LogError(err, "git.pull-multiple", sonarServicePathValidationFailed)
 	}
 	results := PullMultiple(ctx, paths, names)
 	for _, result := range results {
@@ -264,15 +271,15 @@ func (s *Service) validatePath(path string) error {
 	}
 	workDir := s.Options().WorkDir
 	if workDir == "" {
-		return core.E("git.validatePath", "path must be absolute", nil)
+		return core.E(sonarServiceGitValidatepath, "path must be absolute", nil)
 	}
 	workDir = core.CleanPath(workDir, ds)
 	if !core.PathIsAbs(workDir) {
-		return core.E("git.validatePath", "WorkDir must be absolute", nil)
+		return core.E(sonarServiceGitValidatepath, "WorkDir must be absolute", nil)
 	}
 	rel, err := filepath.Rel(workDir, core.CleanPath(path, ds))
 	if err != nil || rel == ".." || core.HasPrefix(rel, ".."+ds) {
-		return core.E("git.validatePath", "path is outside of allowed WorkDir", nil)
+		return core.E(sonarServiceGitValidatepath, "path is outside of allowed WorkDir", nil)
 	}
 	return nil
 }

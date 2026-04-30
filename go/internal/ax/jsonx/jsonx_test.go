@@ -2,7 +2,11 @@
 
 package jsonx
 
-import core "dappco.re/go"
+import (
+	"math"
+
+	core "dappco.re/go"
+)
 
 func TestJsonx_Marshal_Good(t *core.T) {
 	got, err := Marshal(map[string]string{"agent": "codex"})
@@ -11,7 +15,7 @@ func TestJsonx_Marshal_Good(t *core.T) {
 }
 
 func TestJsonx_Marshal_Bad(t *core.T) {
-	_, err := Marshal(func() {})
+	_, err := Marshal(math.Inf(1))
 	core.AssertError(
 		t, err,
 	)
@@ -75,7 +79,7 @@ func TestJsonx_NewEncoder_Good(t *core.T) {
 func TestJsonx_NewEncoder_Bad(t *core.T) {
 	builder := core.NewBuilder()
 	encoder := NewEncoder(builder)
-	err := encoder.Encode(func() {})
+	err := encoder.Encode(math.Inf(1))
 	core.AssertError(t, err)
 }
 

@@ -12,6 +12,14 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+const (
+	sonarAgentciTestAgentLocal     = "agent.local"
+	sonarAgentciTestAgentYaml      = "agent.yaml"
+	sonarAgentciTestClothoVerified = "clotho-verified"
+	sonarAgentciTestCodexBot       = "codex-bot"
+	sonarAgentciTestEchoReady      = "echo ready"
+)
+
 func ax7AgentConfig(t *core.T) *config.Config {
 	r := config.New(config.WithPath(filepath.Join(t.TempDir(), "config.yaml")))
 	core.RequireNoError(t, configResultError(r))
@@ -89,10 +97,10 @@ func TestAgentci_LoadActiveAgents_Ugly(t *core.T) {
 
 func TestAgentci_LoadClothoConfig_Good(t *core.T) {
 	cfg := ax7AgentConfig(t)
-	core.RequireNoError(t, configResultError(cfg.Set("clotho", map[string]any{"strategy": "clotho-verified", "validation_threshold": 0.75})))
+	core.RequireNoError(t, configResultError(cfg.Set("clotho", map[string]any{"strategy": sonarAgentciTestClothoVerified, "validation_threshold": 0.75})))
 	got, err := LoadClothoConfig(cfg)
 	core.AssertNoError(t, err)
-	core.AssertEqual(t, "clotho-verified", got.Strategy)
+	core.AssertEqual(t, sonarAgentciTestClothoVerified, got.Strategy)
 	core.AssertEqual(t, 0.75, got.ValidationThreshold)
 }
 
@@ -112,11 +120,11 @@ func TestAgentci_LoadClothoConfig_Ugly(t *core.T) {
 
 func TestAgentci_SaveAgent_Good(t *core.T) {
 	cfg := ax7AgentConfig(t)
-	err := SaveAgent(cfg, "codex", AgentConfig{Host: "agent.local", Active: true})
+	err := SaveAgent(cfg, "codex", AgentConfig{Host: sonarAgentciTestAgentLocal, Active: true})
 	core.AssertNoError(t, err)
 	agents, loadErr := LoadAgents(cfg)
 	core.RequireNoError(t, loadErr)
-	core.AssertEqual(t, "agent.local", agents["codex"].Host)
+	core.AssertEqual(t, sonarAgentciTestAgentLocal, agents["codex"].Host)
 }
 
 func TestAgentci_SaveAgent_Bad(t *core.T) {
@@ -159,9 +167,9 @@ func TestAgentci_RemoveAgent_Ugly(t *core.T) {
 }
 
 func TestAgentci_AgentConfig_MarshalYAML_Good(t *core.T) {
-	raw, err := yaml.Marshal(AgentConfig{Host: "agent.local", Roles: []string{"coder"}})
+	raw, err := yaml.Marshal(AgentConfig{Host: sonarAgentciTestAgentLocal, Roles: []string{"coder"}})
 	core.AssertNoError(t, err)
-	core.AssertContains(t, string(raw), "agent.local")
+	core.AssertContains(t, string(raw), sonarAgentciTestAgentLocal)
 }
 
 func TestAgentci_AgentConfig_MarshalYAML_Bad(t *core.T) {
@@ -180,7 +188,7 @@ func TestAgentci_AgentConfig_UnmarshalYAML_Good(t *core.T) {
 	var agent AgentConfig
 	err := yaml.Unmarshal([]byte("host: agent.local\nactive: true\n"), &agent)
 	core.AssertNoError(t, err)
-	core.AssertEqual(t, "agent.local", agent.Host)
+	core.AssertEqual(t, sonarAgentciTestAgentLocal, agent.Host)
 	core.AssertTrue(t, agent.Active)
 }
 
@@ -217,7 +225,7 @@ func TestAgentci_NewSpinner_Ugly(t *core.T) {
 }
 
 func TestAgentci_Spinner_DeterminePlan_Good(t *core.T) {
-	spinner := NewSpinner(ClothoConfig{Strategy: "clotho-verified"}, map[string]AgentConfig{})
+	spinner := NewSpinner(ClothoConfig{Strategy: sonarAgentciTestClothoVerified}, map[string]AgentConfig{})
 	got := spinner.DeterminePlan(&jobrunner.PipelineSignal{NeedsCoding: true}, "codex")
 	core.AssertEqual(t, RunModeClothoVerified, got)
 }
@@ -235,11 +243,11 @@ func TestAgentci_Spinner_DeterminePlan_Ugly(t *core.T) {
 }
 
 func TestAgentci_Spinner_FindByForgejoUser_Good(t *core.T) {
-	spinner := NewSpinner(ClothoConfig{}, map[string]AgentConfig{"codex": {ForgejoUser: "codex-bot"}})
-	name, agent, ok := spinner.FindByForgejoUser("codex-bot")
+	spinner := NewSpinner(ClothoConfig{}, map[string]AgentConfig{"codex": {ForgejoUser: sonarAgentciTestCodexBot}})
+	name, agent, ok := spinner.FindByForgejoUser(sonarAgentciTestCodexBot)
 	core.AssertTrue(t, ok)
 	core.AssertEqual(t, "codex", name)
-	core.AssertEqual(t, "codex-bot", agent.ForgejoUser)
+	core.AssertEqual(t, sonarAgentciTestCodexBot, agent.ForgejoUser)
 }
 
 func TestAgentci_Spinner_FindByForgejoUser_Bad(t *core.T) {
@@ -334,14 +342,14 @@ func TestAgentci_ValidatePathElement_Ugly(t *core.T) {
 
 func TestAgentci_ResolvePathWithinRoot_Good(t *core.T) {
 	root := t.TempDir()
-	name, path, err := ResolvePathWithinRoot(root, "agent.yaml")
+	name, path, err := ResolvePathWithinRoot(root, sonarAgentciTestAgentYaml)
 	core.AssertNoError(t, err)
-	core.AssertEqual(t, "agent.yaml", name)
-	core.AssertEqual(t, filepath.Join(root, "agent.yaml"), path)
+	core.AssertEqual(t, sonarAgentciTestAgentYaml, name)
+	core.AssertEqual(t, filepath.Join(root, sonarAgentciTestAgentYaml), path)
 }
 
 func TestAgentci_ResolvePathWithinRoot_Bad(t *core.T) {
-	_, _, err := ResolvePathWithinRoot("", "agent.yaml")
+	_, _, err := ResolvePathWithinRoot("", sonarAgentciTestAgentYaml)
 	core.AssertError(
 		t, err,
 	)
@@ -414,9 +422,9 @@ func TestAgentci_EscapeShellArg_Ugly(t *core.T) {
 }
 
 func TestAgentci_SecureSSHCommand_Good(t *core.T) {
-	cmd := SecureSSHCommand("agent.local", "echo ready")
+	cmd := SecureSSHCommand(sonarAgentciTestAgentLocal, sonarAgentciTestEchoReady)
 	core.AssertEqual(t, "ssh", filepath.Base(cmd.Path))
-	core.AssertContains(t, cmd.Args, "agent.local")
+	core.AssertContains(t, cmd.Args, sonarAgentciTestAgentLocal)
 }
 
 func TestAgentci_SecureSSHCommand_Bad(t *core.T) {
@@ -426,28 +434,29 @@ func TestAgentci_SecureSSHCommand_Bad(t *core.T) {
 }
 
 func TestAgentci_SecureSSHCommand_Ugly(t *core.T) {
-	cmd := SecureSSHCommand("agent.local", "printf 'x'")
+	cmd := SecureSSHCommand(sonarAgentciTestAgentLocal, "printf 'x'")
 	core.AssertContains(
 		t, cmd.Args, "StrictHostKeyChecking=yes",
 	)
 }
 
 func TestAgentci_SecureSSHCommandContext_Good(t *core.T) {
-	cmd := SecureSSHCommandContext(context.Background(), "agent.local", "echo ready")
+	cmd := SecureSSHCommandContext(context.Background(), sonarAgentciTestAgentLocal, sonarAgentciTestEchoReady)
 	core.AssertEqual(t, "ssh", filepath.Base(cmd.Path))
-	core.AssertContains(t, cmd.Args, "echo ready")
+	core.AssertContains(t, cmd.Args, sonarAgentciTestEchoReady)
 }
 
 func TestAgentci_SecureSSHCommandContext_Bad(t *core.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	cmd := SecureSSHCommandContext(ctx, "agent.local", "echo ready")
+	cmd := SecureSSHCommandContext(ctx, sonarAgentciTestAgentLocal, sonarAgentciTestEchoReady)
 	core.AssertNotNil(t, cmd)
 	core.AssertNotNil(t, cmd.Cancel)
 }
 
 func TestAgentci_SecureSSHCommandContext_Ugly(t *core.T) {
-	cmd := SecureSSHCommandContext(nil, "agent.local", "echo ready")
+	var ctx context.Context
+	cmd := SecureSSHCommandContext(ctx, sonarAgentciTestAgentLocal, sonarAgentciTestEchoReady)
 	core.AssertNotNil(t, cmd)
 	core.AssertContains(t, cmd.Args, "BatchMode=yes")
 }

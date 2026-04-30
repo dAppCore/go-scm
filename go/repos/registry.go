@@ -18,6 +18,12 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+const (
+	sonarRegistryMediumIsRequired      = "medium is required"
+	sonarRegistryReposRegistrySyncrepo = "repos.Registry.SyncRepo"
+	sonarRegistryReposYaml             = "repos.yaml"
+)
+
 type RepoType string
 
 type RegistryDefaults struct {
@@ -131,49 +137,59 @@ func (r *Registry) TopologicalOrder() ([]*Repo, error) {
 	if len(repos) == 0 {
 		return nil, nil
 	}
-	byName := make(map[string]*Repo, len(repos))
-	for _, repo := range repos {
-		byName[repo.Name] = repo
-	}
+	byName := reposByName(repos)
 	var ordered []*Repo
 	seen := map[string]bool{}
-	var visit func(string, map[string]bool) error
-	visit = func(name string, stack map[string]bool) error {
-		if seen[name] {
-			return nil
-		}
-		if stack[name] {
-			return core.E("repos.Registry.TopologicalOrder", "dependency cycle", nil)
-		}
-		repo := byName[name]
-		if repo == nil {
-			return nil
-		}
-		if stack == nil {
-			stack = make(map[string]bool)
-		}
-		stack[name] = true
-		for _, dep := range repo.DependsOn {
-			if err := visit(dep, stack); err != nil {
-				return err
-			}
-		}
-		delete(stack, name)
-		seen[name] = true
-		ordered = append(ordered, repo)
-		return nil
-	}
 	for _, repo := range repos {
-		if err := visit(repo.Name, nil); err != nil {
+		if err := visitRepo(repo.Name, byName, seen, nil, &ordered); err != nil {
 			return nil, err
 		}
 	}
 	return ordered, nil
 }
 
+func reposByName(repos []*Repo) map[string]*Repo {
+	byName := make(map[string]*Repo, len(repos))
+	for _, repo := range repos {
+		byName[repo.Name] = repo
+	}
+	return byName
+}
+
+func visitRepo(name string, byName map[string]*Repo, seen map[string]bool, stack map[string]bool, ordered *[]*Repo) error {
+	if seen[name] {
+		return nil
+	}
+	if stack[name] {
+		return core.E("repos.Registry.TopologicalOrder", "dependency cycle", nil)
+	}
+	repo := byName[name]
+	if repo == nil {
+		return nil
+	}
+	nextStack := repoVisitStack(stack, name)
+	for _, dep := range repo.DependsOn {
+		if err := visitRepo(dep, byName, seen, nextStack, ordered); err != nil {
+			return err
+		}
+	}
+	delete(nextStack, name)
+	seen[name] = true
+	*ordered = append(*ordered, repo)
+	return nil
+}
+
+func repoVisitStack(stack map[string]bool, name string) map[string]bool {
+	if stack == nil {
+		stack = make(map[string]bool)
+	}
+	stack[name] = true
+	return stack
+}
+
 func LoadRegistry(m coreio.Medium, path string) (*Registry, error) {
 	if m == nil {
-		return nil, core.E("repos.LoadRegistry", "medium is required", nil)
+		return nil, core.E("repos.LoadRegistry", sonarRegistryMediumIsRequired, nil)
 	}
 	raw, err := m.Read(path)
 	if err != nil {
@@ -202,32 +218,9 @@ func LoadRegistry(m coreio.Medium, path string) (*Registry, error) {
 
 func FindRegistry(m coreio.Medium) (string, error) {
 	if m == nil {
-		return "", core.E("repos.FindRegistry", "medium is required", nil)
+		return "", core.E("repos.FindRegistry", sonarRegistryMediumIsRequired, nil)
 	}
-	candidates := []string{"repos.yaml", filepathx.Join(".core", "repos.yaml")}
-	if env := core.Trim(osx.Getenv("CORE_REPOS")); env != "" {
-		for _, candidate := range core.Split(env, core.Env("PS")) {
-			candidate = core.Trim(candidate)
-			if candidate != "" {
-				candidates = append([]string{candidate}, candidates...)
-			}
-		}
-	}
-	if cwd, err := osx.Getwd(); err == nil {
-		dir := cwd
-		for {
-			candidates = append(candidates, filepathx.Join(dir, ".core", "repos.yaml"))
-			parent := filepathx.Dir(dir)
-			if parent == dir {
-				break
-			}
-			dir = parent
-		}
-	}
-	if home, err := osx.UserHomeDir(); err == nil {
-		candidates = append(candidates, filepathx.Join(home, ".core", "repos.yaml"))
-	}
-	for _, candidate := range candidates {
+	for _, candidate := range registryCandidates() {
 		if m.Exists(candidate) {
 			return candidate, nil
 		}
@@ -235,9 +228,47 @@ func FindRegistry(m coreio.Medium) (string, error) {
 	return "", fs.ErrNotExist
 }
 
+func registryCandidates() []string {
+	candidates := []string{sonarRegistryReposYaml, filepathx.Join(".core", sonarRegistryReposYaml)}
+	candidates = prependEnvRegistryCandidates(candidates)
+	candidates = append(candidates, cwdRegistryCandidates()...)
+	if home, err := osx.UserHomeDir(); err == nil {
+		candidates = append(candidates, filepathx.Join(home, ".core", sonarRegistryReposYaml))
+	}
+	return candidates
+}
+
+func prependEnvRegistryCandidates(candidates []string) []string {
+	env := core.Trim(osx.Getenv("CORE_REPOS"))
+	if env == "" {
+		return candidates
+	}
+	for _, candidate := range core.Split(env, core.Env("PS")) {
+		candidate = core.Trim(candidate)
+		if candidate != "" {
+			candidates = append([]string{candidate}, candidates...)
+		}
+	}
+	return candidates
+}
+
+func cwdRegistryCandidates() []string {
+	cwd, err := osx.Getwd()
+	if err != nil {
+		return nil
+	}
+	var candidates []string
+	for dir := cwd; ; dir = filepathx.Dir(dir) {
+		candidates = append(candidates, filepathx.Join(dir, ".core", sonarRegistryReposYaml))
+		if parent := filepathx.Dir(dir); parent == dir {
+			return candidates
+		}
+	}
+}
+
 func ScanDirectory(m coreio.Medium, dir string) (*Registry, error) {
 	if m == nil {
-		return nil, core.E("repos.ScanDirectory", "medium is required", nil)
+		return nil, core.E("repos.ScanDirectory", sonarRegistryMediumIsRequired, nil)
 	}
 	entries, err := m.List(dir)
 	if err != nil {
@@ -274,14 +305,14 @@ func (r *Registry) Save(path string) error {
 // SyncRepo fetches and resets a named repo to match its Forge remote branch.
 func (r *Registry) SyncRepo(ctx context.Context, name, remote, branch string) error {
 	if r == nil {
-		return core.E("repos.Registry.SyncRepo", "registry is required", nil)
+		return core.E(sonarRegistryReposRegistrySyncrepo, "registry is required", nil)
 	}
 	repo, ok := r.Get(name)
 	if !ok {
-		return core.E("repos.Registry.SyncRepo", core.Sprintf("repo %q not found", name), nil)
+		return core.E(sonarRegistryReposRegistrySyncrepo, core.Sprintf("repo %q not found", name), nil)
 	}
 	if repo.Path == "" {
-		return core.E("repos.Registry.SyncRepo", core.Sprintf("repo %q has no path", name), nil)
+		return core.E(sonarRegistryReposRegistrySyncrepo, core.Sprintf("repo %q has no path", name), nil)
 	}
 	return git.SyncWithRemote(ctx, repo.Path, remote, branch)
 }

@@ -13,6 +13,10 @@ import (
 	coreio "dappco.re/go/io"
 )
 
+const (
+	sonarInstallerTestPluginsRegistryJson = "plugins/registry.json"
+)
+
 func TestInstallerPersistsInstallUpdateAndRemove(t *testing.T) {
 	medium := coreio.NewMockMedium()
 	registry := NewRegistry(medium, "plugins")
@@ -22,7 +26,7 @@ func TestInstallerPersistsInstallUpdateAndRemove(t *testing.T) {
 		t.Fatalf("Install: %v", err)
 	}
 
-	raw, ok := medium.Files["plugins/registry.json"]
+	raw, ok := medium.Files[sonarInstallerTestPluginsRegistryJson]
 	if !ok {
 		t.Fatalf("expected registry to be saved after install")
 	}
@@ -35,7 +39,7 @@ func TestInstallerPersistsInstallUpdateAndRemove(t *testing.T) {
 		t.Fatalf("Update: %v", err)
 	}
 
-	after := medium.Files["plugins/registry.json"]
+	after := medium.Files[sonarInstallerTestPluginsRegistryJson]
 	if before == after {
 		t.Fatalf("expected update to change persisted registry")
 	}
@@ -43,7 +47,7 @@ func TestInstallerPersistsInstallUpdateAndRemove(t *testing.T) {
 	if err := inst.Remove("foo"); err != nil {
 		t.Fatalf("Remove: %v", err)
 	}
-	final := medium.Files["plugins/registry.json"]
+	final := medium.Files[sonarInstallerTestPluginsRegistryJson]
 	if strings.Contains(final, `"foo"`) {
 		t.Fatalf("expected plugin entry to be removed: %s", final)
 	}

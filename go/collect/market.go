@@ -38,33 +38,22 @@ func (m *MarketCollector) Collect(ctx context.Context, cfg *Config) (*Result, er
 	if cfg == nil {
 		return nil, core.E("collect.MarketCollector.Collect", "config is required", nil)
 	}
-	if ctx == nil {
-		ctx = context.Background()
-	}
-	if ctx != nil {
-		if err := ctx.Err(); err != nil {
-			return nil, err
-		}
+	ctx, err := activeCollectContext(ctx)
+	if err != nil {
+		return nil, err
 	}
 	if cfg.Dispatcher != nil {
 		cfg.Dispatcher.EmitStart(m.Name(), "Starting market data collection")
 	}
-	if cfg.DryRun {
-		if cfg.Dispatcher != nil {
-			cfg.Dispatcher.EmitProgress(m.Name(), "[dry-run] Would collect market data", nil)
-			cfg.Dispatcher.EmitComplete(m.Name(), "Market dry-run complete", &Result{Source: m.Name()})
-		}
-		return &Result{Source: m.Name()}, nil
+	result := &Result{Source: m.Name()}
+	if emitDryRun(cfg, m.Name(), "[dry-run] Would collect market data", "Market dry-run complete", result) {
+		return result, nil
 	}
-	if cfg.Limiter != nil {
-		if err := cfg.Limiter.Wait(ctx, "coingecko"); err != nil {
-			return &Result{Source: m.Name()}, err
-		}
+	if err := waitCollectLimiter(ctx, cfg, "coingecko"); err != nil {
+		return result, err
 	}
-	if m.Historical && core.Trim(m.FromDate) != "" {
-		if _, err := time.Parse("2006-01-02", core.Trim(m.FromDate)); err != nil {
-			return &Result{Source: m.Name()}, core.E("collect.MarketCollector.Collect", core.Sprintf("invalid from_date %q", m.FromDate), err)
-		}
+	if err := m.validateHistoricalDate(); err != nil {
+		return result, err
 	}
 	data := &coinData{
 		Name:         titleText(m.CoinID),
@@ -74,32 +63,51 @@ func (m *MarketCollector) Collect(ctx context.Context, cfg *Config) (*Result, er
 		Volume:       50_000,
 		Change24H:    0,
 	}
-	content := FormatMarketSummary(data)
-	if m.Historical || core.Trim(m.FromDate) != "" {
-		details := core.NewBuilder()
-		details.WriteString("\n")
-		details.WriteString("- Historical: ")
-		details.WriteString(strconv.FormatBool(m.Historical))
-		details.WriteString("\n")
-		if core.Trim(m.FromDate) != "" {
-			details.WriteString(core.Sprintf("- From date: %s\n", core.Trim(m.FromDate)))
-		}
-		content += details.String()
-	}
-	path := "market.md"
-	if m.CoinID != "" {
-		path = m.CoinID + ".md"
-	}
-	outPath, err := writeResultFile(cfg, m.Name(), path, content)
+	content := FormatMarketSummary(data) + m.historicalDetails()
+	outPath, err := writeResultFile(cfg, m.Name(), m.outputPath(), content)
 	if err != nil {
 		return &Result{Source: m.Name(), Errors: 1}, err
 	}
-	result := &Result{Source: m.Name(), Items: 1, Files: []string{outPath}}
+	result.Items = 1
+	result.Files = []string{outPath}
 	if cfg.Dispatcher != nil {
 		cfg.Dispatcher.EmitItem(m.Name(), core.Sprintf("Collected market data for %s", m.CoinID), nil)
 		cfg.Dispatcher.EmitComplete(m.Name(), "Market collection complete", result)
 	}
 	return result, nil
+}
+
+func (m *MarketCollector) validateHistoricalDate() error {
+	fromDate := core.Trim(m.FromDate)
+	if !m.Historical || fromDate == "" {
+		return nil
+	}
+	if _, err := time.Parse("2006-01-02", fromDate); err != nil {
+		return core.E("collect.MarketCollector.Collect", core.Sprintf("invalid from_date %q", m.FromDate), err)
+	}
+	return nil
+}
+
+func (m *MarketCollector) historicalDetails() string {
+	if !m.Historical && core.Trim(m.FromDate) == "" {
+		return ""
+	}
+	details := core.NewBuilder()
+	details.WriteString("\n")
+	details.WriteString("- Historical: ")
+	details.WriteString(strconv.FormatBool(m.Historical))
+	details.WriteString("\n")
+	if fromDate := core.Trim(m.FromDate); fromDate != "" {
+		details.WriteString(core.Sprintf("- From date: %s\n", fromDate))
+	}
+	return details.String()
+}
+
+func (m *MarketCollector) outputPath() string {
+	if m.CoinID == "" {
+		return "market.md"
+	}
+	return m.CoinID + ".md"
 }
 
 // FormatMarketSummary is exported for testing.

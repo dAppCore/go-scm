@@ -15,6 +15,12 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+const (
+	sonarServiceReposServiceSyncrepo = "repos.Service.syncRepo"
+	sonarServiceReposYaml            = "repos.yaml"
+	sonarServiceServiceIsRequired    = "service is required"
+)
+
 // ServiceOptions configures the repo sync service.
 type ServiceOptions struct {
 	Root         string
@@ -121,7 +127,7 @@ func (s *Service) syncWorkspace(ctx context.Context, pushed WorkspacePushed) cor
 
 func (s *Service) syncRepo(ctx context.Context, opts core.Options) (*git.SyncResult, error) {
 	if s == nil {
-		return nil, core.E("repos.Service.syncRepo", "service is required", nil)
+		return nil, core.E(sonarServiceReposServiceSyncrepo, sonarServiceServiceIsRequired, nil)
 	}
 	if err := ctx.Err(); err != nil {
 		return nil, err
@@ -132,43 +138,66 @@ func (s *Service) syncRepo(ctx context.Context, opts core.Options) (*git.SyncRes
 	workspacePath, workspaceOK := workspaceRepoPath(opts, s.Options().Root)
 
 	if path := core.Trim(opts.String("path")); path != "" {
-		if err := git.SyncWithRemote(ctx, path, remote, branch); err != nil {
-			return &git.SyncResult{Name: filepathx.Base(path), Path: path, Success: false, Error: err}, err
-		}
-		return &git.SyncResult{Name: filepathx.Base(path), Path: path, Success: true}, nil
+		return syncPath(ctx, path, filepathx.Base(path), remote, branch)
 	}
 
 	if repoName := core.Trim(opts.String("repo")); repoName != "" {
-		reg, err := s.registryForPath(opts.String("root"))
-		if err != nil && !core.Is(err, fs.ErrNotExist) {
-			return nil, err
-		}
-		if reg != nil {
-			if repo, ok := reg.Get(repoName); ok {
-				if err := git.SyncWithRemote(ctx, repo.Path, remote, branch); err != nil {
-					return &git.SyncResult{Name: repo.Name, Path: repo.Path, Success: false, Error: err}, err
-				}
-				return &git.SyncResult{Name: repo.Name, Path: repo.Path, Success: true}, nil
-			}
-		}
-		if workspaceOK {
-			if err := git.SyncWithRemote(ctx, workspacePath, remote, branch); err != nil {
-				return &git.SyncResult{Name: repoName, Path: workspacePath, Success: false, Error: err}, err
-			}
-			return &git.SyncResult{Name: repoName, Path: workspacePath, Success: true}, nil
-		}
-		if reg == nil {
-			return nil, core.E("repos.Service.syncRepo", "registry not loaded", nil)
-		}
-		return nil, core.E("repos.Service.syncRepo", core.Sprintf("repo %q not found in registry", repoName), nil)
+		return s.syncNamedRepo(ctx, opts, repoName, workspacePath, workspaceOK, remote, branch)
 	}
 
-	return nil, core.E("repos.Service.syncRepo", "repo or path is required", nil)
+	return nil, core.E(sonarServiceReposServiceSyncrepo, "repo or path is required", nil)
+}
+
+func (s *Service) syncNamedRepo(
+	ctx context.Context,
+	opts core.Options,
+	repoName string,
+	workspacePath string,
+	workspaceOK bool,
+	remote string,
+	branch string,
+) (*git.SyncResult, error) {
+	reg, err := s.registryForPath(opts.String("root"))
+	if err != nil && !core.Is(err, fs.ErrNotExist) {
+		return nil, err
+	}
+	if result, ok, err := syncRegistryRepo(ctx, reg, repoName, remote, branch); ok || err != nil {
+		return result, err
+	}
+	if workspaceOK {
+		return syncPath(ctx, workspacePath, repoName, remote, branch)
+	}
+	if reg == nil {
+		return nil, core.E(sonarServiceReposServiceSyncrepo, "registry not loaded", nil)
+	}
+	return nil, core.E(sonarServiceReposServiceSyncrepo, core.Sprintf("repo %q not found in registry", repoName), nil)
+}
+
+func syncRegistryRepo(ctx context.Context, reg *Registry, repoName, remote, branch string) (*git.SyncResult, bool, error) {
+	if reg == nil {
+		return nil, false, nil
+	}
+	repo, ok := reg.Get(repoName)
+	if !ok {
+		return nil, false, nil
+	}
+	result, err := syncPath(ctx, repo.Path, repo.Name, remote, branch)
+	return result, true, err
+}
+
+func syncPath(ctx context.Context, path, name, remote, branch string) (*git.SyncResult, error) {
+	result := &git.SyncResult{Name: name, Path: path, Success: true}
+	if err := git.SyncWithRemote(ctx, path, remote, branch); err != nil {
+		result.Success = false
+		result.Error = err
+		return result, err
+	}
+	return result, nil
 }
 
 func (s *Service) syncAll(ctx context.Context, opts core.Options) ([]SyncResult, error) {
 	if s == nil {
-		return nil, core.E("repos.Service.syncAll", "service is required", nil)
+		return nil, core.E("repos.Service.syncAll", sonarServiceServiceIsRequired, nil)
 	}
 	if err := ctx.Err(); err != nil {
 		return nil, err
@@ -189,7 +218,7 @@ func (s *Service) syncAll(ctx context.Context, opts core.Options) ([]SyncResult,
 
 func (s *Service) registryForPath(root string) (*Registry, error) {
 	if s == nil {
-		return nil, core.E("repos.Service.registryForPath", "service is required", nil)
+		return nil, core.E("repos.Service.registryForPath", sonarServiceServiceIsRequired, nil)
 	}
 	if s.registry != nil {
 		return s.registry, nil
@@ -224,20 +253,7 @@ func (s *Service) loadRegistryAt(root string) (*Registry, error) {
 			merged = reg
 			continue
 		}
-		for name, repo := range reg.Repos {
-			if repo == nil {
-				continue
-			}
-			if _, exists := merged.Repos[name]; exists {
-				continue
-			}
-			cp := *repo
-			cp.registry = merged
-			merged.Repos[name] = &cp
-		}
-		if merged.BasePath == "" {
-			merged.BasePath = reg.BasePath
-		}
+		mergeRegistry(merged, reg)
 	}
 	if merged == nil {
 		return nil, fs.ErrNotExist
@@ -245,9 +261,26 @@ func (s *Service) loadRegistryAt(root string) (*Registry, error) {
 	return merged, nil
 }
 
+func mergeRegistry(merged, reg *Registry) {
+	for name, repo := range reg.Repos {
+		if repo == nil {
+			continue
+		}
+		if _, exists := merged.Repos[name]; exists {
+			continue
+		}
+		cp := *repo
+		cp.registry = merged
+		merged.Repos[name] = &cp
+	}
+	if merged.BasePath == "" {
+		merged.BasePath = reg.BasePath
+	}
+}
+
 func (s *Service) registryPaths(root string) ([]string, error) {
 	if s == nil {
-		return nil, core.E("repos.Service.registryPaths", "service is required", nil)
+		return nil, core.E("repos.Service.registryPaths", sonarServiceServiceIsRequired, nil)
 	}
 	opts := s.Options()
 	candidates := []string{}
@@ -255,22 +288,12 @@ func (s *Service) registryPaths(root string) ([]string, error) {
 		candidates = append(candidates, opts.RegistryPath)
 		return cleanExistingCandidates(candidates), nil
 	}
-	if root != "" {
-		candidates = append(candidates,
-			filepathx.Join(root, ".core", "repos.yaml"),
-			filepathx.Join(root, "repos.yaml"),
-		)
-	}
-	if opts.Root != "" {
-		candidates = append(candidates,
-			filepathx.Join(opts.Root, ".core", "repos.yaml"),
-			filepathx.Join(opts.Root, "repos.yaml"),
-		)
-	}
+	candidates = append(candidates, rootRegistryCandidates(root)...)
+	candidates = append(candidates, rootRegistryCandidates(opts.Root)...)
 	if cwd, err := osx.Getwd(); err == nil {
 		dir := cwd
 		for {
-			candidates = append(candidates, filepathx.Join(dir, ".core", "repos.yaml"))
+			candidates = append(candidates, filepathx.Join(dir, ".core", sonarServiceReposYaml))
 			parent := filepathx.Dir(dir)
 			if parent == dir {
 				break
@@ -279,10 +302,20 @@ func (s *Service) registryPaths(root string) ([]string, error) {
 		}
 	}
 	if home, err := osx.UserHomeDir(); err == nil {
-		candidates = append(candidates, filepathx.Join(home, ".core", "repos.yaml"))
+		candidates = append(candidates, filepathx.Join(home, ".core", sonarServiceReposYaml))
 	}
 
 	return cleanExistingCandidates(candidates), nil
+}
+
+func rootRegistryCandidates(root string) []string {
+	if root == "" {
+		return nil
+	}
+	return []string{
+		filepathx.Join(root, ".core", sonarServiceReposYaml),
+		filepathx.Join(root, sonarServiceReposYaml),
+	}
 }
 
 func cleanExistingCandidates(candidates []string) []string {

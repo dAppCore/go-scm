@@ -9,6 +9,10 @@ import (
 	coreio "dappco.re/go/io"
 )
 
+const (
+	sonarIndexTestMarketplaceIndexJson = "marketplace/index.json"
+)
+
 type readWriteFileMedium struct {
 	*coreio.MockMedium
 	readFileCalled  bool
@@ -28,11 +32,11 @@ func (m *readWriteFileMedium) WriteFile(path string, data []byte, _ fs.FileMode)
 
 func TestLoadIndexUsesReadFile(t *testing.T) {
 	medium := &readWriteFileMedium{MockMedium: coreio.NewMockMedium()}
-	if err := medium.Write("marketplace/index.json", `{"version":1,"modules":[{"code":"go-io","name":"Core I/O"}]}`); err != nil {
+	if err := medium.Write(sonarIndexTestMarketplaceIndexJson, `{"version":1,"modules":[{"code":"go-io","name":"Core I/O"}]}`); err != nil {
 		t.Fatalf("seed index: %v", err)
 	}
 
-	idx, err := LoadIndex(medium, "marketplace/index.json")
+	idx, err := LoadIndex(medium, sonarIndexTestMarketplaceIndexJson)
 	if err != nil {
 		t.Fatalf("LoadIndex: %v", err)
 	}
@@ -47,7 +51,7 @@ func TestLoadIndexUsesReadFile(t *testing.T) {
 func TestWriteIndexToMediumUsesWriteFile(t *testing.T) {
 	medium := &readWriteFileMedium{MockMedium: coreio.NewMockMedium()}
 
-	if err := WriteIndexToMedium(medium, "marketplace/index.json", &Index{
+	if err := WriteIndexToMedium(medium, sonarIndexTestMarketplaceIndexJson, &Index{
 		Version: 1,
 		Modules: []Module{{Code: "go-io", Name: "Core I/O"}},
 	}); err != nil {
@@ -56,7 +60,7 @@ func TestWriteIndexToMediumUsesWriteFile(t *testing.T) {
 	if !medium.writeFileCalled {
 		t.Fatalf("expected WriteIndexToMedium to use WriteFile")
 	}
-	if !medium.IsFile("marketplace/index.json") {
+	if !medium.IsFile(sonarIndexTestMarketplaceIndexJson) {
 		t.Fatalf("expected index file to be written")
 	}
 }

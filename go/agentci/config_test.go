@@ -12,6 +12,12 @@ import (
 	"dappco.re/go/config"
 )
 
+const (
+	sonarConfigTestNewConfigV = "new config: %v"
+	sonarConfigTestNotAMap    = "not-a-map"
+	sonarConfigTestSetClothoV = "set clotho: %v"
+)
+
 func configResultError(r core.Result) error {
 	if r.OK {
 		return nil
@@ -23,7 +29,7 @@ func testConfig(t *testing.T, opts ...config.Option) *config.Config {
 	t.Helper()
 	r := config.New(opts...)
 	if err := configResultError(r); err != nil {
-		t.Fatalf("new config: %v", err)
+		t.Fatalf(sonarConfigTestNewConfigV, err)
 	}
 	return core.MustCast[*config.Config](r)
 }
@@ -108,7 +114,7 @@ func TestLoadClothoConfigDefaults(t *testing.T) {
 func TestLoadAgentsReturnsErrorForInvalidData(t *testing.T) {
 	cfg := testConfig(t)
 
-	if err := configResultError(cfg.Set("agents", "not-a-map")); err != nil {
+	if err := configResultError(cfg.Set("agents", sonarConfigTestNotAMap)); err != nil {
 		t.Fatalf("set agents: %v", err)
 	}
 
@@ -120,8 +126,8 @@ func TestLoadAgentsReturnsErrorForInvalidData(t *testing.T) {
 func TestLoadClothoConfigReturnsErrorForInvalidData(t *testing.T) {
 	cfg := testConfig(t)
 
-	if err := configResultError(cfg.Set("clotho", "not-a-map")); err != nil {
-		t.Fatalf("set clotho: %v", err)
+	if err := configResultError(cfg.Set("clotho", sonarConfigTestNotAMap)); err != nil {
+		t.Fatalf(sonarConfigTestSetClothoV, err)
 	}
 
 	if _, err := LoadClothoConfig(cfg); err == nil {
@@ -133,7 +139,7 @@ func TestLoadClothoConfigHandlesNullConfig(t *testing.T) {
 	cfg := testConfig(t)
 
 	if err := configResultError(cfg.Set("clotho", nil)); err != nil {
-		t.Fatalf("set clotho: %v", err)
+		t.Fatalf(sonarConfigTestSetClothoV, err)
 	}
 
 	clotho, err := LoadClothoConfig(cfg)
@@ -154,7 +160,7 @@ func TestLoadClothoConfigRejectsOutOfRangeThreshold(t *testing.T) {
 	if err := configResultError(cfg.Set("clotho", map[string]any{
 		"validation_threshold": 1.5,
 	})); err != nil {
-		t.Fatalf("set clotho: %v", err)
+		t.Fatalf(sonarConfigTestSetClothoV, err)
 	}
 
 	if _, err := LoadClothoConfig(cfg); err == nil {
@@ -168,7 +174,7 @@ func TestLoadClothoConfigRejectsUnknownStrategy(t *testing.T) {
 	if err := configResultError(cfg.Set("clotho", map[string]any{
 		"strategy": "experimental",
 	})); err != nil {
-		t.Fatalf("set clotho: %v", err)
+		t.Fatalf(sonarConfigTestSetClothoV, err)
 	}
 
 	if _, err := LoadClothoConfig(cfg); err == nil {
@@ -179,7 +185,7 @@ func TestLoadClothoConfigRejectsUnknownStrategy(t *testing.T) {
 func TestSaveAndRemoveAgentPropagateLoadErrors(t *testing.T) {
 	cfg := testConfig(t)
 
-	if err := configResultError(cfg.Set("agents", "not-a-map")); err != nil {
+	if err := configResultError(cfg.Set("agents", sonarConfigTestNotAMap)); err != nil {
 		t.Fatalf("set agents: %v", err)
 	}
 

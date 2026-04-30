@@ -12,6 +12,10 @@ import (
 	core "dappco.re/go"
 )
 
+const (
+	sonarJournalJobrunnerJournalAppend = "jobrunner.Journal.Append"
+)
+
 // Journal writes ActionResult entries to date-partitioned JSONL files.
 type Journal struct {
 	baseDir string
@@ -59,10 +63,10 @@ func NewJournal(baseDir string) (*Journal, error) {
 // Append writes a journal entry for the given signal and result.
 func (j *Journal) Append(signal *PipelineSignal, result *ActionResult) error {
 	if j == nil {
-		return core.E("jobrunner.Journal.Append", "journal is required", nil)
+		return core.E(sonarJournalJobrunnerJournalAppend, "journal is required", nil)
 	}
 	if result == nil {
-		return core.E("jobrunner.Journal.Append", "result is required", nil)
+		return core.E(sonarJournalJobrunnerJournalAppend, "result is required", nil)
 	}
 
 	ts := result.Timestamp
@@ -97,11 +101,11 @@ func (j *Journal) Append(signal *PipelineSignal, result *ActionResult) error {
 
 	marshalResult := core.JSONMarshal(entry)
 	if !marshalResult.OK {
-		return core.E("jobrunner.Journal.Append", "marshal entry", resultCause(marshalResult))
+		return core.E(sonarJournalJobrunnerJournalAppend, "marshal entry", resultCause(marshalResult))
 	}
 	payload, ok := marshalResult.Value.([]byte)
 	if !ok {
-		return core.E("jobrunner.Journal.Append", "marshal entry returned invalid payload", nil)
+		return core.E(sonarJournalJobrunnerJournalAppend, "marshal entry returned invalid payload", nil)
 	}
 
 	filePath := core.Path(j.baseDir, ts.Format("2006"), ts.Format("01"), ts.Format("02")+".jsonl")
@@ -111,28 +115,28 @@ func (j *Journal) Append(signal *PipelineSignal, result *ActionResult) error {
 
 	fs := (&core.Fs{}).NewUnrestricted()
 	if r := fs.EnsureDir(core.PathDir(filePath)); !r.OK {
-		return core.E("jobrunner.Journal.Append", "create directories", resultCause(r))
+		return core.E(sonarJournalJobrunnerJournalAppend, "create directories", resultCause(r))
 	}
 	if !fs.Exists(filePath) {
 		if r := fs.WriteMode(filePath, "", 0o600); !r.OK {
-			return core.E("jobrunner.Journal.Append", "create journal", resultCause(r))
+			return core.E(sonarJournalJobrunnerJournalAppend, "create journal", resultCause(r))
 		}
 	}
 
 	openResult := fs.Append(filePath)
 	if !openResult.OK {
-		return core.E("jobrunner.Journal.Append", "open journal", resultCause(openResult))
+		return core.E(sonarJournalJobrunnerJournalAppend, "open journal", resultCause(openResult))
 	}
 	f, ok := openResult.Value.(journalWriteCloser)
 	if !ok {
-		return core.E("jobrunner.Journal.Append", "open journal returned invalid writer", nil)
+		return core.E(sonarJournalJobrunnerJournalAppend, "open journal returned invalid writer", nil)
 	}
 	defer func() {
 		_ = f.Close()
 	}()
 
 	if _, err := f.Write(append(payload, '\n')); err != nil {
-		return core.E("jobrunner.Journal.Append", "write journal", err)
+		return core.E(sonarJournalJobrunnerJournalAppend, "write journal", err)
 	}
 	return nil
 }

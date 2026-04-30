@@ -29,36 +29,19 @@ func (p *PapersCollector) Collect(ctx context.Context, cfg *Config) (*Result, er
 	if cfg == nil {
 		return nil, core.E("collect.PapersCollector.Collect", "config is required", nil)
 	}
-	if ctx == nil {
-		ctx = context.Background()
-	}
-	if ctx != nil {
-		if err := ctx.Err(); err != nil {
-			return nil, err
-		}
+	ctx, err := activeCollectContext(ctx)
+	if err != nil {
+		return nil, err
 	}
 	if cfg.Dispatcher != nil {
 		cfg.Dispatcher.EmitStart(p.Name(), "Starting papers collection")
 	}
-	if cfg.DryRun {
-		if cfg.Dispatcher != nil {
-			cfg.Dispatcher.EmitProgress(p.Name(), "[dry-run] Would collect papers", nil)
-			cfg.Dispatcher.EmitComplete(p.Name(), "Papers dry-run complete", &Result{Source: p.Name()})
-		}
-		return &Result{Source: p.Name()}, nil
+	result := &Result{Source: p.Name()}
+	if emitDryRun(cfg, p.Name(), "[dry-run] Would collect papers", "Papers dry-run complete", result) {
+		return result, nil
 	}
-	if cfg.Limiter != nil {
-		source := ensureText(p.Source, PaperSourceAll)
-		if source == PaperSourceAll {
-			if err := cfg.Limiter.Wait(ctx, PaperSourceIACR); err != nil {
-				return &Result{Source: p.Name()}, err
-			}
-			if err := cfg.Limiter.Wait(ctx, PaperSourceArXiv); err != nil {
-				return &Result{Source: p.Name()}, err
-			}
-		} else if err := cfg.Limiter.Wait(ctx, source); err != nil {
-			return &Result{Source: p.Name()}, err
-		}
+	if err := p.waitForLimiter(ctx, cfg); err != nil {
+		return result, err
 	}
 	content := FormatPaperMarkdown(
 		ensureText(p.Query, "Untitled paper"),
@@ -76,12 +59,27 @@ func (p *PapersCollector) Collect(ctx context.Context, cfg *Config) (*Result, er
 	if err != nil {
 		return &Result{Source: p.Name(), Errors: 1}, err
 	}
-	result := &Result{Source: p.Name(), Items: 1, Files: []string{outPath}}
+	result.Items = 1
+	result.Files = []string{outPath}
 	if cfg.Dispatcher != nil {
 		cfg.Dispatcher.EmitItem(p.Name(), core.Sprintf("Collected paper data for %q", p.Query), nil)
 		cfg.Dispatcher.EmitComplete(p.Name(), "Papers collection complete", result)
 	}
 	return result, nil
+}
+
+func (p *PapersCollector) waitForLimiter(ctx context.Context, cfg *Config) error {
+	if cfg == nil || cfg.Limiter == nil {
+		return nil
+	}
+	source := ensureText(p.Source, PaperSourceAll)
+	if source != PaperSourceAll {
+		return cfg.Limiter.Wait(ctx, source)
+	}
+	if err := cfg.Limiter.Wait(ctx, PaperSourceIACR); err != nil {
+		return err
+	}
+	return cfg.Limiter.Wait(ctx, PaperSourceArXiv)
 }
 
 // FormatPaperMarkdown formats paper metadata as markdown.

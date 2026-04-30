@@ -13,6 +13,12 @@ import (
 	coreio "dappco.re/go/io"
 )
 
+const (
+	sonarReposTestCoreWiki  = ".core/wiki"
+	sonarReposTestGoScm     = "go-scm"
+	sonarReposTestReposYaml = "repos.yaml"
+)
+
 func ax7ReposRegistry() *Registry {
 	return &Registry{
 		Version:  1,
@@ -168,8 +174,8 @@ func TestRepos_Registry_TopologicalOrder_Ugly(t *core.T) {
 
 func TestRepos_LoadRegistry_Good(t *core.T) {
 	medium := coreio.NewMockMedium()
-	core.RequireNoError(t, medium.Write("repos.yaml", "version: 1\nbase_path: /work\nrepos:\n  core:\n    type: library\n"))
-	registry, err := LoadRegistry(medium, "repos.yaml")
+	core.RequireNoError(t, medium.Write(sonarReposTestReposYaml, "version: 1\nbase_path: /work\nrepos:\n  core:\n    type: library\n"))
+	registry, err := LoadRegistry(medium, sonarReposTestReposYaml)
 	core.AssertNoError(t, err)
 	repo, ok := registry.Get("core")
 	core.AssertTrue(t, ok)
@@ -177,7 +183,7 @@ func TestRepos_LoadRegistry_Good(t *core.T) {
 }
 
 func TestRepos_LoadRegistry_Bad(t *core.T) {
-	_, err := LoadRegistry(nil, "repos.yaml")
+	_, err := LoadRegistry(nil, sonarReposTestReposYaml)
 	core.AssertError(
 		t, err,
 	)
@@ -185,17 +191,17 @@ func TestRepos_LoadRegistry_Bad(t *core.T) {
 
 func TestRepos_LoadRegistry_Ugly(t *core.T) {
 	medium := coreio.NewMockMedium()
-	core.RequireNoError(t, medium.Write("repos.yaml", "repos: ["))
-	_, err := LoadRegistry(medium, "repos.yaml")
+	core.RequireNoError(t, medium.Write(sonarReposTestReposYaml, "repos: ["))
+	_, err := LoadRegistry(medium, sonarReposTestReposYaml)
 	core.AssertError(t, err)
 }
 
 func TestRepos_FindRegistry_Good(t *core.T) {
 	medium := coreio.NewMockMedium()
-	core.RequireNoError(t, medium.Write("repos.yaml", "version: 1\nrepos: {}\n"))
+	core.RequireNoError(t, medium.Write(sonarReposTestReposYaml, "version: 1\nrepos: {}\n"))
 	path, err := FindRegistry(medium)
 	core.AssertNoError(t, err)
-	core.AssertEqual(t, "repos.yaml", path)
+	core.AssertEqual(t, sonarReposTestReposYaml, path)
 }
 
 func TestRepos_FindRegistry_Bad(t *core.T) {
@@ -239,22 +245,22 @@ func TestRepos_Registry_Save_Good(t *core.T) {
 	medium := coreio.NewMockMedium()
 	registry := ax7ReposRegistry()
 	registry.medium = medium
-	err := registry.Save("repos.yaml")
+	err := registry.Save(sonarReposTestReposYaml)
 	core.AssertNoError(t, err)
-	raw, readErr := medium.Read("repos.yaml")
+	raw, readErr := medium.Read(sonarReposTestReposYaml)
 	core.RequireNoError(t, readErr)
 	core.AssertContains(t, raw, "repos:")
 }
 
 func TestRepos_Registry_Save_Bad(t *core.T) {
 	var registry *Registry
-	err := registry.Save("repos.yaml")
+	err := registry.Save(sonarReposTestReposYaml)
 	core.AssertError(t, err)
 }
 
 func TestRepos_Registry_Save_Ugly(t *core.T) {
 	registry := ax7ReposRegistry()
-	path := filepath.Join(t.TempDir(), "repos.yaml")
+	path := filepath.Join(t.TempDir(), sonarReposTestReposYaml)
 	err := registry.Save(path)
 	core.AssertNoError(t, err)
 }
@@ -593,7 +599,7 @@ func TestRepos_SaveWorkConfig_Ugly(t *core.T) {
 func TestRepos_DefaultKBConfig_Good(t *core.T) {
 	cfg := DefaultKBConfig()
 	core.AssertEqual(t, 1, cfg.Version)
-	core.AssertEqual(t, ".core/wiki", cfg.Wiki.Dir)
+	core.AssertEqual(t, sonarReposTestCoreWiki, cfg.Wiki.Dir)
 }
 
 func TestRepos_DefaultKBConfig_Bad(t *core.T) {
@@ -612,38 +618,38 @@ func TestRepos_DefaultKBConfig_Ugly(t *core.T) {
 
 func TestRepos_KBConfig_WikiRepoURL_Good(t *core.T) {
 	cfg := &KBConfig{Wiki: WikiConfig{Remote: "https://forge.example/core"}}
-	got := cfg.WikiRepoURL("go-scm")
+	got := cfg.WikiRepoURL(sonarReposTestGoScm)
 	core.AssertEqual(t, "https://forge.example/core/go-scm.wiki.git", got)
 }
 
 func TestRepos_KBConfig_WikiRepoURL_Bad(t *core.T) {
 	cfg := &KBConfig{}
-	got := cfg.WikiRepoURL("go-scm")
+	got := cfg.WikiRepoURL(sonarReposTestGoScm)
 	core.AssertEqual(t, "", got)
 }
 
 func TestRepos_KBConfig_WikiRepoURL_Ugly(t *core.T) {
 	var cfg *KBConfig
-	got := cfg.WikiRepoURL("go-scm")
+	got := cfg.WikiRepoURL(sonarReposTestGoScm)
 	core.AssertEqual(t, "", got)
 }
 
 func TestRepos_KBConfig_WikiLocalPath_Good(t *core.T) {
 	cfg := &KBConfig{Wiki: WikiConfig{Dir: "wiki"}}
-	got := cfg.WikiLocalPath("/root", "go-scm")
-	core.AssertEqual(t, filepath.Join("/root", "wiki", "go-scm"), got)
+	got := cfg.WikiLocalPath("/root", sonarReposTestGoScm)
+	core.AssertEqual(t, filepath.Join("/root", "wiki", sonarReposTestGoScm), got)
 }
 
 func TestRepos_KBConfig_WikiLocalPath_Bad(t *core.T) {
 	cfg := &KBConfig{}
-	got := cfg.WikiLocalPath("/root", "go-scm")
-	core.AssertEqual(t, filepath.Join("/root", ".core/wiki", "go-scm"), got)
+	got := cfg.WikiLocalPath("/root", sonarReposTestGoScm)
+	core.AssertEqual(t, filepath.Join("/root", sonarReposTestCoreWiki, sonarReposTestGoScm), got)
 }
 
 func TestRepos_KBConfig_WikiLocalPath_Ugly(t *core.T) {
 	var cfg *KBConfig
 	got := cfg.WikiLocalPath("", "")
-	core.AssertEqual(t, filepath.Join(".core/wiki"), got)
+	core.AssertEqual(t, filepath.Join(sonarReposTestCoreWiki), got)
 }
 
 func TestRepos_LoadKBConfig_Good(t *core.T) {
@@ -713,7 +719,7 @@ func TestRepos_NewService_Ugly(t *core.T) {
 func TestRepos_Service_OnStartup_Good(t *core.T) {
 	root := t.TempDir()
 	core.RequireNoError(t, os.MkdirAll(filepath.Join(root, ".core"), 0o755))
-	core.RequireNoError(t, os.WriteFile(filepath.Join(root, ".core", "repos.yaml"), []byte("version: 1\nrepos: {}\n"), 0o600))
+	core.RequireNoError(t, os.WriteFile(filepath.Join(root, ".core", sonarReposTestReposYaml), []byte("version: 1\nrepos: {}\n"), 0o600))
 	c := core.New(core.WithService(NewService(ServiceOptions{Root: root})))
 	result := c.ServiceStartup(context.Background(), nil)
 	core.AssertTrue(t, result.OK)

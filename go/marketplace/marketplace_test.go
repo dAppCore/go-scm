@@ -15,6 +15,12 @@ import (
 	"dappco.re/go/scm/manifest"
 )
 
+const (
+	sonarMarketplaceTestIndexJson            = "index.json"
+	sonarMarketplaceTestMarketplaceIndexJson = "marketplace/index.json"
+	sonarMarketplaceTestProvidersYaml        = "providers.yaml"
+)
+
 func TestBuildIndexFromManifestsCarriesSignKey(t *testing.T) {
 	idx := BuildIndexFromManifests([]*manifest.Manifest{
 		{
@@ -187,7 +193,7 @@ func TestMarketplace_Builder_BuildFromDirs_Ugly(t *core.T) {
 }
 
 func TestMarketplace_WriteIndex_Good(t *core.T) {
-	path := filepath.Join(t.TempDir(), "index.json")
+	path := filepath.Join(t.TempDir(), sonarMarketplaceTestIndexJson)
 	err := WriteIndex(path, &Index{Version: 1, Modules: []Module{{Code: "demo"}}})
 	core.AssertNoError(t, err)
 	raw, readErr := os.ReadFile(path)
@@ -196,14 +202,14 @@ func TestMarketplace_WriteIndex_Good(t *core.T) {
 }
 
 func TestMarketplace_WriteIndex_Bad(t *core.T) {
-	err := WriteIndex(filepath.Join(t.TempDir(), "index.json"), nil)
+	err := WriteIndex(filepath.Join(t.TempDir(), sonarMarketplaceTestIndexJson), nil)
 	core.AssertError(
 		t, err,
 	)
 }
 
 func TestMarketplace_WriteIndex_Ugly(t *core.T) {
-	err := WriteIndex(filepath.Join(t.TempDir(), "missing", "index.json"), &Index{Version: 1})
+	err := WriteIndex(filepath.Join(t.TempDir(), "missing", sonarMarketplaceTestIndexJson), &Index{Version: 1})
 	core.AssertError(
 		t, err,
 	)
@@ -211,14 +217,14 @@ func TestMarketplace_WriteIndex_Ugly(t *core.T) {
 
 func TestMarketplace_LoadIndex_Good(t *core.T) {
 	medium := coreio.NewMemoryMedium()
-	core.RequireNoError(t, medium.Write("marketplace/index.json", `{"version":1,"modules":[{"code":"demo"}]}`))
-	idx, err := LoadIndex(medium, "marketplace/index.json")
+	core.RequireNoError(t, medium.Write(sonarMarketplaceTestMarketplaceIndexJson, `{"version":1,"modules":[{"code":"demo"}]}`))
+	idx, err := LoadIndex(medium, sonarMarketplaceTestMarketplaceIndexJson)
 	core.AssertNoError(t, err)
 	core.AssertEqual(t, "demo", idx.Modules[0].Code)
 }
 
 func TestMarketplace_LoadIndex_Bad(t *core.T) {
-	_, err := LoadIndex(nil, "marketplace/index.json")
+	_, err := LoadIndex(nil, sonarMarketplaceTestMarketplaceIndexJson)
 	core.AssertError(
 		t, err,
 	)
@@ -232,22 +238,22 @@ func TestMarketplace_LoadIndex_Ugly(t *core.T) {
 
 func TestMarketplace_WriteIndexToMedium_Good(t *core.T) {
 	medium := coreio.NewMemoryMedium()
-	err := WriteIndexToMedium(medium, "marketplace/index.json", &Index{Version: 1, Modules: []Module{{Code: "demo"}}})
+	err := WriteIndexToMedium(medium, sonarMarketplaceTestMarketplaceIndexJson, &Index{Version: 1, Modules: []Module{{Code: "demo"}}})
 	core.AssertNoError(t, err)
-	raw, readErr := medium.Read("marketplace/index.json")
+	raw, readErr := medium.Read(sonarMarketplaceTestMarketplaceIndexJson)
 	core.RequireNoError(t, readErr)
 	core.AssertContains(t, raw, "demo")
 }
 
 func TestMarketplace_WriteIndexToMedium_Bad(t *core.T) {
-	err := WriteIndexToMedium(nil, "marketplace/index.json", &Index{Version: 1})
+	err := WriteIndexToMedium(nil, sonarMarketplaceTestMarketplaceIndexJson, &Index{Version: 1})
 	core.AssertError(
 		t, err,
 	)
 }
 
 func TestMarketplace_WriteIndexToMedium_Ugly(t *core.T) {
-	err := WriteIndexToMedium(coreio.NewMemoryMedium(), "marketplace/index.json", nil)
+	err := WriteIndexToMedium(coreio.NewMemoryMedium(), sonarMarketplaceTestMarketplaceIndexJson, nil)
 	core.AssertError(
 		t, err,
 	)
@@ -485,7 +491,7 @@ func TestMarketplace_DiscoverProviders_Ugly(t *core.T) {
 }
 
 func TestMarketplace_LoadProviderRegistry_Good(t *core.T) {
-	path := filepath.Join(t.TempDir(), "providers.yaml")
+	path := filepath.Join(t.TempDir(), sonarMarketplaceTestProvidersYaml)
 	core.RequireNoError(t, os.WriteFile(path, []byte("version: 1\nproviders:\n  demo:\n    version: 1.0.0\n"), 0o600))
 	reg, err := LoadProviderRegistry(path)
 	core.AssertNoError(t, err)
@@ -501,14 +507,14 @@ func TestMarketplace_LoadProviderRegistry_Bad(t *core.T) {
 }
 
 func TestMarketplace_LoadProviderRegistry_Ugly(t *core.T) {
-	path := filepath.Join(t.TempDir(), "providers.yaml")
+	path := filepath.Join(t.TempDir(), sonarMarketplaceTestProvidersYaml)
 	core.RequireNoError(t, os.WriteFile(path, []byte("providers: ["), 0o600))
 	_, err := LoadProviderRegistry(path)
 	core.AssertError(t, err)
 }
 
 func TestMarketplace_SaveProviderRegistry_Good(t *core.T) {
-	path := filepath.Join(t.TempDir(), "providers.yaml")
+	path := filepath.Join(t.TempDir(), sonarMarketplaceTestProvidersYaml)
 	reg := &ProviderRegistryFile{Version: 1, Providers: map[string]ProviderRegistryEntry{"demo": {Version: "1.0.0"}}}
 	err := SaveProviderRegistry(path, reg)
 	core.AssertNoError(t, err)
@@ -518,14 +524,14 @@ func TestMarketplace_SaveProviderRegistry_Good(t *core.T) {
 }
 
 func TestMarketplace_SaveProviderRegistry_Bad(t *core.T) {
-	err := SaveProviderRegistry(filepath.Join(t.TempDir(), "missing", "providers.yaml"), &ProviderRegistryFile{})
+	err := SaveProviderRegistry(filepath.Join(t.TempDir(), "missing", sonarMarketplaceTestProvidersYaml), &ProviderRegistryFile{})
 	core.AssertError(
 		t, err,
 	)
 }
 
 func TestMarketplace_SaveProviderRegistry_Ugly(t *core.T) {
-	path := filepath.Join(t.TempDir(), "providers.yaml")
+	path := filepath.Join(t.TempDir(), sonarMarketplaceTestProvidersYaml)
 	err := SaveProviderRegistry(path, nil)
 	core.AssertNoError(t, err)
 	raw, readErr := os.ReadFile(path)

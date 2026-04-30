@@ -13,25 +13,42 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+const (
+	sonarServiceTestBare                          = "--bare"
+	sonarServiceTestLocalChange                   = "local change"
+	sonarServiceTestLocalChanges                  = "local changes\n"
+	sonarServiceTestReadSyncedFileV               = "read synced file: %v"
+	sonarServiceTestRemoteGit                     = "remote.git"
+	sonarServiceTestRemoteState                   = "remote state\n"
+	sonarServiceTestStateTxt                      = "state.txt"
+	sonarServiceTestTestExampleCom                = "test@example.com"
+	sonarServiceTestTestUser                      = "Test User"
+	sonarServiceTestUnexpectedSyncedFileContentsQ = "unexpected synced file contents: %q"
+	sonarServiceTestUserEmail                     = "user.email"
+	sonarServiceTestUserName                      = "user.name"
+	sonarServiceTestWriteLocalChangeV             = "write local change: %v"
+	sonarServiceTestWriteSeedFileV                = "write seed file: %v"
+)
+
 func TestServiceRegistersRepoSyncActions(t *testing.T) {
 	root := t.TempDir()
 	repoPath := filepath.Join(root, "repo1")
-	remotePath := filepath.Join(root, "remote.git")
-	filePath := filepath.Join(repoPath, "state.txt")
+	remotePath := filepath.Join(root, sonarServiceTestRemoteGit)
+	filePath := filepath.Join(repoPath, sonarServiceTestStateTxt)
 
-	runGitCmd(t, root, "git", "init", "--bare", remotePath)
+	runGitCmd(t, root, "git", "init", sonarServiceTestBare, remotePath)
 	if err := os.MkdirAll(filepath.Dir(repoPath), 0o755); err != nil {
 		t.Fatalf("mkdir workspace parent: %v", err)
 	}
 	runGitCmd(t, root, "git", "clone", remotePath, repoPath)
-	runGitCmd(t, repoPath, "git", "-C", repoPath, "config", "user.name", "Test User")
-	runGitCmd(t, repoPath, "git", "-C", repoPath, "config", "user.email", "test@example.com")
+	runGitCmd(t, repoPath, "git", "-C", repoPath, "config", sonarServiceTestUserName, sonarServiceTestTestUser)
+	runGitCmd(t, repoPath, "git", "-C", repoPath, "config", sonarServiceTestUserEmail, sonarServiceTestTestExampleCom)
 	runGitCmd(t, repoPath, "git", "-C", repoPath, "checkout", "-b", "dev")
 
-	if err := os.WriteFile(filePath, []byte("remote state\n"), 0o600); err != nil {
-		t.Fatalf("write seed file: %v", err)
+	if err := os.WriteFile(filePath, []byte(sonarServiceTestRemoteState), 0o600); err != nil {
+		t.Fatalf(sonarServiceTestWriteSeedFileV, err)
 	}
-	runGitCmd(t, repoPath, "git", "-C", repoPath, "add", "state.txt")
+	runGitCmd(t, repoPath, "git", "-C", repoPath, "add", sonarServiceTestStateTxt)
 	runGitCmd(t, repoPath, "git", "-C", repoPath, "commit", "-m", "initial")
 	runGitCmd(t, repoPath, "git", "-C", repoPath, "push", "-u", "origin", "dev")
 
@@ -59,10 +76,10 @@ func TestServiceRegistersRepoSyncActions(t *testing.T) {
 		t.Fatalf("repo.sync.all action was not registered")
 	}
 
-	if err := os.WriteFile(filePath, []byte("local changes\n"), 0o600); err != nil {
-		t.Fatalf("write local change: %v", err)
+	if err := os.WriteFile(filePath, []byte(sonarServiceTestLocalChanges), 0o600); err != nil {
+		t.Fatalf(sonarServiceTestWriteLocalChangeV, err)
 	}
-	runGitCmd(t, repoPath, "git", "-C", repoPath, "commit", "-am", "local change")
+	runGitCmd(t, repoPath, "git", "-C", repoPath, "commit", "-am", sonarServiceTestLocalChange)
 
 	syncResult := c.Action("repo.sync").Run(context.Background(), core.NewOptions(core.Option{Key: "repo", Value: "repo1"}))
 	if !syncResult.OK {
@@ -71,10 +88,10 @@ func TestServiceRegistersRepoSyncActions(t *testing.T) {
 
 	raw, err := os.ReadFile(filePath)
 	if err != nil {
-		t.Fatalf("read synced file: %v", err)
+		t.Fatalf(sonarServiceTestReadSyncedFileV, err)
 	}
-	if got := string(raw); got != "remote state\n" {
-		t.Fatalf("unexpected synced file contents: %q", got)
+	if got := string(raw); got != sonarServiceTestRemoteState {
+		t.Fatalf(sonarServiceTestUnexpectedSyncedFileContentsQ, got)
 	}
 
 	if err := os.WriteFile(filePath, []byte("local changes again\n"), 0o600); err != nil {
@@ -90,7 +107,7 @@ func TestServiceRegistersRepoSyncActions(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read ipc-synced file: %v", err)
 	}
-	if got := string(raw); got != "remote state\n" {
+	if got := string(raw); got != sonarServiceTestRemoteState {
 		t.Fatalf("unexpected ipc synced file contents: %q", got)
 	}
 }
@@ -163,19 +180,19 @@ func TestServiceSyncRepoFallsBackToWorkspacePath(t *testing.T) {
 	org := "core"
 	repoName := "repo1"
 	repoPath := filepath.Join(root, org, repoName)
-	remotePath := filepath.Join(root, "remote.git")
-	filePath := filepath.Join(repoPath, "state.txt")
+	remotePath := filepath.Join(root, sonarServiceTestRemoteGit)
+	filePath := filepath.Join(repoPath, sonarServiceTestStateTxt)
 
-	runGitCmd(t, root, "git", "init", "--bare", remotePath)
+	runGitCmd(t, root, "git", "init", sonarServiceTestBare, remotePath)
 	runGitCmd(t, root, "git", "clone", remotePath, repoPath)
-	runGitCmd(t, repoPath, "git", "-C", repoPath, "config", "user.name", "Test User")
-	runGitCmd(t, repoPath, "git", "-C", repoPath, "config", "user.email", "test@example.com")
+	runGitCmd(t, repoPath, "git", "-C", repoPath, "config", sonarServiceTestUserName, sonarServiceTestTestUser)
+	runGitCmd(t, repoPath, "git", "-C", repoPath, "config", sonarServiceTestUserEmail, sonarServiceTestTestExampleCom)
 	runGitCmd(t, repoPath, "git", "-C", repoPath, "checkout", "-b", "dev")
 
-	if err := os.WriteFile(filePath, []byte("remote state\n"), 0o600); err != nil {
-		t.Fatalf("write seed file: %v", err)
+	if err := os.WriteFile(filePath, []byte(sonarServiceTestRemoteState), 0o600); err != nil {
+		t.Fatalf(sonarServiceTestWriteSeedFileV, err)
 	}
-	runGitCmd(t, repoPath, "git", "-C", repoPath, "add", "state.txt")
+	runGitCmd(t, repoPath, "git", "-C", repoPath, "add", sonarServiceTestStateTxt)
 	runGitCmd(t, repoPath, "git", "-C", repoPath, "commit", "-m", "initial")
 	runGitCmd(t, repoPath, "git", "-C", repoPath, "push", "-u", "origin", "dev")
 
@@ -184,10 +201,10 @@ func TestServiceSyncRepoFallsBackToWorkspacePath(t *testing.T) {
 		RegistryPath: filepath.Join(root, ".core", "missing.yaml"),
 	})}
 
-	if err := os.WriteFile(filePath, []byte("local changes\n"), 0o600); err != nil {
-		t.Fatalf("write local change: %v", err)
+	if err := os.WriteFile(filePath, []byte(sonarServiceTestLocalChanges), 0o600); err != nil {
+		t.Fatalf(sonarServiceTestWriteLocalChangeV, err)
 	}
-	runGitCmd(t, repoPath, "git", "-C", repoPath, "commit", "-am", "local change")
+	runGitCmd(t, repoPath, "git", "-C", repoPath, "commit", "-am", sonarServiceTestLocalChange)
 
 	result, err := svc.syncRepo(context.Background(), core.NewOptions(
 		core.Option{Key: "root", Value: root},
@@ -205,10 +222,10 @@ func TestServiceSyncRepoFallsBackToWorkspacePath(t *testing.T) {
 
 	raw, err := os.ReadFile(filePath)
 	if err != nil {
-		t.Fatalf("read synced file: %v", err)
+		t.Fatalf(sonarServiceTestReadSyncedFileV, err)
 	}
-	if got := string(raw); got != "remote state\n" {
-		t.Fatalf("unexpected synced file contents: %q", got)
+	if got := string(raw); got != sonarServiceTestRemoteState {
+		t.Fatalf(sonarServiceTestUnexpectedSyncedFileContentsQ, got)
 	}
 }
 
@@ -218,19 +235,19 @@ func TestServiceSyncRepoFallsBackWhenRegistryMissesRepo(t *testing.T) {
 	org := "core"
 	repoName := "repo1"
 	repoPath := filepath.Join(root, org, repoName)
-	remotePath := filepath.Join(root, "remote.git")
-	filePath := filepath.Join(repoPath, "state.txt")
+	remotePath := filepath.Join(root, sonarServiceTestRemoteGit)
+	filePath := filepath.Join(repoPath, sonarServiceTestStateTxt)
 
-	runGitCmd(t, root, "git", "init", "--bare", remotePath)
+	runGitCmd(t, root, "git", "init", sonarServiceTestBare, remotePath)
 	runGitCmd(t, root, "git", "clone", remotePath, repoPath)
-	runGitCmd(t, repoPath, "git", "-C", repoPath, "config", "user.name", "Test User")
-	runGitCmd(t, repoPath, "git", "-C", repoPath, "config", "user.email", "test@example.com")
+	runGitCmd(t, repoPath, "git", "-C", repoPath, "config", sonarServiceTestUserName, sonarServiceTestTestUser)
+	runGitCmd(t, repoPath, "git", "-C", repoPath, "config", sonarServiceTestUserEmail, sonarServiceTestTestExampleCom)
 	runGitCmd(t, repoPath, "git", "-C", repoPath, "checkout", "-b", "dev")
 
-	if err := os.WriteFile(filePath, []byte("remote state\n"), 0o600); err != nil {
-		t.Fatalf("write seed file: %v", err)
+	if err := os.WriteFile(filePath, []byte(sonarServiceTestRemoteState), 0o600); err != nil {
+		t.Fatalf(sonarServiceTestWriteSeedFileV, err)
 	}
-	runGitCmd(t, repoPath, "git", "-C", repoPath, "add", "state.txt")
+	runGitCmd(t, repoPath, "git", "-C", repoPath, "add", sonarServiceTestStateTxt)
 	runGitCmd(t, repoPath, "git", "-C", repoPath, "commit", "-m", "initial")
 	runGitCmd(t, repoPath, "git", "-C", repoPath, "push", "-u", "origin", "dev")
 
@@ -251,10 +268,10 @@ func TestServiceSyncRepoFallsBackWhenRegistryMissesRepo(t *testing.T) {
 		Remote: "origin",
 	})}
 
-	if err := os.WriteFile(filePath, []byte("local changes\n"), 0o600); err != nil {
-		t.Fatalf("write local change: %v", err)
+	if err := os.WriteFile(filePath, []byte(sonarServiceTestLocalChanges), 0o600); err != nil {
+		t.Fatalf(sonarServiceTestWriteLocalChangeV, err)
 	}
-	runGitCmd(t, repoPath, "git", "-C", repoPath, "commit", "-am", "local change")
+	runGitCmd(t, repoPath, "git", "-C", repoPath, "commit", "-am", sonarServiceTestLocalChange)
 
 	result, err := svc.syncRepo(context.Background(), core.NewOptions(
 		core.Option{Key: "root", Value: root},
@@ -275,10 +292,10 @@ func TestServiceSyncRepoFallsBackWhenRegistryMissesRepo(t *testing.T) {
 
 	raw, err := os.ReadFile(filePath)
 	if err != nil {
-		t.Fatalf("read synced file: %v", err)
+		t.Fatalf(sonarServiceTestReadSyncedFileV, err)
 	}
-	if got := string(raw); got != "remote state\n" {
-		t.Fatalf("unexpected synced file contents: %q", got)
+	if got := string(raw); got != sonarServiceTestRemoteState {
+		t.Fatalf(sonarServiceTestUnexpectedSyncedFileContentsQ, got)
 	}
 }
 

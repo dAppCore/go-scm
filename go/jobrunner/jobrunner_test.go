@@ -13,6 +13,10 @@ import (
 	core "dappco.re/go"
 )
 
+const (
+	sonarJobrunnerTestGoScm = "go-scm"
+)
+
 type ax7Source struct {
 	name      string
 	signals   []*PipelineSignal
@@ -122,7 +126,7 @@ func TestJobrunner_PipelineSignal_HasUnresolvedThreads_Ugly(t *core.T) {
 }
 
 func TestJobrunner_PipelineSignal_RepoFullName_Good(t *core.T) {
-	signal := &PipelineSignal{RepoOwner: "core", RepoName: "go-scm"}
+	signal := &PipelineSignal{RepoOwner: "core", RepoName: sonarJobrunnerTestGoScm}
 	got := signal.RepoFullName()
 	core.AssertEqual(t, "core/go-scm", got)
 }
@@ -161,8 +165,8 @@ func TestJobrunner_NewJournal_Ugly(t *core.T) {
 func TestJobrunner_Journal_Append_Good(t *core.T) {
 	journal, err := NewJournal(t.TempDir())
 	core.RequireNoError(t, err)
-	result := &ActionResult{Action: "dispatch", RepoOwner: "core", RepoName: "go-scm", Timestamp: time.Date(2026, 4, 15, 8, 0, 0, 0, time.UTC), Success: true}
-	err = journal.Append(&PipelineSignal{RepoOwner: "core", RepoName: "go-scm"}, result)
+	result := &ActionResult{Action: "dispatch", RepoOwner: "core", RepoName: sonarJobrunnerTestGoScm, Timestamp: time.Date(2026, 4, 15, 8, 0, 0, 0, time.UTC), Success: true}
+	err = journal.Append(&PipelineSignal{RepoOwner: "core", RepoName: sonarJobrunnerTestGoScm}, result)
 	core.AssertNoError(t, err)
 	_, statErr := os.Stat(filepath.Join(journal.baseDir, "2026", "04", "15.jsonl"))
 	core.AssertNoError(t, statErr)

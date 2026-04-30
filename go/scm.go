@@ -76,53 +76,65 @@ func NewCoreService(opts Options) func(*core.Core) core.Result {
 		if c == nil {
 			return core.Fail(errors.New("scm.NewCoreService: core is required"))
 		}
-
-		if opts.RegistryPath != "" || opts.Root != "" || opts.Remote != "" || opts.Branch != "" {
-			repoResult := repos.NewService(repos.ServiceOptions{
-				Root:         opts.Root,
-				RegistryPath: opts.RegistryPath,
-				Remote:       opts.Remote,
-				Branch:       opts.Branch,
-			})(c)
-			if !repoResult.OK {
-				return repoResult
-			}
-			if repoResult.Value != nil && !c.Service("repos").OK {
-				if r := c.RegisterService("repos", repoResult.Value); !r.OK {
-					return r
-				}
-			}
+		if result := registerReposService(c, opts); !result.OK {
+			return result
 		}
-
-		if opts.Root != "" {
-			gitResult := git.NewService(git.ServiceOptions{WorkDir: opts.Root})(c)
-			if !gitResult.OK {
-				return gitResult
-			}
-			if gitResult.Value != nil && !c.Service("git").OK {
-				if r := c.RegisterService("git", gitResult.Value); !r.OK {
-					return r
-				}
-			}
+		if result := registerGitService(c, opts); !result.OK {
+			return result
 		}
-
 		return core.Ok(&Service{ServiceRuntime: core.NewServiceRuntime(c, opts)})
 	}
 }
 
-// OnStartup satisfies the Core lifecycle contract.
-func (s *Service) OnStartup(ctx context.Context) core.Result {
-	if s == nil {
+func registerReposService(c *core.Core, opts Options) core.Result {
+	if opts.RegistryPath == "" && opts.Root == "" && opts.Remote == "" && opts.Branch == "" {
 		return core.Ok(nil)
 	}
-	if err := ctx.Err(); err != nil {
-		return core.Fail(err)
+	result := repos.NewService(repos.ServiceOptions{
+		Root:         opts.Root,
+		RegistryPath: opts.RegistryPath,
+		Remote:       opts.Remote,
+		Branch:       opts.Branch,
+	})(c)
+	if !result.OK {
+		return result
 	}
-	return core.Ok(nil)
+	return registerServiceIfMissing(c, "repos", result.Value)
+}
+
+func registerGitService(c *core.Core, opts Options) core.Result {
+	if opts.Root == "" {
+		return core.Ok(nil)
+	}
+	result := git.NewService(git.ServiceOptions{WorkDir: opts.Root})(c)
+	if !result.OK {
+		return result
+	}
+	return registerServiceIfMissing(c, "git", result.Value)
+}
+
+func registerServiceIfMissing(c *core.Core, name string, service any) core.Result {
+	if service == nil || c.Service(name).OK {
+		return core.Ok(nil)
+	}
+	return c.RegisterService(name, service)
+}
+
+// OnStartup satisfies the Core lifecycle contract.
+func (s *Service) OnStartup(ctx context.Context) core.Result {
+	return serviceStartupResult(s, ctx)
 }
 
 // OnShutdown satisfies the Core lifecycle contract.
 func (s *Service) OnShutdown(ctx context.Context) core.Result {
+	return serviceLifecycleResult(s, ctx)
+}
+
+func serviceStartupResult(s *Service, ctx context.Context) core.Result {
+	return serviceLifecycleResult(s, ctx)
+}
+
+func serviceLifecycleResult(s *Service, ctx context.Context) core.Result {
 	if s == nil {
 		return core.Ok(nil)
 	}

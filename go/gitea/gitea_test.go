@@ -12,11 +12,18 @@ import (
 	core "dappco.re/go"
 )
 
+const (
+	sonarGiteaTestApplicationJson         = "application/json"
+	sonarGiteaTestConfigYaml              = "config.yaml"
+	sonarGiteaTestContentType             = "Content-Type"
+	sonarGiteaTestHttpsExampleTestRepoGit = "https://example.test/repo.git"
+)
+
 func ax7GiteaClient(t *core.T) *Client {
 	t.Helper()
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/api/v1/version" {
-			w.Header().Set("Content-Type", "application/json")
+			w.Header().Set(sonarGiteaTestContentType, sonarGiteaTestApplicationJson)
 			_, _ = w.Write([]byte(`{"version":"1.22.0"}`))
 			return
 		}
@@ -31,7 +38,7 @@ func ax7GiteaClient(t *core.T) *Client {
 
 func TestGitea_New_Good(t *core.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set(sonarGiteaTestContentType, sonarGiteaTestApplicationJson)
 		_, _ = w.Write([]byte(`{"version":"1.22.0"}`))
 	}))
 	t.Cleanup(server.Close)
@@ -48,7 +55,7 @@ func TestGitea_New_Bad(t *core.T) {
 
 func TestGitea_New_Ugly(t *core.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set(sonarGiteaTestContentType, sonarGiteaTestApplicationJson)
 		_, _ = w.Write([]byte(`{"version":"1.22.0"}`))
 	}))
 	t.Cleanup(server.Close)
@@ -59,7 +66,7 @@ func TestGitea_New_Ugly(t *core.T) {
 
 func TestGitea_NewFromConfig_Good(t *core.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set(sonarGiteaTestContentType, sonarGiteaTestApplicationJson)
 		_, _ = w.Write([]byte(`{"version":"1.22.0"}`))
 	}))
 	t.Cleanup(server.Close)
@@ -76,7 +83,7 @@ func TestGitea_NewFromConfig_Bad(t *core.T) {
 
 func TestGitea_NewFromConfig_Ugly(t *core.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set(sonarGiteaTestContentType, sonarGiteaTestApplicationJson)
 		_, _ = w.Write([]byte(`{"version":"1.22.0"}`))
 	}))
 	t.Cleanup(server.Close)
@@ -109,7 +116,7 @@ func TestGitea_ResolveConfig_Ugly(t *core.T) {
 	t.Setenv("GITEA_URL", "")
 	t.Setenv("GITEA_TOKEN", "")
 	core.RequireNoError(t, os.MkdirAll(filepath.Join(home, ".core"), 0o755))
-	core.RequireNoError(t, os.WriteFile(filepath.Join(home, ".core", "config.yaml"), []byte("gitea:\n  url: http://file.test\n  token: file-token\n"), 0o600))
+	core.RequireNoError(t, os.WriteFile(filepath.Join(home, ".core", sonarGiteaTestConfigYaml), []byte("gitea:\n  url: http://file.test\n  token: file-token\n"), 0o600))
 	url, token, err := ResolveConfig("", "")
 	core.AssertNoError(t, err)
 	core.AssertEqual(t, "http://file.test", url)
@@ -121,7 +128,7 @@ func TestGitea_SaveConfig_Good(t *core.T) {
 	t.Setenv("HOME", home)
 	err := SaveConfig("http://save.test", "saved-token")
 	core.AssertNoError(t, err)
-	raw, readErr := os.ReadFile(filepath.Join(home, ".core", "config.yaml"))
+	raw, readErr := os.ReadFile(filepath.Join(home, ".core", sonarGiteaTestConfigYaml))
 	core.RequireNoError(t, readErr)
 	core.AssertContains(t, string(raw), "saved-token")
 }
@@ -137,7 +144,7 @@ func TestGitea_SaveConfig_Ugly(t *core.T) {
 	t.Setenv("HOME", home)
 	err := SaveConfig("", "token-only")
 	core.AssertNoError(t, err)
-	raw, readErr := os.ReadFile(filepath.Join(home, ".core", "config.yaml"))
+	raw, readErr := os.ReadFile(filepath.Join(home, ".core", sonarGiteaTestConfigYaml))
 	core.RequireNoError(t, readErr)
 	core.AssertContains(t, string(raw), "token-only")
 }
@@ -210,6 +217,7 @@ func TestGitea_Client_ListIssuesIter_Bad(t *core.T) {
 	client := &Client{}
 	core.AssertPanics(t, func() {
 		for range client.ListIssuesIter("owner", "repo", ListIssuesOpts{}) {
+			break
 		}
 	})
 	core.AssertNil(t, client.API())
@@ -219,6 +227,7 @@ func TestGitea_Client_ListIssuesIter_Ugly(t *core.T) {
 	var client *Client
 	core.AssertPanics(t, func() {
 		for range client.ListIssuesIter("owner", "repo", ListIssuesOpts{}) {
+			break
 		}
 	})
 	core.AssertEqual(t, "", client.URL())
@@ -346,6 +355,7 @@ func TestGitea_Client_ListIssueCommentsIter_Bad(t *core.T) {
 	client := &Client{}
 	core.AssertPanics(t, func() {
 		for range client.ListIssueCommentsIter("owner", "repo", 7) {
+			break
 		}
 	})
 	core.AssertNil(t, client.API())
@@ -355,6 +365,7 @@ func TestGitea_Client_ListIssueCommentsIter_Ugly(t *core.T) {
 	var client *Client
 	core.AssertPanics(t, func() {
 		for range client.ListIssueCommentsIter("owner", "repo", 7) {
+			break
 		}
 	})
 	core.AssertEqual(t, "", client.URL())
@@ -482,6 +493,7 @@ func TestGitea_Client_ListPullRequestsIter_Bad(t *core.T) {
 	client := &Client{}
 	core.AssertPanics(t, func() {
 		for range client.ListPullRequestsIter("owner", "repo", "closed") {
+			break
 		}
 	})
 	core.AssertNil(t, client.API())
@@ -491,6 +503,7 @@ func TestGitea_Client_ListPullRequestsIter_Ugly(t *core.T) {
 	var client *Client
 	core.AssertPanics(t, func() {
 		for range client.ListPullRequestsIter("owner", "repo", "") {
+			break
 		}
 	})
 	core.AssertEqual(t, "", client.URL())
@@ -582,6 +595,7 @@ func TestGitea_Client_ListOrgReposIter_Bad(t *core.T) {
 	client := &Client{}
 	core.AssertPanics(t, func() {
 		for range client.ListOrgReposIter("org") {
+			break
 		}
 	})
 	core.AssertNil(t, client.API())
@@ -591,6 +605,7 @@ func TestGitea_Client_ListOrgReposIter_Ugly(t *core.T) {
 	var client *Client
 	core.AssertPanics(t, func() {
 		for range client.ListOrgReposIter("org") {
+			break
 		}
 	})
 	core.AssertEqual(t, "", client.URL())
@@ -628,6 +643,7 @@ func TestGitea_Client_ListUserReposIter_Bad(t *core.T) {
 	client := &Client{}
 	core.AssertPanics(t, func() {
 		for range client.ListUserReposIter() {
+			break
 		}
 	})
 	core.AssertNil(t, client.API())
@@ -637,6 +653,7 @@ func TestGitea_Client_ListUserReposIter_Ugly(t *core.T) {
 	var client *Client
 	core.AssertPanics(t, func() {
 		for range client.ListUserReposIter() {
+			break
 		}
 	})
 	core.AssertEqual(t, "", client.URL())
@@ -644,13 +661,13 @@ func TestGitea_Client_ListUserReposIter_Ugly(t *core.T) {
 
 func TestGitea_Client_CreateMirror_Good(t *core.T) {
 	client := ax7GiteaClient(t)
-	_, err := client.CreateMirror("owner", "repo", "https://example.test/repo.git", "token")
+	_, err := client.CreateMirror("owner", "repo", sonarGiteaTestHttpsExampleTestRepoGit, "token")
 	core.AssertError(t, err)
 }
 
 func TestGitea_Client_CreateMirror_Bad(t *core.T) {
 	client := &Client{}
-	core.AssertPanics(t, func() { _, _ = client.CreateMirror("owner", "repo", "https://example.test/repo.git", "") })
+	core.AssertPanics(t, func() { _, _ = client.CreateMirror("owner", "repo", sonarGiteaTestHttpsExampleTestRepoGit, "") })
 	core.AssertNil(t, client.API())
 }
 
@@ -662,14 +679,14 @@ func TestGitea_Client_CreateMirror_Ugly(t *core.T) {
 
 func TestGitea_Client_CreateMirrorFromService_Good(t *core.T) {
 	client := ax7GiteaClient(t)
-	_, err := client.CreateMirrorFromService("owner", "repo", "https://example.test/repo.git", sdk.GitServicePlain, "token")
+	_, err := client.CreateMirrorFromService("owner", "repo", sonarGiteaTestHttpsExampleTestRepoGit, sdk.GitServicePlain, "token")
 	core.AssertError(t, err)
 }
 
 func TestGitea_Client_CreateMirrorFromService_Bad(t *core.T) {
 	client := &Client{}
 	core.AssertPanics(t, func() {
-		_, _ = client.CreateMirrorFromService("owner", "repo", "https://example.test/repo.git", sdk.GitServicePlain, "")
+		_, _ = client.CreateMirrorFromService("owner", "repo", sonarGiteaTestHttpsExampleTestRepoGit, sdk.GitServicePlain, "")
 	})
 	core.AssertNil(t, client.API())
 }

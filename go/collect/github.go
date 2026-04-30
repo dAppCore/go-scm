@@ -24,29 +24,19 @@ func (g *GitHubCollector) Collect(ctx context.Context, cfg *Config) (*Result, er
 	if cfg == nil {
 		return nil, core.E("collect.GitHubCollector.Collect", "config is required", nil)
 	}
-	if ctx == nil {
-		ctx = context.Background()
-	}
-	if ctx != nil {
-		if err := ctx.Err(); err != nil {
-			return nil, err
-		}
+	ctx, err := activeCollectContext(ctx)
+	if err != nil {
+		return nil, err
 	}
 	result := &Result{Source: g.Name()}
 	if cfg.Dispatcher != nil {
 		cfg.Dispatcher.EmitStart(g.Name(), "Starting GitHub collection")
 	}
-	if cfg.DryRun {
-		if cfg.Dispatcher != nil {
-			cfg.Dispatcher.EmitProgress(g.Name(), "[dry-run] Would collect GitHub data", nil)
-			cfg.Dispatcher.EmitComplete(g.Name(), "GitHub dry-run complete", result)
-		}
+	if emitDryRun(cfg, g.Name(), "[dry-run] Would collect GitHub data", "GitHub dry-run complete", result) {
 		return result, nil
 	}
-	if cfg.Limiter != nil {
-		if err := cfg.Limiter.Wait(ctx, "github"); err != nil {
-			return result, err
-		}
+	if err := waitCollectLimiter(ctx, cfg, "github"); err != nil {
+		return result, err
 	}
 	content := core.Sprintf("# GitHub Collection\n\n- Org: %s\n- Repo: %s\n- IssuesOnly: %t\n- PRsOnly: %t\n", g.Org, g.Repo, g.IssuesOnly, g.PRsOnly)
 	path := "github.md"

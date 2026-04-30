@@ -75,6 +75,31 @@ func MergeResults(source string, results ...*Result) *Result {
 	return merged
 }
 
+func activeCollectContext(ctx context.Context) (context.Context, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	return ctx, ctx.Err()
+}
+
+func emitDryRun(cfg *Config, source, progress, complete string, result *Result) bool {
+	if cfg == nil || !cfg.DryRun {
+		return false
+	}
+	if cfg.Dispatcher != nil {
+		cfg.Dispatcher.EmitProgress(source, progress, nil)
+		cfg.Dispatcher.EmitComplete(source, complete, result)
+	}
+	return true
+}
+
+func waitCollectLimiter(ctx context.Context, cfg *Config, source string) error {
+	if cfg == nil || cfg.Limiter == nil {
+		return nil
+	}
+	return cfg.Limiter.Wait(ctx, source)
+}
+
 func writeResultFile(cfg *Config, source, name, content string) (string, error) {
 	if cfg == nil || cfg.Output == nil {
 		return "", core.E("collect.writeResultFile", "output medium is required", nil)

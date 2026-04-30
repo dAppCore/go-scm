@@ -16,6 +16,11 @@ import (
 	coreio "dappco.re/go/io"
 )
 
+const (
+	sonarStateCollectStateLoad = "collect.State.Load"
+	sonarStateCollectStateSave = "collect.State.Save"
+)
+
 // State tracks collection progress for incremental runs.
 type State struct {
 	mu      sync.Mutex
@@ -78,7 +83,7 @@ func (s *State) Set(source string, entry *StateEntry) {
 // Load reads state from disk.
 func (s *State) Load() error {
 	if s == nil {
-		return core.E("collect.State.Load", "state is required", nil)
+		return core.E(sonarStateCollectStateLoad, "state is required", nil)
 	}
 	if s.medium == nil || s.path == "" {
 		return nil
@@ -91,11 +96,11 @@ func (s *State) Load() error {
 			s.mu.Unlock()
 			return nil
 		}
-		return core.E("collect.State.Load", "read", err)
+		return core.E(sonarStateCollectStateLoad, "read", err)
 	}
 	var data map[string]*StateEntry
 	if err := json.Unmarshal([]byte(raw), &data); err != nil {
-		return core.E("collect.State.Load", "unmarshal", err)
+		return core.E(sonarStateCollectStateLoad, "unmarshal", err)
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -109,7 +114,7 @@ func (s *State) Load() error {
 // Save writes state to disk.
 func (s *State) Save() error {
 	if s == nil {
-		return core.E("collect.State.Save", "state is required", nil)
+		return core.E(sonarStateCollectStateSave, "state is required", nil)
 	}
 	if s.medium == nil || s.path == "" {
 		return nil
@@ -118,16 +123,16 @@ func (s *State) Save() error {
 	defer s.mu.Unlock()
 	raw, err := json.MarshalIndent(s.entries, "", "  ")
 	if err != nil {
-		return core.E("collect.State.Save", "marshal", err)
+		return core.E(sonarStateCollectStateSave, "marshal", err)
 	}
 	dir := core.PathDir(s.path)
 	if dir != "." {
 		if err := s.medium.EnsureDir(dir); err != nil {
-			return core.E("collect.State.Save", "ensure dir", err)
+			return core.E(sonarStateCollectStateSave, "ensure dir", err)
 		}
 	}
 	if err := s.medium.Write(s.path, string(raw)); err != nil {
-		return core.E("collect.State.Save", "write", err)
+		return core.E(sonarStateCollectStateSave, "write", err)
 	}
 	return nil
 }

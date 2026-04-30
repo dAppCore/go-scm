@@ -15,6 +15,10 @@ import (
 	coreio "dappco.re/go/io"
 )
 
+const (
+	sonarCollectTestStateJson = "state.json"
+)
+
 type ax7Collector struct {
 	name   string
 	result *Result
@@ -120,13 +124,21 @@ func TestCollect_NewDispatcher_Bad(t *core.T) {
 
 func TestCollect_NewDispatcher_Ugly(t *core.T) {
 	dispatcher := NewDispatcher()
-	dispatcher.On(EventStart, func(Event) {})
+	ax7RegisterStartHandler(dispatcher)
 	core.AssertLen(t, dispatcher.handlers[EventStart], 1)
+}
+
+func ax7RegisterStartHandler(dispatcher *Dispatcher) {
+	dispatcher.On(EventStart, func(Event) {
+		// Empty handler verifies registration without side effects.
+	})
 }
 
 func TestCollect_Dispatcher_On_Good(t *core.T) {
 	dispatcher := NewDispatcher()
-	dispatcher.On(EventStart, func(Event) {})
+	dispatcher.On(EventStart, func(Event) {
+		// Empty handler verifies registration without side effects.
+	})
 	core.AssertLen(t, dispatcher.handlers[EventStart], 1)
 }
 
@@ -139,7 +151,9 @@ func TestCollect_Dispatcher_On_Bad(t *core.T) {
 func TestCollect_Dispatcher_On_Ugly(t *core.T) {
 	var dispatcher *Dispatcher
 	core.AssertNotPanics(t, func() {
-		dispatcher.On(EventStart, func(Event) {})
+		dispatcher.On(EventStart, func(Event) {
+			// Empty handler verifies nil dispatcher handling.
+		})
 	})
 }
 
@@ -276,8 +290,8 @@ func TestCollect_Dispatcher_EmitComplete_Ugly(t *core.T) {
 }
 
 func TestCollect_NewState_Good(t *core.T) {
-	state := NewState(coreio.NewMockMedium(), "state.json")
-	core.AssertEqual(t, "state.json", state.path)
+	state := NewState(coreio.NewMockMedium(), sonarCollectTestStateJson)
+	core.AssertEqual(t, sonarCollectTestStateJson, state.path)
 	core.AssertNotNil(t, state.entries)
 }
 
@@ -290,7 +304,7 @@ func TestCollect_NewState_Bad(t *core.T) {
 func TestCollect_NewState_Ugly(t *core.T) {
 	state := NewState(coreio.NewMockMedium(), "dir/../state.json")
 	core.AssertEqual(
-		t, "state.json", state.path,
+		t, sonarCollectTestStateJson, state.path,
 	)
 }
 
@@ -338,8 +352,8 @@ func TestCollect_State_Set_Ugly(t *core.T) {
 
 func TestCollect_State_Load_Good(t *core.T) {
 	medium := coreio.NewMockMedium()
-	core.RequireNoError(t, medium.Write("state.json", `{"github":{"source":"github","items":2}}`))
-	state := NewState(medium, "state.json")
+	core.RequireNoError(t, medium.Write(sonarCollectTestStateJson, `{"github":{"source":"github","items":2}}`))
+	state := NewState(medium, sonarCollectTestStateJson)
 	err := state.Load()
 	core.AssertNoError(t, err)
 	entry, ok := state.Get("github")
@@ -362,11 +376,11 @@ func TestCollect_State_Load_Ugly(t *core.T) {
 
 func TestCollect_State_Save_Good(t *core.T) {
 	medium := coreio.NewMockMedium()
-	state := NewState(medium, "state.json")
+	state := NewState(medium, sonarCollectTestStateJson)
 	state.Set("github", &StateEntry{Items: 2})
 	err := state.Save()
 	core.AssertNoError(t, err)
-	raw, readErr := medium.Read("state.json")
+	raw, readErr := medium.Read(sonarCollectTestStateJson)
 	core.RequireNoError(t, readErr)
 	core.AssertContains(t, raw, "github")
 }
@@ -507,7 +521,8 @@ func TestCollect_RateLimiter_Wait_Bad(t *core.T) {
 
 func TestCollect_RateLimiter_Wait_Ugly(t *core.T) {
 	var limiter *RateLimiter
-	err := limiter.Wait(nil, "unit")
+	var ctx context.Context
+	err := limiter.Wait(ctx, "unit")
 	core.AssertNoError(t, err)
 }
 
@@ -593,7 +608,8 @@ func TestCollect_RateLimiter_CheckGitHubRateLimitCtx_Bad(t *core.T) {
 
 func TestCollect_RateLimiter_CheckGitHubRateLimitCtx_Ugly(t *core.T) {
 	var limiter *RateLimiter
-	used, limit, err := limiter.CheckGitHubRateLimitCtx(nil)
+	var ctx context.Context
+	used, limit, err := limiter.CheckGitHubRateLimitCtx(ctx)
 	core.AssertNoError(t, err)
 	core.AssertEqual(t, 0, used)
 	core.AssertEqual(t, 0, limit)

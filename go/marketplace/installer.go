@@ -14,6 +14,10 @@ import (
 	"dappco.re/go/scm/manifest"
 )
 
+const (
+	sonarInstallerModuleJson = "module.json"
+)
+
 type InstalledModule struct {
 	Code        string               `json:"code"`
 	Name        string               `json:"name"`
@@ -65,7 +69,7 @@ func (i *Installer) Install(ctx context.Context, mod Module) error {
 	if err != nil {
 		return err
 	}
-	if err := writeMediumFile(i.medium, filepath.Join(i.modulesDir, mod.Code, "module.json"), raw); err != nil {
+	if err := writeMediumFile(i.medium, filepath.Join(i.modulesDir, mod.Code, sonarInstallerModuleJson), raw); err != nil {
 		return err
 	}
 	return nil
@@ -101,7 +105,7 @@ func (i *Installer) Installed() ([]InstalledModule, error) {
 		if entry == nil || !entry.IsDir() {
 			continue
 		}
-		raw, err := readMediumFile(i.medium, filepath.Join(i.modulesDir, entry.Name(), "module.json"))
+		raw, err := readMediumFile(i.medium, filepath.Join(i.modulesDir, entry.Name(), sonarInstallerModuleJson))
 		if err != nil {
 			continue
 		}
@@ -136,7 +140,7 @@ func (i *Installer) Update(ctx context.Context, code string) error {
 	if i.medium == nil {
 		return errors.New("marketplace.Installer.Update: medium is required")
 	}
-	path := filepath.Join(i.modulesDir, code, "module.json")
+	path := filepath.Join(i.modulesDir, code, sonarInstallerModuleJson)
 	raw, err := readMediumFile(i.medium, path)
 	if err != nil {
 		return err

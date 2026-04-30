@@ -12,6 +12,10 @@ import (
 	coreio "dappco.re/go/io"
 )
 
+const (
+	sonarScmTestExpectedRegistry = "expected registry"
+)
+
 func TestScm_NewCoreService_Good(t *testing.T) {
 	c := core.New(core.WithService(NewCoreService(Options{Root: t.TempDir()})))
 	if r := c.ServiceStartup(context.Background(), nil); !r.OK {
@@ -66,7 +70,7 @@ func TestScm_WithMedium_Good(t *testing.T) {
 
 	registry := NewRegistry(WithMedium(medium))
 	if registry == nil {
-		t.Fatal("expected registry")
+		t.Fatal(sonarScmTestExpectedRegistry)
 	}
 	if registry.Medium() != medium {
 		t.Fatalf("expected registry medium to be preserved")
@@ -76,7 +80,7 @@ func TestScm_WithMedium_Good(t *testing.T) {
 func TestScm_WithMedium_Bad(t *testing.T) {
 	registry := NewRegistry(WithMedium(nil))
 	if registry == nil {
-		t.Fatal("expected registry")
+		t.Fatal(sonarScmTestExpectedRegistry)
 	}
 	if registry.Medium() != nil {
 		t.Fatalf("expected nil medium to be ignored")
@@ -88,7 +92,7 @@ func TestScm_WithMedium_Ugly(t *testing.T) {
 
 	registry := NewRegistry(WithMedium(medium), WithMedium(nil))
 	if registry == nil {
-		t.Fatal("expected registry")
+		t.Fatal(sonarScmTestExpectedRegistry)
 	}
 	if registry.Medium() != medium {
 		t.Fatalf("expected nil medium option not to clear an existing medium")

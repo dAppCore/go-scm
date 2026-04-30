@@ -17,45 +17,20 @@ func (c *Client) CreateRepoLabel(owner, repo string, opts forgejo.CreateLabelOpt
 }
 
 func (c *Client) ListRepoLabels(owner, repo string) ([]*forgejo.Label, error) {
-	var all []*forgejo.Label
-	page := 1
-	for {
-		labels, resp, err := c.api.ListRepoLabels(owner, repo, forgejo.ListLabelsOptions{
+	return collectForgePages(func(page int) ([]*forgejo.Label, *forgeResponse, error) {
+		return c.api.ListRepoLabels(owner, repo, forgejo.ListLabelsOptions{
 			ListOptions: forgejo.ListOptions{Page: page, PageSize: 50},
 		})
-		if err != nil {
-			return nil, err
-		}
-		all = append(all, labels...)
-		if resp == nil || page >= resp.LastPage {
-			break
-		}
-		page++
-	}
-	return all, nil
+	})
 }
 
 func (c *Client) ListRepoLabelsIter(owner, repo string) iter.Seq2[*forgejo.Label, error] {
 	return func(yield func(*forgejo.Label, error) bool) {
-		page := 1
-		for {
-			labels, resp, err := c.api.ListRepoLabels(owner, repo, forgejo.ListLabelsOptions{
+		yieldForgePages(yield, func(page int) ([]*forgejo.Label, *forgeResponse, error) {
+			return c.api.ListRepoLabels(owner, repo, forgejo.ListLabelsOptions{
 				ListOptions: forgejo.ListOptions{Page: page, PageSize: 50},
 			})
-			if err != nil {
-				yield(nil, err)
-				return
-			}
-			for _, label := range labels {
-				if !yield(label, nil) {
-					return
-				}
-			}
-			if resp == nil || page >= resp.LastPage {
-				break
-			}
-			page++
-		}
+		})
 	}
 }
 
@@ -75,53 +50,55 @@ func (c *Client) ListOrgLabels(org string) ([]*forgejo.Label, error) {
 		if err != nil {
 			return nil, err
 		}
-		for _, label := range labels {
-			key := strings.ToLower(label.Name)
-			if _, ok := seen[key]; ok {
-				continue
-			}
-			seen[key] = struct{}{}
-			all = append(all, label)
-		}
+		all = appendUniqueLabels(all, seen, labels)
 	}
 	return all, nil
+}
+
+func appendUniqueLabels(all []*forgejo.Label, seen map[string]struct{}, labels []*forgejo.Label) []*forgejo.Label {
+	for _, label := range labels {
+		key := strings.ToLower(label.Name)
+		if _, ok := seen[key]; ok {
+			continue
+		}
+		seen[key] = struct{}{}
+		all = append(all, label)
+	}
+	return all
 }
 
 func (c *Client) ListOrgLabelsIter(org string) iter.Seq2[*forgejo.Label, error] {
 	return func(yield func(*forgejo.Label, error) bool) {
 		seen := make(map[string]struct{})
-		page := 1
-		for {
-			repos, resp, err := c.api.ListOrgRepos(org, forgejo.ListOrgReposOptions{
+		yieldForgePages(func(repo *forgejo.Repository, err error) bool {
+			if err != nil {
+				return yield(nil, err)
+			}
+			return c.yieldRepoLabels(yield, seen, repo)
+		}, func(page int) ([]*forgejo.Repository, *forgeResponse, error) {
+			return c.api.ListOrgRepos(org, forgejo.ListOrgReposOptions{
 				ListOptions: forgejo.ListOptions{Page: page, PageSize: 50},
 			})
-			if err != nil {
-				yield(nil, err)
-				return
-			}
-			for _, repo := range repos {
-				labels, err := c.ListRepoLabels(repo.Owner.UserName, repo.Name)
-				if err != nil {
-					yield(nil, err)
-					return
-				}
-				for _, label := range labels {
-					key := strings.ToLower(label.Name)
-					if _, ok := seen[key]; ok {
-						continue
-					}
-					seen[key] = struct{}{}
-					if !yield(label, nil) {
-						return
-					}
-				}
-			}
-			if resp == nil || page >= resp.LastPage {
-				break
-			}
-			page++
+		})
+	}
+}
+
+func (c *Client) yieldRepoLabels(yield func(*forgejo.Label, error) bool, seen map[string]struct{}, repo *forgejo.Repository) bool {
+	labels, err := c.ListRepoLabels(repo.Owner.UserName, repo.Name)
+	if err != nil {
+		return yield(nil, err)
+	}
+	for _, label := range labels {
+		key := strings.ToLower(label.Name)
+		if _, ok := seen[key]; ok {
+			continue
+		}
+		seen[key] = struct{}{}
+		if !yield(label, nil) {
+			return false
 		}
 	}
+	return true
 }
 
 func (c *Client) GetLabelByName(owner, repo, name string) (*forgejo.Label, error) {

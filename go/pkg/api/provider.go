@@ -13,6 +13,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const (
+	sonarProviderModuleNotFound = "module not found"
+)
+
 type ScmProvider struct {
 	index     *marketplace.Index
 	installer *marketplace.Installer
@@ -84,7 +88,7 @@ func (p *ScmProvider) getMarketplaceModule(c *gin.Context) {
 		return
 	}
 	if p == nil || p.index == nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "module not found"})
+		c.JSON(http.StatusNotFound, gin.H{"error": sonarProviderModuleNotFound})
 		return
 	}
 	code := core.Trim(c.Param("code"))
@@ -94,7 +98,7 @@ func (p *ScmProvider) getMarketplaceModule(c *gin.Context) {
 	}
 	mod, ok := p.index.Find(code)
 	if !ok {
-		c.JSON(http.StatusNotFound, gin.H{"error": "module not found"})
+		c.JSON(http.StatusNotFound, gin.H{"error": sonarProviderModuleNotFound})
 		return
 	}
 	c.JSON(http.StatusOK, mod)
@@ -158,7 +162,7 @@ func (p *ScmProvider) getInstalledModule(c *gin.Context) {
 		return
 	}
 	if p == nil || p.installer == nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "module not found"})
+		c.JSON(http.StatusNotFound, gin.H{"error": sonarProviderModuleNotFound})
 		return
 	}
 	modules, err := p.installer.Installed()
@@ -172,5 +176,5 @@ func (p *ScmProvider) getInstalledModule(c *gin.Context) {
 			return
 		}
 	}
-	c.JSON(http.StatusNotFound, gin.H{"error": "module not found"})
+	c.JSON(http.StatusNotFound, gin.H{"error": sonarProviderModuleNotFound})
 }

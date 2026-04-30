@@ -12,11 +12,18 @@ import (
 	core "dappco.re/go"
 )
 
+const (
+	sonarForgeTestApplicationJson      = "application/json"
+	sonarForgeTestConfigYaml           = "config.yaml"
+	sonarForgeTestContentType          = "Content-Type"
+	sonarForgeTestUnexpectedHttpStatus = "unexpected HTTP status"
+)
+
 func ax7ForgeClient(t *core.T) *Client {
 	t.Helper()
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/api/v1/version" {
-			w.Header().Set("Content-Type", "application/json")
+			w.Header().Set(sonarForgeTestContentType, sonarForgeTestApplicationJson)
 			_, _ = w.Write([]byte(`{"version":"1.22.0"}`))
 			return
 		}
@@ -31,7 +38,7 @@ func ax7ForgeClient(t *core.T) *Client {
 
 func TestForge_New_Good(t *core.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set(sonarForgeTestContentType, sonarForgeTestApplicationJson)
 		_, _ = w.Write([]byte(`{"version":"1.22.0"}`))
 	}))
 	t.Cleanup(server.Close)
@@ -48,7 +55,7 @@ func TestForge_New_Bad(t *core.T) {
 
 func TestForge_New_Ugly(t *core.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set(sonarForgeTestContentType, sonarForgeTestApplicationJson)
 		_, _ = w.Write([]byte(`{"version":"1.22.0"}`))
 	}))
 	t.Cleanup(server.Close)
@@ -59,7 +66,7 @@ func TestForge_New_Ugly(t *core.T) {
 
 func TestForge_NewFromConfig_Good(t *core.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set(sonarForgeTestContentType, sonarForgeTestApplicationJson)
 		_, _ = w.Write([]byte(`{"version":"1.22.0"}`))
 	}))
 	t.Cleanup(server.Close)
@@ -76,7 +83,7 @@ func TestForge_NewFromConfig_Bad(t *core.T) {
 
 func TestForge_NewFromConfig_Ugly(t *core.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set(sonarForgeTestContentType, sonarForgeTestApplicationJson)
 		_, _ = w.Write([]byte(`{"version":"1.22.0"}`))
 	}))
 	t.Cleanup(server.Close)
@@ -109,7 +116,7 @@ func TestForge_ResolveConfig_Ugly(t *core.T) {
 	t.Setenv("FORGE_URL", "")
 	t.Setenv("FORGE_TOKEN", "")
 	core.RequireNoError(t, os.MkdirAll(filepath.Join(home, ".core"), 0o755))
-	core.RequireNoError(t, os.WriteFile(filepath.Join(home, ".core", "config.yaml"), []byte("forge:\n  url: http://file.test\n  token: file-token\n"), 0o600))
+	core.RequireNoError(t, os.WriteFile(filepath.Join(home, ".core", sonarForgeTestConfigYaml), []byte("forge:\n  url: http://file.test\n  token: file-token\n"), 0o600))
 	url, token, err := ResolveConfig("", "")
 	core.AssertNoError(t, err)
 	core.AssertEqual(t, "http://file.test", url)
@@ -121,7 +128,7 @@ func TestForge_SaveConfig_Good(t *core.T) {
 	t.Setenv("HOME", home)
 	err := SaveConfig("http://save.test", "saved-token")
 	core.AssertNoError(t, err)
-	raw, readErr := os.ReadFile(filepath.Join(home, ".core", "config.yaml"))
+	raw, readErr := os.ReadFile(filepath.Join(home, ".core", sonarForgeTestConfigYaml))
 	core.RequireNoError(t, readErr)
 	core.AssertContains(t, string(raw), "saved-token")
 }
@@ -137,7 +144,7 @@ func TestForge_SaveConfig_Ugly(t *core.T) {
 	t.Setenv("HOME", home)
 	err := SaveConfig("", "token-only")
 	core.AssertNoError(t, err)
-	raw, readErr := os.ReadFile(filepath.Join(home, ".core", "config.yaml"))
+	raw, readErr := os.ReadFile(filepath.Join(home, ".core", sonarForgeTestConfigYaml))
 	core.RequireNoError(t, readErr)
 	core.AssertContains(t, string(raw), "token-only")
 }
@@ -198,20 +205,20 @@ func TestForge_Client_Token_Ugly(t *core.T) {
 
 func TestForge_Error_Error_Good(t *core.T) {
 	err := (&httpError{status: http.StatusTeapot}).Error()
-	core.AssertEqual(t, "unexpected HTTP status", err)
+	core.AssertEqual(t, sonarForgeTestUnexpectedHttpStatus, err)
 	core.AssertEqual(t, http.StatusTeapot, (&httpError{status: http.StatusTeapot}).status)
 }
 
 func TestForge_Error_Error_Bad(t *core.T) {
 	err := (&httpError{}).Error()
-	core.AssertEqual(t, "unexpected HTTP status", err)
+	core.AssertEqual(t, sonarForgeTestUnexpectedHttpStatus, err)
 	core.AssertEqual(t, 0, (&httpError{}).status)
 }
 
 func TestForge_Error_Error_Ugly(t *core.T) {
 	var err *httpError
 	got := err.Error()
-	core.AssertEqual(t, "unexpected HTTP status", got)
+	core.AssertEqual(t, sonarForgeTestUnexpectedHttpStatus, got)
 }
 
 func TestForge_Client_GetCurrentUser_Good(t *core.T) {
@@ -408,6 +415,7 @@ func TestForge_Client_ListIssueCommentsIter_Bad(t *core.T) {
 	client := &Client{}
 	core.AssertPanics(t, func() {
 		for range client.ListIssueCommentsIter("owner", "repo", 7) {
+			break
 		}
 	})
 	core.AssertNil(t, client.API())
@@ -417,6 +425,7 @@ func TestForge_Client_ListIssueCommentsIter_Ugly(t *core.T) {
 	var client *Client
 	core.AssertPanics(t, func() {
 		for range client.ListIssueCommentsIter("owner", "repo", 7) {
+			break
 		}
 	})
 	core.AssertEqual(t, "", client.URL())
@@ -490,6 +499,7 @@ func TestForge_Client_ListPullRequestsIter_Bad(t *core.T) {
 	client := &Client{}
 	core.AssertPanics(t, func() {
 		for range client.ListPullRequestsIter("owner", "repo", "closed") {
+			break
 		}
 	})
 	core.AssertNil(t, client.API())
@@ -499,6 +509,7 @@ func TestForge_Client_ListPullRequestsIter_Ugly(t *core.T) {
 	var client *Client
 	core.AssertPanics(t, func() {
 		for range client.ListPullRequestsIter("owner", "repo", "") {
+			break
 		}
 	})
 	core.AssertEqual(t, "", client.URL())
@@ -608,6 +619,7 @@ func TestForge_Client_ListOrgReposIter_Bad(t *core.T) {
 	client := &Client{}
 	core.AssertPanics(t, func() {
 		for range client.ListOrgReposIter("org") {
+			break
 		}
 	})
 	core.AssertNil(t, client.API())
@@ -617,6 +629,7 @@ func TestForge_Client_ListOrgReposIter_Ugly(t *core.T) {
 	var client *Client
 	core.AssertPanics(t, func() {
 		for range client.ListOrgReposIter("org") {
+			break
 		}
 	})
 	core.AssertEqual(t, "", client.URL())
@@ -654,6 +667,7 @@ func TestForge_Client_ListUserReposIter_Bad(t *core.T) {
 	client := &Client{}
 	core.AssertPanics(t, func() {
 		for range client.ListUserReposIter() {
+			break
 		}
 	})
 	core.AssertNil(t, client.API())
@@ -663,6 +677,7 @@ func TestForge_Client_ListUserReposIter_Ugly(t *core.T) {
 	var client *Client
 	core.AssertPanics(t, func() {
 		for range client.ListUserReposIter() {
+			break
 		}
 	})
 	core.AssertEqual(t, "", client.URL())
@@ -736,6 +751,7 @@ func TestForge_Client_ListRepoLabelsIter_Bad(t *core.T) {
 	client := &Client{}
 	core.AssertPanics(t, func() {
 		for range client.ListRepoLabelsIter("owner", "repo") {
+			break
 		}
 	})
 	core.AssertNil(t, client.API())
@@ -745,6 +761,7 @@ func TestForge_Client_ListRepoLabelsIter_Ugly(t *core.T) {
 	var client *Client
 	core.AssertPanics(t, func() {
 		for range client.ListRepoLabelsIter("owner", "repo") {
+			break
 		}
 	})
 	core.AssertEqual(t, "", client.URL())
@@ -782,6 +799,7 @@ func TestForge_Client_ListOrgLabelsIter_Bad(t *core.T) {
 	client := &Client{}
 	core.AssertPanics(t, func() {
 		for range client.ListOrgLabelsIter("org") {
+			break
 		}
 	})
 	core.AssertNil(t, client.API())
@@ -791,6 +809,7 @@ func TestForge_Client_ListOrgLabelsIter_Ugly(t *core.T) {
 	var client *Client
 	core.AssertPanics(t, func() {
 		for range client.ListOrgLabelsIter("org") {
+			break
 		}
 	})
 	core.AssertEqual(t, "", client.URL())
@@ -936,6 +955,7 @@ func TestForge_Client_ListPRReviewsIter_Bad(t *core.T) {
 	client := &Client{}
 	core.AssertPanics(t, func() {
 		for range client.ListPRReviewsIter("owner", "repo", 7) {
+			break
 		}
 	})
 	core.AssertNil(t, client.API())
@@ -945,6 +965,7 @@ func TestForge_Client_ListPRReviewsIter_Ugly(t *core.T) {
 	var client *Client
 	core.AssertPanics(t, func() {
 		for range client.ListPRReviewsIter("owner", "repo", 7) {
+			break
 		}
 	})
 	core.AssertEqual(t, "", client.URL())
@@ -1126,6 +1147,7 @@ func TestForge_Client_ListMyOrgsIter_Bad(t *core.T) {
 	client := &Client{}
 	core.AssertPanics(t, func() {
 		for range client.ListMyOrgsIter() {
+			break
 		}
 	})
 	core.AssertNil(t, client.API())
@@ -1135,6 +1157,7 @@ func TestForge_Client_ListMyOrgsIter_Ugly(t *core.T) {
 	var client *Client
 	core.AssertPanics(t, func() {
 		for range client.ListMyOrgsIter() {
+			break
 		}
 	})
 	core.AssertEqual(t, "", client.URL())
@@ -1190,6 +1213,7 @@ func TestForge_Client_ListRepoWebhooksIter_Bad(t *core.T) {
 	client := &Client{}
 	core.AssertPanics(t, func() {
 		for range client.ListRepoWebhooksIter("owner", "repo") {
+			break
 		}
 	})
 	core.AssertNil(t, client.API())
@@ -1199,6 +1223,7 @@ func TestForge_Client_ListRepoWebhooksIter_Ugly(t *core.T) {
 	var client *Client
 	core.AssertPanics(t, func() {
 		for range client.ListRepoWebhooksIter("owner", "repo") {
+			break
 		}
 	})
 	core.AssertEqual(t, "", client.URL())

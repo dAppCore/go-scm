@@ -16,6 +16,29 @@ type ListIssuesOpts struct {
 	Limit  int
 }
 
+func forgeStateFromString(state string) forgejo.StateType {
+	switch state {
+	case "closed":
+		return forgejo.StateClosed
+	case "all":
+		return forgejo.StateAll
+	default:
+		return forgejo.StateOpen
+	}
+}
+
+func normalizeForgeListIssuesOpts(opts ListIssuesOpts) (forgejo.StateType, int, int) {
+	limit := opts.Limit
+	if limit == 0 {
+		limit = 50
+	}
+	page := opts.Page
+	if page == 0 {
+		page = 1
+	}
+	return forgeStateFromString(opts.State), page, limit
+}
+
 func (c *Client) GetIssue(owner, repo string, number int64) (*forgejo.Issue, error) {
 	issue, _, err := c.api.GetIssue(owner, repo, number)
 	return issue, err
@@ -48,45 +71,20 @@ func (c *Client) AssignIssue(owner, repo string, number int64, assignees []strin
 }
 
 func (c *Client) ListIssueComments(owner, repo string, number int64) ([]*forgejo.Comment, error) {
-	var all []*forgejo.Comment
-	page := 1
-	for {
-		comments, resp, err := c.api.ListIssueComments(owner, repo, number, forgejo.ListIssueCommentOptions{
+	return collectForgePages(func(page int) ([]*forgejo.Comment, *forgeResponse, error) {
+		return c.api.ListIssueComments(owner, repo, number, forgejo.ListIssueCommentOptions{
 			ListOptions: forgejo.ListOptions{Page: page, PageSize: 50},
 		})
-		if err != nil {
-			return nil, err
-		}
-		all = append(all, comments...)
-		if resp == nil || page >= resp.LastPage {
-			break
-		}
-		page++
-	}
-	return all, nil
+	})
 }
 
 func (c *Client) ListIssueCommentsIter(owner, repo string, number int64) iter.Seq2[*forgejo.Comment, error] {
 	return func(yield func(*forgejo.Comment, error) bool) {
-		page := 1
-		for {
-			comments, resp, err := c.api.ListIssueComments(owner, repo, number, forgejo.ListIssueCommentOptions{
+		yieldForgePages(yield, func(page int) ([]*forgejo.Comment, *forgeResponse, error) {
+			return c.api.ListIssueComments(owner, repo, number, forgejo.ListIssueCommentOptions{
 				ListOptions: forgejo.ListOptions{Page: page, PageSize: 50},
 			})
-			if err != nil {
-				yield(nil, err)
-				return
-			}
-			for _, comment := range comments {
-				if !yield(comment, nil) {
-					return
-				}
-			}
-			if resp == nil || page >= resp.LastPage {
-				break
-			}
-			page++
-		}
+		})
 	}
 }
 
@@ -96,104 +94,36 @@ func (c *Client) GetIssueLabels(owner, repo string, number int64) ([]*forgejo.La
 }
 
 func (c *Client) ListIssues(owner, repo string, opts ListIssuesOpts) ([]*forgejo.Issue, error) {
-	state := forgejo.StateOpen
-	switch opts.State {
-	case "closed":
-		state = forgejo.StateClosed
-	case "all":
-		state = forgejo.StateAll
-	}
-
-	limit := opts.Limit
-	if limit == 0 {
-		limit = 50
-	}
-	page := opts.Page
-	if page == 0 {
-		page = 1
-	}
-
-	var all []*forgejo.Issue
-	for {
-		issues, resp, err := c.api.ListRepoIssues(owner, repo, forgejo.ListIssueOption{
+	state, page, limit := normalizeForgeListIssuesOpts(opts)
+	return collectForgeLimitedPages(page, limit, func(page int) ([]*forgejo.Issue, *forgeResponse, error) {
+		return c.api.ListRepoIssues(owner, repo, forgejo.ListIssueOption{
 			ListOptions: forgejo.ListOptions{Page: page, PageSize: limit},
 			State:       state,
 			Type:        forgejo.IssueTypeIssue,
 			Labels:      opts.Labels,
 		})
-		if err != nil {
-			return nil, err
-		}
-		all = append(all, issues...)
-		if len(issues) < limit || len(issues) == 0 {
-			break
-		}
-		if resp != nil && resp.LastPage > 0 && page >= resp.LastPage {
-			break
-		}
-		page++
-	}
-	return all, nil
+	})
 }
 
 func (c *Client) ListPullRequests(owner, repo string, state string) ([]*forgejo.PullRequest, error) {
-	st := forgejo.StateOpen
-	switch state {
-	case "closed":
-		st = forgejo.StateClosed
-	case "all":
-		st = forgejo.StateAll
-	}
-
-	var all []*forgejo.PullRequest
-	page := 1
-	for {
-		prs, resp, err := c.api.ListRepoPullRequests(owner, repo, forgejo.ListPullRequestsOptions{
+	st := forgeStateFromString(state)
+	return collectForgePages(func(page int) ([]*forgejo.PullRequest, *forgeResponse, error) {
+		return c.api.ListRepoPullRequests(owner, repo, forgejo.ListPullRequestsOptions{
 			ListOptions: forgejo.ListOptions{Page: page, PageSize: 50},
 			State:       st,
 		})
-		if err != nil {
-			return nil, err
-		}
-		all = append(all, prs...)
-		if resp == nil || page >= resp.LastPage {
-			break
-		}
-		page++
-	}
-	return all, nil
+	})
 }
 
 func (c *Client) ListPullRequestsIter(owner, repo string, state string) iter.Seq2[*forgejo.PullRequest, error] {
-	st := forgejo.StateOpen
-	switch state {
-	case "closed":
-		st = forgejo.StateClosed
-	case "all":
-		st = forgejo.StateAll
-	}
-
+	st := forgeStateFromString(state)
 	return func(yield func(*forgejo.PullRequest, error) bool) {
-		page := 1
-		for {
-			prs, resp, err := c.api.ListRepoPullRequests(owner, repo, forgejo.ListPullRequestsOptions{
+		yieldForgePages(yield, func(page int) ([]*forgejo.PullRequest, *forgeResponse, error) {
+			return c.api.ListRepoPullRequests(owner, repo, forgejo.ListPullRequestsOptions{
 				ListOptions: forgejo.ListOptions{Page: page, PageSize: 50},
 				State:       st,
 			})
-			if err != nil {
-				yield(nil, err)
-				return
-			}
-			for _, pr := range prs {
-				if !yield(pr, nil) {
-					return
-				}
-			}
-			if resp == nil || page >= resp.LastPage {
-				break
-			}
-			page++
-		}
+		})
 	}
 }
 

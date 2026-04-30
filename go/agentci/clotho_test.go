@@ -11,12 +11,17 @@ import (
 	"dappco.re/go/scm/jobrunner"
 )
 
+const (
+	sonarClothoTestGpt53CodexSpark = "gpt-5.3-codex-spark"
+	sonarClothoTestGpt54           = "gpt-5.4"
+)
+
 func TestSpinnerDeterministicBehaviour(t *testing.T) {
 	s := NewSpinner(ClothoConfig{Strategy: "clotho-verified"}, map[string]AgentConfig{
 		"charon": {
 			ForgejoUser:   "forge",
-			Model:         "gpt-5.4",
-			VerifyModel:   "gpt-5.3-codex-spark",
+			Model:         sonarClothoTestGpt54,
+			VerifyModel:   sonarClothoTestGpt53CodexSpark,
 			SecurityLevel: "high",
 		},
 	})
@@ -38,7 +43,7 @@ func TestSpinnerDeterministicBehaviour(t *testing.T) {
 	if name, _, ok := s.FindByForgejoUser("forge"); !ok || name != "charon" {
 		t.Fatalf("expected forgejo lookup to resolve charon")
 	}
-	if got := s.GetVerifierModel("charon"); got != "gpt-5.3-codex-spark" {
+	if got := s.GetVerifierModel("charon"); got != sonarClothoTestGpt53CodexSpark {
 		t.Fatalf("unexpected verifier model: %q", got)
 	}
 	ok, err := s.Weave(context.Background(), []byte("same"), []byte("same\n"))
@@ -51,12 +56,12 @@ func TestSpinnerResolveByForgejoUser(t *testing.T) {
 	s := NewSpinner(ClothoConfig{}, map[string]AgentConfig{
 		"charon": {
 			ForgejoUser: "forge",
-			Model:       "gpt-5.4",
-			VerifyModel: "gpt-5.3-codex-spark",
+			Model:       sonarClothoTestGpt54,
+			VerifyModel: sonarClothoTestGpt53CodexSpark,
 		},
 	})
 
-	if got := s.GetVerifierModel("forge"); got != "gpt-5.3-codex-spark" {
+	if got := s.GetVerifierModel("forge"); got != sonarClothoTestGpt53CodexSpark {
 		t.Fatalf("expected verifier model by forgejo user, got %q", got)
 	}
 }
@@ -65,7 +70,7 @@ func TestSpinnerGetVerifierModelReturnsOnlySecondaryModel(t *testing.T) {
 	s := NewSpinner(ClothoConfig{}, map[string]AgentConfig{
 		"charon": {
 			ForgejoUser: "forge",
-			Model:       "gpt-5.4",
+			Model:       sonarClothoTestGpt54,
 		},
 	})
 
@@ -106,8 +111,8 @@ func TestSpinnerDeterminePlanHonorsAgentOverridesUnderDirectStrategy(t *testing.
 	s := NewSpinner(ClothoConfig{Strategy: "direct"}, map[string]AgentConfig{
 		"charon": {
 			ForgejoUser:   "forge",
-			Model:         "gpt-5.4",
-			VerifyModel:   "gpt-5.3-codex-spark",
+			Model:         sonarClothoTestGpt54,
+			VerifyModel:   sonarClothoTestGpt53CodexSpark,
 			SecurityLevel: "high",
 		},
 	})

@@ -16,15 +16,18 @@ type ListIssuesOpts struct {
 	Limit  int
 }
 
-func (c *Client) ListIssues(owner, repo string, opts ListIssuesOpts) ([]*gitea.Issue, error) {
-	state := gitea.StateOpen
-	switch opts.State {
+func giteaStateFromString(state string) gitea.StateType {
+	switch state {
 	case "closed":
-		state = gitea.StateClosed
+		return gitea.StateClosed
 	case "all":
-		state = gitea.StateAll
+		return gitea.StateAll
+	default:
+		return gitea.StateOpen
 	}
+}
 
+func normalizeGiteaListIssuesOpts(opts ListIssuesOpts) (gitea.StateType, int, int) {
 	limit := opts.Limit
 	if limit == 0 {
 		limit = 50
@@ -33,73 +36,32 @@ func (c *Client) ListIssues(owner, repo string, opts ListIssuesOpts) ([]*gitea.I
 	if page == 0 {
 		page = 1
 	}
+	return giteaStateFromString(opts.State), page, limit
+}
 
-	var all []*gitea.Issue
-	for {
-		issues, resp, err := c.api.ListRepoIssues(owner, repo, gitea.ListIssueOption{
+func (c *Client) ListIssues(owner, repo string, opts ListIssuesOpts) ([]*gitea.Issue, error) {
+	state, page, limit := normalizeGiteaListIssuesOpts(opts)
+	return collectGiteaLimitedPages(page, limit, func(page int) ([]*gitea.Issue, *gitea.Response, error) {
+		return c.api.ListRepoIssues(owner, repo, gitea.ListIssueOption{
 			ListOptions: gitea.ListOptions{Page: page, PageSize: limit},
 			State:       state,
 			Type:        gitea.IssueTypeIssue,
 			Labels:      opts.Labels,
 		})
-		if err != nil {
-			return nil, err
-		}
-		all = append(all, issues...)
-		if len(issues) < limit || len(issues) == 0 {
-			break
-		}
-		if resp != nil && resp.LastPage > 0 && page >= resp.LastPage {
-			break
-		}
-		page++
-	}
-	return all, nil
+	})
 }
 
 func (c *Client) ListIssuesIter(owner, repo string, opts ListIssuesOpts) iter.Seq2[*gitea.Issue, error] {
-	state := gitea.StateOpen
-	switch opts.State {
-	case "closed":
-		state = gitea.StateClosed
-	case "all":
-		state = gitea.StateAll
-	}
-
-	limit := opts.Limit
-	if limit == 0 {
-		limit = 50
-	}
-	page := opts.Page
-	if page == 0 {
-		page = 1
-	}
-
+	state, page, limit := normalizeGiteaListIssuesOpts(opts)
 	return func(yield func(*gitea.Issue, error) bool) {
-		for {
-			issues, resp, err := c.api.ListRepoIssues(owner, repo, gitea.ListIssueOption{
+		yieldGiteaLimitedPages(yield, page, limit, func(page int) ([]*gitea.Issue, *gitea.Response, error) {
+			return c.api.ListRepoIssues(owner, repo, gitea.ListIssueOption{
 				ListOptions: gitea.ListOptions{Page: page, PageSize: limit},
 				State:       state,
 				Type:        gitea.IssueTypeIssue,
 				Labels:      opts.Labels,
 			})
-			if err != nil {
-				yield(nil, err)
-				return
-			}
-			for _, issue := range issues {
-				if !yield(issue, nil) {
-					return
-				}
-			}
-			if len(issues) < limit || len(issues) == 0 {
-				break
-			}
-			if resp != nil && resp.LastPage > 0 && page >= resp.LastPage {
-				break
-			}
-			page++
-		}
+		})
 	}
 }
 
@@ -129,45 +91,20 @@ func (c *Client) CreateIssueComment(owner, repo string, issue int64, body string
 }
 
 func (c *Client) ListIssueComments(owner, repo string, number int64) ([]*gitea.Comment, error) {
-	var all []*gitea.Comment
-	page := 1
-	for {
-		comments, resp, err := c.api.ListIssueComments(owner, repo, number, gitea.ListIssueCommentOptions{
+	return collectGiteaPages(func(page int) ([]*gitea.Comment, *gitea.Response, error) {
+		return c.api.ListIssueComments(owner, repo, number, gitea.ListIssueCommentOptions{
 			ListOptions: gitea.ListOptions{Page: page, PageSize: commentPageSize},
 		})
-		if err != nil {
-			return nil, err
-		}
-		all = append(all, comments...)
-		if resp == nil || page >= resp.LastPage {
-			break
-		}
-		page++
-	}
-	return all, nil
+	})
 }
 
 func (c *Client) ListIssueCommentsIter(owner, repo string, number int64) iter.Seq2[*gitea.Comment, error] {
 	return func(yield func(*gitea.Comment, error) bool) {
-		page := 1
-		for {
-			comments, resp, err := c.api.ListIssueComments(owner, repo, number, gitea.ListIssueCommentOptions{
+		yieldGiteaPages(yield, func(page int) ([]*gitea.Comment, *gitea.Response, error) {
+			return c.api.ListIssueComments(owner, repo, number, gitea.ListIssueCommentOptions{
 				ListOptions: gitea.ListOptions{Page: page, PageSize: commentPageSize},
 			})
-			if err != nil {
-				yield(nil, err)
-				return
-			}
-			for _, comment := range comments {
-				if !yield(comment, nil) {
-					return
-				}
-			}
-			if resp == nil || page >= resp.LastPage {
-				break
-			}
-			page++
-		}
+		})
 	}
 }
 
@@ -198,62 +135,23 @@ func (c *Client) GetPullRequest(owner, repo string, number int64) (*gitea.PullRe
 }
 
 func (c *Client) ListPullRequests(owner, repo string, state string) ([]*gitea.PullRequest, error) {
-	st := gitea.StateOpen
-	switch state {
-	case "closed":
-		st = gitea.StateClosed
-	case "all":
-		st = gitea.StateAll
-	}
-
-	var all []*gitea.PullRequest
-	page := 1
-	for {
-		prs, resp, err := c.api.ListRepoPullRequests(owner, repo, gitea.ListPullRequestsOptions{
+	st := giteaStateFromString(state)
+	return collectGiteaPages(func(page int) ([]*gitea.PullRequest, *gitea.Response, error) {
+		return c.api.ListRepoPullRequests(owner, repo, gitea.ListPullRequestsOptions{
 			ListOptions: gitea.ListOptions{Page: page, PageSize: 50},
 			State:       st,
 		})
-		if err != nil {
-			return nil, err
-		}
-		all = append(all, prs...)
-		if resp == nil || page >= resp.LastPage {
-			break
-		}
-		page++
-	}
-	return all, nil
+	})
 }
 
 func (c *Client) ListPullRequestsIter(owner, repo string, state string) iter.Seq2[*gitea.PullRequest, error] {
-	st := gitea.StateOpen
-	switch state {
-	case "closed":
-		st = gitea.StateClosed
-	case "all":
-		st = gitea.StateAll
-	}
-
+	st := giteaStateFromString(state)
 	return func(yield func(*gitea.PullRequest, error) bool) {
-		page := 1
-		for {
-			prs, resp, err := c.api.ListRepoPullRequests(owner, repo, gitea.ListPullRequestsOptions{
+		yieldGiteaPages(yield, func(page int) ([]*gitea.PullRequest, *gitea.Response, error) {
+			return c.api.ListRepoPullRequests(owner, repo, gitea.ListPullRequestsOptions{
 				ListOptions: gitea.ListOptions{Page: page, PageSize: 50},
 				State:       st,
 			})
-			if err != nil {
-				yield(nil, err)
-				return
-			}
-			for _, pr := range prs {
-				if !yield(pr, nil) {
-					return
-				}
-			}
-			if resp == nil || page >= resp.LastPage {
-				break
-			}
-			page++
-		}
+		})
 	}
 }

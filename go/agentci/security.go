@@ -12,6 +12,12 @@ import (
 	core "dappco.re/go"
 )
 
+const (
+	sonarSecurityAgentciResolvepathwithinroot = "agentci.ResolvePathWithinRoot"
+	sonarSecurityAgentciSanitizepath          = "agentci.SanitizePath"
+	sonarSecurityAgentciValidateremotedir     = "agentci.ValidateRemoteDir"
+)
+
 var safeNameRegex = regexp.MustCompile(`^[a-zA-Z0-9\-\_\.]+$`)
 
 // SanitizePath ensures a filename or directory name is safe and prevents path traversal.
@@ -19,16 +25,16 @@ var safeNameRegex = regexp.MustCompile(`^[a-zA-Z0-9\-\_\.]+$`)
 // Usage: SanitizePath(...)
 func SanitizePath(input string) (string, error) {
 	if input == "" {
-		return "", core.E("agentci.SanitizePath", "path element is required", nil)
+		return "", core.E(sonarSecurityAgentciSanitizepath, "path element is required", nil)
 	}
 	if input == "." || input == ".." {
-		return "", core.E("agentci.SanitizePath", core.Sprintf("invalid path element: %s", input), nil)
+		return "", core.E(sonarSecurityAgentciSanitizepath, core.Sprintf("invalid path element: %s", input), nil)
 	}
 	if core.Contains(input, "/") || core.Contains(input, `\`) {
-		return "", core.E("agentci.SanitizePath", core.Sprintf("path separators are not allowed: %s", input), nil)
+		return "", core.E(sonarSecurityAgentciSanitizepath, core.Sprintf("path separators are not allowed: %s", input), nil)
 	}
 	if !safeNameRegex.MatchString(input) {
-		return "", core.E("agentci.SanitizePath", core.Sprintf("invalid characters in path element: %s", input), nil)
+		return "", core.E(sonarSecurityAgentciSanitizepath, core.Sprintf("invalid characters in path element: %s", input), nil)
 	}
 	return input, nil
 }
@@ -50,12 +56,12 @@ func ValidatePathElement(input string) (string, error) {
 // Usage: ResolvePathWithinRoot(...)
 func ResolvePathWithinRoot(root string, input string) (string, string, error) {
 	if core.Trim(root) == "" {
-		return "", "", core.E("agentci.ResolvePathWithinRoot", "root is required", nil)
+		return "", "", core.E(sonarSecurityAgentciResolvepathwithinroot, "root is required", nil)
 	}
 
 	safeName, err := ValidatePathElement(input)
 	if err != nil {
-		return "", "", core.E("agentci.ResolvePathWithinRoot", "invalid path element", err)
+		return "", "", core.E(sonarSecurityAgentciResolvepathwithinroot, "invalid path element", err)
 	}
 
 	absRoot := absoluteLocalPath(root)
@@ -63,14 +69,14 @@ func ResolvePathWithinRoot(root string, input string) (string, string, error) {
 	cleanRoot := cleanLocalPath(absRoot)
 	if cleanRoot == localPathSeparator() {
 		if !core.HasPrefix(resolved, cleanRoot) {
-			return "", "", core.E("agentci.ResolvePathWithinRoot", "resolved path escaped root", nil)
+			return "", "", core.E(sonarSecurityAgentciResolvepathwithinroot, "resolved path escaped root", nil)
 		}
 		return safeName, resolved, nil
 	}
 
 	rootPrefix := core.Concat(cleanRoot, localPathSeparator())
 	if resolved != cleanRoot && !core.HasPrefix(resolved, rootPrefix) {
-		return "", "", core.E("agentci.ResolvePathWithinRoot", "resolved path escaped root", nil)
+		return "", "", core.E(sonarSecurityAgentciResolvepathwithinroot, "resolved path escaped root", nil)
 	}
 
 	return safeName, resolved, nil
@@ -80,10 +86,10 @@ func ResolvePathWithinRoot(root string, input string) (string, string, error) {
 // Usage: ValidateRemoteDir(...)
 func ValidateRemoteDir(dir string) (string, error) {
 	if core.Trim(dir) == "" {
-		return "", core.E("agentci.ValidateRemoteDir", "directory is required", nil)
+		return "", core.E(sonarSecurityAgentciValidateremotedir, "directory is required", nil)
 	}
 	if core.Contains(dir, `\`) {
-		return "", core.E("agentci.ValidateRemoteDir", "backslashes are not allowed", nil)
+		return "", core.E(sonarSecurityAgentciValidateremotedir, "backslashes are not allowed", nil)
 	}
 
 	switch dir {
@@ -91,38 +97,48 @@ func ValidateRemoteDir(dir string) (string, error) {
 		return dir, nil
 	}
 
-	prefix := ""
-	rest := dir
+	prefix, rest := splitRemoteDirPrefix(dir)
+	if err := validateRemoteDirSegments(rest); err != nil {
+		return "", err
+	}
 
+	if rest == "" || rest == "." {
+		return remoteDirRoot(prefix), nil
+	}
+
+	return cleanRemotePath(dir), nil
+}
+
+func splitRemoteDirPrefix(dir string) (prefix, rest string) {
 	if core.HasPrefix(dir, "~/") {
-		prefix = "~/"
-		rest = core.TrimPrefix(dir, "~/")
+		return "~/", core.TrimPrefix(dir, "~/")
 	}
 	if core.HasPrefix(dir, "/") {
-		prefix = "/"
-		rest = core.TrimPrefix(dir, "/")
+		return "/", core.TrimPrefix(dir, "/")
 	}
+	return "", dir
+}
 
+func validateRemoteDirSegments(rest string) error {
 	for _, part := range core.Split(rest, "/") {
 		if part == "" {
 			continue
 		}
 		if part == "." || part == ".." {
-			return "", core.E("agentci.ValidateRemoteDir", "directory escaped root", nil)
+			return core.E(sonarSecurityAgentciValidateremotedir, "directory escaped root", nil)
 		}
 		if _, err := ValidatePathElement(part); err != nil {
-			return "", core.E("agentci.ValidateRemoteDir", "invalid directory segment", err)
+			return core.E(sonarSecurityAgentciValidateremotedir, "invalid directory segment", err)
 		}
 	}
+	return nil
+}
 
-	if rest == "" || rest == "." {
-		if prefix == "~/" {
-			return "~", nil
-		}
-		return prefix, nil
+func remoteDirRoot(prefix string) string {
+	if prefix == "~/" {
+		return "~"
 	}
-
-	return cleanRemotePath(dir), nil
+	return prefix
 }
 
 // JoinRemotePath joins validated remote path elements using forward slashes.

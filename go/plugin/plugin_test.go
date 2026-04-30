@@ -9,6 +9,12 @@ import (
 	coreio "dappco.re/go/io"
 )
 
+const (
+	sonarPluginTestCorePluginV1          = "core/plugin@v1"
+	sonarPluginTestPluginsDemoPluginJson = "plugins/demo/plugin.json"
+	sonarPluginTestPluginsRegistryJson   = "plugins/registry.json"
+)
+
 func ax7PluginManifestJSON(name string) string {
 	return `{"name":"` + name + `","version":"1.0.0","entrypoint":"plugin.so"}`
 }
@@ -71,7 +77,8 @@ func TestPlugin_BasePlugin_Init_Bad(t *core.T) {
 
 func TestPlugin_BasePlugin_Init_Ugly(t *core.T) {
 	var plugin *BasePlugin
-	err := plugin.Init(nil)
+	var ctx context.Context
+	err := plugin.Init(ctx)
 	core.AssertNoError(t, err)
 }
 
@@ -91,7 +98,8 @@ func TestPlugin_BasePlugin_Start_Bad(t *core.T) {
 
 func TestPlugin_BasePlugin_Start_Ugly(t *core.T) {
 	var plugin *BasePlugin
-	err := plugin.Start(nil)
+	var ctx context.Context
+	err := plugin.Start(ctx)
 	core.AssertNoError(t, err)
 }
 
@@ -111,7 +119,8 @@ func TestPlugin_BasePlugin_Stop_Bad(t *core.T) {
 
 func TestPlugin_BasePlugin_Stop_Ugly(t *core.T) {
 	var plugin *BasePlugin
-	err := plugin.Stop(nil)
+	var ctx context.Context
+	err := plugin.Stop(ctx)
 	core.AssertNoError(t, err)
 }
 
@@ -137,14 +146,14 @@ func TestPlugin_Manifest_Validate_Ugly(t *core.T) {
 
 func TestPlugin_LoadManifest_Good(t *core.T) {
 	medium := coreio.NewMockMedium()
-	core.RequireNoError(t, medium.Write("plugins/demo/plugin.json", ax7PluginManifestJSON("demo")))
-	manifest, err := LoadManifest(medium, "plugins/demo/plugin.json")
+	core.RequireNoError(t, medium.Write(sonarPluginTestPluginsDemoPluginJson, ax7PluginManifestJSON("demo")))
+	manifest, err := LoadManifest(medium, sonarPluginTestPluginsDemoPluginJson)
 	core.AssertNoError(t, err)
 	core.AssertEqual(t, "demo", manifest.Name)
 }
 
 func TestPlugin_LoadManifest_Bad(t *core.T) {
-	_, err := LoadManifest(nil, "plugins/demo/plugin.json")
+	_, err := LoadManifest(nil, sonarPluginTestPluginsDemoPluginJson)
 	core.AssertError(
 		t, err,
 	)
@@ -152,8 +161,8 @@ func TestPlugin_LoadManifest_Bad(t *core.T) {
 
 func TestPlugin_LoadManifest_Ugly(t *core.T) {
 	medium := coreio.NewMockMedium()
-	core.RequireNoError(t, medium.Write("plugins/demo/plugin.json", `{"name":"demo"}`))
-	_, err := LoadManifest(medium, "plugins/demo/plugin.json")
+	core.RequireNoError(t, medium.Write(sonarPluginTestPluginsDemoPluginJson, `{"name":"demo"}`))
+	_, err := LoadManifest(medium, sonarPluginTestPluginsDemoPluginJson)
 	core.AssertError(t, err)
 }
 
@@ -178,7 +187,7 @@ func TestPlugin_NewLoader_Ugly(t *core.T) {
 
 func TestPlugin_Loader_Discover_Good(t *core.T) {
 	medium := coreio.NewMockMedium()
-	core.RequireNoError(t, medium.Write("plugins/demo/plugin.json", ax7PluginManifestJSON("demo")))
+	core.RequireNoError(t, medium.Write(sonarPluginTestPluginsDemoPluginJson, ax7PluginManifestJSON("demo")))
 	loader := NewLoader(medium, "plugins")
 	got, err := loader.Discover()
 	core.AssertNoError(t, err)
@@ -201,7 +210,7 @@ func TestPlugin_Loader_Discover_Ugly(t *core.T) {
 
 func TestPlugin_Loader_LoadPlugin_Good(t *core.T) {
 	medium := coreio.NewMockMedium()
-	core.RequireNoError(t, medium.Write("plugins/demo/plugin.json", ax7PluginManifestJSON("demo")))
+	core.RequireNoError(t, medium.Write(sonarPluginTestPluginsDemoPluginJson, ax7PluginManifestJSON("demo")))
 	loader := NewLoader(medium, "plugins")
 	manifest, err := loader.LoadPlugin("demo")
 	core.AssertNoError(t, err)
@@ -302,7 +311,7 @@ func TestPlugin_Registry_List_Ugly(t *core.T) {
 
 func TestPlugin_Registry_Load_Good(t *core.T) {
 	medium := coreio.NewMockMedium()
-	core.RequireNoError(t, medium.Write("plugins/registry.json", `{"plugins":{"demo":{"name":"demo"}}}`))
+	core.RequireNoError(t, medium.Write(sonarPluginTestPluginsRegistryJson, `{"plugins":{"demo":{"name":"demo"}}}`))
 	registry := NewRegistry(medium, "plugins")
 	err := registry.Load()
 	core.AssertNoError(t, err)
@@ -319,7 +328,7 @@ func TestPlugin_Registry_Load_Bad(t *core.T) {
 
 func TestPlugin_Registry_Load_Ugly(t *core.T) {
 	medium := coreio.NewMockMedium()
-	core.RequireNoError(t, medium.Write("plugins/registry.json", `{`))
+	core.RequireNoError(t, medium.Write(sonarPluginTestPluginsRegistryJson, `{`))
 	registry := NewRegistry(medium, "plugins")
 	err := registry.Load()
 	core.AssertError(t, err)
@@ -352,7 +361,7 @@ func TestPlugin_Registry_Save_Good(t *core.T) {
 	core.RequireNoError(t, registry.Add(&PluginConfig{Name: "demo"}))
 	err := registry.Save()
 	core.AssertNoError(t, err)
-	raw, readErr := medium.Read("plugins/registry.json")
+	raw, readErr := medium.Read(sonarPluginTestPluginsRegistryJson)
 	core.RequireNoError(t, readErr)
 	core.AssertContains(t, raw, "demo")
 }
@@ -390,7 +399,7 @@ func TestPlugin_NewInstaller_Ugly(t *core.T) {
 }
 
 func TestPlugin_ParseSource_Good(t *core.T) {
-	org, repo, version, err := ParseSource("core/plugin@v1")
+	org, repo, version, err := ParseSource(sonarPluginTestCorePluginV1)
 	core.AssertNoError(t, err)
 	core.AssertEqual(t, "core", org)
 	core.AssertEqual(t, "plugin", repo)
@@ -415,7 +424,7 @@ func TestPlugin_ParseSource_Ugly(t *core.T) {
 func TestPlugin_Installer_Install_Good(t *core.T) {
 	registry := NewRegistry(coreio.NewMockMedium(), "plugins")
 	installer := NewInstaller(coreio.NewMockMedium(), registry)
-	err := installer.Install(context.Background(), "core/plugin@v1")
+	err := installer.Install(context.Background(), sonarPluginTestCorePluginV1)
 	core.AssertNoError(t, err)
 	cfg, ok := registry.Get("plugin")
 	core.AssertTrue(t, ok)
@@ -439,7 +448,7 @@ func TestPlugin_Installer_Install_Ugly(t *core.T) {
 func TestPlugin_Installer_Remove_Good(t *core.T) {
 	registry := NewRegistry(coreio.NewMockMedium(), "plugins")
 	installer := NewInstaller(coreio.NewMockMedium(), registry)
-	core.RequireNoError(t, installer.Install(context.Background(), "core/plugin@v1"))
+	core.RequireNoError(t, installer.Install(context.Background(), sonarPluginTestCorePluginV1))
 	err := installer.Remove("plugin")
 	core.AssertNoError(t, err)
 	_, ok := registry.Get("plugin")
@@ -462,7 +471,7 @@ func TestPlugin_Installer_Remove_Ugly(t *core.T) {
 func TestPlugin_Installer_Update_Good(t *core.T) {
 	registry := NewRegistry(coreio.NewMockMedium(), "plugins")
 	installer := NewInstaller(coreio.NewMockMedium(), registry)
-	core.RequireNoError(t, installer.Install(context.Background(), "core/plugin@v1"))
+	core.RequireNoError(t, installer.Install(context.Background(), sonarPluginTestCorePluginV1))
 	err := installer.Update(context.Background(), "plugin")
 	core.AssertNoError(t, err)
 }

@@ -14,6 +14,10 @@ import (
 	core "dappco.re/go"
 )
 
+const (
+	sonarPollerJobrunnerPollerRunonce = "jobrunner.Poller.RunOnce"
+)
+
 // Poller discovers signals from sources and dispatches them to handlers.
 type Poller struct {
 	mu       sync.RWMutex
@@ -138,43 +142,8 @@ func (p *Poller) RunOnce(ctx context.Context) error {
 		if source == nil {
 			continue
 		}
-
-		signals, err := source.Poll(ctx)
-		if err != nil {
-			return core.E("jobrunner.Poller.RunOnce", core.Sprintf("poll %s", source.Name()), err)
-		}
-
-		for _, signal := range signals {
-			if err := ctx.Err(); err != nil {
-				return err
-			}
-			if signal == nil {
-				continue
-			}
-
-			handler := firstMatchingHandler(handlers, signal)
-			if handler == nil {
-				continue
-			}
-			if dryRun {
-				continue
-			}
-
-			result, err := handler.Execute(ctx, signal)
-			if err != nil {
-				return core.E("jobrunner.Poller.RunOnce", core.Sprintf("execute %s", handler.Name()), err)
-			}
-			if result == nil {
-				return core.E("jobrunner.Poller.RunOnce", "handler returned nil result", nil)
-			}
-			if journal != nil {
-				if err := journal.Append(signal, result); err != nil {
-					return err
-				}
-			}
-			if err := source.Report(ctx, result); err != nil {
-				return core.E("jobrunner.Poller.RunOnce", core.Sprintf("report %s", source.Name()), err)
-			}
+		if err := p.runSource(ctx, source, handlers, journal, dryRun); err != nil {
+			return err
 		}
 	}
 
@@ -182,6 +151,53 @@ func (p *Poller) RunOnce(ctx context.Context) error {
 	p.cycle++
 	p.mu.Unlock()
 	return nil
+}
+
+func (p *Poller) runSource(ctx context.Context, source JobSource, handlers []JobHandler, journal *Journal, dryRun bool) error {
+	signals, err := source.Poll(ctx)
+	if err != nil {
+		return core.E(sonarPollerJobrunnerPollerRunonce, core.Sprintf("poll %s", source.Name()), err)
+	}
+	for _, signal := range signals {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		if signal == nil {
+			continue
+		}
+		if err := dispatchSignal(ctx, source, handlers, journal, dryRun, signal); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func dispatchSignal(ctx context.Context, source JobSource, handlers []JobHandler, journal *Journal, dryRun bool, signal *PipelineSignal) error {
+	handler := firstMatchingHandler(handlers, signal)
+	if handler == nil || dryRun {
+		return nil
+	}
+	result, err := handler.Execute(ctx, signal)
+	if err != nil {
+		return core.E(sonarPollerJobrunnerPollerRunonce, core.Sprintf("execute %s", handler.Name()), err)
+	}
+	if result == nil {
+		return core.E(sonarPollerJobrunnerPollerRunonce, "handler returned nil result", nil)
+	}
+	if err := appendJournal(journal, signal, result); err != nil {
+		return err
+	}
+	if err := source.Report(ctx, result); err != nil {
+		return core.E(sonarPollerJobrunnerPollerRunonce, core.Sprintf("report %s", source.Name()), err)
+	}
+	return nil
+}
+
+func appendJournal(journal *Journal, signal *PipelineSignal, result *ActionResult) error {
+	if journal == nil {
+		return nil
+	}
+	return journal.Append(signal, result)
 }
 
 func (p *Poller) snapshot() ([]JobSource, []JobHandler, *Journal, bool) {

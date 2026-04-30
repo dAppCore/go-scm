@@ -12,6 +12,10 @@ import (
 	"dappco.re/go/scm/jobrunner"
 )
 
+const (
+	sonarForgejoTestCoreGoScm = "core/go-scm"
+)
+
 func ax7ForgeClient(t *core.T) *coreforge.Client {
 	t.Helper()
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -30,8 +34,8 @@ func ax7ForgeClient(t *core.T) *coreforge.Client {
 }
 
 func TestForgejo_New_Good(t *core.T) {
-	source := New(Config{Repos: []string{"core/go-scm"}}, nil)
-	core.AssertEqual(t, []string{"core/go-scm"}, source.repos)
+	source := New(Config{Repos: []string{sonarForgejoTestCoreGoScm}}, nil)
+	core.AssertEqual(t, []string{sonarForgejoTestCoreGoScm}, source.repos)
 	core.AssertNil(t, source.forge)
 }
 
@@ -42,10 +46,10 @@ func TestForgejo_New_Bad(t *core.T) {
 }
 
 func TestForgejo_New_Ugly(t *core.T) {
-	repos := []string{"core/go-scm"}
+	repos := []string{sonarForgejoTestCoreGoScm}
 	source := New(Config{Repos: repos}, nil)
 	repos[0] = "mutated/repo"
-	core.AssertEqual(t, "core/go-scm", source.repos[0])
+	core.AssertEqual(t, sonarForgejoTestCoreGoScm, source.repos[0])
 }
 
 func TestForgejo_ForgejoSource_Name_Good(t *core.T) {
@@ -67,7 +71,7 @@ func TestForgejo_ForgejoSource_Name_Ugly(t *core.T) {
 }
 
 func TestForgejo_ForgejoSource_Poll_Good(t *core.T) {
-	source := New(Config{Repos: []string{"core/go-scm"}}, nil)
+	source := New(Config{Repos: []string{sonarForgejoTestCoreGoScm}}, nil)
 	signals, err := source.Poll(context.Background())
 	core.AssertNoError(t, err)
 	core.AssertNil(t, signals)
@@ -76,7 +80,7 @@ func TestForgejo_ForgejoSource_Poll_Good(t *core.T) {
 func TestForgejo_ForgejoSource_Poll_Bad(t *core.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	source := New(Config{Repos: []string{"core/go-scm"}}, nil)
+	source := New(Config{Repos: []string{sonarForgejoTestCoreGoScm}}, nil)
 	signals, err := source.Poll(ctx)
 	core.AssertError(t, err)
 	core.AssertNil(t, signals)

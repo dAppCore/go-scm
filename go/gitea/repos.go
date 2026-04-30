@@ -25,88 +25,38 @@ func (c *Client) GetRepo(owner, name string) (*gitea.Repository, error) {
 }
 
 func (c *Client) ListOrgRepos(org string) ([]*gitea.Repository, error) {
-	var all []*gitea.Repository
-	page := 1
-	for {
-		repos, resp, err := c.api.ListOrgRepos(org, gitea.ListOrgReposOptions{
+	return collectGiteaPages(func(page int) ([]*gitea.Repository, *gitea.Response, error) {
+		return c.api.ListOrgRepos(org, gitea.ListOrgReposOptions{
 			ListOptions: gitea.ListOptions{Page: page, PageSize: 50},
 		})
-		if err != nil {
-			return nil, err
-		}
-		all = append(all, repos...)
-		if resp == nil || page >= resp.LastPage {
-			break
-		}
-		page++
-	}
-	return all, nil
+	})
 }
 
 func (c *Client) ListOrgReposIter(org string) iter.Seq2[*gitea.Repository, error] {
 	return func(yield func(*gitea.Repository, error) bool) {
-		page := 1
-		for {
-			repos, resp, err := c.api.ListOrgRepos(org, gitea.ListOrgReposOptions{
+		yieldGiteaPages(yield, func(page int) ([]*gitea.Repository, *gitea.Response, error) {
+			return c.api.ListOrgRepos(org, gitea.ListOrgReposOptions{
 				ListOptions: gitea.ListOptions{Page: page, PageSize: 50},
 			})
-			if err != nil {
-				yield(nil, err)
-				return
-			}
-			for _, repo := range repos {
-				if !yield(repo, nil) {
-					return
-				}
-			}
-			if resp == nil || page >= resp.LastPage {
-				break
-			}
-			page++
-		}
+		})
 	}
 }
 
 func (c *Client) ListUserRepos() ([]*gitea.Repository, error) {
-	var all []*gitea.Repository
-	page := 1
-	for {
-		repos, resp, err := c.api.ListMyRepos(gitea.ListReposOptions{
+	return collectGiteaPages(func(page int) ([]*gitea.Repository, *gitea.Response, error) {
+		return c.api.ListMyRepos(gitea.ListReposOptions{
 			ListOptions: gitea.ListOptions{Page: page, PageSize: 50},
 		})
-		if err != nil {
-			return nil, err
-		}
-		all = append(all, repos...)
-		if resp == nil || page >= resp.LastPage {
-			break
-		}
-		page++
-	}
-	return all, nil
+	})
 }
 
 func (c *Client) ListUserReposIter() iter.Seq2[*gitea.Repository, error] {
 	return func(yield func(*gitea.Repository, error) bool) {
-		page := 1
-		for {
-			repos, resp, err := c.api.ListMyRepos(gitea.ListReposOptions{
+		yieldGiteaPages(yield, func(page int) ([]*gitea.Repository, *gitea.Response, error) {
+			return c.api.ListMyRepos(gitea.ListReposOptions{
 				ListOptions: gitea.ListOptions{Page: page, PageSize: 50},
 			})
-			if err != nil {
-				yield(nil, err)
-				return
-			}
-			for _, repo := range repos {
-				if !yield(repo, nil) {
-					return
-				}
-			}
-			if resp == nil || page >= resp.LastPage {
-				break
-			}
-			page++
-		}
+		})
 	}
 }
 

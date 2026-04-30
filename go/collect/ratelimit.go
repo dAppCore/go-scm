@@ -17,6 +17,10 @@ import (
 	core "dappco.re/go"
 )
 
+const (
+	sonarRatelimitCollectRatelimiterCheckgithubratelimitctx = "collect.RateLimiter.CheckGitHubRateLimitCtx"
+)
+
 // RateLimiter tracks per-source rate limiting to avoid overwhelming APIs.
 type RateLimiter struct {
 	mu     sync.Mutex
@@ -133,22 +137,22 @@ func (r *RateLimiter) CheckGitHubRateLimitCtx(ctx context.Context) (used, limit 
 	cmd := exec.CommandContext(ctx, "gh", "api", "rate_limit", "--jq", ".rate | \"\\(.used) \\(.limit)\"")
 	out, err := cmd.Output()
 	if err != nil {
-		return 0, 0, core.E("collect.RateLimiter.CheckGitHubRateLimitCtx", "gh api rate_limit", err)
+		return 0, 0, core.E(sonarRatelimitCollectRatelimiterCheckgithubratelimitctx, "gh api rate_limit", err)
 	}
 
 	trimmed := core.Trim(string(out))
 	parts := textFields(trimmed)
 	if len(parts) != 2 {
-		return 0, 0, core.E("collect.RateLimiter.CheckGitHubRateLimitCtx", core.Sprintf("unexpected output %q", trimmed), nil)
+		return 0, 0, core.E(sonarRatelimitCollectRatelimiterCheckgithubratelimitctx, core.Sprintf("unexpected output %q", trimmed), nil)
 	}
 
 	used, err = strconv.Atoi(parts[0])
 	if err != nil {
-		return 0, 0, core.E("collect.RateLimiter.CheckGitHubRateLimitCtx", "parse used", err)
+		return 0, 0, core.E(sonarRatelimitCollectRatelimiterCheckgithubratelimitctx, "parse used", err)
 	}
 	limit, err = strconv.Atoi(parts[1])
 	if err != nil {
-		return 0, 0, core.E("collect.RateLimiter.CheckGitHubRateLimitCtx", "parse limit", err)
+		return 0, 0, core.E(sonarRatelimitCollectRatelimiterCheckgithubratelimitctx, "parse limit", err)
 	}
 
 	if limit > 0 && float64(used)/float64(limit) >= 0.75 {

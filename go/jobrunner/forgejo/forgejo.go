@@ -42,34 +42,45 @@ func (s *ForgejoSource) Poll(ctx context.Context) ([]*jobrunner.PipelineSignal, 
 
 	var signals []*jobrunner.PipelineSignal
 	for _, repoRef := range s.repos {
-		owner, repo, err := splitRepoRef(repoRef)
+		repoSignals, err := s.pollRepo(ctx, repoRef)
 		if err != nil {
 			return nil, err
 		}
-
-		issues, err := s.forge.ListIssues(owner, repo, coreforge.ListIssuesOpts{State: "open", Limit: 100})
-		if err != nil {
-			return nil, err
-		}
-
-		for _, epic := range issues {
-			if epic == nil || strings.TrimSpace(epic.Body) == "" {
-				continue
-			}
-			childNumbers := parseChildIssueNumbers(epic.Body)
-			if len(childNumbers) == 0 {
-				continue
-			}
-			for _, childNumber := range childNumbers {
-				childSignal, err := s.signalForChild(ctx, owner, repo, epic.Index, childNumber)
-				if err != nil {
-					continue
-				}
-				signals = append(signals, childSignal)
-			}
-		}
+		signals = append(signals, repoSignals...)
 	}
 	return signals, nil
+}
+
+func (s *ForgejoSource) pollRepo(ctx context.Context, repoRef string) ([]*jobrunner.PipelineSignal, error) {
+	owner, repo, err := splitRepoRef(repoRef)
+	if err != nil {
+		return nil, err
+	}
+	issues, err := s.forge.ListIssues(owner, repo, coreforge.ListIssuesOpts{State: "open", Limit: 100})
+	if err != nil {
+		return nil, err
+	}
+	var signals []*jobrunner.PipelineSignal
+	for _, epic := range issues {
+		signals = append(signals, s.signalsForEpic(ctx, owner, repo, epic)...)
+	}
+	return signals, nil
+}
+
+func (s *ForgejoSource) signalsForEpic(ctx context.Context, owner, repo string, epic *forgejo.Issue) []*jobrunner.PipelineSignal {
+	if epic == nil || strings.TrimSpace(epic.Body) == "" {
+		return nil
+	}
+	childNumbers := parseChildIssueNumbers(epic.Body)
+	signals := make([]*jobrunner.PipelineSignal, 0, len(childNumbers))
+	for _, childNumber := range childNumbers {
+		childSignal, err := s.signalForChild(ctx, owner, repo, epic.Index, childNumber)
+		if err != nil {
+			continue
+		}
+		signals = append(signals, childSignal)
+	}
+	return signals
 }
 
 func (s *ForgejoSource) Report(ctx context.Context, result *jobrunner.ActionResult) error {

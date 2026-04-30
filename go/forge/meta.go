@@ -6,6 +6,7 @@ import (
 	// Note: time.Time mirrors Forgejo metadata timestamps in public structs.
 	"time"
 
+	"code.gitea.io/sdk/gitea"
 	"codeberg.org/forgejo/go-sdk/forgejo"
 )
 
@@ -33,6 +34,67 @@ type PRMeta struct {
 }
 
 const commentPageSize = 50
+
+type forgeResponse = gitea.Response
+
+func collectForgePages[T any](fetch func(page int) ([]T, *forgeResponse, error)) ([]T, error) {
+	var all []T
+	for page := 1; ; page++ {
+		items, resp, err := fetch(page)
+		if err != nil {
+			return nil, err
+		}
+		all = append(all, items...)
+		if !hasNextForgePage(resp, page) {
+			return all, nil
+		}
+	}
+}
+
+func collectForgeLimitedPages[T any](page, limit int, fetch func(page int) ([]T, *forgeResponse, error)) ([]T, error) {
+	var all []T
+	for {
+		items, resp, err := fetch(page)
+		if err != nil {
+			return nil, err
+		}
+		all = append(all, items...)
+		if !hasMoreForgeItems(items, resp, page, limit) {
+			return all, nil
+		}
+		page++
+	}
+}
+
+func yieldForgePages[T any](yield func(T, error) bool, fetch func(page int) ([]T, *forgeResponse, error)) {
+	for page := 1; ; page++ {
+		items, resp, err := fetch(page)
+		if err != nil {
+			var zero T
+			yield(zero, err)
+			return
+		}
+		for _, item := range items {
+			if !yield(item, nil) {
+				return
+			}
+		}
+		if !hasNextForgePage(resp, page) {
+			return
+		}
+	}
+}
+
+func hasNextForgePage(resp *forgeResponse, page int) bool {
+	return resp != nil && page < resp.LastPage
+}
+
+func hasMoreForgeItems[T any](items []T, resp *forgeResponse, page, limit int) bool {
+	if len(items) == 0 || len(items) < limit {
+		return false
+	}
+	return resp == nil || resp.LastPage <= 0 || page < resp.LastPage
+}
 
 func (c *Client) GetIssueBody(owner, repo string, issue int64) (string, error) {
 	iss, _, err := c.api.GetIssue(owner, repo, issue)

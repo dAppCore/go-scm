@@ -4,15 +4,21 @@ package stringsx
 
 import core "dappco.re/go"
 
+const (
+	sonarStringsxTestAgentDispatch  = "agent.dispatch"
+	sonarStringsxTestAgentDispatch2 = "agent/dispatch"
+	sonarStringsxTestManifestYaml   = "manifest.yaml"
+)
+
 func TestStringsx_Contains_Good(t *core.T) {
-	got := Contains("agent.dispatch", "dispatch")
+	got := Contains(sonarStringsxTestAgentDispatch, "dispatch")
 	core.AssertTrue(
 		t, got,
 	)
 }
 
 func TestStringsx_Contains_Bad(t *core.T) {
-	got := Contains("agent.dispatch", "missing")
+	got := Contains(sonarStringsxTestAgentDispatch, "missing")
 	core.AssertFalse(
 		t, got,
 	)
@@ -26,7 +32,7 @@ func TestStringsx_Contains_Ugly(t *core.T) {
 }
 
 func TestStringsx_ContainsAny_Good(t *core.T) {
-	got := ContainsAny("agent.dispatch", ".:")
+	got := ContainsAny(sonarStringsxTestAgentDispatch, ".:")
 	core.AssertTrue(
 		t, got,
 	)
@@ -89,42 +95,42 @@ func TestStringsx_Fields_Ugly(t *core.T) {
 }
 
 func TestStringsx_HasPrefix_Good(t *core.T) {
-	got := HasPrefix("agent.dispatch", "agent")
+	got := HasPrefix(sonarStringsxTestAgentDispatch, "agent")
 	core.AssertTrue(
 		t, got,
 	)
 }
 
 func TestStringsx_HasPrefix_Bad(t *core.T) {
-	got := HasPrefix("agent.dispatch", "task")
+	got := HasPrefix(sonarStringsxTestAgentDispatch, "task")
 	core.AssertFalse(
 		t, got,
 	)
 }
 
 func TestStringsx_HasPrefix_Ugly(t *core.T) {
-	got := HasPrefix("agent.dispatch", "")
+	got := HasPrefix(sonarStringsxTestAgentDispatch, "")
 	core.AssertTrue(
 		t, got,
 	)
 }
 
 func TestStringsx_HasSuffix_Good(t *core.T) {
-	got := HasSuffix("manifest.yaml", ".yaml")
+	got := HasSuffix(sonarStringsxTestManifestYaml, ".yaml")
 	core.AssertTrue(
 		t, got,
 	)
 }
 
 func TestStringsx_HasSuffix_Bad(t *core.T) {
-	got := HasSuffix("manifest.yaml", ".json")
+	got := HasSuffix(sonarStringsxTestManifestYaml, ".json")
 	core.AssertFalse(
 		t, got,
 	)
 }
 
 func TestStringsx_HasSuffix_Ugly(t *core.T) {
-	got := HasSuffix("manifest.yaml", "")
+	got := HasSuffix(sonarStringsxTestManifestYaml, "")
 	core.AssertTrue(
 		t, got,
 	)
@@ -133,7 +139,7 @@ func TestStringsx_HasSuffix_Ugly(t *core.T) {
 func TestStringsx_Join_Good(t *core.T) {
 	got := Join([]string{"agent", "dispatch"}, ".")
 	core.AssertEqual(
-		t, "agent.dispatch", got,
+		t, sonarStringsxTestAgentDispatch, got,
 	)
 }
 
@@ -159,16 +165,16 @@ func TestStringsx_LastIndex_Good(t *core.T) {
 }
 
 func TestStringsx_LastIndex_Bad(t *core.T) {
-	got := LastIndex("agent.dispatch", "/")
+	got := LastIndex(sonarStringsxTestAgentDispatch, "/")
 	core.AssertEqual(
 		t, -1, got,
 	)
 }
 
 func TestStringsx_LastIndex_Ugly(t *core.T) {
-	got := LastIndex("agent.dispatch", "")
+	got := LastIndex(sonarStringsxTestAgentDispatch, "")
 	core.AssertEqual(
-		t, len("agent.dispatch"), got,
+		t, len(sonarStringsxTestAgentDispatch), got,
 	)
 }
 
@@ -217,16 +223,16 @@ func TestStringsx_Repeat_Ugly(t *core.T) {
 }
 
 func TestStringsx_Replace_Good(t *core.T) {
-	got := Replace("agent/dispatch", "/", ".", 1)
+	got := Replace(sonarStringsxTestAgentDispatch2, "/", ".", 1)
 	core.AssertEqual(
-		t, "agent.dispatch", got,
+		t, sonarStringsxTestAgentDispatch, got,
 	)
 }
 
 func TestStringsx_Replace_Bad(t *core.T) {
-	got := Replace("agent/dispatch", ".", "/", 1)
+	got := Replace(sonarStringsxTestAgentDispatch2, ".", "/", 1)
 	core.AssertEqual(
-		t, "agent/dispatch", got,
+		t, sonarStringsxTestAgentDispatch2, got,
 	)
 }
 
@@ -259,16 +265,16 @@ func TestStringsx_ReplaceAll_Ugly(t *core.T) {
 }
 
 func TestStringsx_Split_Good(t *core.T) {
-	got := Split("agent/dispatch", "/")
+	got := Split(sonarStringsxTestAgentDispatch2, "/")
 	core.AssertEqual(
 		t, []string{"agent", "dispatch"}, got,
 	)
 }
 
 func TestStringsx_Split_Bad(t *core.T) {
-	got := Split("agent/dispatch", ".")
+	got := Split(sonarStringsxTestAgentDispatch2, ".")
 	core.AssertEqual(
-		t, []string{"agent/dispatch"}, got,
+		t, []string{sonarStringsxTestAgentDispatch2}, got,
 	)
 }
 
@@ -367,23 +373,23 @@ func TestStringsx_ToUpper_Ugly(t *core.T) {
 }
 
 func TestStringsx_TrimPrefix_Good(t *core.T) {
-	got := TrimPrefix("agent.dispatch", "agent.")
+	got := TrimPrefix(sonarStringsxTestAgentDispatch, "agent.")
 	core.AssertEqual(
 		t, "dispatch", got,
 	)
 }
 
 func TestStringsx_TrimPrefix_Bad(t *core.T) {
-	got := TrimPrefix("agent.dispatch", "task.")
+	got := TrimPrefix(sonarStringsxTestAgentDispatch, "task.")
 	core.AssertEqual(
-		t, "agent.dispatch", got,
+		t, sonarStringsxTestAgentDispatch, got,
 	)
 }
 
 func TestStringsx_TrimPrefix_Ugly(t *core.T) {
-	got := TrimPrefix("agent.dispatch", "")
+	got := TrimPrefix(sonarStringsxTestAgentDispatch, "")
 	core.AssertEqual(
-		t, "agent.dispatch", got,
+		t, sonarStringsxTestAgentDispatch, got,
 	)
 }
 
@@ -409,22 +415,22 @@ func TestStringsx_TrimSpace_Ugly(t *core.T) {
 }
 
 func TestStringsx_TrimSuffix_Good(t *core.T) {
-	got := TrimSuffix("manifest.yaml", ".yaml")
+	got := TrimSuffix(sonarStringsxTestManifestYaml, ".yaml")
 	core.AssertEqual(
 		t, "manifest", got,
 	)
 }
 
 func TestStringsx_TrimSuffix_Bad(t *core.T) {
-	got := TrimSuffix("manifest.yaml", ".json")
+	got := TrimSuffix(sonarStringsxTestManifestYaml, ".json")
 	core.AssertEqual(
-		t, "manifest.yaml", got,
+		t, sonarStringsxTestManifestYaml, got,
 	)
 }
 
 func TestStringsx_TrimSuffix_Ugly(t *core.T) {
-	got := TrimSuffix("manifest.yaml", "")
+	got := TrimSuffix(sonarStringsxTestManifestYaml, "")
 	core.AssertEqual(
-		t, "manifest.yaml", got,
+		t, sonarStringsxTestManifestYaml, got,
 	)
 }

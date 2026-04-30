@@ -4,12 +4,17 @@ package fmtx
 
 import core "dappco.re/go"
 
+const (
+	sonarFmtxTestAgentCodex = "agent=codex"
+	sonarFmtxTestAgentS     = "agent=%s"
+)
+
 func TestFmtx_Fprintf_Good(t *core.T) {
 	builder := core.NewBuilder()
-	n, err := Fprintf(builder, "agent=%s", "codex")
+	n, err := Fprintf(builder, sonarFmtxTestAgentS, "codex")
 	core.AssertNoError(t, err)
 	core.AssertEqual(t, 11, n)
-	core.AssertEqual(t, "agent=codex", builder.String())
+	core.AssertEqual(t, sonarFmtxTestAgentCodex, builder.String())
 }
 
 func TestFmtx_Fprintf_Bad(t *core.T) {
@@ -29,7 +34,7 @@ func TestFmtx_Fprintf_Ugly(t *core.T) {
 }
 
 func TestFmtx_Printf_Good(t *core.T) {
-	n, err := Printf("agent=%s", "codex")
+	n, err := Printf(sonarFmtxTestAgentS, "codex")
 	core.AssertNoError(t, err)
 	core.AssertEqual(t, 11, n)
 }
@@ -68,7 +73,7 @@ func TestFmtx_Println_Ugly(t *core.T) {
 func TestFmtx_Sprint_Good(t *core.T) {
 	got := Sprint("agent", "=", "codex")
 	core.AssertEqual(
-		t, "agent=codex", got,
+		t, sonarFmtxTestAgentCodex, got,
 	)
 }
 
@@ -87,9 +92,9 @@ func TestFmtx_Sprint_Ugly(t *core.T) {
 }
 
 func TestFmtx_Sprintf_Good(t *core.T) {
-	got := Sprintf("agent=%s", "codex")
+	got := Sprintf(sonarFmtxTestAgentS, "codex")
 	core.AssertEqual(
-		t, "agent=codex", got,
+		t, sonarFmtxTestAgentCodex, got,
 	)
 }
 

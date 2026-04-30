@@ -148,44 +148,59 @@ func (b *BitcoinTalkCollector) collectTopic(ctx context.Context, cfg *Config, to
 		if pages > 0 && page > pages {
 			break
 		}
-		if cfg.Limiter != nil {
-			if err := cfg.Limiter.Wait(ctx, b.Name()); err != nil {
-				result.Errors++
-				if cfg.Dispatcher != nil {
-					cfg.Dispatcher.EmitError(b.Name(), core.Sprintf("Rate limit wait failed for page %d: %v", page, err), nil)
-				}
-				break
-			}
-		}
-		url := b.pageURL(topicID, page)
-		posts, err := fetcher(ctx, url)
-		if err != nil {
-			result.Errors++
-			if cfg.Dispatcher != nil {
-				cfg.Dispatcher.EmitError(b.Name(), core.Sprintf("Failed to fetch page %d: %v", page, err), nil)
-			}
+		if !b.collectTopicPage(ctx, cfg, topicID, fetcher, page, result) {
 			break
-		}
-		if len(posts) == 0 {
-			break
-		}
-		for _, post := range posts {
-			result.Items++
-			md := FormatPostMarkdown(post.Number, post.Author, post.Date, post.Content)
-			name := core.Sprintf("%s-page-%d-post-%d.md", topicID, page, post.Number)
-			outPath, err := writeResultFile(cfg, b.Name(), name, md)
-			if err != nil {
-				result.Errors++
-				continue
-			}
-			result.Files = append(result.Files, outPath)
-			if cfg.Dispatcher != nil {
-				cfg.Dispatcher.EmitItem(b.Name(), core.Sprintf("Post %d by %s", post.Number, post.Author), nil)
-			}
 		}
 		page++
 	}
 	return result
+}
+
+func (b *BitcoinTalkCollector) collectTopicPage(
+	ctx context.Context,
+	cfg *Config,
+	topicID string,
+	fetcher func(context.Context, string) ([]btPost, error),
+	page int,
+	result *Result,
+) bool {
+	if err := waitCollectLimiter(ctx, cfg, b.Name()); err != nil {
+		result.Errors++
+		if cfg.Dispatcher != nil {
+			cfg.Dispatcher.EmitError(b.Name(), core.Sprintf("Rate limit wait failed for page %d: %v", page, err), nil)
+		}
+		return false
+	}
+	posts, err := fetcher(ctx, b.pageURL(topicID, page))
+	if err != nil {
+		result.Errors++
+		if cfg.Dispatcher != nil {
+			cfg.Dispatcher.EmitError(b.Name(), core.Sprintf("Failed to fetch page %d: %v", page, err), nil)
+		}
+		return false
+	}
+	if len(posts) == 0 {
+		return false
+	}
+	for _, post := range posts {
+		b.writeTopicPost(cfg, topicID, page, post, result)
+	}
+	return true
+}
+
+func (b *BitcoinTalkCollector) writeTopicPost(cfg *Config, topicID string, page int, post btPost, result *Result) {
+	result.Items++
+	md := FormatPostMarkdown(post.Number, post.Author, post.Date, post.Content)
+	name := core.Sprintf("%s-page-%d-post-%d.md", topicID, page, post.Number)
+	outPath, err := writeResultFile(cfg, b.Name(), name, md)
+	if err != nil {
+		result.Errors++
+		return
+	}
+	result.Files = append(result.Files, outPath)
+	if cfg.Dispatcher != nil {
+		cfg.Dispatcher.EmitItem(b.Name(), core.Sprintf("Post %d by %s", post.Number, post.Author), nil)
+	}
 }
 
 func (b *BitcoinTalkCollector) pageURL(topicID string, page int) string {

@@ -11,6 +11,12 @@ import (
 	"testing"
 )
 
+const (
+	sonarSecurityTestAiWorkQueue    = "~/ai-work/queue"
+	sonarSecurityTestHostExampleCom = "host.example.com"
+	sonarSecurityTestLsLa           = "ls -la"
+)
+
 func checkNoError(t *testing.T, err error) {
 	t.Helper()
 	if err != nil {
@@ -120,7 +126,7 @@ func TestValidateRemoteDir_Good(t *testing.T) {
 		{"queue", "queue"},
 		{"queue/subdir", "queue/subdir"},
 		{"/var/tmp/queue", "/var/tmp/queue"},
-		{"~/ai-work/queue", "~/ai-work/queue"},
+		{sonarSecurityTestAiWorkQueue, sonarSecurityTestAiWorkQueue},
 		{"queue//nested", "queue/nested"},
 	}
 
@@ -155,9 +161,9 @@ func TestValidateRemoteDir_Bad(t *testing.T) {
 }
 
 func TestJoinRemotePath_Good_BaseOnly_Good(t *testing.T) {
-	got, err := JoinRemotePath("~/ai-work/queue")
+	got, err := JoinRemotePath(sonarSecurityTestAiWorkQueue)
 	checkNoError(t, err)
-	checkEqual(t, "~/ai-work/queue", got)
+	checkEqual(t, sonarSecurityTestAiWorkQueue, got)
 }
 
 func TestResolvePathWithinRoot_Good_RootDirectory_Good(t *testing.T) {
@@ -189,7 +195,7 @@ func TestResolvePathWithinRoot_Bad_EmptyRoot(t *testing.T) {
 }
 
 func TestSecureSSHCommand_Good(t *testing.T) {
-	cmd := SecureSSHCommand("host.example.com", "ls -la")
+	cmd := SecureSSHCommand(sonarSecurityTestHostExampleCom, sonarSecurityTestLsLa)
 	args := cmd.Args
 
 	checkEqual(t, "ssh", args[0])
@@ -197,12 +203,12 @@ func TestSecureSSHCommand_Good(t *testing.T) {
 	checkContains(t, args, "StrictHostKeyChecking=yes")
 	checkContains(t, args, "BatchMode=yes")
 	checkContains(t, args, "ConnectTimeout=10")
-	checkEqual(t, "host.example.com", args[len(args)-2])
-	checkEqual(t, "ls -la", args[len(args)-1])
+	checkEqual(t, sonarSecurityTestHostExampleCom, args[len(args)-2])
+	checkEqual(t, sonarSecurityTestLsLa, args[len(args)-1])
 }
 
 func TestSecureSSHCommandContext_Good(t *testing.T) {
-	cmd := SecureSSHCommandContext(context.Background(), "host.example.com", "ls -la")
+	cmd := SecureSSHCommandContext(context.Background(), sonarSecurityTestHostExampleCom, sonarSecurityTestLsLa)
 	args := cmd.Args
 
 	checkEqual(t, "ssh", args[0])
@@ -210,8 +216,8 @@ func TestSecureSSHCommandContext_Good(t *testing.T) {
 	checkContains(t, args, "StrictHostKeyChecking=yes")
 	checkContains(t, args, "BatchMode=yes")
 	checkContains(t, args, "ConnectTimeout=10")
-	checkEqual(t, "host.example.com", args[len(args)-2])
-	checkEqual(t, "ls -la", args[len(args)-1])
+	checkEqual(t, sonarSecurityTestHostExampleCom, args[len(args)-2])
+	checkEqual(t, sonarSecurityTestLsLa, args[len(args)-1])
 }
 
 func TestMaskToken_Good(t *testing.T) {

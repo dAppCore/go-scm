@@ -4,6 +4,7 @@ package marketplace
 
 import (
 	"errors"
+	"io/fs"
 	"path/filepath"
 	"strings"
 
@@ -22,33 +23,56 @@ func BuildFromManifests(manifests []*manifest.Manifest) *Index {
 }
 
 func (b *Builder) BuildFromDirs(dirs ...string) (*Index, error) {
+	manifests, err := loadManifestsFromDirs(dirs)
+	if err != nil {
+		return nil, err
+	}
+	idx := BuildIndexFromManifests(manifests)
+	b.fillModuleRepos(idx)
+	return idx, nil
+}
+
+func loadManifestsFromDirs(dirs []string) ([]*manifest.Manifest, error) {
 	var manifests []*manifest.Manifest
 	for _, dir := range dirs {
 		entries, err := osx.ReadDir(dir)
 		if err != nil {
 			return nil, err
 		}
-		for _, entry := range entries {
-			if entry == nil || !entry.IsDir() {
-				continue
-			}
-			root := filepath.Join(dir, entry.Name())
-			if m, err := loadManifestFromRoot(root); err == nil && m != nil {
-				manifests = append(manifests, m)
-			}
+		manifests = append(manifests, loadManifestsFromEntries(dir, entries)...)
+	}
+	return manifests, nil
+}
+
+func loadManifestsFromEntries(dir string, entries []fs.DirEntry) []*manifest.Manifest {
+	var manifests []*manifest.Manifest
+	for _, entry := range entries {
+		if entry == nil || !entry.IsDir() {
+			continue
+		}
+		root := filepath.Join(dir, entry.Name())
+		if m, err := loadManifestFromRoot(root); err == nil && m != nil {
+			manifests = append(manifests, m)
 		}
 	}
-	idx := BuildIndexFromManifests(manifests)
+	return manifests
+}
+
+func (b *Builder) fillModuleRepos(idx *Index) {
 	for i := range idx.Modules {
-		if idx.Modules[i].Repo == "" && idx.Modules[i].Code != "" && b.BaseURL != "" {
-			org := b.Org
-			if org == "" {
-				org = "core"
-			}
-			idx.Modules[i].Repo = strings.TrimRight(b.BaseURL, "/") + "/" + org + "/" + idx.Modules[i].Code
+		if idx.Modules[i].Repo != "" || idx.Modules[i].Code == "" || b.BaseURL == "" {
+			continue
 		}
+		idx.Modules[i].Repo = b.moduleRepo(idx.Modules[i].Code)
 	}
-	return idx, nil
+}
+
+func (b *Builder) moduleRepo(code string) string {
+	org := b.Org
+	if org == "" {
+		org = "core"
+	}
+	return strings.TrimRight(b.BaseURL, "/") + "/" + org + "/" + code
 }
 
 func loadManifestFromRoot(root string) (*manifest.Manifest, error) {

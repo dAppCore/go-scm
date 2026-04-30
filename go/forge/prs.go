@@ -68,45 +68,20 @@ func (e *httpError) Error() string {
 }
 
 func (c *Client) ListPRReviews(owner, repo string, index int64) ([]*forgejo.PullReview, error) {
-	var all []*forgejo.PullReview
-	page := 1
-	for {
-		reviews, resp, err := c.api.ListPullReviews(owner, repo, index, forgejo.ListPullReviewsOptions{
+	return collectForgePages(func(page int) ([]*forgejo.PullReview, *forgeResponse, error) {
+		return c.api.ListPullReviews(owner, repo, index, forgejo.ListPullReviewsOptions{
 			ListOptions: forgejo.ListOptions{Page: page, PageSize: 50},
 		})
-		if err != nil {
-			return nil, err
-		}
-		all = append(all, reviews...)
-		if resp == nil || page >= resp.LastPage {
-			break
-		}
-		page++
-	}
-	return all, nil
+	})
 }
 
 func (c *Client) ListPRReviewsIter(owner, repo string, index int64) iter.Seq2[*forgejo.PullReview, error] {
 	return func(yield func(*forgejo.PullReview, error) bool) {
-		page := 1
-		for {
-			reviews, resp, err := c.api.ListPullReviews(owner, repo, index, forgejo.ListPullReviewsOptions{
+		yieldForgePages(yield, func(page int) ([]*forgejo.PullReview, *forgeResponse, error) {
+			return c.api.ListPullReviews(owner, repo, index, forgejo.ListPullReviewsOptions{
 				ListOptions: forgejo.ListOptions{Page: page, PageSize: 50},
 			})
-			if err != nil {
-				yield(nil, err)
-				return
-			}
-			for _, review := range reviews {
-				if !yield(review, nil) {
-					return
-				}
-			}
-			if resp == nil || page >= resp.LastPage {
-				break
-			}
-			page++
-		}
+		})
 	}
 }
 

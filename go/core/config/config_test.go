@@ -8,8 +8,14 @@ import (
 	"testing"
 )
 
+const (
+	sonarConfigTestAgentName  = "agent.name"
+	sonarConfigTestConfigYaml = "config.yaml"
+	sonarConfigTestNewConfigV = "new config: %v"
+)
+
 func TestConfig_SetGetCommit(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "config.yaml")
+	path := filepath.Join(t.TempDir(), sonarConfigTestConfigYaml)
 	cfg := NewWithPath(path)
 
 	if err := cfg.Set("agents.alpha.active", true); err != nil {
@@ -43,11 +49,11 @@ func TestConfig_SetGetCommit(t *testing.T) {
 }
 
 func TestConfig_WithPath_Good(t *testing.T) {
-	cfg, err := New(WithPath("config.yaml"))
+	cfg, err := New(WithPath(sonarConfigTestConfigYaml))
 	if err != nil {
-		t.Fatalf("new config: %v", err)
+		t.Fatalf(sonarConfigTestNewConfigV, err)
 	}
-	if cfg.Path != "config.yaml" {
+	if cfg.Path != sonarConfigTestConfigYaml {
 		t.Fatalf("expected configured path, got %q", cfg.Path)
 	}
 }
@@ -55,7 +61,7 @@ func TestConfig_WithPath_Good(t *testing.T) {
 func TestConfig_WithPath_Bad(t *testing.T) {
 	cfg, err := New(WithPath(""))
 	if err != nil {
-		t.Fatalf("new config: %v", err)
+		t.Fatalf(sonarConfigTestNewConfigV, err)
 	}
 	if cfg.Path != "" {
 		t.Fatalf("expected empty path, got %q", cfg.Path)
@@ -63,19 +69,19 @@ func TestConfig_WithPath_Bad(t *testing.T) {
 }
 
 func TestConfig_WithPath_Ugly(t *testing.T) {
-	cfg, err := New(WithPath(filepath.Join("..", "config.yaml")))
+	cfg, err := New(WithPath(filepath.Join("..", sonarConfigTestConfigYaml)))
 	if err != nil {
-		t.Fatalf("new config: %v", err)
+		t.Fatalf(sonarConfigTestNewConfigV, err)
 	}
-	if cfg.Path != filepath.Join("..", "config.yaml") {
+	if cfg.Path != filepath.Join("..", sonarConfigTestConfigYaml) {
 		t.Fatalf("expected relative path preserved, got %q", cfg.Path)
 	}
 }
 
 func TestConfig_New_Good(t *testing.T) {
-	cfg, err := New(WithPath("config.yaml"))
+	cfg, err := New(WithPath(sonarConfigTestConfigYaml))
 	if err != nil {
-		t.Fatalf("new config: %v", err)
+		t.Fatalf(sonarConfigTestNewConfigV, err)
 	}
 	if cfg == nil || cfg.data == nil {
 		t.Fatalf("expected initialized config")
@@ -98,7 +104,7 @@ func TestConfig_New_Bad(t *testing.T) {
 func TestConfig_New_Ugly(t *testing.T) {
 	cfg, err := New(WithPath("first.yaml"), WithPath("second.yaml"))
 	if err != nil {
-		t.Fatalf("new config: %v", err)
+		t.Fatalf(sonarConfigTestNewConfigV, err)
 	}
 	if cfg.Path != "second.yaml" {
 		t.Fatalf("expected later option to win, got %q", cfg.Path)
@@ -106,8 +112,8 @@ func TestConfig_New_Ugly(t *testing.T) {
 }
 
 func TestConfig_NewWithPath_Good(t *testing.T) {
-	cfg := NewWithPath("config.yaml")
-	if cfg.Path != "config.yaml" {
+	cfg := NewWithPath(sonarConfigTestConfigYaml)
+	if cfg.Path != sonarConfigTestConfigYaml {
 		t.Fatalf("expected configured path, got %q", cfg.Path)
 	}
 	if cfg.data == nil {
@@ -126,7 +132,7 @@ func TestConfig_NewWithPath_Bad(t *testing.T) {
 }
 
 func TestConfig_NewWithPath_Ugly(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "nested", "config.yaml")
+	path := filepath.Join(t.TempDir(), "nested", sonarConfigTestConfigYaml)
 	cfg := NewWithPath(path)
 	if cfg.Path != path {
 		t.Fatalf("expected temp path, got %q", cfg.Path)
@@ -135,11 +141,11 @@ func TestConfig_NewWithPath_Ugly(t *testing.T) {
 
 func TestConfig_Config_Set_Good(t *testing.T) {
 	cfg := NewWithPath("")
-	if err := cfg.Set("agent.name", "codex"); err != nil {
+	if err := cfg.Set(sonarConfigTestAgentName, "codex"); err != nil {
 		t.Fatalf("set dotted key: %v", err)
 	}
 	var got string
-	if err := cfg.Get("agent.name", &got); err != nil {
+	if err := cfg.Get(sonarConfigTestAgentName, &got); err != nil {
 		t.Fatalf("get dotted key: %v", err)
 	}
 	if got != "codex" {
@@ -162,7 +168,7 @@ func TestConfig_Config_Set_Ugly(t *testing.T) {
 		t.Fatalf("set root map: %v", err)
 	}
 	var got string
-	if err := cfg.Get("agent.name", &got); err != nil {
+	if err := cfg.Get(sonarConfigTestAgentName, &got); err != nil {
 		t.Fatalf("get cloned root value: %v", err)
 	}
 	if got != "codex" {
@@ -202,9 +208,9 @@ func TestConfig_Config_Get_Ugly(t *testing.T) {
 }
 
 func TestConfig_Config_Commit_Good(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "config.yaml")
+	path := filepath.Join(t.TempDir(), sonarConfigTestConfigYaml)
 	cfg := NewWithPath(path)
-	if err := cfg.Set("agent.name", "codex"); err != nil {
+	if err := cfg.Set(sonarConfigTestAgentName, "codex"); err != nil {
 		t.Fatalf("set agent: %v", err)
 	}
 	if err := cfg.Commit(); err != nil {
@@ -224,7 +230,7 @@ func TestConfig_Config_Commit_Bad(t *testing.T) {
 }
 
 func TestConfig_Config_Commit_Ugly(t *testing.T) {
-	cfg := NewWithPath(filepath.Join(t.TempDir(), "nested", "config.yaml"))
+	cfg := NewWithPath(filepath.Join(t.TempDir(), "nested", sonarConfigTestConfigYaml))
 	if err := cfg.Commit(); err != nil {
 		t.Fatalf("commit empty config: %v", err)
 	}
