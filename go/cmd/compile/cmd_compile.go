@@ -4,10 +4,6 @@
 package compile
 
 import (
-	"os"
-	"path/filepath"
-	"strings"
-
 	core "dappco.re/go"
 	"dappco.re/go/scm/manifest"
 )
@@ -22,84 +18,75 @@ func Register(app *core.Core) core.Result {
 	if app == nil {
 		return core.Fail(core.E("cmd.compile.Register", "core app is required", nil))
 	}
-	return app.Command("compile", core.Command{Action: run})
+	return app.Command("compile", core.Command{Action: run(app)})
 }
 
-func run(opts core.Options) core.Result {
-	if wantsHelp(opts) {
-		core.Print(nil, usage)
+func run(app *core.Core) core.CommandAction {
+	return func(opts core.Options) core.Result {
+		if wantsHelp(opts) {
+			core.Print(nil, usage)
+			return core.Ok(nil)
+		}
+
+		root := option(opts, "root", ".")
+		manifestPath := option(opts, "manifest", core.PathJoin(root, ".core", "manifest.yaml"))
+		outPath := option(opts, "out", core.PathJoin(root, "core.json"))
+
+		raw, err := readFile(app, manifestPath)
+		if err != nil {
+			return failed(err)
+		}
+		m, err := manifest.Parse(raw)
+		if err != nil {
+			return failed(err)
+		}
+
+		cm, err := manifest.CompileWithOptions(m, manifest.CompileOptions{
+			Commit:  opts.String("commit"),
+			Tag:     opts.String("tag"),
+			BuiltBy: opts.String("built-by"),
+			Build: manifest.BuildInfo{
+				Targets:   splitList(option(opts, "targets", opts.String("target"))),
+				Checksums: opts.String("checksums"),
+				SHA256:    opts.String("sha256"),
+			},
+		})
+		if err != nil {
+			return failed(err)
+		}
+
+		compiled, err := manifest.MarshalJSON(cm)
+		if err != nil {
+			return failed(err)
+		}
+		if r := app.Fs().WriteMode(outPath, string(compiled), 0o600); !r.OK {
+			return failed(resultError("cmd.compile.run", "write compiled manifest", r))
+		}
+
+		core.Print(nil, "%s", outPath)
 		return core.Ok(nil)
 	}
-
-	root := option(opts, "root", ".")
-	manifestPath := option(opts, "manifest", filepath.Join(root, ".core", "manifest.yaml"))
-	outPath := option(opts, "out", filepath.Join(root, "core.json"))
-
-	raw, err := os.ReadFile(manifestPath)
-	if err != nil {
-		return failed(err)
-	}
-	m, err := manifest.Parse(raw)
-	if err != nil {
-		return failed(err)
-	}
-
-	cm, err := manifest.CompileWithOptions(m, manifest.CompileOptions{
-		Commit:  opts.String("commit"),
-		Tag:     opts.String("tag"),
-		BuiltBy: opts.String("built-by"),
-		Build: manifest.BuildInfo{
-			Targets:   splitList(option(opts, "targets", opts.String("target"))),
-			Checksums: opts.String("checksums"),
-			SHA256:    opts.String("sha256"),
-		},
-	})
-	if err != nil {
-		return failed(err)
-	}
-
-	compiled, err := manifest.MarshalJSON(cm)
-	if err != nil {
-		return failed(err)
-	}
-	if err := mkdirParent(outPath); err != nil {
-		return failed(err)
-	}
-	if err := os.WriteFile(outPath, compiled, 0o600); err != nil {
-		return failed(err)
-	}
-
-	core.Print(nil, "%s", outPath)
-	return core.Ok(nil)
 }
 
 func option(opts core.Options, key, fallback string) string {
-	if value := strings.TrimSpace(opts.String(key)); value != "" {
+	if value := core.Trim(opts.String(key)); value != "" {
 		return value
 	}
 	return fallback
 }
 
 func splitList(value string) []string {
-	if strings.TrimSpace(value) == "" {
+	if core.Trim(value) == "" {
 		return nil
 	}
-	parts := strings.Split(value, ",")
+	parts := core.Split(value, ",")
 	out := make([]string, 0, len(parts))
 	for _, part := range parts {
-		if part = strings.TrimSpace(part); part != "" {
+		if part = core.Trim(part); part != "" {
 			out = append(out, part)
 		}
 	}
 	return out
-}
-
-func mkdirParent(path string) error {
-	dir := filepath.Dir(path)
-	if dir == "." || dir == "" {
-		return nil
-	}
-	return os.MkdirAll(dir, 0o755)
 }
 
 func wantsHelp(opts core.Options) bool {
@@ -108,4 +95,26 @@ func wantsHelp(opts core.Options) bool {
 
 func failed(err error) core.Result {
 	return core.Fail(err)
+}
+
+func readFile(app *core.Core, path string) ([]byte, error) {
+	if app == nil {
+		return nil, core.E("cmd.compile.readFile", "core app is required", nil)
+	}
+	r := app.Fs().Read(path)
+	if !r.OK {
+		return nil, resultError("cmd.compile.readFile", "read file", r)
+	}
+	raw, ok := r.Value.(string)
+	if !ok {
+		return nil, core.E("cmd.compile.readFile", "read returned invalid payload", nil)
+	}
+	return []byte(raw), nil
+}
+
+func resultError(op, msg string, r core.Result) error {
+	if err, ok := r.Value.(error); ok {
+		return core.E(op, msg, err)
+	}
+	return core.E(op, msg, nil)
 }

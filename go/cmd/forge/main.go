@@ -8,17 +8,27 @@ import (
 )
 
 func main() {
-	newApp().Run()
+	result := newApp()
+	if !result.OK {
+		core.Error("forge setup failed", "err", result.Value)
+		core.Exit(1)
+		return
+	}
+	result.Value.(*core.Core).Run()
 }
 
-func newApp() *core.Core {
+func newApp() core.Result {
 	app := core.New(core.WithOption("name", "forge"))
 	app.App().Version = "dev"
 
-	_ = app.Command("auth", core.Command{Action: auth})
-	_ = app.Command("repos", core.Command{Action: repos})
+	if r := app.Command("auth", core.Command{Action: auth}); !r.OK {
+		return r
+	}
+	if r := app.Command("repos", core.Command{Action: repos}); !r.OK {
+		return r
+	}
 
-	return app
+	return core.Ok(app)
 }
 
 func auth(opts core.Options) core.Result {

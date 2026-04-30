@@ -6,11 +6,6 @@ package sign
 import (
 	"crypto/ed25519"
 	"encoding/base64"
-	"encoding/json"
-	"errors"
-	"os"
-	"path/filepath"
-	"strings"
 
 	core "dappco.re/go"
 	"dappco.re/go/scm/manifest"
@@ -26,49 +21,48 @@ func Register(app *core.Core) core.Result {
 	if app == nil {
 		return core.Fail(core.E("cmd.sign.Register", "core app is required", nil))
 	}
-	return app.Command("sign", core.Command{Action: run})
+	return app.Command("sign", core.Command{Action: run(app)})
 }
 
-func run(opts core.Options) core.Result {
-	if wantsHelp(opts) {
-		core.Print(nil, usage)
+func run(app *core.Core) core.CommandAction {
+	return func(opts core.Options) core.Result {
+		if wantsHelp(opts) {
+			core.Print(nil, usage)
+			return core.Ok(nil)
+		}
+
+		priv, err := privateKey(app, opts)
+		if err != nil {
+			return failed(err)
+		}
+
+		root := option(opts, "root", ".")
+		outPath := option(opts, "out", core.PathJoin(root, "core.json"))
+
+		cm, err := compiledManifest(app, opts, root, priv)
+		if err != nil {
+			return failed(err)
+		}
+
+		raw, err := manifest.MarshalJSON(cm)
+		if err != nil {
+			return failed(err)
+		}
+		if r := app.Fs().WriteMode(outPath, string(raw), 0o600); !r.OK {
+			return failed(resultError("cmd.sign.run", "write signed manifest", r))
+		}
+
+		core.Print(nil, "%s", outPath)
 		return core.Ok(nil)
 	}
-
-	priv, err := privateKey(opts)
-	if err != nil {
-		return failed(err)
-	}
-
-	root := option(opts, "root", ".")
-	outPath := option(opts, "out", filepath.Join(root, "core.json"))
-
-	cm, err := compiledManifest(opts, root, priv)
-	if err != nil {
-		return failed(err)
-	}
-
-	raw, err := manifest.MarshalJSON(cm)
-	if err != nil {
-		return failed(err)
-	}
-	if err := mkdirParent(outPath); err != nil {
-		return failed(err)
-	}
-	if err := os.WriteFile(outPath, raw, 0o600); err != nil {
-		return failed(err)
-	}
-
-	core.Print(nil, "%s", outPath)
-	return core.Ok(nil)
 }
 
-func compiledManifest(opts core.Options, root string, priv ed25519.PrivateKey) (*manifest.CompiledManifest, error) {
+func compiledManifest(app *core.Core, opts core.Options, root string, priv ed25519.PrivateKey) (*manifest.CompiledManifest, error) {
 	pub := priv.Public().(ed25519.PublicKey)
 	signKey := base64.StdEncoding.EncodeToString(pub)
 
-	if path := strings.TrimSpace(opts.String("manifest")); path != "" {
-		raw, err := os.ReadFile(path)
+	if path := core.Trim(opts.String("manifest")); path != "" {
+		raw, err := readFile(app, path)
 		if err != nil {
 			return nil, err
 		}
@@ -76,15 +70,15 @@ func compiledManifest(opts core.Options, root string, priv ed25519.PrivateKey) (
 		if err != nil {
 			return nil, err
 		}
-		if strings.TrimSpace(m.SignKey) == "" {
+		if core.Trim(m.SignKey) == "" {
 			m.SignKey = signKey
 		}
 		m.Sign = ""
 		return manifest.CompileWithOptions(m, manifest.CompileOptions{SignKey: priv})
 	}
 
-	inPath := option(opts, "in", filepath.Join(root, "core.json"))
-	raw, err := os.ReadFile(inPath)
+	inPath := option(opts, "in", core.PathJoin(root, "core.json"))
+	raw, err := readFile(app, inPath)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +89,7 @@ func compiledManifest(opts core.Options, root string, priv ed25519.PrivateKey) (
 	if _, err := manifest.Compile(&cm.Manifest, cm.Build); err != nil {
 		return nil, err
 	}
-	if strings.TrimSpace(cm.SignKey) == "" {
+	if core.Trim(cm.SignKey) == "" {
 		cm.SignKey = signKey
 	}
 	payload, err := canonicalManifestBytes(&cm.Manifest)
@@ -108,57 +102,57 @@ func compiledManifest(opts core.Options, root string, priv ed25519.PrivateKey) (
 	return cm, nil
 }
 
-func privateKey(opts core.Options) (ed25519.PrivateKey, error) {
-	value := strings.TrimSpace(opts.String("key"))
-	if path := strings.TrimSpace(opts.String("key-file")); path != "" {
-		raw, err := os.ReadFile(path)
+func privateKey(app *core.Core, opts core.Options) (ed25519.PrivateKey, error) {
+	value := core.Trim(opts.String("key"))
+	if path := core.Trim(opts.String("key-file")); path != "" {
+		raw, err := readFile(app, path)
 		if err != nil {
 			return nil, err
 		}
-		value = strings.TrimSpace(string(raw))
+		value = core.Trim(string(raw))
 	}
 	if value == "" {
-		value = strings.TrimSpace(os.Getenv("SCM_SIGN_KEY"))
+		value = core.Trim(app.Env("SCM_SIGN_KEY"))
 	}
 	if value == "" {
-		return nil, errors.New("signing key is required")
+		return nil, core.E("cmd.sign.privateKey", "signing key is required", nil)
 	}
-	if raw, err := os.ReadFile(value); err == nil {
-		value = strings.TrimSpace(string(raw))
+	if raw, err := readFile(app, value); err == nil {
+		value = core.Trim(string(raw))
 	}
 	decoded, err := base64.StdEncoding.DecodeString(value)
 	if err != nil {
 		return nil, err
 	}
 	if len(decoded) != ed25519.PrivateKeySize {
-		return nil, errors.New("signing key must be a base64 ed25519 private key")
+		return nil, core.E("cmd.sign.privateKey", "signing key must be a base64 ed25519 private key", nil)
 	}
 	return ed25519.PrivateKey(decoded), nil
 }
 
 func canonicalManifestBytes(m *manifest.Manifest) ([]byte, error) {
 	if m == nil {
-		return nil, errors.New("manifest is required")
+		return nil, core.E("cmd.sign.canonicalManifestBytes", "manifest is required", nil)
 	}
 	cp := *m
 	cp.Sign = ""
 	cp.SignKey = ""
-	return json.Marshal(cp)
+	r := core.JSONMarshal(cp)
+	if !r.OK {
+		return nil, resultError("cmd.sign.canonicalManifestBytes", "marshal manifest", r)
+	}
+	raw, ok := r.Value.([]byte)
+	if !ok {
+		return nil, core.E("cmd.sign.canonicalManifestBytes", "marshal returned invalid payload", nil)
+	}
+	return raw, nil
 }
 
 func option(opts core.Options, key, fallback string) string {
-	if value := strings.TrimSpace(opts.String(key)); value != "" {
+	if value := core.Trim(opts.String(key)); value != "" {
 		return value
 	}
 	return fallback
-}
-
-func mkdirParent(path string) error {
-	dir := filepath.Dir(path)
-	if dir == "." || dir == "" {
-		return nil
-	}
-	return os.MkdirAll(dir, 0o755)
 }
 
 func wantsHelp(opts core.Options) bool {
@@ -167,4 +161,26 @@ func wantsHelp(opts core.Options) bool {
 
 func failed(err error) core.Result {
 	return core.Fail(err)
+}
+
+func readFile(app *core.Core, path string) ([]byte, error) {
+	if app == nil {
+		return nil, core.E("cmd.sign.readFile", "core app is required", nil)
+	}
+	r := app.Fs().Read(path)
+	if !r.OK {
+		return nil, resultError("cmd.sign.readFile", "read file", r)
+	}
+	raw, ok := r.Value.(string)
+	if !ok {
+		return nil, core.E("cmd.sign.readFile", "read returned invalid payload", nil)
+	}
+	return []byte(raw), nil
+}
+
+func resultError(op, msg string, r core.Result) error {
+	if err, ok := r.Value.(error); ok {
+		return core.E(op, msg, err)
+	}
+	return core.E(op, msg, nil)
 }
