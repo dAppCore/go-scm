@@ -28,7 +28,7 @@ type CompiledManifest struct {
 	Build    BuildInfo `json:"build,omitempty" yaml:"build,omitempty"`
 }
 
-func Compile(m *Manifest, info BuildInfo) ([]byte, error) {
+func Compile(m *Manifest, info BuildInfo) ([]byte, error)  /* v090-result-boundary */ {
 	if err := validateManifest(m); err != nil {
 		return nil, err
 	}
@@ -37,7 +37,7 @@ func Compile(m *Manifest, info BuildInfo) ([]byte, error) {
 	return marshalJSON("manifest.Compile", &cp)
 }
 
-func ParseCoreJSON(data []byte) (*Manifest, error) {
+func ParseCoreJSON(data []byte) (*Manifest, error)  /* v090-result-boundary */ {
 	var m Manifest
 	if err := unmarshalJSON("manifest.ParseCoreJSON", data, &m); err != nil {
 		return nil, err
@@ -48,7 +48,7 @@ func ParseCoreJSON(data []byte) (*Manifest, error) {
 	return &m, nil
 }
 
-func CompileWithOptions(m *Manifest, opts CompileOptions) (*CompiledManifest, error) {
+func CompileWithOptions(m *Manifest, opts CompileOptions) (*CompiledManifest, error)  /* v090-result-boundary */ {
 	if err := validateManifest(m); err != nil {
 		return nil, err
 	}
@@ -72,14 +72,14 @@ func CompileWithOptions(m *Manifest, opts CompileOptions) (*CompiledManifest, er
 	}, nil
 }
 
-func MarshalJSON(cm *CompiledManifest) ([]byte, error) {
+func MarshalJSON(cm *CompiledManifest) ([]byte, error)  /* v090-result-boundary */ {
 	if cm == nil {
 		return nil, core.E("manifest.MarshalJSON", "compiled manifest is required", nil)
 	}
 	return marshalJSON("manifest.MarshalJSON", cm)
 }
 
-func ParseCompiled(data []byte) (*CompiledManifest, error) {
+func ParseCompiled(data []byte) (*CompiledManifest, error)  /* v090-result-boundary */ {
 	var cm CompiledManifest
 	if err := unmarshalJSON("manifest.ParseCompiled", data, &cm); err != nil {
 		return nil, err
@@ -87,7 +87,7 @@ func ParseCompiled(data []byte) (*CompiledManifest, error) {
 	return &cm, nil
 }
 
-func LoadCompiled(medium coreio.Medium, root string) (*CompiledManifest, error) {
+func LoadCompiled(medium coreio.Medium, root string) (*CompiledManifest, error)  /* v090-result-boundary */ {
 	if medium == nil {
 		return nil, core.E("manifest.LoadCompiled", "medium is required", nil)
 	}
@@ -98,7 +98,7 @@ func LoadCompiled(medium coreio.Medium, root string) (*CompiledManifest, error) 
 	return ParseCompiled([]byte(raw))
 }
 
-func WriteCompiled(medium coreio.Medium, root string, cm *CompiledManifest) error {
+func WriteCompiled(medium coreio.Medium, root string, cm *CompiledManifest) error  /* v090-result-boundary */ {
 	if medium == nil {
 		return core.E("manifest.WriteCompiled", "medium is required", nil)
 	}
@@ -119,7 +119,7 @@ func normalizeBuildInfo(build BuildInfo) BuildInfo {
 	return build
 }
 
-func marshalJSON(op string, v any) ([]byte, error) {
+func marshalJSON(op string, v any) ([]byte, error)  /* v090-result-boundary */ {
 	r := core.JSONMarshal(v)
 	if !r.OK {
 		return nil, resultError(op, "marshal JSON", r)
@@ -131,7 +131,7 @@ func marshalJSON(op string, v any) ([]byte, error) {
 	return raw, nil
 }
 
-func unmarshalJSON(op string, data []byte, target any) error {
+func unmarshalJSON(op string, data []byte, target any) error  /* v090-result-boundary */ {
 	r := core.JSONUnmarshal(data, target)
 	if !r.OK {
 		return resultError(op, "unmarshal JSON", r)
@@ -139,7 +139,7 @@ func unmarshalJSON(op string, data []byte, target any) error {
 	return nil
 }
 
-func resultError(op, msg string, r core.Result) error {
+func resultError(op, msg string, r core.Result) error  /* v090-result-boundary */ {
 	if err, ok := r.Value.(error); ok {
 		return core.E(op, msg, err)
 	}

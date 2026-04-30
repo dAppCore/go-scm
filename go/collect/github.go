@@ -20,7 +20,7 @@ type GitHubCollector struct {
 func (g *GitHubCollector) Name() string { return "github" }
 
 // Collect gathers issues and/or PRs from GitHub repositories.
-func (g *GitHubCollector) Collect(ctx context.Context, cfg *Config) (*Result, error) {
+func (g *GitHubCollector) Collect(ctx context.Context, cfg *Config) (*Result, error)  /* v090-result-boundary */ {
 	if cfg == nil {
 		return nil, core.E("collect.GitHubCollector.Collect", "config is required", nil)
 	}

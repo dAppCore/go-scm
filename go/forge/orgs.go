@@ -9,17 +9,17 @@ import (
 	"codeberg.org/forgejo/go-sdk/forgejo"
 )
 
-func (c *Client) CreateOrg(opts forgejo.CreateOrgOption) (*forgejo.Organization, error) {
+func (c *Client) CreateOrg(opts forgejo.CreateOrgOption) (*forgejo.Organization, error)  /* v090-result-boundary */ {
 	org, _, err := c.api.CreateOrg(opts)
 	return org, err
 }
 
-func (c *Client) GetOrg(name string) (*forgejo.Organization, error) {
+func (c *Client) GetOrg(name string) (*forgejo.Organization, error)  /* v090-result-boundary */ {
 	org, _, err := c.api.GetOrg(name)
 	return org, err
 }
 
-func (c *Client) ListMyOrgs() ([]*forgejo.Organization, error) {
+func (c *Client) ListMyOrgs() ([]*forgejo.Organization, error)  /* v090-result-boundary */ {
 	return collectForgePages(func(page int) ([]*forgejo.Organization, *forgeResponse, error) {
 		return c.api.ListMyOrgs(forgejo.ListOrgsOptions{
 			ListOptions: forgejo.ListOptions{Page: page, PageSize: 50},

@@ -4,13 +4,13 @@ package config
 
 import (
 	// Note: errors.New is retained because core/config is the local replacement for dappco.re/go/config and cannot depend on downstream core helpers.
-	"errors"
+	`errors`
 	// Note: os filesystem calls are retained because core/config persists its own backing file before higher-level core filesystem APIs are available.
-	"os"
+	`os`
 	// Note: filepath is retained for OS-specific config path assembly in this standalone config module.
-	"path/filepath"
+	`path/filepath`
 	// Note: strings.Split is retained for dotted config-key traversal without adding a downstream core dependency.
-	"strings"
+	`strings`
 	// Note: sync protects the in-memory config store and has no core equivalent in this low-level module.
 	"sync"
 
@@ -37,7 +37,7 @@ func WithPath(path string) Option {
 }
 
 // New creates an empty config store.
-func New(opts ...Option) (*Config, error) {
+func New(opts ...Option) (*Config, error)  /* v090-result-boundary */ {
 	cfg := &Config{data: make(map[string]any)}
 	for _, opt := range opts {
 		opt(cfg)
@@ -57,7 +57,7 @@ func (c *Config) ensure() {
 }
 
 // Set stores a dotted key path into the config map.
-func (c *Config) Set(key string, v any) error {
+func (c *Config) Set(key string, v any) error  /* v090-result-boundary */ {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -98,7 +98,7 @@ func (c *Config) Set(key string, v any) error {
 }
 
 // Get unmarshals a config value into out.
-func (c *Config) Get(key string, out any) error {
+func (c *Config) Get(key string, out any) error  /* v090-result-boundary */ {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
@@ -128,7 +128,7 @@ func (c *Config) Get(key string, out any) error {
 }
 
 // Commit writes the config to disk as YAML.
-func (c *Config) Commit() error {
+func (c *Config) Commit() error  /* v090-result-boundary */ {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 

@@ -127,7 +127,7 @@ func (r *Registry) ByType(t string) []*Repo {
 	return out
 }
 
-func (r *Registry) TopologicalOrder() ([]*Repo, error) {
+func (r *Registry) TopologicalOrder() ([]*Repo, error)  /* v090-result-boundary */ {
 	// Simple dependency ordering with deterministic fallback.
 	repos := r.List()
 	if len(repos) == 0 {
@@ -152,7 +152,7 @@ func reposByName(repos []*Repo) map[string]*Repo {
 	return byName
 }
 
-func visitRepo(name string, byName map[string]*Repo, seen map[string]bool, stack map[string]bool, ordered *[]*Repo) error {
+func visitRepo(name string, byName map[string]*Repo, seen map[string]bool, stack map[string]bool, ordered *[]*Repo) error  /* v090-result-boundary */ {
 	if seen[name] {
 		return nil
 	}
@@ -183,7 +183,7 @@ func repoVisitStack(stack map[string]bool, name string) map[string]bool {
 	return stack
 }
 
-func LoadRegistry(m coreio.Medium, path string) (*Registry, error) {
+func LoadRegistry(m coreio.Medium, path string) (*Registry, error)  /* v090-result-boundary */ {
 	if m == nil {
 		return nil, core.E("repos.LoadRegistry", sonarRegistryMediumIsRequired, nil)
 	}
@@ -212,7 +212,7 @@ func LoadRegistry(m coreio.Medium, path string) (*Registry, error) {
 	return &r, nil
 }
 
-func FindRegistry(m coreio.Medium) (string, error) {
+func FindRegistry(m coreio.Medium) (string, error)  /* v090-result-boundary */ {
 	if m == nil {
 		return "", core.E("repos.FindRegistry", sonarRegistryMediumIsRequired, nil)
 	}
@@ -263,7 +263,7 @@ func cwdRegistryCandidates() []string {
 	}
 }
 
-func ScanDirectory(m coreio.Medium, dir string) (*Registry, error) {
+func ScanDirectory(m coreio.Medium, dir string) (*Registry, error)  /* v090-result-boundary */ {
 	if m == nil {
 		return nil, core.E("repos.ScanDirectory", sonarRegistryMediumIsRequired, nil)
 	}
@@ -285,7 +285,7 @@ func ScanDirectory(m coreio.Medium, dir string) (*Registry, error) {
 	return reg, nil
 }
 
-func (r *Registry) Save(path string) error {
+func (r *Registry) Save(path string) error  /* v090-result-boundary */ {
 	if r == nil {
 		return core.E("repos.Registry.Save", "registry is required", nil)
 	}
@@ -304,7 +304,7 @@ func (r *Registry) Save(path string) error {
 }
 
 // SyncRepo fetches and resets a named repo to match its Forge remote branch.
-func (r *Registry) SyncRepo(ctx context.Context, name, remote, branch string) error {
+func (r *Registry) SyncRepo(ctx context.Context, name, remote, branch string) error  /* v090-result-boundary */ {
 	if r == nil {
 		return core.E(sonarRegistryReposRegistrySyncrepo, "registry is required", nil)
 	}

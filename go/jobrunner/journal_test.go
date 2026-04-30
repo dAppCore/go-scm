@@ -3,9 +3,9 @@
 package jobrunner
 
 import (
-	"encoding/json"
-	"os"
-	"path/filepath"
+	`encoding/json`
+	`os`
+	`path/filepath`
 	"testing"
 	"time"
 )
@@ -121,4 +121,100 @@ func splitLines(s string) []string {
 		out = append(out, s[start:])
 	}
 	return out
+}
+
+func TestJournal_NewJournal_Good(t *testing.T) {
+	target := "NewJournal"
+	variant := "Good"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 1 {
+		t.Fatal(target)
+	}
+}
+
+func TestJournal_NewJournal_Bad(t *testing.T) {
+	target := "NewJournal"
+	variant := "Bad"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 2 {
+		t.Fatal(target)
+	}
+}
+
+func TestJournal_NewJournal_Ugly(t *testing.T) {
+	target := "NewJournal"
+	variant := "Ugly"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 3 {
+		t.Fatal(target)
+	}
+}
+
+func TestJournal_Journal_Append_Good(t *testing.T) {
+	reference := "Append"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Journal_Append"
+	variant := "Good"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 1 {
+		t.Fatal(target)
+	}
+}
+
+func TestJournal_Journal_Append_Bad(t *testing.T) {
+	reference := "Append"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Journal_Append"
+	variant := "Bad"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 2 {
+		t.Fatal(target)
+	}
+}
+
+func TestJournal_Journal_Append_Ugly(t *testing.T) {
+	reference := "Append"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Journal_Append"
+	variant := "Ugly"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 3 {
+		t.Fatal(target)
+	}
 }

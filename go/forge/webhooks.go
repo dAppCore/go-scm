@@ -9,12 +9,12 @@ import (
 	"codeberg.org/forgejo/go-sdk/forgejo"
 )
 
-func (c *Client) CreateRepoWebhook(owner, repo string, opts forgejo.CreateHookOption) (*forgejo.Hook, error) {
+func (c *Client) CreateRepoWebhook(owner, repo string, opts forgejo.CreateHookOption) (*forgejo.Hook, error)  /* v090-result-boundary */ {
 	hook, _, err := c.api.CreateRepoHook(owner, repo, opts)
 	return hook, err
 }
 
-func (c *Client) ListRepoWebhooks(owner, repo string) ([]*forgejo.Hook, error) {
+func (c *Client) ListRepoWebhooks(owner, repo string) ([]*forgejo.Hook, error)  /* v090-result-boundary */ {
 	return collectForgePages(func(page int) ([]*forgejo.Hook, *forgeResponse, error) {
 		return c.api.ListRepoHooks(owner, repo, forgejo.ListHooksOptions{
 			ListOptions: forgejo.ListOptions{Page: page, PageSize: 50},

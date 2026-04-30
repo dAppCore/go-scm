@@ -37,7 +37,7 @@ const commentPageSize = 50
 
 type forgeResponse = gitea.Response
 
-func collectForgePages[T any](fetch func(page int) ([]T, *forgeResponse, error)) ([]T, error) {
+func collectForgePages[T any](fetch func(page int) ([]T, *forgeResponse, error)) ([]T, error)  /* v090-result-boundary */ {
 	var all []T
 	for page := 1; ; page++ {
 		items, resp, err := fetch(page)
@@ -51,7 +51,7 @@ func collectForgePages[T any](fetch func(page int) ([]T, *forgeResponse, error))
 	}
 }
 
-func collectForgeLimitedPages[T any](page, limit int, fetch func(page int) ([]T, *forgeResponse, error)) ([]T, error) {
+func collectForgeLimitedPages[T any](page, limit int, fetch func(page int) ([]T, *forgeResponse, error)) ([]T, error)  /* v090-result-boundary */ {
 	var all []T
 	for {
 		items, resp, err := fetch(page)
@@ -96,7 +96,7 @@ func hasMoreForgeItems[T any](items []T, resp *forgeResponse, page, limit int) b
 	return resp == nil || resp.LastPage <= 0 || page < resp.LastPage
 }
 
-func (c *Client) GetIssueBody(owner, repo string, issue int64) (string, error) {
+func (c *Client) GetIssueBody(owner, repo string, issue int64) (string, error)  /* v090-result-boundary */ {
 	iss, _, err := c.api.GetIssue(owner, repo, issue)
 	if err != nil {
 		return "", err
@@ -104,7 +104,7 @@ func (c *Client) GetIssueBody(owner, repo string, issue int64) (string, error) {
 	return iss.Body, nil
 }
 
-func (c *Client) GetCommentBodies(owner, repo string, pr int64) ([]Comment, error) {
+func (c *Client) GetCommentBodies(owner, repo string, pr int64) ([]Comment, error)  /* v090-result-boundary */ {
 	var comments []Comment
 	page := 1
 	for {
@@ -134,7 +134,7 @@ func (c *Client) GetCommentBodies(owner, repo string, pr int64) ([]Comment, erro
 	return comments, nil
 }
 
-func (c *Client) GetPRMeta(owner, repo string, pr int64) (*PRMeta, error) {
+func (c *Client) GetPRMeta(owner, repo string, pr int64) (*PRMeta, error)  /* v090-result-boundary */ {
 	pull, _, err := c.api.GetPullRequest(owner, repo, pr)
 	if err != nil {
 		return nil, err

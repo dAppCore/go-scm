@@ -78,7 +78,7 @@ func (r *ProviderRegistryFile) Remove(code string) {
 	delete(r.Providers, code)
 }
 
-func DiscoverProviders(dir string) ([]DiscoveredProvider, error) {
+func DiscoverProviders(dir string) ([]DiscoveredProvider, error)  /* v090-result-boundary */ {
 	absResult := core.PathAbs(dir)
 	if absResult.OK {
 		dir = absResult.Value.(string)
@@ -107,7 +107,7 @@ func DiscoverProviders(dir string) ([]DiscoveredProvider, error) {
 	return out, nil
 }
 
-func LoadProviderRegistry(path string) (*ProviderRegistryFile, error) {
+func LoadProviderRegistry(path string) (*ProviderRegistryFile, error)  /* v090-result-boundary */ {
 	readResult := core.ReadFile(path)
 	if !readResult.OK {
 		return &ProviderRegistryFile{Version: 1, Providers: map[string]ProviderRegistryEntry{}}, nil
@@ -125,7 +125,7 @@ func LoadProviderRegistry(path string) (*ProviderRegistryFile, error) {
 	return &reg, nil
 }
 
-func SaveProviderRegistry(path string, reg *ProviderRegistryFile) error {
+func SaveProviderRegistry(path string, reg *ProviderRegistryFile) error  /* v090-result-boundary */ {
 	if reg == nil {
 		reg = &ProviderRegistryFile{Version: 1, Providers: map[string]ProviderRegistryEntry{}}
 	}

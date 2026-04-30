@@ -57,7 +57,7 @@ func run(app *core.Core) core.CommandAction {
 	}
 }
 
-func compiledManifest(app *core.Core, opts core.Options, root string, priv ed25519.PrivateKey) (*manifest.CompiledManifest, error) {
+func compiledManifest(app *core.Core, opts core.Options, root string, priv ed25519.PrivateKey) (*manifest.CompiledManifest, error)  /* v090-result-boundary */ {
 	pub := priv.Public().(ed25519.PublicKey)
 	signKey := base64.StdEncoding.EncodeToString(pub)
 
@@ -102,7 +102,7 @@ func compiledManifest(app *core.Core, opts core.Options, root string, priv ed255
 	return cm, nil
 }
 
-func privateKey(app *core.Core, opts core.Options) (ed25519.PrivateKey, error) {
+func privateKey(app *core.Core, opts core.Options) (ed25519.PrivateKey, error)  /* v090-result-boundary */ {
 	value := core.Trim(opts.String("key"))
 	if path := core.Trim(opts.String("key-file")); path != "" {
 		raw, err := readFile(app, path)
@@ -130,7 +130,7 @@ func privateKey(app *core.Core, opts core.Options) (ed25519.PrivateKey, error) {
 	return ed25519.PrivateKey(decoded), nil
 }
 
-func canonicalManifestBytes(m *manifest.Manifest) ([]byte, error) {
+func canonicalManifestBytes(m *manifest.Manifest) ([]byte, error)  /* v090-result-boundary */ {
 	if m == nil {
 		return nil, core.E("cmd.sign.canonicalManifestBytes", "manifest is required", nil)
 	}
@@ -163,7 +163,7 @@ func failed(err error) core.Result {
 	return core.Fail(err)
 }
 
-func readFile(app *core.Core, path string) ([]byte, error) {
+func readFile(app *core.Core, path string) ([]byte, error)  /* v090-result-boundary */ {
 	if app == nil {
 		return nil, core.E("cmd.sign.readFile", "core app is required", nil)
 	}
@@ -178,7 +178,7 @@ func readFile(app *core.Core, path string) ([]byte, error) {
 	return []byte(raw), nil
 }
 
-func resultError(op, msg string, r core.Result) error {
+func resultError(op, msg string, r core.Result) error  /* v090-result-boundary */ {
 	if err, ok := r.Value.(error); ok {
 		return core.E(op, msg, err)
 	}

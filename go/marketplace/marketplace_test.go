@@ -6,8 +6,8 @@ import (
 	"context"
 	"crypto/ed25519"
 	"encoding/base64"
-	"os"
-	"path/filepath"
+	`os`
+	`path/filepath`
 	"testing"
 
 	core "dappco.re/go"
@@ -393,10 +393,10 @@ func TestMarketplace_ProviderRegistryFile_Add_Ugly(t *core.T) {
 }
 
 func TestMarketplace_ProviderRegistryFile_Get_Good(t *core.T) {
-	reg := &ProviderRegistryFile{Providers: map[string]ProviderRegistryEntry{"demo": {Installed: "path"}}}
+	reg := &ProviderRegistryFile{Providers: map[string]ProviderRegistryEntry{"demo": {Installed: `path`}}}
 	entry, ok := reg.Get("demo")
 	core.AssertTrue(t, ok)
-	core.AssertEqual(t, "path", entry.Installed)
+	core.AssertEqual(t, `path`, entry.Installed)
 }
 
 func TestMarketplace_ProviderRegistryFile_Get_Bad(t *core.T) {

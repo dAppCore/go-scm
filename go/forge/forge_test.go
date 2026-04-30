@@ -5,8 +5,8 @@ package forge
 import (
 	"net/http"
 	"net/http/httptest"
-	"os"
-	"path/filepath"
+	`os`
+	`path/filepath`
 
 	forgejo "codeberg.org/forgejo/go-sdk/forgejo"
 	core "dappco.re/go"

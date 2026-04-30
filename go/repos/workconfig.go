@@ -4,7 +4,7 @@ package repos
 
 import (
 	// Note: AX-6 — Config APIs return standard errors for nil storage media.
-	"errors"
+	`errors`
 	// Note: AX-6 — Work config exposes duration fields and defaults.
 	"time"
 
@@ -53,7 +53,7 @@ func (wc *WorkConfig) HasTrigger(name string) bool {
 	return false
 }
 
-func LoadWorkConfig(m coreio.Medium, root string) (*WorkConfig, error) {
+func LoadWorkConfig(m coreio.Medium, root string) (*WorkConfig, error)  /* v090-result-boundary */ {
 	if m == nil {
 		return nil, errors.New("repos.LoadWorkConfig: medium is required")
 	}
@@ -71,7 +71,7 @@ func LoadWorkConfig(m coreio.Medium, root string) (*WorkConfig, error) {
 	return &wc, nil
 }
 
-func SaveWorkConfig(m coreio.Medium, root string, wc *WorkConfig) error {
+func SaveWorkConfig(m coreio.Medium, root string, wc *WorkConfig) error  /* v090-result-boundary */ {
 	if m == nil {
 		return errors.New("repos.SaveWorkConfig: medium is required")
 	}

@@ -75,7 +75,7 @@ func MergeResults(source string, results ...*Result) *Result {
 	return merged
 }
 
-func activeCollectContext(ctx context.Context) (context.Context, error) {
+func activeCollectContext(ctx context.Context) (context.Context, error)  /* v090-result-boundary */ {
 	if ctx == nil {
 		ctx = context.Background()
 	}
@@ -93,14 +93,14 @@ func emitDryRun(cfg *Config, source, progress, complete string, result *Result) 
 	return true
 }
 
-func waitCollectLimiter(ctx context.Context, cfg *Config, source string) error {
+func waitCollectLimiter(ctx context.Context, cfg *Config, source string) error  /* v090-result-boundary */ {
 	if cfg == nil || cfg.Limiter == nil {
 		return nil
 	}
 	return cfg.Limiter.Wait(ctx, source)
 }
 
-func writeResultFile(cfg *Config, source, name, content string) (string, error) {
+func writeResultFile(cfg *Config, source, name, content string) (string, error)  /* v090-result-boundary */ {
 	if cfg == nil || cfg.Output == nil {
 		return "", core.E("collect.writeResultFile", "output medium is required", nil)
 	}

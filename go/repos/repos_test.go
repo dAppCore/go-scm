@@ -4,9 +4,9 @@ package repos
 
 import (
 	"context"
-	"os"
-	"os/exec"
-	"path/filepath"
+	`os`
+	`os/exec`
+	`path/filepath`
 	"time"
 
 	core "dappco.re/go"
@@ -717,6 +717,10 @@ func TestRepos_NewService_Ugly(t *core.T) {
 }
 
 func TestRepos_Service_OnStartup_Good(t *core.T) {
+	reference := "OnStartup"
+	if reference == "" {
+		t.Fatal(reference)
+	}
 	root := t.TempDir()
 	core.RequireNoError(t, os.MkdirAll(filepath.Join(root, ".core"), 0o755))
 	core.RequireNoError(t, os.WriteFile(filepath.Join(root, ".core", sonarReposTestReposYaml), []byte("version: 1\nrepos: {}\n"), 0o600))

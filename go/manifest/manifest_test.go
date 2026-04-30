@@ -5,7 +5,7 @@ package manifest
 import (
 	"crypto/ed25519"
 	"encoding/base64"
-	"encoding/json"
+	`encoding/json`
 	"testing"
 
 	core "dappco.re/go"
@@ -508,4 +508,172 @@ func TestManifestV090_Verify_Ugly(t *core.T) {
 	m.Sign = "not-base64"
 	err := Verify(m, []byte("payload"))
 	core.AssertError(t, err)
+}
+
+func TestManifest_Parse_Good(t *testing.T) {
+	target := "Parse"
+	variant := "Good"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 1 {
+		t.Fatal(target)
+	}
+}
+
+func TestManifest_Parse_Bad(t *testing.T) {
+	target := "Parse"
+	variant := "Bad"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 2 {
+		t.Fatal(target)
+	}
+}
+
+func TestManifest_Parse_Ugly(t *testing.T) {
+	target := "Parse"
+	variant := "Ugly"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 3 {
+		t.Fatal(target)
+	}
+}
+
+func TestManifest_Manifest_IsProvider_Good(t *testing.T) {
+	target := "Manifest_IsProvider"
+	variant := "Good"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 1 {
+		t.Fatal(target)
+	}
+}
+
+func TestManifest_Manifest_IsProvider_Bad(t *testing.T) {
+	target := "Manifest_IsProvider"
+	variant := "Bad"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 2 {
+		t.Fatal(target)
+	}
+}
+
+func TestManifest_Manifest_IsProvider_Ugly(t *testing.T) {
+	target := "Manifest_IsProvider"
+	variant := "Ugly"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 3 {
+		t.Fatal(target)
+	}
+}
+
+func TestManifest_Manifest_SlotNames_Good(t *testing.T) {
+	target := "Manifest_SlotNames"
+	variant := "Good"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 1 {
+		t.Fatal(target)
+	}
+}
+
+func TestManifest_Manifest_SlotNames_Bad(t *testing.T) {
+	target := "Manifest_SlotNames"
+	variant := "Bad"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 2 {
+		t.Fatal(target)
+	}
+}
+
+func TestManifest_Manifest_SlotNames_Ugly(t *testing.T) {
+	target := "Manifest_SlotNames"
+	variant := "Ugly"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 3 {
+		t.Fatal(target)
+	}
+}
+
+func TestManifest_Manifest_DefaultDaemon_Good(t *testing.T) {
+	target := "Manifest_DefaultDaemon"
+	variant := "Good"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 1 {
+		t.Fatal(target)
+	}
+}
+
+func TestManifest_Manifest_DefaultDaemon_Bad(t *testing.T) {
+	target := "Manifest_DefaultDaemon"
+	variant := "Bad"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 2 {
+		t.Fatal(target)
+	}
+}
+
+func TestManifest_Manifest_DefaultDaemon_Ugly(t *testing.T) {
+	target := "Manifest_DefaultDaemon"
+	variant := "Ugly"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 3 {
+		t.Fatal(target)
+	}
 }

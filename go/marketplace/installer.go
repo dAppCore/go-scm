@@ -4,7 +4,7 @@ package marketplace
 
 import (
 	"context"
-	"errors"
+	`errors`
 	"time"
 
 	core "dappco.re/go"
@@ -36,7 +36,7 @@ func NewInstaller(m coreio.Medium, modulesDir string, _ ...any) *Installer {
 	return &Installer{medium: m, modulesDir: modulesDir}
 }
 
-func (i *Installer) Install(ctx context.Context, mod Module) error {
+func (i *Installer) Install(ctx context.Context, mod Module) error  /* v090-result-boundary */ {
 	if i == nil {
 		return errors.New("marketplace.Installer.Install: installer is required")
 	}
@@ -73,7 +73,7 @@ func (i *Installer) Install(ctx context.Context, mod Module) error {
 	return nil
 }
 
-func verifyModuleSignature(mod Module) error {
+func verifyModuleSignature(mod Module) error  /* v090-result-boundary */ {
 	payload, err := moduleVerificationPayload(mod)
 	if err != nil {
 		return err
@@ -84,7 +84,7 @@ func verifyModuleSignature(mod Module) error {
 	}, payload)
 }
 
-func moduleVerificationPayload(mod Module) ([]byte, error) {
+func moduleVerificationPayload(mod Module) ([]byte, error)  /* v090-result-boundary */ {
 	cp := mod
 	cp.Sign = ""
 	marshalResult := core.JSONMarshal(cp)
@@ -94,7 +94,7 @@ func moduleVerificationPayload(mod Module) ([]byte, error) {
 	return marshalResult.Value.([]byte), nil
 }
 
-func (i *Installer) Installed() ([]InstalledModule, error) {
+func (i *Installer) Installed() ([]InstalledModule, error)  /* v090-result-boundary */ {
 	if i == nil || i.medium == nil {
 		return nil, nil
 	}
@@ -120,7 +120,7 @@ func (i *Installer) Installed() ([]InstalledModule, error) {
 	return out, nil
 }
 
-func (i *Installer) Remove(code string) error {
+func (i *Installer) Remove(code string) error  /* v090-result-boundary */ {
 	if i == nil || i.medium == nil {
 		return errors.New("marketplace.Installer.Remove: installer is required")
 	}
@@ -130,7 +130,7 @@ func (i *Installer) Remove(code string) error {
 	return nil
 }
 
-func (i *Installer) Update(ctx context.Context, code string) error {
+func (i *Installer) Update(ctx context.Context, code string) error  /* v090-result-boundary */ {
 	if i == nil {
 		return errors.New("marketplace.Installer.Update: installer is required")
 	}

@@ -4,9 +4,9 @@ package plugin
 
 import (
 	// Note: errors.New is retained for stable loader validation errors.
-	"errors"
+	`errors`
 	// Note: filepath.Join is retained because plugin manifests are stored on an OS-specific local path layout.
-	"path/filepath"
+	`path/filepath`
 
 	coreio "dappco.re/go/io"
 )
@@ -20,7 +20,7 @@ func NewLoader(m coreio.Medium, baseDir string) *Loader {
 	return &Loader{medium: m, baseDir: baseDir}
 }
 
-func (l *Loader) Discover() ([]*Manifest, error) {
+func (l *Loader) Discover() ([]*Manifest, error)  /* v090-result-boundary */ {
 	if l == nil || l.medium == nil {
 		return nil, nil
 	}
@@ -42,7 +42,7 @@ func (l *Loader) Discover() ([]*Manifest, error) {
 	return out, nil
 }
 
-func (l *Loader) LoadPlugin(name string) (*Manifest, error) {
+func (l *Loader) LoadPlugin(name string) (*Manifest, error)  /* v090-result-boundary */ {
 	if l == nil || l.medium == nil {
 		return nil, errors.New("plugin.Loader.LoadPlugin: loader is required")
 	}

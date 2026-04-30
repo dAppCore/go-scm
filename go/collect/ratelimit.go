@@ -6,7 +6,7 @@ import (
 	// Note: context.Context is retained as the rate limiter cancellation contract.
 	"context"
 	// Note: AX-6 — structural boundary: gh CLI rate-limit probing intentionally invokes a binary until collect has a process-service boundary.
-	"os/exec"
+	`os/exec`
 	// Note: strconv.Atoi is retained for parsing gh rate-limit output.
 	"strconv"
 	// Note: sync.Mutex protects limiter state and has no core equivalent.
@@ -50,7 +50,7 @@ func NewRateLimiter() *RateLimiter {
 
 // Wait blocks until the rate limit allows the next request for the given source.
 // It respects context cancellation.
-func (r *RateLimiter) Wait(ctx context.Context, source string) error {
+func (r *RateLimiter) Wait(ctx context.Context, source string) error  /* v090-result-boundary */ {
 	if r == nil {
 		return nil
 	}
@@ -119,14 +119,14 @@ func (r *RateLimiter) GetDelay(source string) time.Duration {
 // the GitHub rate limit delay.
 //
 // Deprecated: Use CheckGitHubRateLimitCtx for context-aware cancellation.
-func (r *RateLimiter) CheckGitHubRateLimit() (used, limit int, err error) {
+func (r *RateLimiter) CheckGitHubRateLimit() (used, limit int, err error)  /* v090-result-boundary */ {
 	return r.CheckGitHubRateLimitCtx(context.Background())
 }
 
 // CheckGitHubRateLimitCtx checks GitHub API rate limit status via gh api with
 // context support. Returns used and limit counts. Auto-pauses at 75% usage by
 // increasing the GitHub rate limit delay.
-func (r *RateLimiter) CheckGitHubRateLimitCtx(ctx context.Context) (used, limit int, err error) {
+func (r *RateLimiter) CheckGitHubRateLimitCtx(ctx context.Context) (used, limit int, err error)  /* v090-result-boundary */ {
 	if r == nil {
 		return 0, 0, nil
 	}

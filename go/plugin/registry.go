@@ -20,7 +20,7 @@ func NewRegistry(m coreio.Medium, basePath string) *Registry {
 	return &Registry{medium: m, basePath: basePath, plugins: map[string]*PluginConfig{}}
 }
 
-func (r *Registry) Add(cfg *PluginConfig) error {
+func (r *Registry) Add(cfg *PluginConfig) error  /* v090-result-boundary */ {
 	if r == nil || cfg == nil {
 		return core.E("plugin.Registry.Add", "config is required", nil)
 	}
@@ -55,7 +55,7 @@ func (r *Registry) List() []*PluginConfig {
 	return out
 }
 
-func (r *Registry) Load() error {
+func (r *Registry) Load() error  /* v090-result-boundary */ {
 	if r == nil || r.medium == nil {
 		return nil
 	}
@@ -76,7 +76,7 @@ func (r *Registry) Load() error {
 	return nil
 }
 
-func (r *Registry) Remove(name string) error {
+func (r *Registry) Remove(name string) error  /* v090-result-boundary */ {
 	if r == nil {
 		return core.E("plugin.Registry.Remove", "registry is required", nil)
 	}
@@ -84,7 +84,7 @@ func (r *Registry) Remove(name string) error {
 	return nil
 }
 
-func (r *Registry) Save() error {
+func (r *Registry) Save() error  /* v090-result-boundary */ {
 	if r == nil || r.medium == nil {
 		return nil
 	}

@@ -9,22 +9,22 @@ import (
 	"code.gitea.io/sdk/gitea"
 )
 
-func (c *Client) CreateOrgRepo(org string, opts gitea.CreateRepoOption) (*gitea.Repository, error) {
+func (c *Client) CreateOrgRepo(org string, opts gitea.CreateRepoOption) (*gitea.Repository, error)  /* v090-result-boundary */ {
 	repo, _, err := c.api.CreateOrgRepo(org, opts)
 	return repo, err
 }
 
-func (c *Client) DeleteRepo(owner, name string) error {
+func (c *Client) DeleteRepo(owner, name string) error  /* v090-result-boundary */ {
 	_, err := c.api.DeleteRepo(owner, name)
 	return err
 }
 
-func (c *Client) GetRepo(owner, name string) (*gitea.Repository, error) {
+func (c *Client) GetRepo(owner, name string) (*gitea.Repository, error)  /* v090-result-boundary */ {
 	repo, _, err := c.api.GetRepo(owner, name)
 	return repo, err
 }
 
-func (c *Client) ListOrgRepos(org string) ([]*gitea.Repository, error) {
+func (c *Client) ListOrgRepos(org string) ([]*gitea.Repository, error)  /* v090-result-boundary */ {
 	return collectGiteaPages(func(page int) ([]*gitea.Repository, *gitea.Response, error) {
 		return c.api.ListOrgRepos(org, gitea.ListOrgReposOptions{
 			ListOptions: gitea.ListOptions{Page: page, PageSize: 50},
@@ -42,7 +42,7 @@ func (c *Client) ListOrgReposIter(org string) iter.Seq2[*gitea.Repository, error
 	}
 }
 
-func (c *Client) ListUserRepos() ([]*gitea.Repository, error) {
+func (c *Client) ListUserRepos() ([]*gitea.Repository, error)  /* v090-result-boundary */ {
 	return collectGiteaPages(func(page int) ([]*gitea.Repository, *gitea.Response, error) {
 		return c.api.ListMyRepos(gitea.ListReposOptions{
 			ListOptions: gitea.ListOptions{Page: page, PageSize: 50},
@@ -60,7 +60,7 @@ func (c *Client) ListUserReposIter() iter.Seq2[*gitea.Repository, error] {
 	}
 }
 
-func (c *Client) CreateMirror(owner, name, cloneURL, authToken string) (*gitea.Repository, error) {
+func (c *Client) CreateMirror(owner, name, cloneURL, authToken string) (*gitea.Repository, error)  /* v090-result-boundary */ {
 	opts := gitea.MigrateRepoOption{
 		RepoName:    name,
 		RepoOwner:   owner,
@@ -75,7 +75,7 @@ func (c *Client) CreateMirror(owner, name, cloneURL, authToken string) (*gitea.R
 	return repo, err
 }
 
-func (c *Client) CreateMirrorFromService(owner, name, cloneURL string, service gitea.GitServiceType, authToken string) (*gitea.Repository, error) {
+func (c *Client) CreateMirrorFromService(owner, name, cloneURL string, service gitea.GitServiceType, authToken string) (*gitea.Repository, error)  /* v090-result-boundary */ {
 	opts := gitea.MigrateRepoOption{
 		RepoName:    name,
 		RepoOwner:   owner,

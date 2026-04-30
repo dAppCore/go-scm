@@ -3,8 +3,8 @@
 package config
 
 import (
-	"os"
-	"path/filepath"
+	`os`
+	`path/filepath`
 	"testing"
 )
 

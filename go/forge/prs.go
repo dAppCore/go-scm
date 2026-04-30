@@ -4,7 +4,7 @@ package forge
 
 import (
 	// Note: bytes.NewReader is retained for constructing the small PATCH payload body.
-	"bytes"
+	`bytes`
 	// Note: iter.Seq2 is retained because the forge client exposes lazy paginated iterators directly.
 	"iter"
 	// Note: net/http is retained for the raw PATCH endpoint not covered by the Forgejo SDK.
@@ -17,7 +17,7 @@ import (
 	"codeberg.org/forgejo/go-sdk/forgejo"
 )
 
-func (c *Client) MergePullRequest(owner, repo string, index int64, method string) error {
+func (c *Client) MergePullRequest(owner, repo string, index int64, method string) error  /* v090-result-boundary */ {
 	style := forgejo.MergeStyleMerge
 	switch method {
 	case "squash":
@@ -36,7 +36,7 @@ func (c *Client) MergePullRequest(owner, repo string, index int64, method string
 	return nil
 }
 
-func (c *Client) SetPRDraft(owner, repo string, index int64, draft bool) error {
+func (c *Client) SetPRDraft(owner, repo string, index int64, draft bool) error  /* v090-result-boundary */ {
 	payload := []byte(`{"draft":` + strconv.FormatBool(draft) + `}`)
 	path, err := url.JoinPath(c.url, "api", "v1", "repos", owner, repo, "pulls", strconv.FormatInt(index, 10))
 	if err != nil {
@@ -67,7 +67,7 @@ func (e *httpError) Error() string {
 	return "unexpected HTTP status"
 }
 
-func (c *Client) ListPRReviews(owner, repo string, index int64) ([]*forgejo.PullReview, error) {
+func (c *Client) ListPRReviews(owner, repo string, index int64) ([]*forgejo.PullReview, error)  /* v090-result-boundary */ {
 	return collectForgePages(func(page int) ([]*forgejo.PullReview, *forgeResponse, error) {
 		return c.api.ListPullReviews(owner, repo, index, forgejo.ListPullReviewsOptions{
 			ListOptions: forgejo.ListOptions{Page: page, PageSize: 50},
@@ -85,17 +85,17 @@ func (c *Client) ListPRReviewsIter(owner, repo string, index int64) iter.Seq2[*f
 	}
 }
 
-func (c *Client) GetCombinedStatus(owner, repo string, ref string) (*forgejo.CombinedStatus, error) {
+func (c *Client) GetCombinedStatus(owner, repo string, ref string) (*forgejo.CombinedStatus, error)  /* v090-result-boundary */ {
 	status, _, err := c.api.GetCombinedStatus(owner, repo, ref)
 	return status, err
 }
 
-func (c *Client) DismissReview(owner, repo string, index, reviewID int64, message string) error {
+func (c *Client) DismissReview(owner, repo string, index, reviewID int64, message string) error  /* v090-result-boundary */ {
 	_, err := c.api.DismissPullReview(owner, repo, index, reviewID, forgejo.DismissPullReviewOptions{Message: message})
 	return err
 }
 
-func (c *Client) UndismissReview(owner, repo string, index, reviewID int64) error {
+func (c *Client) UndismissReview(owner, repo string, index, reviewID int64) error  /* v090-result-boundary */ {
 	_, err := c.api.UnDismissPullReview(owner, repo, index, reviewID)
 	return err
 }

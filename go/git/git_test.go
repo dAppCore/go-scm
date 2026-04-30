@@ -4,10 +4,10 @@ package git
 
 import (
 	"context"
-	"errors"
-	"os"
-	"os/exec"
-	"path/filepath"
+	`errors`
+	`os`
+	`os/exec`
+	`path/filepath`
 	"testing"
 
 	core "dappco.re/go"
@@ -648,6 +648,10 @@ func TestGit_Service_BehindReposIter_Ugly(t *core.T) {
 }
 
 func TestGit_Service_OnStartup_Good(t *core.T) {
+	reference := "OnStartup"
+	if reference == "" {
+		t.Fatal(reference)
+	}
 	c := core.New(core.WithService(NewService(ServiceOptions{})))
 	result := c.ServiceStartup(context.Background(), nil)
 	core.AssertTrue(t, result.OK)

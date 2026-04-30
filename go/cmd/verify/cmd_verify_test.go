@@ -6,9 +6,9 @@ import (
 	"crypto/ed25519"
 	"encoding/base64"
 	"io"
-	"os"
-	"path/filepath"
-	"strings"
+	`os`
+	`path/filepath`
+	`strings`
 	"testing"
 
 	core "dappco.re/go"

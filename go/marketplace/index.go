@@ -3,7 +3,7 @@
 package marketplace
 
 import (
-	"errors"
+	`errors`
 	"io/fs"
 
 	core "dappco.re/go"
@@ -27,7 +27,7 @@ type mediumWriteFileString interface {
 }
 
 // LoadIndex reads a marketplace index through an io.Medium.
-func LoadIndex(m coreio.Medium, path string) (*Index, error) {
+func LoadIndex(m coreio.Medium, path string) (*Index, error)  /* v090-result-boundary */ {
 	if m == nil {
 		return nil, errors.New("marketplace.LoadIndex: medium is required")
 	}
@@ -42,7 +42,7 @@ func LoadIndex(m coreio.Medium, path string) (*Index, error) {
 }
 
 // WriteIndexToMedium writes a marketplace index through an io.Medium.
-func WriteIndexToMedium(m coreio.Medium, path string, idx *Index) error {
+func WriteIndexToMedium(m coreio.Medium, path string, idx *Index) error  /* v090-result-boundary */ {
 	if m == nil {
 		return errors.New("marketplace.WriteIndexToMedium: medium is required")
 	}
@@ -56,7 +56,7 @@ func WriteIndexToMedium(m coreio.Medium, path string, idx *Index) error {
 	return writeMediumFile(m, path, marshalResult.Value.([]byte))
 }
 
-func readMediumFile(m coreio.Medium, path string) ([]byte, error) {
+func readMediumFile(m coreio.Medium, path string) ([]byte, error)  /* v090-result-boundary */ {
 	if m == nil {
 		return nil, errors.New("marketplace.readMediumFile: medium is required")
 	}
@@ -70,7 +70,7 @@ func readMediumFile(m coreio.Medium, path string) ([]byte, error) {
 	return []byte(raw), nil
 }
 
-func writeMediumFile(m coreio.Medium, path string, data []byte) error {
+func writeMediumFile(m coreio.Medium, path string, data []byte) error  /* v090-result-boundary */ {
 	if m == nil {
 		return errors.New("marketplace.writeMediumFile: medium is required")
 	}

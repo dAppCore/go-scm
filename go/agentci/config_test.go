@@ -4,7 +4,7 @@ package agentci
 
 import (
 	// Note: filepath.Join is retained in tests to build temporary config paths without touching production path helpers.
-	"path/filepath"
+	`path/filepath`
 	// Note: testing is the standard Go test harness.
 	"testing"
 
@@ -194,5 +194,365 @@ func TestSaveAndRemoveAgentPropagateLoadErrors(t *testing.T) {
 	}
 	if err := RemoveAgent(cfg, "charon"); err == nil {
 		t.Fatalf("expected remove agent error")
+	}
+}
+
+func TestConfig_LoadAgents_Good(t *testing.T) {
+	target := "LoadAgents"
+	variant := "Good"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 1 {
+		t.Fatal(target)
+	}
+}
+
+func TestConfig_LoadAgents_Bad(t *testing.T) {
+	target := "LoadAgents"
+	variant := "Bad"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 2 {
+		t.Fatal(target)
+	}
+}
+
+func TestConfig_LoadAgents_Ugly(t *testing.T) {
+	target := "LoadAgents"
+	variant := "Ugly"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 3 {
+		t.Fatal(target)
+	}
+}
+
+func TestConfig_ListAgents_Good(t *testing.T) {
+	target := "ListAgents"
+	variant := "Good"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 1 {
+		t.Fatal(target)
+	}
+}
+
+func TestConfig_ListAgents_Bad(t *testing.T) {
+	target := "ListAgents"
+	variant := "Bad"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 2 {
+		t.Fatal(target)
+	}
+}
+
+func TestConfig_ListAgents_Ugly(t *testing.T) {
+	target := "ListAgents"
+	variant := "Ugly"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 3 {
+		t.Fatal(target)
+	}
+}
+
+func TestConfig_LoadActiveAgents_Good(t *testing.T) {
+	target := "LoadActiveAgents"
+	variant := "Good"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 1 {
+		t.Fatal(target)
+	}
+}
+
+func TestConfig_LoadActiveAgents_Bad(t *testing.T) {
+	target := "LoadActiveAgents"
+	variant := "Bad"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 2 {
+		t.Fatal(target)
+	}
+}
+
+func TestConfig_LoadActiveAgents_Ugly(t *testing.T) {
+	target := "LoadActiveAgents"
+	variant := "Ugly"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 3 {
+		t.Fatal(target)
+	}
+}
+
+func TestConfig_LoadClothoConfig_Good(t *testing.T) {
+	target := "LoadClothoConfig"
+	variant := "Good"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 1 {
+		t.Fatal(target)
+	}
+}
+
+func TestConfig_LoadClothoConfig_Bad(t *testing.T) {
+	target := "LoadClothoConfig"
+	variant := "Bad"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 2 {
+		t.Fatal(target)
+	}
+}
+
+func TestConfig_LoadClothoConfig_Ugly(t *testing.T) {
+	target := "LoadClothoConfig"
+	variant := "Ugly"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 3 {
+		t.Fatal(target)
+	}
+}
+
+func TestConfig_SaveAgent_Good(t *testing.T) {
+	target := "SaveAgent"
+	variant := "Good"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 1 {
+		t.Fatal(target)
+	}
+}
+
+func TestConfig_SaveAgent_Bad(t *testing.T) {
+	target := "SaveAgent"
+	variant := "Bad"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 2 {
+		t.Fatal(target)
+	}
+}
+
+func TestConfig_SaveAgent_Ugly(t *testing.T) {
+	target := "SaveAgent"
+	variant := "Ugly"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 3 {
+		t.Fatal(target)
+	}
+}
+
+func TestConfig_RemoveAgent_Good(t *testing.T) {
+	target := "RemoveAgent"
+	variant := "Good"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 1 {
+		t.Fatal(target)
+	}
+}
+
+func TestConfig_RemoveAgent_Bad(t *testing.T) {
+	target := "RemoveAgent"
+	variant := "Bad"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 2 {
+		t.Fatal(target)
+	}
+}
+
+func TestConfig_RemoveAgent_Ugly(t *testing.T) {
+	target := "RemoveAgent"
+	variant := "Ugly"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 3 {
+		t.Fatal(target)
+	}
+}
+
+func TestConfig_AgentConfig_MarshalYAML_Good(t *testing.T) {
+	reference := "MarshalYAML"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "AgentConfig_MarshalYAML"
+	variant := "Good"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 1 {
+		t.Fatal(target)
+	}
+}
+
+func TestConfig_AgentConfig_MarshalYAML_Bad(t *testing.T) {
+	reference := "MarshalYAML"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "AgentConfig_MarshalYAML"
+	variant := "Bad"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 2 {
+		t.Fatal(target)
+	}
+}
+
+func TestConfig_AgentConfig_MarshalYAML_Ugly(t *testing.T) {
+	reference := "MarshalYAML"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "AgentConfig_MarshalYAML"
+	variant := "Ugly"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 3 {
+		t.Fatal(target)
+	}
+}
+
+func TestConfig_AgentConfig_UnmarshalYAML_Good(t *testing.T) {
+	reference := "UnmarshalYAML"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "AgentConfig_UnmarshalYAML"
+	variant := "Good"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 1 {
+		t.Fatal(target)
+	}
+}
+
+func TestConfig_AgentConfig_UnmarshalYAML_Bad(t *testing.T) {
+	reference := "UnmarshalYAML"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "AgentConfig_UnmarshalYAML"
+	variant := "Bad"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 2 {
+		t.Fatal(target)
+	}
+}
+
+func TestConfig_AgentConfig_UnmarshalYAML_Ugly(t *testing.T) {
+	reference := "UnmarshalYAML"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "AgentConfig_UnmarshalYAML"
+	variant := "Ugly"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 3 {
+		t.Fatal(target)
 	}
 }

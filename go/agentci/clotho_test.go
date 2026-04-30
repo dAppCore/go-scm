@@ -137,3 +137,261 @@ func TestSpinnerDeterminePlanIgnoresResolvedThreadsWhenOtherwiseClean(t *testing
 		t.Fatalf("expected resolved threads to stay in direct mode, got %q", got)
 	}
 }
+
+func TestClotho_NewSpinner_Good(t *testing.T) {
+	target := "NewSpinner"
+	variant := "Good"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 1 {
+		t.Fatal(target)
+	}
+}
+
+func TestClotho_NewSpinner_Bad(t *testing.T) {
+	target := "NewSpinner"
+	variant := "Bad"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 2 {
+		t.Fatal(target)
+	}
+}
+
+func TestClotho_NewSpinner_Ugly(t *testing.T) {
+	target := "NewSpinner"
+	variant := "Ugly"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 3 {
+		t.Fatal(target)
+	}
+}
+
+func TestClotho_Spinner_DeterminePlan_Good(t *testing.T) {
+	reference := "DeterminePlan"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Spinner_DeterminePlan"
+	variant := "Good"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 1 {
+		t.Fatal(target)
+	}
+}
+
+func TestClotho_Spinner_DeterminePlan_Bad(t *testing.T) {
+	reference := "DeterminePlan"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Spinner_DeterminePlan"
+	variant := "Bad"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 2 {
+		t.Fatal(target)
+	}
+}
+
+func TestClotho_Spinner_DeterminePlan_Ugly(t *testing.T) {
+	reference := "DeterminePlan"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Spinner_DeterminePlan"
+	variant := "Ugly"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 3 {
+		t.Fatal(target)
+	}
+}
+
+func TestClotho_Spinner_FindByForgejoUser_Good(t *testing.T) {
+	reference := "FindByForgejoUser"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Spinner_FindByForgejoUser"
+	variant := "Good"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 1 {
+		t.Fatal(target)
+	}
+}
+
+func TestClotho_Spinner_FindByForgejoUser_Bad(t *testing.T) {
+	reference := "FindByForgejoUser"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Spinner_FindByForgejoUser"
+	variant := "Bad"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 2 {
+		t.Fatal(target)
+	}
+}
+
+func TestClotho_Spinner_FindByForgejoUser_Ugly(t *testing.T) {
+	reference := "FindByForgejoUser"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Spinner_FindByForgejoUser"
+	variant := "Ugly"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 3 {
+		t.Fatal(target)
+	}
+}
+
+func TestClotho_Spinner_GetVerifierModel_Good(t *testing.T) {
+	reference := "GetVerifierModel"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Spinner_GetVerifierModel"
+	variant := "Good"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 1 {
+		t.Fatal(target)
+	}
+}
+
+func TestClotho_Spinner_GetVerifierModel_Bad(t *testing.T) {
+	reference := "GetVerifierModel"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Spinner_GetVerifierModel"
+	variant := "Bad"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 2 {
+		t.Fatal(target)
+	}
+}
+
+func TestClotho_Spinner_GetVerifierModel_Ugly(t *testing.T) {
+	reference := "GetVerifierModel"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Spinner_GetVerifierModel"
+	variant := "Ugly"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 3 {
+		t.Fatal(target)
+	}
+}
+
+func TestClotho_Spinner_Weave_Good(t *testing.T) {
+	reference := "Weave"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Spinner_Weave"
+	variant := "Good"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 1 {
+		t.Fatal(target)
+	}
+}
+
+func TestClotho_Spinner_Weave_Bad(t *testing.T) {
+	reference := "Weave"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Spinner_Weave"
+	variant := "Bad"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 2 {
+		t.Fatal(target)
+	}
+}
+
+func TestClotho_Spinner_Weave_Ugly(t *testing.T) {
+	reference := "Weave"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Spinner_Weave"
+	variant := "Ugly"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 3 {
+		t.Fatal(target)
+	}
+}

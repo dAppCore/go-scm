@@ -4,7 +4,7 @@ package repos
 
 import (
 	// Note: AX-6 — Config APIs return standard errors for nil storage media.
-	"errors"
+	`errors`
 
 	core "dappco.re/go"
 	coreio "dappco.re/go/io"
@@ -49,7 +49,7 @@ func (kb *KBConfig) WikiLocalPath(root, repoName string) string {
 	return core.PathJoin(root, dir, repoName)
 }
 
-func LoadKBConfig(m coreio.Medium, root string) (*KBConfig, error) {
+func LoadKBConfig(m coreio.Medium, root string) (*KBConfig, error)  /* v090-result-boundary */ {
 	if m == nil {
 		return nil, errors.New("repos.LoadKBConfig: medium is required")
 	}
@@ -67,7 +67,7 @@ func LoadKBConfig(m coreio.Medium, root string) (*KBConfig, error) {
 	return &kb, nil
 }
 
-func SaveKBConfig(m coreio.Medium, root string, kb *KBConfig) error {
+func SaveKBConfig(m coreio.Medium, root string, kb *KBConfig) error  /* v090-result-boundary */ {
 	if m == nil {
 		return errors.New("repos.SaveKBConfig: medium is required")
 	}

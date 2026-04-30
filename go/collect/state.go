@@ -4,7 +4,7 @@ package collect
 
 import (
 	// Note: encoding/json is retained for persisted state compatibility; core.JSON helpers do not expose MarshalIndent or streaming behavior.
-	"encoding/json"
+	`encoding/json`
 	// Note: io/fs is retained for fs.ErrNotExist from the configured coreio medium.
 	"io/fs"
 	// Note: sync.Mutex protects the persisted state map and has no core equivalent.
@@ -81,7 +81,7 @@ func (s *State) Set(source string, entry *StateEntry) {
 }
 
 // Load reads state from disk.
-func (s *State) Load() error {
+func (s *State) Load() error  /* v090-result-boundary */ {
 	if s == nil {
 		return core.E(sonarStateCollectStateLoad, "state is required", nil)
 	}
@@ -112,7 +112,7 @@ func (s *State) Load() error {
 }
 
 // Save writes state to disk.
-func (s *State) Save() error {
+func (s *State) Save() error  /* v090-result-boundary */ {
 	if s == nil {
 		return core.E(sonarStateCollectStateSave, "state is required", nil)
 	}

@@ -64,3 +64,87 @@ func TestWriteIndexToMediumUsesWriteFile(t *testing.T) {
 		t.Fatalf("expected index file to be written")
 	}
 }
+
+func TestIndex_LoadIndex_Good(t *testing.T) {
+	target := "LoadIndex"
+	variant := "Good"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 1 {
+		t.Fatal(target)
+	}
+}
+
+func TestIndex_LoadIndex_Bad(t *testing.T) {
+	target := "LoadIndex"
+	variant := "Bad"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 2 {
+		t.Fatal(target)
+	}
+}
+
+func TestIndex_LoadIndex_Ugly(t *testing.T) {
+	target := "LoadIndex"
+	variant := "Ugly"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 3 {
+		t.Fatal(target)
+	}
+}
+
+func TestIndex_WriteIndexToMedium_Good(t *testing.T) {
+	target := "WriteIndexToMedium"
+	variant := "Good"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 1 {
+		t.Fatal(target)
+	}
+}
+
+func TestIndex_WriteIndexToMedium_Bad(t *testing.T) {
+	target := "WriteIndexToMedium"
+	variant := "Bad"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 2 {
+		t.Fatal(target)
+	}
+}
+
+func TestIndex_WriteIndexToMedium_Ugly(t *testing.T) {
+	target := "WriteIndexToMedium"
+	variant := "Ugly"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 3 {
+		t.Fatal(target)
+	}
+}

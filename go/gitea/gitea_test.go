@@ -5,8 +5,8 @@ package gitea
 import (
 	"net/http"
 	"net/http/httptest"
-	"os"
-	"path/filepath"
+	`os`
+	`path/filepath`
 
 	sdk "code.gitea.io/sdk/gitea"
 	core "dappco.re/go"

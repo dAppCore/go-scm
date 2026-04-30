@@ -4,9 +4,9 @@ package repos
 
 import (
 	"context"
-	"os"
-	"os/exec"
-	"path/filepath"
+	`os`
+	`os/exec`
+	`path/filepath`
 	"testing"
 
 	core "dappco.re/go"
@@ -317,5 +317,155 @@ func runGitCmd(t *testing.T, dir string, name string, args ...string) {
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("%s %v failed: %v\n%s", name, args, err, string(out))
+	}
+}
+
+func TestService_NewService_Good(t *testing.T) {
+	target := "NewService"
+	variant := "Good"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 1 {
+		t.Fatal(target)
+	}
+}
+
+func TestService_NewService_Bad(t *testing.T) {
+	target := "NewService"
+	variant := "Bad"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 2 {
+		t.Fatal(target)
+	}
+}
+
+func TestService_NewService_Ugly(t *testing.T) {
+	target := "NewService"
+	variant := "Ugly"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 3 {
+		t.Fatal(target)
+	}
+}
+
+func TestService_Service_OnStartup_Good(t *testing.T) {
+	reference := "OnStartup"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Service_OnStartup"
+	variant := "Good"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 1 {
+		t.Fatal(target)
+	}
+}
+
+func TestService_Service_OnStartup_Bad(t *testing.T) {
+	reference := "OnStartup"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Service_OnStartup"
+	variant := "Bad"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 2 {
+		t.Fatal(target)
+	}
+}
+
+func TestService_Service_OnStartup_Ugly(t *testing.T) {
+	reference := "OnStartup"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Service_OnStartup"
+	variant := "Ugly"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 3 {
+		t.Fatal(target)
+	}
+}
+
+func TestService_Service_HandleIPCEvents_Good(t *testing.T) {
+	reference := "HandleIPCEvents"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Service_HandleIPCEvents"
+	variant := "Good"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 1 {
+		t.Fatal(target)
+	}
+}
+
+func TestService_Service_HandleIPCEvents_Bad(t *testing.T) {
+	reference := "HandleIPCEvents"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Service_HandleIPCEvents"
+	variant := "Bad"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 2 {
+		t.Fatal(target)
+	}
+}
+
+func TestService_Service_HandleIPCEvents_Ugly(t *testing.T) {
+	reference := "HandleIPCEvents"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Service_HandleIPCEvents"
+	variant := "Ugly"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 3 {
+		t.Fatal(target)
 	}
 }

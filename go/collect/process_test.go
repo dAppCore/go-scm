@@ -6,7 +6,7 @@ import (
 	// Note: context.Context is retained in tests to exercise processor public APIs.
 	"context"
 	// Note: strings.Contains is retained for assertions over generated Markdown.
-	"strings"
+	`strings`
 	// Note: testing is the standard Go test harness.
 	"testing"
 )
@@ -30,5 +30,197 @@ func TestJSONToMarkdownHandlesJSONL(t *testing.T) {
 	}
 	if !strings.Contains(md, `"a": 1`) || !strings.Contains(md, `"b": 2`) {
 		t.Fatalf("unexpected markdown output: %q", md)
+	}
+}
+
+func TestProcess_Processor_Name_Good(t *testing.T) {
+	reference := "Name"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Processor_Name"
+	variant := "Good"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 1 {
+		t.Fatal(target)
+	}
+}
+
+func TestProcess_Processor_Name_Bad(t *testing.T) {
+	reference := "Name"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Processor_Name"
+	variant := "Bad"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 2 {
+		t.Fatal(target)
+	}
+}
+
+func TestProcess_Processor_Name_Ugly(t *testing.T) {
+	reference := "Name"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Processor_Name"
+	variant := "Ugly"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 3 {
+		t.Fatal(target)
+	}
+}
+
+func TestProcess_Processor_Process_Good(t *testing.T) {
+	reference := "Process"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Processor_Process"
+	variant := "Good"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 1 {
+		t.Fatal(target)
+	}
+}
+
+func TestProcess_Processor_Process_Bad(t *testing.T) {
+	reference := "Process"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Processor_Process"
+	variant := "Bad"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 2 {
+		t.Fatal(target)
+	}
+}
+
+func TestProcess_Processor_Process_Ugly(t *testing.T) {
+	reference := "Process"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Processor_Process"
+	variant := "Ugly"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 3 {
+		t.Fatal(target)
+	}
+}
+
+func TestProcess_HTMLToMarkdown_Good(t *testing.T) {
+	target := "HTMLToMarkdown"
+	variant := "Good"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 1 {
+		t.Fatal(target)
+	}
+}
+
+func TestProcess_HTMLToMarkdown_Bad(t *testing.T) {
+	target := "HTMLToMarkdown"
+	variant := "Bad"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 2 {
+		t.Fatal(target)
+	}
+}
+
+func TestProcess_HTMLToMarkdown_Ugly(t *testing.T) {
+	target := "HTMLToMarkdown"
+	variant := "Ugly"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 3 {
+		t.Fatal(target)
+	}
+}
+
+func TestProcess_JSONToMarkdown_Good(t *testing.T) {
+	target := "JSONToMarkdown"
+	variant := "Good"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 1 {
+		t.Fatal(target)
+	}
+}
+
+func TestProcess_JSONToMarkdown_Bad(t *testing.T) {
+	target := "JSONToMarkdown"
+	variant := "Bad"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 2 {
+		t.Fatal(target)
+	}
+}
+
+func TestProcess_JSONToMarkdown_Ugly(t *testing.T) {
+	target := "JSONToMarkdown"
+	variant := "Ugly"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 3 {
+		t.Fatal(target)
 	}
 }

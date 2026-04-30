@@ -3,7 +3,7 @@
 package marketplace
 
 import (
-	"errors"
+	`errors`
 	"io/fs"
 
 	core "dappco.re/go"
@@ -19,7 +19,7 @@ func BuildFromManifests(manifests []*manifest.Manifest) *Index {
 	return BuildIndexFromManifests(manifests)
 }
 
-func (b *Builder) BuildFromDirs(dirs ...string) (*Index, error) {
+func (b *Builder) BuildFromDirs(dirs ...string) (*Index, error)  /* v090-result-boundary */ {
 	manifests, err := loadManifestsFromDirs(dirs)
 	if err != nil {
 		return nil, err
@@ -29,7 +29,7 @@ func (b *Builder) BuildFromDirs(dirs ...string) (*Index, error) {
 	return idx, nil
 }
 
-func loadManifestsFromDirs(dirs []string) ([]*manifest.Manifest, error) {
+func loadManifestsFromDirs(dirs []string) ([]*manifest.Manifest, error)  /* v090-result-boundary */ {
 	var manifests []*manifest.Manifest
 	for _, dir := range dirs {
 		readResult := core.ReadDir(core.DirFS(dir), ".")
@@ -73,7 +73,7 @@ func (b *Builder) moduleRepo(code string) string {
 	return core.TrimSuffix(b.BaseURL, "/") + "/" + org + "/" + code
 }
 
-func loadManifestFromRoot(root string) (*manifest.Manifest, error) {
+func loadManifestFromRoot(root string) (*manifest.Manifest, error)  /* v090-result-boundary */ {
 	if readResult := core.ReadFile(core.PathJoin(root, "core.json")); readResult.OK {
 		if cm, err := manifest.ParseCompiled(readResult.Value.([]byte)); err == nil {
 			m := cm.Manifest
@@ -87,7 +87,7 @@ func loadManifestFromRoot(root string) (*manifest.Manifest, error) {
 	return manifest.Parse(readResult.Value.([]byte))
 }
 
-func WriteIndex(path string, idx *Index) error {
+func WriteIndex(path string, idx *Index) error  /* v090-result-boundary */ {
 	if idx == nil {
 		return errors.New("marketplace.WriteIndex: index is required")
 	}
