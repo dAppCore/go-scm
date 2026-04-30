@@ -233,7 +233,7 @@ func fetchBitcoinTalkPage(ctx context.Context, url string) (string, error)  /* v
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close
+	defer resp.Body.Close()
 	if resp.StatusCode >= 400 {
 		return "", core.E("collect.BitcoinTalkCollector", core.Sprintf("http %s", resp.Status), nil)
 	}
