@@ -63,29 +63,6 @@ func TestScmProviderRoutesExposeState(t *testing.T) {
 	assertRouteOK(t, router, "/scm/modules/go-io", "Core I/O")
 }
 
-func TestScmProviderDescribeIncludesReadOnlyRoutes(t *testing.T) {
-	provider := NewProvider(nil, nil, nil, nil)
-	descs := provider.Describe()
-
-	want := map[string]bool{
-		"GET /health":      false,
-		"GET /marketplace": false,
-		"GET /repos":       false,
-		"GET /modules":     false,
-	}
-	for _, desc := range descs {
-		key := desc.Method + " " + desc.Path
-		if _, ok := want[key]; ok {
-			want[key] = true
-		}
-	}
-	for key, seen := range want {
-		if !seen {
-			t.Fatalf("expected route description for %s", key)
-		}
-	}
-}
-
 func TestScmProviderMetadataExposesStreamAndElement(t *testing.T) {
 	provider := NewProvider(nil, nil, nil, nil)
 
@@ -212,27 +189,6 @@ func TestProvider_ScmProvider_RegisterRoutes_Ugly(t *core.T) {
 	router := gin.New()
 	core.AssertNotPanics(t, func() { provider.RegisterRoutes(router.Group("/scm")) })
 	core.AssertEqual(t, "scm", provider.Name())
-}
-
-func TestProvider_ScmProvider_Describe_Good(t *core.T) {
-	provider := NewProvider(nil, nil, nil, nil)
-	got := provider.Describe()
-	core.AssertLen(t, got, 8)
-	core.AssertEqual(t, "/health", got[0].Path)
-}
-
-func TestProvider_ScmProvider_Describe_Bad(t *core.T) {
-	provider := &ScmProvider{}
-	got := provider.Describe()
-	core.AssertLen(t, got, 8)
-	core.AssertEqual(t, http.StatusOK, got[0].StatusCode)
-}
-
-func TestProvider_ScmProvider_Describe_Ugly(t *core.T) {
-	var provider *ScmProvider
-	got := provider.Describe()
-	core.AssertLen(t, got, 8)
-	core.AssertEqual(t, "GET", got[0].Method)
 }
 
 func TestProvider_ScmProvider_Channels_Good(t *core.T) {

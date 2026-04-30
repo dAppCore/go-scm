@@ -13,14 +13,14 @@ import (
 )
 
 func ax7AgentConfig(t *core.T) *config.Config {
-	cfg, err := config.New(config.WithPath(filepath.Join(t.TempDir(), "config.yaml")))
-	core.RequireNoError(t, err)
-	return cfg
+	r := config.New(config.WithPath(filepath.Join(t.TempDir(), "config.yaml")))
+	core.RequireNoError(t, configResultError(r))
+	return core.MustCast[*config.Config](r)
 }
 
 func TestAgentci_LoadAgents_Good(t *core.T) {
 	cfg := ax7AgentConfig(t)
-	core.RequireNoError(t, cfg.Set("agents", map[string]AgentConfig{"codex": {Active: true, Roles: []string{"coder"}}}))
+	core.RequireNoError(t, configResultError(cfg.Set("agents", map[string]AgentConfig{"codex": {Active: true, Roles: []string{"coder"}}})))
 	agents, err := LoadAgents(cfg)
 	core.AssertNoError(t, err)
 	core.AssertTrue(t, agents["codex"].Active)
@@ -34,7 +34,7 @@ func TestAgentci_LoadAgents_Bad(t *core.T) {
 
 func TestAgentci_LoadAgents_Ugly(t *core.T) {
 	cfg := ax7AgentConfig(t)
-	core.RequireNoError(t, cfg.Set("agents", map[string]AgentConfig{"codex": {Roles: []string{"coder"}}}))
+	core.RequireNoError(t, configResultError(cfg.Set("agents", map[string]AgentConfig{"codex": {Roles: []string{"coder"}}})))
 	agents, err := LoadAgents(cfg)
 	core.AssertNoError(t, err)
 	agents["codex"] = AgentConfig{Roles: []string{"mutated"}}
@@ -45,7 +45,7 @@ func TestAgentci_LoadAgents_Ugly(t *core.T) {
 
 func TestAgentci_ListAgents_Good(t *core.T) {
 	cfg := ax7AgentConfig(t)
-	core.RequireNoError(t, cfg.Set("agents", map[string]AgentConfig{"codex": {Active: true}}))
+	core.RequireNoError(t, configResultError(cfg.Set("agents", map[string]AgentConfig{"codex": {Active: true}})))
 	agents, err := ListAgents(cfg)
 	core.AssertNoError(t, err)
 	core.AssertLen(t, agents, 1)
@@ -66,7 +66,7 @@ func TestAgentci_ListAgents_Ugly(t *core.T) {
 
 func TestAgentci_LoadActiveAgents_Good(t *core.T) {
 	cfg := ax7AgentConfig(t)
-	core.RequireNoError(t, cfg.Set("agents", map[string]AgentConfig{"codex": {Active: true}, "idle": {Active: false}}))
+	core.RequireNoError(t, configResultError(cfg.Set("agents", map[string]AgentConfig{"codex": {Active: true}, "idle": {Active: false}})))
 	agents, err := LoadActiveAgents(cfg)
 	core.AssertNoError(t, err)
 	core.AssertLen(t, agents, 1)
@@ -81,7 +81,7 @@ func TestAgentci_LoadActiveAgents_Bad(t *core.T) {
 
 func TestAgentci_LoadActiveAgents_Ugly(t *core.T) {
 	cfg := ax7AgentConfig(t)
-	core.RequireNoError(t, cfg.Set("agents", map[string]AgentConfig{"idle": {Active: false}}))
+	core.RequireNoError(t, configResultError(cfg.Set("agents", map[string]AgentConfig{"idle": {Active: false}})))
 	agents, err := LoadActiveAgents(cfg)
 	core.AssertNoError(t, err)
 	core.AssertEmpty(t, agents)
@@ -89,7 +89,7 @@ func TestAgentci_LoadActiveAgents_Ugly(t *core.T) {
 
 func TestAgentci_LoadClothoConfig_Good(t *core.T) {
 	cfg := ax7AgentConfig(t)
-	core.RequireNoError(t, cfg.Set("clotho", map[string]any{"strategy": "clotho-verified", "validation_threshold": 0.75}))
+	core.RequireNoError(t, configResultError(cfg.Set("clotho", map[string]any{"strategy": "clotho-verified", "validation_threshold": 0.75})))
 	got, err := LoadClothoConfig(cfg)
 	core.AssertNoError(t, err)
 	core.AssertEqual(t, "clotho-verified", got.Strategy)
@@ -98,7 +98,7 @@ func TestAgentci_LoadClothoConfig_Good(t *core.T) {
 
 func TestAgentci_LoadClothoConfig_Bad(t *core.T) {
 	cfg := ax7AgentConfig(t)
-	core.RequireNoError(t, cfg.Set("clotho", map[string]any{"strategy": "unknown"}))
+	core.RequireNoError(t, configResultError(cfg.Set("clotho", map[string]any{"strategy": "unknown"})))
 	_, err := LoadClothoConfig(cfg)
 	core.AssertError(t, err)
 }

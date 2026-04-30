@@ -7,8 +7,6 @@ import (
 	"net/http"
 
 	core "dappco.re/go"
-	"dappco.re/go/api"
-	coreprovider "dappco.re/go/api/pkg/provider"
 	coreio "dappco.re/go/io"
 	"dappco.re/go/scm/marketplace"
 	"dappco.re/go/scm/repos"
@@ -22,6 +20,11 @@ type ScmProvider struct {
 	registry  *repos.Registry
 	hub       *ws.Hub
 	medium    coreio.Medium
+}
+
+type elementSpec struct {
+	Tag    string `json:"tag"`
+	Source string `json:"source"`
 }
 
 func NewProvider(idx *marketplace.Index, inst *marketplace.Installer, reg *repos.Registry, hub *ws.Hub) *ScmProvider {
@@ -48,25 +51,12 @@ func (p *ScmProvider) RegisterRoutes(rg *gin.RouterGroup) {
 	rg.GET("/modules/:code", p.getInstalledModule)
 }
 
-func (p *ScmProvider) Describe() []api.RouteDescription {
-	return []api.RouteDescription{
-		{Method: "GET", Path: "/health", Summary: "Health check", StatusCode: http.StatusOK},
-		{Method: "GET", Path: "/ui", Summary: "Embedded UI", StatusCode: http.StatusOK, Tags: []string{"scm"}},
-		{Method: "GET", Path: "/marketplace", Summary: "List marketplace modules", StatusCode: http.StatusOK, Tags: []string{"scm"}},
-		{Method: "GET", Path: "/marketplace/:code", Summary: "Get marketplace module", StatusCode: http.StatusOK, Tags: []string{"scm"}},
-		{Method: "GET", Path: "/repos", Summary: "List registered repos", StatusCode: http.StatusOK, Tags: []string{"scm"}},
-		{Method: "GET", Path: "/repos/:name", Summary: "Get a registered repo", StatusCode: http.StatusOK, Tags: []string{"scm"}},
-		{Method: "GET", Path: "/modules", Summary: "List installed modules", StatusCode: http.StatusOK, Tags: []string{"scm"}},
-		{Method: "GET", Path: "/modules/:code", Summary: "Get an installed module", StatusCode: http.StatusOK, Tags: []string{"scm"}},
-	}
-}
-
 func (p *ScmProvider) Channels() []string {
 	return []string{"scm"}
 }
 
-func (p *ScmProvider) Element() coreprovider.ElementSpec {
-	return coreprovider.ElementSpec{Tag: "core-scm", Source: "ui/app.js"}
+func (p *ScmProvider) Element() elementSpec {
+	return elementSpec{Tag: "core-scm", Source: "ui/app.js"}
 }
 
 func (p *ScmProvider) serveUI(c *gin.Context) {

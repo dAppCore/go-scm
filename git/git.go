@@ -106,6 +106,9 @@ func Pull(ctx context.Context, path string) error {
 }
 
 func Push(ctx context.Context, path string) error {
+	if err := ensurePath(path); err != nil {
+		return err
+	}
 	_, _, err := runGit(ctx, path, "push")
 	return err
 }

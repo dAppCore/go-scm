@@ -49,11 +49,11 @@ func LoadAgents(cfg *config.Config) (map[string]AgentConfig, error) {
 	if cfg == nil {
 		return agents, nil
 	}
-	if err := cfg.Get("agents", &agents); err != nil {
-		if isMissingKeyError(err) {
+	if r := cfg.Get("agents", &agents); !r.OK {
+		if isMissingKeyError(r.Error()) {
 			return agents, nil
 		}
-		return nil, fmt.Errorf("agentci.LoadAgents: get agents: %w", err)
+		return nil, fmt.Errorf("agentci.LoadAgents: get agents: %s", r.Error())
 	}
 	if agents == nil {
 		agents = make(map[string]AgentConfig)
@@ -89,14 +89,14 @@ func LoadClothoConfig(cfg *config.Config) (ClothoConfig, error) {
 		return clotho, nil
 	}
 	var raw map[string]any
-	if err := cfg.Get("clotho", &raw); err != nil {
-		if isMissingKeyError(err) {
+	if r := cfg.Get("clotho", &raw); !r.OK {
+		if isMissingKeyError(r.Error()) {
 			return clotho, nil
 		}
-		return clotho, fmt.Errorf("agentci.LoadClothoConfig: get clotho: %w", err)
+		return clotho, fmt.Errorf("agentci.LoadClothoConfig: get clotho: %s", r.Error())
 	}
-	if err := cfg.Get("clotho", &clotho); err != nil {
-		return clotho, fmt.Errorf("agentci.LoadClothoConfig: decode clotho: %w", err)
+	if r := cfg.Get("clotho", &clotho); !r.OK {
+		return clotho, fmt.Errorf("agentci.LoadClothoConfig: decode clotho: %s", r.Error())
 	}
 	if raw == nil {
 		raw = map[string]any{}
@@ -152,10 +152,13 @@ func SaveAgent(cfg *config.Config, name string, ac AgentConfig) error {
 		agents = make(map[string]AgentConfig)
 	}
 	agents[name] = ac
-	if err := cfg.Set("agents", agents); err != nil {
-		return fmt.Errorf("agentci.SaveAgent: set agents: %w", err)
+	if r := cfg.Set("agents", agents); !r.OK {
+		return fmt.Errorf("agentci.SaveAgent: set agents: %s", r.Error())
 	}
-	return cfg.Commit()
+	if r := cfg.Commit(); !r.OK {
+		return fmt.Errorf("agentci.SaveAgent: commit: %s", r.Error())
+	}
+	return nil
 }
 
 // RemoveAgent removes an agent from the config file.
@@ -172,10 +175,13 @@ func RemoveAgent(cfg *config.Config, name string) error {
 		return fmt.Errorf("agentci.RemoveAgent: load agents: %w", err)
 	}
 	delete(agents, name)
-	if err := cfg.Set("agents", agents); err != nil {
-		return fmt.Errorf("agentci.RemoveAgent: set agents: %w", err)
+	if r := cfg.Set("agents", agents); !r.OK {
+		return fmt.Errorf("agentci.RemoveAgent: set agents: %s", r.Error())
 	}
-	return cfg.Commit()
+	if r := cfg.Commit(); !r.OK {
+		return fmt.Errorf("agentci.RemoveAgent: commit: %s", r.Error())
+	}
+	return nil
 }
 
 // MarshalYAML makes the config stable when written through generic YAML paths.
@@ -195,8 +201,8 @@ func (a *AgentConfig) UnmarshalYAML(value *yaml.Node) error {
 	return nil
 }
 
-func isMissingKeyError(err error) bool {
-	return err != nil && strings.Contains(err.Error(), "key not found")
+func isMissingKeyError(msg string) bool {
+	return strings.Contains(msg, "key not found")
 }
 
 func cloneAgents(src map[string]AgentConfig) map[string]AgentConfig {
