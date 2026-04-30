@@ -7,7 +7,7 @@ import (
 	// Note: AX-6 — Build metadata records wall-clock compilation time.
 	"time"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	coreio "dappco.re/go/io"
 	"dappco.re/go/scm/internal/ax/filepathx"
 )

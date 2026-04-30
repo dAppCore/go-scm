@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"dappco.re/go/scm/manifest"
 )
 
@@ -93,4 +93,26 @@ func captureStdout(t *testing.T, fn func()) string {
 		t.Fatalf("read stdout: %v", err)
 	}
 	return string(out)
+}
+
+func TestCmdVerify_Register_Good(t *core.T) {
+	app := core.New(core.WithOption("name", "scm"))
+	result := Register(app)
+	core.AssertTrue(t, result.OK)
+	core.AssertTrue(t, app.Command("verify").OK)
+}
+
+func TestCmdVerify_Register_Bad(t *core.T) {
+	result := Register(nil)
+	core.AssertFalse(t, result.OK)
+	core.AssertContains(t, result.Error(), "core app is required")
+}
+
+func TestCmdVerify_Register_Ugly(t *core.T) {
+	app := core.New(core.WithOption("name", "scm"))
+	first := Register(app)
+	second := Register(app)
+	core.AssertTrue(t, first.OK)
+	core.AssertFalse(t, second.OK)
+	core.AssertTrue(t, app.Command("verify").OK)
 }

@@ -5,7 +5,7 @@ package main
 import (
 	"context"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"dappco.re/go/scm/collect"
 )
 
@@ -27,7 +27,7 @@ func newApp() *core.Core {
 func github(opts core.Options) core.Result {
 	if wantsHelp(opts) {
 		core.Print(nil, "usage: collect github [--org=ORG] [--repo=REPO] [--out=DIR] [--dry-run]")
-		return core.Result{OK: true}
+		return core.Ok(nil)
 	}
 	return runCollector(opts, &collect.GitHubCollector{
 		Org:        opts.String("org"),
@@ -40,7 +40,7 @@ func github(opts core.Options) core.Result {
 func market(opts core.Options) core.Result {
 	if wantsHelp(opts) {
 		core.Print(nil, "usage: collect market [--coin=COIN] [--from=YYYY-MM-DD] [--historical] [--out=DIR] [--dry-run]")
-		return core.Result{OK: true}
+		return core.Ok(nil)
 	}
 	return runCollector(opts, &collect.MarketCollector{
 		CoinID:     option(opts, "coin", "bitcoin"),
@@ -52,7 +52,7 @@ func market(opts core.Options) core.Result {
 func papers(opts core.Options) core.Result {
 	if wantsHelp(opts) {
 		core.Print(nil, "usage: collect papers [--source=all|iacr|arxiv] [--category=CAT] [--query=QUERY] [--out=DIR] [--dry-run]")
-		return core.Result{OK: true}
+		return core.Ok(nil)
 	}
 	return runCollector(opts, &collect.PapersCollector{
 		Source:   opts.String("source"),
@@ -68,7 +68,7 @@ func runCollector(opts core.Options, collector collect.Collector) core.Result {
 
 	result, err := collector.Collect(context.Background(), cfg)
 	if err != nil {
-		return core.Result{Value: err, OK: false}
+		return core.Fail(err)
 	}
 	if result != nil {
 		core.Print(nil, "%s: %d items, %d errors, %d skipped", result.Source, result.Items, result.Errors, result.Skipped)
@@ -76,7 +76,7 @@ func runCollector(opts core.Options, collector collect.Collector) core.Result {
 			core.Print(nil, "%s", file)
 		}
 	}
-	return core.Result{OK: true}
+	return core.Ok(nil)
 }
 
 func option(opts core.Options, key, fallback string) string {

@@ -6,7 +6,7 @@ import (
 	// Note: AX-6 — Slot and daemon names must be returned deterministically (no core sort primitive).
 	"sort"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"gopkg.in/yaml.v3"
 )
 

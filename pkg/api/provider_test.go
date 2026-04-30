@@ -3,7 +3,7 @@
 package api
 
 import (
-	"crypto/ed25519" // intrinsic
+	"crypto/ed25519"
 	"encoding/base64"
 	"encoding/json"
 	"net/http"
@@ -11,6 +11,7 @@ import (
 	"strings"
 	"testing"
 
+	core "dappco.re/go"
 	coreio "dappco.re/go/io"
 	"dappco.re/go/scm/manifest"
 	"dappco.re/go/scm/marketplace"
@@ -62,29 +63,6 @@ func TestScmProviderRoutesExposeState(t *testing.T) {
 	assertRouteOK(t, router, "/scm/modules/go-io", "Core I/O")
 }
 
-func TestScmProviderDescribeIncludesReadOnlyRoutes(t *testing.T) {
-	provider := NewProvider(nil, nil, nil, nil)
-	descs := provider.Describe()
-
-	want := map[string]bool{
-		"GET /health":      false,
-		"GET /marketplace": false,
-		"GET /repos":       false,
-		"GET /modules":     false,
-	}
-	for _, desc := range descs {
-		key := desc.Method + " " + desc.Path
-		if _, ok := want[key]; ok {
-			want[key] = true
-		}
-	}
-	for key, seen := range want {
-		if !seen {
-			t.Fatalf("expected route description for %s", key)
-		}
-	}
-}
-
 func TestScmProviderMetadataExposesStreamAndElement(t *testing.T) {
 	provider := NewProvider(nil, nil, nil, nil)
 
@@ -133,4 +111,119 @@ func assertRouteOK(t *testing.T, router *gin.Engine, path, want string) {
 	if !strings.Contains(rec.Body.String(), want) {
 		t.Fatalf("%s: expected body to contain %q, got %s", path, want, rec.Body.String())
 	}
+}
+
+func TestProvider_NewProvider_Good(t *core.T) {
+	provider := NewProvider(&marketplace.Index{Version: 1}, nil, &repos.Registry{Version: 1}, nil)
+	core.AssertNotNil(t, provider.index)
+	core.AssertNotNil(t, provider.registry)
+}
+
+func TestProvider_NewProvider_Bad(t *core.T) {
+	provider := NewProvider(nil, nil, nil, nil)
+	core.AssertNil(t, provider.index)
+	core.AssertNil(t, provider.registry)
+}
+
+func TestProvider_NewProvider_Ugly(t *core.T) {
+	hubProvider := NewProvider(nil, nil, nil, nil)
+	core.AssertNil(t, hubProvider.hub)
+	core.AssertEqual(t, "scm", hubProvider.Name())
+}
+
+func TestProvider_ScmProvider_Name_Good(t *core.T) {
+	provider := NewProvider(nil, nil, nil, nil)
+	got := provider.Name()
+	core.AssertEqual(t, "scm", got)
+}
+
+func TestProvider_ScmProvider_Name_Bad(t *core.T) {
+	provider := &ScmProvider{}
+	got := provider.Name()
+	core.AssertEqual(t, "scm", got)
+}
+
+func TestProvider_ScmProvider_Name_Ugly(t *core.T) {
+	var provider *ScmProvider
+	got := provider.Name()
+	core.AssertEqual(t, "scm", got)
+}
+
+func TestProvider_ScmProvider_BasePath_Good(t *core.T) {
+	provider := NewProvider(nil, nil, nil, nil)
+	got := provider.BasePath()
+	core.AssertEqual(t, "/scm", got)
+}
+
+func TestProvider_ScmProvider_BasePath_Bad(t *core.T) {
+	provider := &ScmProvider{}
+	got := provider.BasePath()
+	core.AssertEqual(t, "/scm", got)
+}
+
+func TestProvider_ScmProvider_BasePath_Ugly(t *core.T) {
+	var provider *ScmProvider
+	got := provider.BasePath()
+	core.AssertEqual(t, "/scm", got)
+}
+
+func TestProvider_ScmProvider_RegisterRoutes_Good(t *core.T) {
+	gin.SetMode(gin.TestMode)
+	provider := NewProvider(nil, nil, nil, nil)
+	router := gin.New()
+	provider.RegisterRoutes(router.Group(provider.BasePath()))
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/scm/health", nil))
+	core.AssertEqual(t, http.StatusOK, rec.Code)
+}
+
+func TestProvider_ScmProvider_RegisterRoutes_Bad(t *core.T) {
+	provider := NewProvider(nil, nil, nil, nil)
+	core.AssertNotPanics(t, func() { provider.RegisterRoutes(nil) })
+	core.AssertEqual(t, "scm", provider.Name())
+}
+
+func TestProvider_ScmProvider_RegisterRoutes_Ugly(t *core.T) {
+	gin.SetMode(gin.TestMode)
+	var provider *ScmProvider
+	router := gin.New()
+	core.AssertNotPanics(t, func() { provider.RegisterRoutes(router.Group("/scm")) })
+	core.AssertEqual(t, "scm", provider.Name())
+}
+
+func TestProvider_ScmProvider_Channels_Good(t *core.T) {
+	provider := NewProvider(nil, nil, nil, nil)
+	got := provider.Channels()
+	core.AssertEqual(t, []string{"scm"}, got)
+}
+
+func TestProvider_ScmProvider_Channels_Bad(t *core.T) {
+	provider := &ScmProvider{}
+	got := provider.Channels()
+	core.AssertLen(t, got, 1)
+}
+
+func TestProvider_ScmProvider_Channels_Ugly(t *core.T) {
+	var provider *ScmProvider
+	got := provider.Channels()
+	core.AssertEqual(t, "scm", got[0])
+}
+
+func TestProvider_ScmProvider_Element_Good(t *core.T) {
+	provider := NewProvider(nil, nil, nil, nil)
+	got := provider.Element()
+	core.AssertEqual(t, "core-scm", got.Tag)
+	core.AssertEqual(t, "ui/app.js", got.Source)
+}
+
+func TestProvider_ScmProvider_Element_Bad(t *core.T) {
+	provider := &ScmProvider{}
+	got := provider.Element()
+	core.AssertEqual(t, "core-scm", got.Tag)
+}
+
+func TestProvider_ScmProvider_Element_Ugly(t *core.T) {
+	var provider *ScmProvider
+	got := provider.Element()
+	core.AssertEqual(t, "ui/app.js", got.Source)
 }

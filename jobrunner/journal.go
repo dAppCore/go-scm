@@ -9,7 +9,7 @@ import (
 	"time"
 
 	// Note: AX-6 — Core provides JSON, path, filesystem, and structured error primitives.
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 )
 
 // Journal writes ActionResult entries to date-partitioned JSONL files.

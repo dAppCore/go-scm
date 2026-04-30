@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"dappco.re/go/scm/gitea"
 )
 
@@ -27,18 +27,18 @@ func newApp() *core.Core {
 func repos(opts core.Options) core.Result {
 	if wantsHelp(opts) {
 		core.Print(nil, "usage: gitea repos [--org=ORG] [--url=URL] [--token=TOKEN]")
-		return core.Result{OK: true}
+		return core.Ok(nil)
 	}
 
 	client, err := gitea.NewFromConfig(opts.String("url"), opts.String("token"))
 	if err != nil {
-		return core.Result{Value: err, OK: false}
+		return core.Fail(err)
 	}
 
 	if org := opts.String("org"); org != "" {
 		repositories, err := client.ListOrgRepos(org)
 		if err != nil {
-			return core.Result{Value: err, OK: false}
+			return core.Fail(err)
 		}
 		for _, repo := range repositories {
 			if repo == nil {
@@ -46,12 +46,12 @@ func repos(opts core.Options) core.Result {
 			}
 			core.Print(nil, "%s", repo.FullName)
 		}
-		return core.Result{OK: true}
+		return core.Ok(nil)
 	}
 
 	repositories, err := client.ListUserRepos()
 	if err != nil {
-		return core.Result{Value: err, OK: false}
+		return core.Fail(err)
 	}
 	for _, repo := range repositories {
 		if repo == nil {
@@ -59,13 +59,13 @@ func repos(opts core.Options) core.Result {
 		}
 		core.Print(nil, "%s", repo.FullName)
 	}
-	return core.Result{OK: true}
+	return core.Ok(nil)
 }
 
 func issues(opts core.Options) core.Result {
 	if wantsHelp(opts) {
 		core.Print(nil, "usage: gitea issues OWNER/REPO [--state=open|closed|all] [--limit=N] [--url=URL] [--token=TOKEN]")
-		return core.Result{OK: true}
+		return core.Ok(nil)
 	}
 
 	owner, repo := splitRepo(opts.String("_arg"))
@@ -73,19 +73,19 @@ func issues(opts core.Options) core.Result {
 		owner, repo = opts.String("owner"), opts.String("repo")
 	}
 	if owner == "" || repo == "" {
-		return core.Result{Value: core.E("gitea.issues", "repository must be OWNER/REPO", nil), OK: false}
+		return core.Fail(core.E("gitea.issues", "repository must be OWNER/REPO", nil))
 	}
 
 	client, err := gitea.NewFromConfig(opts.String("url"), opts.String("token"))
 	if err != nil {
-		return core.Result{Value: err, OK: false}
+		return core.Fail(err)
 	}
 	list, err := client.ListIssues(owner, repo, gitea.ListIssuesOpts{
 		State: opts.String("state"),
 		Limit: intOption(opts, "limit"),
 	})
 	if err != nil {
-		return core.Result{Value: err, OK: false}
+		return core.Fail(err)
 	}
 	for _, issue := range list {
 		if issue == nil {
@@ -93,7 +93,7 @@ func issues(opts core.Options) core.Result {
 		}
 		core.Print(nil, "#%d %s", issue.Index, issue.Title)
 	}
-	return core.Result{OK: true}
+	return core.Ok(nil)
 }
 
 func splitRepo(value string) (string, string) {

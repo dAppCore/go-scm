@@ -9,7 +9,7 @@ import (
 	// Note: AX-6 — Constructor failures return standard error values through core.Result.
 	"errors"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	coreio "dappco.re/go/io"
 	"dappco.re/go/scm/git"
 	"dappco.re/go/scm/repos"
@@ -74,7 +74,7 @@ func (r *Registry) Medium() coreio.Medium {
 func NewCoreService(opts Options) func(*core.Core) core.Result {
 	return func(c *core.Core) core.Result {
 		if c == nil {
-			return core.Result{Value: errors.New("scm.NewCoreService: core is required"), OK: false}
+			return core.Fail(errors.New("scm.NewCoreService: core is required"))
 		}
 
 		if opts.RegistryPath != "" || opts.Root != "" || opts.Remote != "" || opts.Branch != "" {
@@ -106,31 +106,28 @@ func NewCoreService(opts Options) func(*core.Core) core.Result {
 			}
 		}
 
-		return core.Result{
-			Value: &Service{ServiceRuntime: core.NewServiceRuntime(c, opts)},
-			OK:    true,
-		}
+		return core.Ok(&Service{ServiceRuntime: core.NewServiceRuntime(c, opts)})
 	}
 }
 
 // OnStartup satisfies the Core lifecycle contract.
 func (s *Service) OnStartup(ctx context.Context) core.Result {
 	if s == nil {
-		return core.Result{OK: true}
+		return core.Ok(nil)
 	}
 	if err := ctx.Err(); err != nil {
-		return core.Result{Value: err, OK: false}
+		return core.Fail(err)
 	}
-	return core.Result{OK: true}
+	return core.Ok(nil)
 }
 
 // OnShutdown satisfies the Core lifecycle contract.
 func (s *Service) OnShutdown(ctx context.Context) core.Result {
 	if s == nil {
-		return core.Result{OK: true}
+		return core.Ok(nil)
 	}
 	if err := ctx.Err(); err != nil {
-		return core.Result{Value: err, OK: false}
+		return core.Fail(err)
 	}
-	return core.Result{OK: true}
+	return core.Ok(nil)
 }

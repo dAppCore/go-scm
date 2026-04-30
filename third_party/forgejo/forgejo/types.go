@@ -28,6 +28,7 @@ const (
 	MergeStyleRebase = gitea.MergeStyleRebase
 	MergeStyleSquash = gitea.MergeStyleSquash
 )
+
 type ListOptions = gitea.ListOptions
 type ListReposOptions = gitea.ListReposOptions
 type ListOrgsOptions = gitea.ListOrgsOptions

@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"sync"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 )
 
 type ServiceOptions struct {
@@ -48,7 +48,7 @@ type Service struct {
 
 func NewService(opts ServiceOptions) func(*core.Core) core.Result {
 	return func(c *core.Core) core.Result {
-		return core.Result{Value: &Service{ServiceRuntime: core.NewServiceRuntime(c, opts)}, OK: true}
+		return core.Ok(&Service{ServiceRuntime: core.NewServiceRuntime(c, opts)})
 	}
 }
 
@@ -131,15 +131,15 @@ func (s *Service) BehindReposIter() iter.Seq[RepoStatus] {
 
 func (s *Service) OnStartup(ctx context.Context) core.Result {
 	if s == nil {
-		return core.Result{OK: true}
+		return core.Ok(nil)
 	}
 	if err := ctx.Err(); err != nil {
-		return core.Result{Value: err, OK: false}
+		return core.Fail(err)
 	}
 
 	c := s.Core()
 	if c == nil {
-		return core.Result{Value: core.E("git.Service.OnStartup", "core is required", nil), OK: false}
+		return core.Fail(core.E("git.Service.OnStartup", "core is required", nil))
 	}
 
 	c.RegisterQuery(s.handleQuery)
@@ -167,12 +167,12 @@ func (s *Service) OnStartup(ctx context.Context) core.Result {
 		s.lastStatus = Status(ctx, StatusOptions{Paths: []string{workDir}})
 		s.mu.Unlock()
 	}
-	return core.Result{OK: true}
+	return core.Ok(nil)
 }
 
 func (s *Service) handleQuery(c *core.Core, q core.Query) core.Result {
 	if s == nil {
-		return core.Result{}
+		return core.Fail(nil)
 	}
 	ctx := c.Context()
 	switch m := q.(type) {
@@ -184,15 +184,15 @@ func (s *Service) handleQuery(c *core.Core, q core.Query) core.Result {
 		s.mu.Lock()
 		s.lastStatus = statuses
 		s.mu.Unlock()
-		return core.Result{Value: statuses, OK: true}
+		return core.Ok(statuses)
 	case QueryDirtyRepos:
-		return core.Result{Value: s.DirtyRepos(), OK: true}
+		return core.Ok(s.DirtyRepos())
 	case QueryAheadRepos:
-		return core.Result{Value: s.AheadRepos(), OK: true}
+		return core.Ok(s.AheadRepos())
 	case QueryBehindRepos:
-		return core.Result{Value: s.BehindRepos(), OK: true}
+		return core.Ok(s.BehindRepos())
 	default:
-		return core.Result{}
+		return core.Fail(nil)
 	}
 }
 
@@ -207,7 +207,7 @@ func (s *Service) handleTaskMessage(c *core.Core, msg core.Message) core.Result 
 	case TaskPullMultiple:
 		return s.runPullMultiple(c.Context(), m.Paths, m.Names)
 	default:
-		return core.Result{}
+		return core.Fail(nil)
 	}
 }
 
@@ -218,7 +218,7 @@ func (s *Service) runPush(ctx context.Context, path string) core.Result {
 	if err := Push(ctx, path); err != nil {
 		return s.Core().LogError(err, "git.push", "push failed")
 	}
-	return core.Result{OK: true}
+	return core.Ok(nil)
 }
 
 func (s *Service) runPull(ctx context.Context, path string) core.Result {
@@ -228,7 +228,7 @@ func (s *Service) runPull(ctx context.Context, path string) core.Result {
 	if err := Pull(ctx, path); err != nil {
 		return s.Core().LogError(err, "git.pull", "pull failed")
 	}
-	return core.Result{OK: true}
+	return core.Ok(nil)
 }
 
 func (s *Service) runPushMultiple(ctx context.Context, paths []string, names map[string]string) core.Result {
@@ -238,10 +238,10 @@ func (s *Service) runPushMultiple(ctx context.Context, paths []string, names map
 	results := PushMultiple(ctx, paths, names)
 	for _, result := range results {
 		if result.Error != nil {
-			return core.Result{Value: results, OK: false}
+			return core.Fail(result.Error)
 		}
 	}
-	return core.Result{Value: results, OK: true}
+	return core.Ok(results)
 }
 
 func (s *Service) runPullMultiple(ctx context.Context, paths []string, names map[string]string) core.Result {
@@ -251,10 +251,10 @@ func (s *Service) runPullMultiple(ctx context.Context, paths []string, names map
 	results := PullMultiple(ctx, paths, names)
 	for _, result := range results {
 		if result.Error != nil {
-			return core.Result{Value: results, OK: false}
+			return core.Fail(result.Error)
 		}
 	}
-	return core.Result{Value: results, OK: true}
+	return core.Ok(results)
 }
 
 func (s *Service) validatePath(path string) error {

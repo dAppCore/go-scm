@@ -6,7 +6,7 @@ import (
 	// Note: unicode helpers classify whitespace and title-case runes without a banned text import.
 	"unicode"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 )
 
 func textFields(s string) []string {

@@ -8,15 +8,29 @@ import (
 	// Note: testing is the standard Go test harness.
 	"testing"
 
+	core "dappco.re/go"
 	"dappco.re/go/config"
 )
 
-func TestLoadAgentsAndRoundTrip(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "config.yaml")
-	cfg, err := config.New(config.WithPath(path))
-	if err != nil {
+func configResultError(r core.Result) error {
+	if r.OK {
+		return nil
+	}
+	return core.E("agentci.config_test", r.Error(), nil)
+}
+
+func testConfig(t *testing.T, opts ...config.Option) *config.Config {
+	t.Helper()
+	r := config.New(opts...)
+	if err := configResultError(r); err != nil {
 		t.Fatalf("new config: %v", err)
 	}
+	return core.MustCast[*config.Config](r)
+}
+
+func TestLoadAgentsAndRoundTrip(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.yaml")
+	cfg := testConfig(t, config.WithPath(path))
 
 	agent := AgentConfig{
 		Host:          "forgejo",
@@ -77,10 +91,7 @@ func TestLoadAgentsAndRoundTrip(t *testing.T) {
 }
 
 func TestLoadClothoConfigDefaults(t *testing.T) {
-	cfg, err := config.New()
-	if err != nil {
-		t.Fatalf("new config: %v", err)
-	}
+	cfg := testConfig(t)
 
 	clotho, err := LoadClothoConfig(cfg)
 	if err != nil {
@@ -95,12 +106,9 @@ func TestLoadClothoConfigDefaults(t *testing.T) {
 }
 
 func TestLoadAgentsReturnsErrorForInvalidData(t *testing.T) {
-	cfg, err := config.New()
-	if err != nil {
-		t.Fatalf("new config: %v", err)
-	}
+	cfg := testConfig(t)
 
-	if err := cfg.Set("agents", "not-a-map"); err != nil {
+	if err := configResultError(cfg.Set("agents", "not-a-map")); err != nil {
 		t.Fatalf("set agents: %v", err)
 	}
 
@@ -110,12 +118,9 @@ func TestLoadAgentsReturnsErrorForInvalidData(t *testing.T) {
 }
 
 func TestLoadClothoConfigReturnsErrorForInvalidData(t *testing.T) {
-	cfg, err := config.New()
-	if err != nil {
-		t.Fatalf("new config: %v", err)
-	}
+	cfg := testConfig(t)
 
-	if err := cfg.Set("clotho", "not-a-map"); err != nil {
+	if err := configResultError(cfg.Set("clotho", "not-a-map")); err != nil {
 		t.Fatalf("set clotho: %v", err)
 	}
 
@@ -125,12 +130,9 @@ func TestLoadClothoConfigReturnsErrorForInvalidData(t *testing.T) {
 }
 
 func TestLoadClothoConfigHandlesNullConfig(t *testing.T) {
-	cfg, err := config.New()
-	if err != nil {
-		t.Fatalf("new config: %v", err)
-	}
+	cfg := testConfig(t)
 
-	if err := cfg.Set("clotho", nil); err != nil {
+	if err := configResultError(cfg.Set("clotho", nil)); err != nil {
 		t.Fatalf("set clotho: %v", err)
 	}
 
@@ -147,14 +149,11 @@ func TestLoadClothoConfigHandlesNullConfig(t *testing.T) {
 }
 
 func TestLoadClothoConfigRejectsOutOfRangeThreshold(t *testing.T) {
-	cfg, err := config.New()
-	if err != nil {
-		t.Fatalf("new config: %v", err)
-	}
+	cfg := testConfig(t)
 
-	if err := cfg.Set("clotho", map[string]any{
+	if err := configResultError(cfg.Set("clotho", map[string]any{
 		"validation_threshold": 1.5,
-	}); err != nil {
+	})); err != nil {
 		t.Fatalf("set clotho: %v", err)
 	}
 
@@ -164,14 +163,11 @@ func TestLoadClothoConfigRejectsOutOfRangeThreshold(t *testing.T) {
 }
 
 func TestLoadClothoConfigRejectsUnknownStrategy(t *testing.T) {
-	cfg, err := config.New()
-	if err != nil {
-		t.Fatalf("new config: %v", err)
-	}
+	cfg := testConfig(t)
 
-	if err := cfg.Set("clotho", map[string]any{
+	if err := configResultError(cfg.Set("clotho", map[string]any{
 		"strategy": "experimental",
-	}); err != nil {
+	})); err != nil {
 		t.Fatalf("set clotho: %v", err)
 	}
 
@@ -181,12 +177,9 @@ func TestLoadClothoConfigRejectsUnknownStrategy(t *testing.T) {
 }
 
 func TestSaveAndRemoveAgentPropagateLoadErrors(t *testing.T) {
-	cfg, err := config.New()
-	if err != nil {
-		t.Fatalf("new config: %v", err)
-	}
+	cfg := testConfig(t)
 
-	if err := cfg.Set("agents", "not-a-map"); err != nil {
+	if err := configResultError(cfg.Set("agents", "not-a-map")); err != nil {
 		t.Fatalf("set agents: %v", err)
 	}
 

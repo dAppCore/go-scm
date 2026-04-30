@@ -6,7 +6,7 @@ import (
 	// Note: context.Context is retained as the public cancellation contract for Spinner.Weave.
 	"context"
 
-	"dappco.re/go/core"
+	"dappco.re/go"
 	"dappco.re/go/scm/jobrunner"
 )
 

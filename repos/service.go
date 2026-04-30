@@ -8,7 +8,7 @@ import (
 	// Note: AX-6 — Registry discovery uses fs.ErrNotExist as the filesystem sentinel.
 	"io/fs"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"dappco.re/go/scm/git"
 	"dappco.re/go/scm/internal/ax/filepathx"
 	"dappco.re/go/scm/internal/ax/osx"
@@ -42,66 +42,66 @@ type Service struct {
 // NewService creates a Core-compatible factory for repo sync actions.
 func NewService(opts ServiceOptions) func(*core.Core) core.Result {
 	return func(c *core.Core) core.Result {
-		return core.Result{Value: &Service{ServiceRuntime: core.NewServiceRuntime(c, opts)}, OK: true}
+		return core.Ok(&Service{ServiceRuntime: core.NewServiceRuntime(c, opts)})
 	}
 }
 
 // OnStartup loads the registry and registers repo sync actions.
 func (s *Service) OnStartup(ctx context.Context) core.Result {
 	if s == nil {
-		return core.Result{OK: true}
+		return core.Ok(nil)
 	}
 	if err := ctx.Err(); err != nil {
-		return core.Result{Value: err, OK: false}
+		return core.Fail(err)
 	}
 	reg, err := s.loadRegistry()
 	if err != nil && !core.Is(err, fs.ErrNotExist) {
-		return core.Result{Value: err, OK: false}
+		return core.Fail(err)
 	}
 	s.registry = reg
 
 	c := s.Core()
 	if c == nil {
-		return core.Result{Value: core.E("repos.Service.OnStartup", "core is required", nil), OK: false}
+		return core.Fail(core.E("repos.Service.OnStartup", "core is required", nil))
 	}
 
 	c.Action("repo.sync", s.handleRepoSync)
 	c.Action("repo.sync.all", s.handleRepoSyncAll)
-	return core.Result{OK: true}
+	return core.Ok(nil)
 }
 
 // HandleIPCEvents reacts to workspace push broadcasts by resyncing repos.
 func (s *Service) HandleIPCEvents(_ *core.Core, msg core.Message) core.Result {
 	if s == nil {
-		return core.Result{OK: true}
+		return core.Ok(nil)
 	}
 	switch v := msg.(type) {
 	case WorkspacePushed:
 		return s.syncWorkspace(context.Background(), v)
 	case *WorkspacePushed:
 		if v == nil {
-			return core.Result{OK: true}
+			return core.Ok(nil)
 		}
 		return s.syncWorkspace(context.Background(), *v)
 	default:
-		return core.Result{OK: true}
+		return core.Ok(nil)
 	}
 }
 
 func (s *Service) handleRepoSync(ctx context.Context, opts core.Options) core.Result {
 	result, err := s.syncRepo(ctx, opts)
 	if err != nil {
-		return core.Result{Value: err, OK: false}
+		return core.Fail(err)
 	}
-	return core.Result{Value: result, OK: true}
+	return core.Ok(result)
 }
 
 func (s *Service) handleRepoSyncAll(ctx context.Context, opts core.Options) core.Result {
 	result, err := s.syncAll(ctx, opts)
 	if err != nil {
-		return core.Result{Value: err, OK: false}
+		return core.Fail(err)
 	}
-	return core.Result{Value: result, OK: true}
+	return core.Ok(result)
 }
 
 func (s *Service) syncWorkspace(ctx context.Context, pushed WorkspacePushed) core.Result {

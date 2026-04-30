@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"dappco.re/go/scm/manifest"
 )
 
@@ -20,7 +20,7 @@ const usage = "usage: scm compile [--root=DIR] [--manifest=FILE] [--out=FILE] [-
 // metadata and adding build fields understood by the manifest package.
 func Register(app *core.Core) core.Result {
 	if app == nil {
-		return core.Result{Value: core.E("cmd.compile.Register", "core app is required", nil), OK: false}
+		return core.Fail(core.E("cmd.compile.Register", "core app is required", nil))
 	}
 	return app.Command("compile", core.Command{Action: run})
 }
@@ -28,7 +28,7 @@ func Register(app *core.Core) core.Result {
 func run(opts core.Options) core.Result {
 	if wantsHelp(opts) {
 		core.Print(nil, usage)
-		return core.Result{OK: true}
+		return core.Ok(nil)
 	}
 
 	root := option(opts, "root", ".")
@@ -70,7 +70,7 @@ func run(opts core.Options) core.Result {
 	}
 
 	core.Print(nil, "%s", outPath)
-	return core.Result{OK: true}
+	return core.Ok(nil)
 }
 
 func option(opts core.Options, key, fallback string) string {
@@ -107,5 +107,5 @@ func wantsHelp(opts core.Options) bool {
 }
 
 func failed(err error) core.Result {
-	return core.Result{Value: err, OK: false}
+	return core.Fail(err)
 }

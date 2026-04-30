@@ -12,7 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"dappco.re/go/scm/manifest"
 )
 
@@ -24,7 +24,7 @@ const usage = "usage: scm sign [--root=DIR] [--in=core.json] [--out=core.json] [
 // is supplied, it compiles that manifest first and writes a signed core.json.
 func Register(app *core.Core) core.Result {
 	if app == nil {
-		return core.Result{Value: core.E("cmd.sign.Register", "core app is required", nil), OK: false}
+		return core.Fail(core.E("cmd.sign.Register", "core app is required", nil))
 	}
 	return app.Command("sign", core.Command{Action: run})
 }
@@ -32,7 +32,7 @@ func Register(app *core.Core) core.Result {
 func run(opts core.Options) core.Result {
 	if wantsHelp(opts) {
 		core.Print(nil, usage)
-		return core.Result{OK: true}
+		return core.Ok(nil)
 	}
 
 	priv, err := privateKey(opts)
@@ -60,7 +60,7 @@ func run(opts core.Options) core.Result {
 	}
 
 	core.Print(nil, "%s", outPath)
-	return core.Result{OK: true}
+	return core.Ok(nil)
 }
 
 func compiledManifest(opts core.Options, root string, priv ed25519.PrivateKey) (*manifest.CompiledManifest, error) {
@@ -166,5 +166,5 @@ func wantsHelp(opts core.Options) bool {
 }
 
 func failed(err error) core.Result {
-	return core.Result{Value: err, OK: false}
+	return core.Fail(err)
 }

@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"dappco.re/go/scm/manifest"
 	"dappco.re/go/scm/internal/ax/jsonx"
 	"dappco.re/go/scm/internal/ax/osx"
+	"dappco.re/go/scm/manifest"
 )
 
 type Builder struct {
@@ -17,7 +17,9 @@ type Builder struct {
 	Org     string
 }
 
-func BuildFromManifests(manifests []*manifest.Manifest) *Index { return BuildIndexFromManifests(manifests) }
+func BuildFromManifests(manifests []*manifest.Manifest) *Index {
+	return BuildIndexFromManifests(manifests)
+}
 
 func (b *Builder) BuildFromDirs(dirs ...string) (*Index, error) {
 	var manifests []*manifest.Manifest

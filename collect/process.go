@@ -12,7 +12,7 @@ import (
 	// Note: regexp is retained for HTML conversion patterns; no core equivalent covers compiled regexes.
 	"regexp"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 )
 
 var (

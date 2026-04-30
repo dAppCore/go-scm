@@ -6,7 +6,7 @@ import (
 	// Note: AX-6 — Marketplace modules and categories must be ordered deterministically (no core sort primitive).
 	"sort"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"dappco.re/go/scm/manifest"
 )
 

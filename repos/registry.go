@@ -10,7 +10,7 @@ import (
 	// Note: AX-6 — Registry listing must be deterministic across map iteration (no core sort primitive).
 	"sort"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	coreio "dappco.re/go/io"
 	"dappco.re/go/scm/git"
 	"dappco.re/go/scm/internal/ax/filepathx"

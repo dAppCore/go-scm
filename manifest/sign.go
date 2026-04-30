@@ -8,7 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 )
 
 func canonicalManifestBytes(m *Manifest) ([]byte, error) {

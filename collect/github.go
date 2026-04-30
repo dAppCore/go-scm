@@ -6,7 +6,7 @@ import (
 	// Note: context.Context is retained as the collector API cancellation contract.
 	"context"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 )
 
 // GitHubCollector collects issues and/or PRs from GitHub repositories.
