@@ -26,7 +26,7 @@ type Index struct {
 	Categories []string `json:"categories"`
 }
 
-func ParseIndex(data []byte) (*Index, error) {
+func ParseIndex(data []byte) (*Index, error)  /* v090-result-boundary */ {
 	var idx Index
 	r := core.JSONUnmarshal(data, &idx)
 	if !r.OK {
@@ -128,7 +128,7 @@ func sortedKeys(m map[string]struct{}) []string {
 	return out
 }
 
-func resultError(op, msg string, r core.Result) error {
+func resultError(op, msg string, r core.Result) error  /* v090-result-boundary */ {
 	if err, ok := r.Value.(error); ok {
 		return core.E(op, msg, err)
 	}

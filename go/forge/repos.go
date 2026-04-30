@@ -9,22 +9,22 @@ import (
 	"codeberg.org/forgejo/go-sdk/forgejo"
 )
 
-func (c *Client) CreateOrgRepo(org string, opts forgejo.CreateRepoOption) (*forgejo.Repository, error) {
+func (c *Client) CreateOrgRepo(org string, opts forgejo.CreateRepoOption) (*forgejo.Repository, error)  /* v090-result-boundary */ {
 	repo, _, err := c.api.CreateOrgRepo(org, opts)
 	return repo, err
 }
 
-func (c *Client) DeleteRepo(owner, name string) error {
+func (c *Client) DeleteRepo(owner, name string) error  /* v090-result-boundary */ {
 	_, err := c.api.DeleteRepo(owner, name)
 	return err
 }
 
-func (c *Client) GetRepo(owner, name string) (*forgejo.Repository, error) {
+func (c *Client) GetRepo(owner, name string) (*forgejo.Repository, error)  /* v090-result-boundary */ {
 	repo, _, err := c.api.GetRepo(owner, name)
 	return repo, err
 }
 
-func (c *Client) ListOrgRepos(org string) ([]*forgejo.Repository, error) {
+func (c *Client) ListOrgRepos(org string) ([]*forgejo.Repository, error)  /* v090-result-boundary */ {
 	return collectForgePages(func(page int) ([]*forgejo.Repository, *forgeResponse, error) {
 		return c.api.ListOrgRepos(org, forgejo.ListOrgReposOptions{
 			ListOptions: forgejo.ListOptions{Page: page, PageSize: 50},
@@ -42,7 +42,7 @@ func (c *Client) ListOrgReposIter(org string) iter.Seq2[*forgejo.Repository, err
 	}
 }
 
-func (c *Client) ListUserRepos() ([]*forgejo.Repository, error) {
+func (c *Client) ListUserRepos() ([]*forgejo.Repository, error)  /* v090-result-boundary */ {
 	return collectForgePages(func(page int) ([]*forgejo.Repository, *forgeResponse, error) {
 		return c.api.ListMyRepos(forgejo.ListReposOptions{
 			ListOptions: forgejo.ListOptions{Page: page, PageSize: 50},
@@ -60,7 +60,7 @@ func (c *Client) ListUserReposIter() iter.Seq2[*forgejo.Repository, error] {
 	}
 }
 
-func (c *Client) MigrateRepo(opts forgejo.MigrateRepoOption) (*forgejo.Repository, error) {
+func (c *Client) MigrateRepo(opts forgejo.MigrateRepoOption) (*forgejo.Repository, error)  /* v090-result-boundary */ {
 	repo, _, err := c.api.MigrateRepo(opts)
 	return repo, err
 }

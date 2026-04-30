@@ -100,7 +100,7 @@ func (s *Spinner) GetVerifierModel(agentName string) string {
 }
 
 // Weave compares primary and verifier outputs. Returns true if they converge.
-func (s *Spinner) Weave(ctx context.Context, primaryOutput, signedOutput []byte) (bool, error) {
+func (s *Spinner) Weave(ctx context.Context, primaryOutput, signedOutput []byte) (bool, error)  /* v090-result-boundary */ {
 	if ctx != nil {
 		if err := ctx.Err(); err != nil {
 			return false, err

@@ -6,9 +6,9 @@ import (
 	// Note: context.Context is retained as the installer API cancellation contract.
 	"context"
 	// Note: errors.New is retained for stable installer validation errors.
-	"errors"
+	`errors`
 	// Note: strings helpers are retained for parsing plugin source identifiers.
-	"strings"
+	`strings`
 	// Note: time is retained for RFC3339 install timestamps in plugin metadata.
 	"time"
 
@@ -24,7 +24,7 @@ func NewInstaller(m coreio.Medium, registry *Registry) *Installer {
 	return &Installer{medium: m, registry: registry}
 }
 
-func ParseSource(source string) (org, repo, version string, err error) {
+func ParseSource(source string) (org, repo, version string, err error)  /* v090-result-boundary */ {
 	if source == "" {
 		return "", "", "", errors.New("plugin.ParseSource: source is required")
 	}
@@ -39,7 +39,7 @@ func ParseSource(source string) (org, repo, version string, err error) {
 	return parts[0], parts[1], version, nil
 }
 
-func (i *Installer) Install(ctx context.Context, source string) error {
+func (i *Installer) Install(ctx context.Context, source string) error  /* v090-result-boundary */ {
 	if i == nil {
 		return errors.New("plugin.Installer.Install: installer is required")
 	}
@@ -69,7 +69,7 @@ func (i *Installer) Install(ctx context.Context, source string) error {
 	return nil
 }
 
-func (i *Installer) Remove(name string) error {
+func (i *Installer) Remove(name string) error  /* v090-result-boundary */ {
 	if i == nil {
 		return errors.New("plugin.Installer.Remove: installer is required")
 	}
@@ -82,7 +82,7 @@ func (i *Installer) Remove(name string) error {
 	return nil
 }
 
-func (i *Installer) Update(ctx context.Context, name string) error {
+func (i *Installer) Update(ctx context.Context, name string) error  /* v090-result-boundary */ {
 	if i == nil {
 		return errors.New("plugin.Installer.Update: installer is required")
 	}

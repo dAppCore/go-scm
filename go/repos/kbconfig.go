@@ -4,14 +4,10 @@ package repos
 
 import (
 	// Note: AX-6 — Config APIs return standard errors for nil storage media.
-	"errors"
-	// Note: AX-6 — Wiki checkout paths use local filesystem path semantics.
-	"path/filepath"
-	// Note: AX-6 — Wiki remote URLs require suffix normalization.
-	"strings"
+	`errors`
 
+	core "dappco.re/go"
 	coreio "dappco.re/go/io"
-	"dappco.re/go/scm/internal/ax/filepathx"
 	"gopkg.in/yaml.v3"
 )
 
@@ -42,7 +38,7 @@ func (kb *KBConfig) WikiRepoURL(repoName string) string {
 	if kb == nil || kb.Wiki.Remote == "" || repoName == "" {
 		return ""
 	}
-	return strings.TrimRight(kb.Wiki.Remote, "/") + "/" + repoName + ".wiki.git"
+	return core.TrimSuffix(kb.Wiki.Remote, "/") + "/" + repoName + ".wiki.git"
 }
 
 func (kb *KBConfig) WikiLocalPath(root, repoName string) string {
@@ -50,14 +46,14 @@ func (kb *KBConfig) WikiLocalPath(root, repoName string) string {
 	if kb != nil && kb.Wiki.Dir != "" {
 		dir = kb.Wiki.Dir
 	}
-	return filepath.Join(root, dir, repoName)
+	return core.PathJoin(root, dir, repoName)
 }
 
-func LoadKBConfig(m coreio.Medium, root string) (*KBConfig, error) {
+func LoadKBConfig(m coreio.Medium, root string) (*KBConfig, error)  /* v090-result-boundary */ {
 	if m == nil {
 		return nil, errors.New("repos.LoadKBConfig: medium is required")
 	}
-	raw, err := m.Read(filepathx.Join(root, ".core", "kb.yaml"))
+	raw, err := m.Read(core.PathJoin(root, ".core", "kb.yaml"))
 	if err != nil {
 		return DefaultKBConfig(), nil
 	}
@@ -71,7 +67,7 @@ func LoadKBConfig(m coreio.Medium, root string) (*KBConfig, error) {
 	return &kb, nil
 }
 
-func SaveKBConfig(m coreio.Medium, root string, kb *KBConfig) error {
+func SaveKBConfig(m coreio.Medium, root string, kb *KBConfig) error  /* v090-result-boundary */ {
 	if m == nil {
 		return errors.New("repos.SaveKBConfig: medium is required")
 	}
@@ -82,5 +78,5 @@ func SaveKBConfig(m coreio.Medium, root string, kb *KBConfig) error {
 	if err != nil {
 		return err
 	}
-	return m.Write(filepathx.Join(root, ".core", "kb.yaml"), string(raw))
+	return m.Write(core.PathJoin(root, ".core", "kb.yaml"), string(raw))
 }

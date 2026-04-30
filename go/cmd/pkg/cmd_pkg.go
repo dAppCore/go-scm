@@ -48,7 +48,7 @@ func run(app *core.Core) core.CommandAction {
 	}
 }
 
-func buildIndex(app *core.Core, dirs []string, baseURL, org string) (*marketplace.Index, error) {
+func buildIndex(app *core.Core, dirs []string, baseURL, org string) (*marketplace.Index, error)  /* v090-result-boundary */ {
 	var manifests []*manifest.Manifest
 	var collectionDirs []string
 
@@ -81,7 +81,7 @@ func buildIndex(app *core.Core, dirs []string, baseURL, org string) (*marketplac
 	return idx, nil
 }
 
-func loadPackageManifest(app *core.Core, root string) (*manifest.Manifest, error) {
+func loadPackageManifest(app *core.Core, root string) (*manifest.Manifest, error)  /* v090-result-boundary */ {
 	if raw, err := readFile(app, core.PathJoin(root, "core.json")); err == nil {
 		cm, err := manifest.ParseCompiled(raw)
 		if err != nil {
@@ -180,7 +180,7 @@ func failed(err error) core.Result {
 	return core.Fail(err)
 }
 
-func writeIndex(app *core.Core, path string, idx *marketplace.Index) error {
+func writeIndex(app *core.Core, path string, idx *marketplace.Index) error  /* v090-result-boundary */ {
 	if idx == nil {
 		return core.E("cmd.pkg.writeIndex", "index is required", nil)
 	}
@@ -198,7 +198,7 @@ func writeIndex(app *core.Core, path string, idx *marketplace.Index) error {
 	return nil
 }
 
-func readFile(app *core.Core, path string) ([]byte, error) {
+func readFile(app *core.Core, path string) ([]byte, error)  /* v090-result-boundary */ {
 	if app == nil {
 		return nil, core.E("cmd.pkg.readFile", "core app is required", nil)
 	}
@@ -213,7 +213,7 @@ func readFile(app *core.Core, path string) ([]byte, error) {
 	return []byte(raw), nil
 }
 
-func resultError(op, msg string, r core.Result) error {
+func resultError(op, msg string, r core.Result) error  /* v090-result-boundary */ {
 	if err, ok := r.Value.(error); ok {
 		return core.E(op, msg, err)
 	}

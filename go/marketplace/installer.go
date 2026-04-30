@@ -4,13 +4,11 @@ package marketplace
 
 import (
 	"context"
-	"errors"
-	"path/filepath"
-	"strings"
+	`errors`
 	"time"
 
+	core "dappco.re/go"
 	coreio "dappco.re/go/io"
-	"dappco.re/go/scm/internal/ax/jsonx"
 	"dappco.re/go/scm/manifest"
 )
 
@@ -38,7 +36,7 @@ func NewInstaller(m coreio.Medium, modulesDir string, _ ...any) *Installer {
 	return &Installer{medium: m, modulesDir: modulesDir}
 }
 
-func (i *Installer) Install(ctx context.Context, mod Module) error {
+func (i *Installer) Install(ctx context.Context, mod Module) error  /* v090-result-boundary */ {
 	if i == nil {
 		return errors.New("marketplace.Installer.Install: installer is required")
 	}
@@ -65,17 +63,17 @@ func (i *Installer) Install(ctx context.Context, mod Module) error {
 		SignKey:     mod.SignKey,
 		InstalledAt: time.Now().UTC().Format(time.RFC3339Nano),
 	}
-	raw, err := jsonx.MarshalIndent(entry, "", "  ")
-	if err != nil {
-		return err
+	marshalResult := core.JSONMarshalIndent(entry, "", "  ")
+	if !marshalResult.OK {
+		return core.E("marketplace.Installer.Install", "encode module entry", nil)
 	}
-	if err := writeMediumFile(i.medium, filepath.Join(i.modulesDir, mod.Code, sonarInstallerModuleJson), raw); err != nil {
+	if err := writeMediumFile(i.medium, core.PathJoin(i.modulesDir, mod.Code, sonarInstallerModuleJson), marshalResult.Value.([]byte)); err != nil {
 		return err
 	}
 	return nil
 }
 
-func verifyModuleSignature(mod Module) error {
+func verifyModuleSignature(mod Module) error  /* v090-result-boundary */ {
 	payload, err := moduleVerificationPayload(mod)
 	if err != nil {
 		return err
@@ -86,13 +84,17 @@ func verifyModuleSignature(mod Module) error {
 	}, payload)
 }
 
-func moduleVerificationPayload(mod Module) ([]byte, error) {
+func moduleVerificationPayload(mod Module) ([]byte, error)  /* v090-result-boundary */ {
 	cp := mod
 	cp.Sign = ""
-	return jsonx.Marshal(cp)
+	marshalResult := core.JSONMarshal(cp)
+	if !marshalResult.OK {
+		return nil, core.E("marketplace.moduleVerificationPayload", "encode module", nil)
+	}
+	return marshalResult.Value.([]byte), nil
 }
 
-func (i *Installer) Installed() ([]InstalledModule, error) {
+func (i *Installer) Installed() ([]InstalledModule, error)  /* v090-result-boundary */ {
 	if i == nil || i.medium == nil {
 		return nil, nil
 	}
@@ -105,12 +107,12 @@ func (i *Installer) Installed() ([]InstalledModule, error) {
 		if entry == nil || !entry.IsDir() {
 			continue
 		}
-		raw, err := readMediumFile(i.medium, filepath.Join(i.modulesDir, entry.Name(), sonarInstallerModuleJson))
+		raw, err := readMediumFile(i.medium, core.PathJoin(i.modulesDir, entry.Name(), sonarInstallerModuleJson))
 		if err != nil {
 			continue
 		}
 		var mod InstalledModule
-		if err := jsonx.Unmarshal(raw, &mod); err != nil {
+		if r := core.JSONUnmarshal(raw, &mod); !r.OK {
 			continue
 		}
 		out = append(out, mod)
@@ -118,17 +120,17 @@ func (i *Installer) Installed() ([]InstalledModule, error) {
 	return out, nil
 }
 
-func (i *Installer) Remove(code string) error {
+func (i *Installer) Remove(code string) error  /* v090-result-boundary */ {
 	if i == nil || i.medium == nil {
 		return errors.New("marketplace.Installer.Remove: installer is required")
 	}
-	if err := i.medium.DeleteAll(filepath.Join(i.modulesDir, code)); err != nil {
+	if err := i.medium.DeleteAll(core.PathJoin(i.modulesDir, code)); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (i *Installer) Update(ctx context.Context, code string) error {
+func (i *Installer) Update(ctx context.Context, code string) error  /* v090-result-boundary */ {
 	if i == nil {
 		return errors.New("marketplace.Installer.Update: installer is required")
 	}
@@ -140,32 +142,32 @@ func (i *Installer) Update(ctx context.Context, code string) error {
 	if i.medium == nil {
 		return errors.New("marketplace.Installer.Update: medium is required")
 	}
-	path := filepath.Join(i.modulesDir, code, sonarInstallerModuleJson)
+	path := core.PathJoin(i.modulesDir, code, sonarInstallerModuleJson)
 	raw, err := readMediumFile(i.medium, path)
 	if err != nil {
 		return err
 	}
 	var entry InstalledModule
-	if err := jsonx.Unmarshal(raw, &entry); err != nil {
-		return err
+	if r := core.JSONUnmarshal(raw, &entry); !r.OK {
+		return core.E("marketplace.Installer.Update", "decode installed module", nil)
 	}
-	if strings.TrimSpace(entry.Code) == "" {
+	if core.Trim(entry.Code) == "" {
 		return errors.New("marketplace.Installer.Update: installed module is invalid")
 	}
 	entry.InstalledAt = time.Now().UTC().Format(time.RFC3339Nano)
-	updated, err := jsonx.MarshalIndent(entry, "", "  ")
-	if err != nil {
-		return err
+	updatedResult := core.JSONMarshalIndent(entry, "", "  ")
+	if !updatedResult.OK {
+		return core.E("marketplace.Installer.Update", "encode installed module", nil)
 	}
-	if err := writeMediumFile(i.medium, path, updated); err != nil {
+	if err := writeMediumFile(i.medium, path, updatedResult.Value.([]byte)); err != nil {
 		return err
 	}
 	return nil
 }
 
 func versionOrLatest(version string) string {
-	if strings.TrimSpace(version) == "" {
+	if core.Trim(version) == "" {
 		return "latest"
 	}
-	return strings.TrimSpace(version)
+	return core.Trim(version)
 }

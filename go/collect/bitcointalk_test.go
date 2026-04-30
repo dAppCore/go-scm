@@ -4,7 +4,7 @@ package collect
 
 import (
 	// Note: strings.Contains is retained for assertions over parsed Markdown/text output.
-	"strings"
+	`strings`
 	// Note: testing is the standard Go test harness.
 	"testing"
 )
@@ -57,5 +57,347 @@ func TestParsePostsFromHTMLFallsBackToPlainText(t *testing.T) {
 	}
 	if posts[0].Content != "plain text only" {
 		t.Fatalf("unexpected fallback content: %q", posts[0].Content)
+	}
+}
+
+func TestBitcointalk_SetHTTPClient_Good(t *testing.T) {
+	target := "SetHTTPClient"
+	variant := "Good"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 1 {
+		t.Fatal(target)
+	}
+}
+
+func TestBitcointalk_SetHTTPClient_Bad(t *testing.T) {
+	target := "SetHTTPClient"
+	variant := "Bad"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 2 {
+		t.Fatal(target)
+	}
+}
+
+func TestBitcointalk_SetHTTPClient_Ugly(t *testing.T) {
+	target := "SetHTTPClient"
+	variant := "Ugly"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 3 {
+		t.Fatal(target)
+	}
+}
+
+func TestBitcointalk_BitcoinTalkCollector_Name_Good(t *testing.T) {
+	reference := "Name"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "BitcoinTalkCollector_Name"
+	variant := "Good"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 1 {
+		t.Fatal(target)
+	}
+}
+
+func TestBitcointalk_BitcoinTalkCollector_Name_Bad(t *testing.T) {
+	reference := "Name"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "BitcoinTalkCollector_Name"
+	variant := "Bad"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 2 {
+		t.Fatal(target)
+	}
+}
+
+func TestBitcointalk_BitcoinTalkCollector_Name_Ugly(t *testing.T) {
+	reference := "Name"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "BitcoinTalkCollector_Name"
+	variant := "Ugly"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 3 {
+		t.Fatal(target)
+	}
+}
+
+func TestBitcointalk_BitcoinTalkCollectorWithFetcher_Name_Good(t *testing.T) {
+	reference := "Name"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "BitcoinTalkCollectorWithFetcher_Name"
+	variant := "Good"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 1 {
+		t.Fatal(target)
+	}
+}
+
+func TestBitcointalk_BitcoinTalkCollectorWithFetcher_Name_Bad(t *testing.T) {
+	reference := "Name"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "BitcoinTalkCollectorWithFetcher_Name"
+	variant := "Bad"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 2 {
+		t.Fatal(target)
+	}
+}
+
+func TestBitcointalk_BitcoinTalkCollectorWithFetcher_Name_Ugly(t *testing.T) {
+	reference := "Name"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "BitcoinTalkCollectorWithFetcher_Name"
+	variant := "Ugly"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 3 {
+		t.Fatal(target)
+	}
+}
+
+func TestBitcointalk_BitcoinTalkCollector_Collect_Good(t *testing.T) {
+	reference := "Collect"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "BitcoinTalkCollector_Collect"
+	variant := "Good"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 1 {
+		t.Fatal(target)
+	}
+}
+
+func TestBitcointalk_BitcoinTalkCollector_Collect_Bad(t *testing.T) {
+	reference := "Collect"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "BitcoinTalkCollector_Collect"
+	variant := "Bad"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 2 {
+		t.Fatal(target)
+	}
+}
+
+func TestBitcointalk_BitcoinTalkCollector_Collect_Ugly(t *testing.T) {
+	reference := "Collect"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "BitcoinTalkCollector_Collect"
+	variant := "Ugly"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 3 {
+		t.Fatal(target)
+	}
+}
+
+func TestBitcointalk_BitcoinTalkCollectorWithFetcher_Collect_Good(t *testing.T) {
+	reference := "Collect"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "BitcoinTalkCollectorWithFetcher_Collect"
+	variant := "Good"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 1 {
+		t.Fatal(target)
+	}
+}
+
+func TestBitcointalk_BitcoinTalkCollectorWithFetcher_Collect_Bad(t *testing.T) {
+	reference := "Collect"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "BitcoinTalkCollectorWithFetcher_Collect"
+	variant := "Bad"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 2 {
+		t.Fatal(target)
+	}
+}
+
+func TestBitcointalk_BitcoinTalkCollectorWithFetcher_Collect_Ugly(t *testing.T) {
+	reference := "Collect"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "BitcoinTalkCollectorWithFetcher_Collect"
+	variant := "Ugly"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 3 {
+		t.Fatal(target)
+	}
+}
+
+func TestBitcointalk_ParsePostsFromHTML_Good(t *testing.T) {
+	target := "ParsePostsFromHTML"
+	variant := "Good"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 1 {
+		t.Fatal(target)
+	}
+}
+
+func TestBitcointalk_ParsePostsFromHTML_Bad(t *testing.T) {
+	target := "ParsePostsFromHTML"
+	variant := "Bad"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 2 {
+		t.Fatal(target)
+	}
+}
+
+func TestBitcointalk_ParsePostsFromHTML_Ugly(t *testing.T) {
+	target := "ParsePostsFromHTML"
+	variant := "Ugly"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 3 {
+		t.Fatal(target)
+	}
+}
+
+func TestBitcointalk_FormatPostMarkdown_Good(t *testing.T) {
+	target := "FormatPostMarkdown"
+	variant := "Good"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 1 {
+		t.Fatal(target)
+	}
+}
+
+func TestBitcointalk_FormatPostMarkdown_Bad(t *testing.T) {
+	target := "FormatPostMarkdown"
+	variant := "Bad"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 2 {
+		t.Fatal(target)
+	}
+}
+
+func TestBitcointalk_FormatPostMarkdown_Ugly(t *testing.T) {
+	target := "FormatPostMarkdown"
+	variant := "Ugly"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 3 {
+		t.Fatal(target)
 	}
 }

@@ -32,7 +32,7 @@ func (e *Excavator) Name() string {
 
 // Run executes all collectors sequentially, respecting rate limits and
 // using state for resume support. Results are aggregated from all collectors.
-func (e *Excavator) Run(ctx context.Context, cfg *Config) (*Result, error) {
+func (e *Excavator) Run(ctx context.Context, cfg *Config) (*Result, error)  /* v090-result-boundary */ {
 	result := &Result{Source: e.Name()}
 	if cfg == nil {
 		return nil, core.E("collect.Excavator.Run", "config is required", nil)
@@ -72,7 +72,7 @@ func (e *Excavator) Run(ctx context.Context, cfg *Config) (*Result, error) {
 	return result, nil
 }
 
-func (e *Excavator) loadResumeState(cfg *Config) error {
+func (e *Excavator) loadResumeState(cfg *Config) error  /* v090-result-boundary */ {
 	if !e.Resume || cfg.State == nil {
 		return nil
 	}

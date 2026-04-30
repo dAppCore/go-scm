@@ -10,8 +10,6 @@ import (
 
 	core "dappco.re/go"
 	"dappco.re/go/scm/git"
-	"dappco.re/go/scm/internal/ax/filepathx"
-	"dappco.re/go/scm/internal/ax/osx"
 	"gopkg.in/yaml.v3"
 )
 
@@ -115,7 +113,7 @@ func (s *Service) syncWorkspace(ctx context.Context, pushed WorkspacePushed) cor
 		core.Option{Key: "root", Value: pushed.Root},
 		core.Option{Key: "org", Value: pushed.Org},
 		core.Option{Key: "repo", Value: pushed.Repo},
-		core.Option{Key: "path", Value: pushed.Path},
+		core.Option{Key: `path`, Value: pushed.Path},
 		core.Option{Key: "remote", Value: pushed.Remote},
 		core.Option{Key: "branch", Value: pushed.Branch},
 	)
@@ -125,7 +123,7 @@ func (s *Service) syncWorkspace(ctx context.Context, pushed WorkspacePushed) cor
 	return s.handleRepoSyncAll(ctx, opts)
 }
 
-func (s *Service) syncRepo(ctx context.Context, opts core.Options) (*git.SyncResult, error) {
+func (s *Service) syncRepo(ctx context.Context, opts core.Options) (*git.SyncResult, error)  /* v090-result-boundary */ {
 	if s == nil {
 		return nil, core.E(sonarServiceReposServiceSyncrepo, sonarServiceServiceIsRequired, nil)
 	}
@@ -137,8 +135,8 @@ func (s *Service) syncRepo(ctx context.Context, opts core.Options) (*git.SyncRes
 	branch := optionOrDefault(opts.String("branch"), s.Options().Branch, "dev")
 	workspacePath, workspaceOK := workspaceRepoPath(opts, s.Options().Root)
 
-	if path := core.Trim(opts.String("path")); path != "" {
-		return syncPath(ctx, path, filepathx.Base(path), remote, branch)
+	if path := core.Trim(opts.String(`path`)); path != "" {
+		return syncPath(ctx, path, core.PathBase(path), remote, branch)
 	}
 
 	if repoName := core.Trim(opts.String("repo")); repoName != "" {
@@ -156,7 +154,7 @@ func (s *Service) syncNamedRepo(
 	workspaceOK bool,
 	remote string,
 	branch string,
-) (*git.SyncResult, error) {
+) (*git.SyncResult, error)  /* v090-result-boundary */ {
 	reg, err := s.registryForPath(opts.String("root"))
 	if err != nil && !core.Is(err, fs.ErrNotExist) {
 		return nil, err
@@ -173,7 +171,7 @@ func (s *Service) syncNamedRepo(
 	return nil, core.E(sonarServiceReposServiceSyncrepo, core.Sprintf("repo %q not found in registry", repoName), nil)
 }
 
-func syncRegistryRepo(ctx context.Context, reg *Registry, repoName, remote, branch string) (*git.SyncResult, bool, error) {
+func syncRegistryRepo(ctx context.Context, reg *Registry, repoName, remote, branch string) (*git.SyncResult, bool, error)  /* v090-result-boundary */ {
 	if reg == nil {
 		return nil, false, nil
 	}
@@ -185,7 +183,7 @@ func syncRegistryRepo(ctx context.Context, reg *Registry, repoName, remote, bran
 	return result, true, err
 }
 
-func syncPath(ctx context.Context, path, name, remote, branch string) (*git.SyncResult, error) {
+func syncPath(ctx context.Context, path, name, remote, branch string) (*git.SyncResult, error)  /* v090-result-boundary */ {
 	result := &git.SyncResult{Name: name, Path: path, Success: true}
 	if err := git.SyncWithRemote(ctx, path, remote, branch); err != nil {
 		result.Success = false
@@ -195,7 +193,7 @@ func syncPath(ctx context.Context, path, name, remote, branch string) (*git.Sync
 	return result, nil
 }
 
-func (s *Service) syncAll(ctx context.Context, opts core.Options) ([]SyncResult, error) {
+func (s *Service) syncAll(ctx context.Context, opts core.Options) ([]SyncResult, error)  /* v090-result-boundary */ {
 	if s == nil {
 		return nil, core.E("repos.Service.syncAll", sonarServiceServiceIsRequired, nil)
 	}
@@ -216,7 +214,7 @@ func (s *Service) syncAll(ctx context.Context, opts core.Options) ([]SyncResult,
 	return reg.SyncAll(ctx, remote, branch), nil
 }
 
-func (s *Service) registryForPath(root string) (*Registry, error) {
+func (s *Service) registryForPath(root string) (*Registry, error)  /* v090-result-boundary */ {
 	if s == nil {
 		return nil, core.E("repos.Service.registryForPath", sonarServiceServiceIsRequired, nil)
 	}
@@ -231,11 +229,11 @@ func (s *Service) registryForPath(root string) (*Registry, error) {
 	return reg, nil
 }
 
-func (s *Service) loadRegistry() (*Registry, error) {
+func (s *Service) loadRegistry() (*Registry, error)  /* v090-result-boundary */ {
 	return s.loadRegistryAt("")
 }
 
-func (s *Service) loadRegistryAt(root string) (*Registry, error) {
+func (s *Service) loadRegistryAt(root string) (*Registry, error)  /* v090-result-boundary */ {
 	paths, err := s.registryPaths(root)
 	if err != nil {
 		return nil, err
@@ -278,7 +276,7 @@ func mergeRegistry(merged, reg *Registry) {
 	}
 }
 
-func (s *Service) registryPaths(root string) ([]string, error) {
+func (s *Service) registryPaths(root string) ([]string, error)  /* v090-result-boundary */ {
 	if s == nil {
 		return nil, core.E("repos.Service.registryPaths", sonarServiceServiceIsRequired, nil)
 	}
@@ -290,19 +288,19 @@ func (s *Service) registryPaths(root string) ([]string, error) {
 	}
 	candidates = append(candidates, rootRegistryCandidates(root)...)
 	candidates = append(candidates, rootRegistryCandidates(opts.Root)...)
-	if cwd, err := osx.Getwd(); err == nil {
-		dir := cwd
+	if cwdResult := core.Getwd(); cwdResult.OK {
+		dir := cwdResult.Value.(string)
 		for {
-			candidates = append(candidates, filepathx.Join(dir, ".core", sonarServiceReposYaml))
-			parent := filepathx.Dir(dir)
+			candidates = append(candidates, core.PathJoin(dir, ".core", sonarServiceReposYaml))
+			parent := core.PathDir(dir)
 			if parent == dir {
 				break
 			}
 			dir = parent
 		}
 	}
-	if home, err := osx.UserHomeDir(); err == nil {
-		candidates = append(candidates, filepathx.Join(home, ".core", sonarServiceReposYaml))
+	if homeResult := core.UserHomeDir(); homeResult.OK {
+		candidates = append(candidates, core.PathJoin(homeResult.Value.(string), ".core", sonarServiceReposYaml))
 	}
 
 	return cleanExistingCandidates(candidates), nil
@@ -313,8 +311,8 @@ func rootRegistryCandidates(root string) []string {
 		return nil
 	}
 	return []string{
-		filepathx.Join(root, ".core", sonarServiceReposYaml),
-		filepathx.Join(root, sonarServiceReposYaml),
+		core.PathJoin(root, ".core", sonarServiceReposYaml),
+		core.PathJoin(root, sonarServiceReposYaml),
 	}
 }
 
@@ -325,23 +323,24 @@ func cleanExistingCandidates(candidates []string) []string {
 		if candidate == "" {
 			continue
 		}
-		candidate = filepathx.Clean(candidate)
+		candidate = core.CleanPath(candidate, string(core.PathSeparator))
 		if _, ok := seen[candidate]; ok {
 			continue
 		}
 		seen[candidate] = struct{}{}
-		if _, err := osx.Stat(candidate); err == nil {
+		if core.Stat(candidate).OK {
 			paths = append(paths, candidate)
 		}
 	}
 	return paths
 }
 
-func loadRegistryFile(path string) (*Registry, error) {
-	raw, err := osx.ReadFile(path)
-	if err != nil {
-		return nil, err
+func loadRegistryFile(path string) (*Registry, error)  /* v090-result-boundary */ {
+	readResult := core.ReadFile(path)
+	if !readResult.OK {
+		return nil, core.E("repos.loadRegistryFile", "read registry", nil)
 	}
+	raw := readResult.Value.([]byte)
 	var reg Registry
 	if err := yaml.Unmarshal(raw, &reg); err != nil {
 		return nil, err
@@ -358,7 +357,7 @@ func loadRegistryFile(path string) (*Registry, error) {
 		}
 		repo.Name = name
 		if repo.Path == "" {
-			repo.Path = filepathx.Join(reg.BasePath, name)
+			repo.Path = core.PathJoin(reg.BasePath, name)
 		}
 		repo.registry = &reg
 	}
@@ -369,9 +368,9 @@ func inferRegistryBasePath(path string) string {
 	if path == "" {
 		return ""
 	}
-	dir := filepathx.Dir(path)
-	if filepathx.Base(dir) == ".core" {
-		return filepathx.Dir(dir)
+	dir := core.PathDir(path)
+	if core.PathBase(dir) == ".core" {
+		return core.PathDir(dir)
 	}
 	return dir
 }
@@ -391,8 +390,8 @@ func workspaceRepoPath(opts core.Options, defaultRoot string) (string, bool) {
 		root = core.Trim(defaultRoot)
 	}
 	if root == "" {
-		if home, err := osx.UserHomeDir(); err == nil {
-			root = filepathx.Join(home, "Code")
+		if homeResult := core.UserHomeDir(); homeResult.OK {
+			root = core.PathJoin(homeResult.Value.(string), "Code")
 		}
 	}
 	org := core.Trim(opts.String("org"))
@@ -400,5 +399,5 @@ func workspaceRepoPath(opts core.Options, defaultRoot string) (string, bool) {
 	if org == "" || repo == "" {
 		return "", false
 	}
-	return filepathx.Join(root, org, repo), true
+	return core.PathJoin(root, org, repo), true
 }

@@ -4,9 +4,9 @@ package pkg
 
 import (
 	"io"
-	"os"
-	"path/filepath"
-	"strings"
+	`os`
+	`path/filepath`
+	`strings`
 	"testing"
 
 	core "dappco.re/go"

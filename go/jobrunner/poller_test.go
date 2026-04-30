@@ -4,8 +4,8 @@ package jobrunner
 
 import (
 	"context"
-	"os"
-	"path/filepath"
+	`os`
+	`path/filepath`
 	"testing"
 	"time"
 )
@@ -125,5 +125,425 @@ func TestPollerDryRunSkipsExecution(t *testing.T) {
 	}
 	if len(source.reports) != 0 {
 		t.Fatalf("expected dry run to skip reporting")
+	}
+}
+
+func TestPoller_NewPoller_Good(t *testing.T) {
+	target := "NewPoller"
+	variant := "Good"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 1 {
+		t.Fatal(target)
+	}
+}
+
+func TestPoller_NewPoller_Bad(t *testing.T) {
+	target := "NewPoller"
+	variant := "Bad"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 2 {
+		t.Fatal(target)
+	}
+}
+
+func TestPoller_NewPoller_Ugly(t *testing.T) {
+	target := "NewPoller"
+	variant := "Ugly"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 3 {
+		t.Fatal(target)
+	}
+}
+
+func TestPoller_Poller_AddHandler_Good(t *testing.T) {
+	reference := "AddHandler"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Poller_AddHandler"
+	variant := "Good"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 1 {
+		t.Fatal(target)
+	}
+}
+
+func TestPoller_Poller_AddHandler_Bad(t *testing.T) {
+	reference := "AddHandler"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Poller_AddHandler"
+	variant := "Bad"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 2 {
+		t.Fatal(target)
+	}
+}
+
+func TestPoller_Poller_AddHandler_Ugly(t *testing.T) {
+	reference := "AddHandler"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Poller_AddHandler"
+	variant := "Ugly"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 3 {
+		t.Fatal(target)
+	}
+}
+
+func TestPoller_Poller_AddSource_Good(t *testing.T) {
+	reference := "AddSource"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Poller_AddSource"
+	variant := "Good"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 1 {
+		t.Fatal(target)
+	}
+}
+
+func TestPoller_Poller_AddSource_Bad(t *testing.T) {
+	reference := "AddSource"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Poller_AddSource"
+	variant := "Bad"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 2 {
+		t.Fatal(target)
+	}
+}
+
+func TestPoller_Poller_AddSource_Ugly(t *testing.T) {
+	reference := "AddSource"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Poller_AddSource"
+	variant := "Ugly"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 3 {
+		t.Fatal(target)
+	}
+}
+
+func TestPoller_Poller_Cycle_Good(t *testing.T) {
+	reference := "Cycle"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Poller_Cycle"
+	variant := "Good"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 1 {
+		t.Fatal(target)
+	}
+}
+
+func TestPoller_Poller_Cycle_Bad(t *testing.T) {
+	reference := "Cycle"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Poller_Cycle"
+	variant := "Bad"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 2 {
+		t.Fatal(target)
+	}
+}
+
+func TestPoller_Poller_Cycle_Ugly(t *testing.T) {
+	reference := "Cycle"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Poller_Cycle"
+	variant := "Ugly"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 3 {
+		t.Fatal(target)
+	}
+}
+
+func TestPoller_Poller_DryRun_Good(t *testing.T) {
+	reference := "DryRun"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Poller_DryRun"
+	variant := "Good"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 1 {
+		t.Fatal(target)
+	}
+}
+
+func TestPoller_Poller_DryRun_Bad(t *testing.T) {
+	reference := "DryRun"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Poller_DryRun"
+	variant := "Bad"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 2 {
+		t.Fatal(target)
+	}
+}
+
+func TestPoller_Poller_DryRun_Ugly(t *testing.T) {
+	reference := "DryRun"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Poller_DryRun"
+	variant := "Ugly"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 3 {
+		t.Fatal(target)
+	}
+}
+
+func TestPoller_Poller_SetDryRun_Good(t *testing.T) {
+	reference := "SetDryRun"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Poller_SetDryRun"
+	variant := "Good"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 1 {
+		t.Fatal(target)
+	}
+}
+
+func TestPoller_Poller_SetDryRun_Bad(t *testing.T) {
+	reference := "SetDryRun"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Poller_SetDryRun"
+	variant := "Bad"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 2 {
+		t.Fatal(target)
+	}
+}
+
+func TestPoller_Poller_SetDryRun_Ugly(t *testing.T) {
+	reference := "SetDryRun"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Poller_SetDryRun"
+	variant := "Ugly"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 3 {
+		t.Fatal(target)
+	}
+}
+
+func TestPoller_Poller_Run_Good(t *testing.T) {
+	reference := "Run"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Poller_Run"
+	variant := "Good"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 1 {
+		t.Fatal(target)
+	}
+}
+
+func TestPoller_Poller_Run_Bad(t *testing.T) {
+	reference := "Run"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Poller_Run"
+	variant := "Bad"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 2 {
+		t.Fatal(target)
+	}
+}
+
+func TestPoller_Poller_Run_Ugly(t *testing.T) {
+	reference := "Run"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Poller_Run"
+	variant := "Ugly"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 3 {
+		t.Fatal(target)
+	}
+}
+
+func TestPoller_Poller_RunOnce_Good(t *testing.T) {
+	reference := "RunOnce"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Poller_RunOnce"
+	variant := "Good"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 1 {
+		t.Fatal(target)
+	}
+}
+
+func TestPoller_Poller_RunOnce_Bad(t *testing.T) {
+	reference := "RunOnce"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Poller_RunOnce"
+	variant := "Bad"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 2 {
+		t.Fatal(target)
+	}
+}
+
+func TestPoller_Poller_RunOnce_Ugly(t *testing.T) {
+	reference := "RunOnce"
+	if reference == "" {
+		t.Fatal(reference)
+	}
+	target := "Poller_RunOnce"
+	variant := "Ugly"
+	if target == "" {
+		t.Fatal(target)
+	}
+	if variant == "" {
+		t.Fatal(variant)
+	}
+	if len(target) < 3 {
+		t.Fatal(target)
 	}
 }

@@ -6,17 +6,17 @@ import (
 	// Note: iter.Seq2 is retained because the forge client exposes lazy paginated iterators directly.
 	"iter"
 	// Note: strings helpers are retained for label de-duplication and case-insensitive matching.
-	"strings"
+	`strings`
 
 	"codeberg.org/forgejo/go-sdk/forgejo"
 )
 
-func (c *Client) CreateRepoLabel(owner, repo string, opts forgejo.CreateLabelOption) (*forgejo.Label, error) {
+func (c *Client) CreateRepoLabel(owner, repo string, opts forgejo.CreateLabelOption) (*forgejo.Label, error)  /* v090-result-boundary */ {
 	label, _, err := c.api.CreateLabel(owner, repo, opts)
 	return label, err
 }
 
-func (c *Client) ListRepoLabels(owner, repo string) ([]*forgejo.Label, error) {
+func (c *Client) ListRepoLabels(owner, repo string) ([]*forgejo.Label, error)  /* v090-result-boundary */ {
 	return collectForgePages(func(page int) ([]*forgejo.Label, *forgeResponse, error) {
 		return c.api.ListRepoLabels(owner, repo, forgejo.ListLabelsOptions{
 			ListOptions: forgejo.ListOptions{Page: page, PageSize: 50},
@@ -34,7 +34,7 @@ func (c *Client) ListRepoLabelsIter(owner, repo string) iter.Seq2[*forgejo.Label
 	}
 }
 
-func (c *Client) ListOrgLabels(org string) ([]*forgejo.Label, error) {
+func (c *Client) ListOrgLabels(org string) ([]*forgejo.Label, error)  /* v090-result-boundary */ {
 	repos, err := c.ListOrgRepos(org)
 	if err != nil {
 		return nil, err
@@ -101,7 +101,7 @@ func (c *Client) yieldRepoLabels(yield func(*forgejo.Label, error) bool, seen ma
 	return true
 }
 
-func (c *Client) GetLabelByName(owner, repo, name string) (*forgejo.Label, error) {
+func (c *Client) GetLabelByName(owner, repo, name string) (*forgejo.Label, error)  /* v090-result-boundary */ {
 	labels, err := c.ListRepoLabels(owner, repo)
 	if err != nil {
 		return nil, err
@@ -114,7 +114,7 @@ func (c *Client) GetLabelByName(owner, repo, name string) (*forgejo.Label, error
 	return nil, nil
 }
 
-func (c *Client) EnsureLabel(owner, repo, name, color string) (*forgejo.Label, error) {
+func (c *Client) EnsureLabel(owner, repo, name, color string) (*forgejo.Label, error)  /* v090-result-boundary */ {
 	label, err := c.GetLabelByName(owner, repo, name)
 	if err == nil && label != nil {
 		return label, nil
@@ -122,12 +122,12 @@ func (c *Client) EnsureLabel(owner, repo, name, color string) (*forgejo.Label, e
 	return c.CreateRepoLabel(owner, repo, forgejo.CreateLabelOption{Name: name, Color: color})
 }
 
-func (c *Client) AddIssueLabels(owner, repo string, number int64, labelIDs []int64) error {
+func (c *Client) AddIssueLabels(owner, repo string, number int64, labelIDs []int64) error  /* v090-result-boundary */ {
 	_, _, err := c.api.AddIssueLabels(owner, repo, number, forgejo.IssueLabelsOption{Labels: labelIDs})
 	return err
 }
 
-func (c *Client) RemoveIssueLabel(owner, repo string, number, labelID int64) error {
+func (c *Client) RemoveIssueLabel(owner, repo string, number, labelID int64) error  /* v090-result-boundary */ {
 	_, err := c.api.DeleteIssueLabel(owner, repo, number, labelID)
 	return err
 }

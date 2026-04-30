@@ -97,7 +97,7 @@ func failed(err error) core.Result {
 	return core.Fail(err)
 }
 
-func readFile(app *core.Core, path string) ([]byte, error) {
+func readFile(app *core.Core, path string) ([]byte, error)  /* v090-result-boundary */ {
 	if app == nil {
 		return nil, core.E("cmd.compile.readFile", "core app is required", nil)
 	}
@@ -112,7 +112,7 @@ func readFile(app *core.Core, path string) ([]byte, error) {
 	return []byte(raw), nil
 }
 
-func resultError(op, msg string, r core.Result) error {
+func resultError(op, msg string, r core.Result) error  /* v090-result-boundary */ {
 	if err, ok := r.Value.(error); ok {
 		return core.E(op, msg, err)
 	}

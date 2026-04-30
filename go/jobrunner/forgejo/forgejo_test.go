@@ -16,7 +16,7 @@ const (
 	sonarForgejoTestCoreGoScm = "core/go-scm"
 )
 
-func ax7ForgeClient(t *core.T) *coreforge.Client {
+func testForgeClient(t *core.T) *coreforge.Client {
 	t.Helper()
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/api/v1/version" {
@@ -87,7 +87,7 @@ func TestForgejo_ForgejoSource_Poll_Bad(t *core.T) {
 }
 
 func TestForgejo_ForgejoSource_Poll_Ugly(t *core.T) {
-	source := New(Config{Repos: []string{"broken-ref"}}, ax7ForgeClient(t))
+	source := New(Config{Repos: []string{"broken-ref"}}, testForgeClient(t))
 	signals, err := source.Poll(context.Background())
 	core.AssertError(t, err)
 	core.AssertNil(t, signals)
@@ -109,7 +109,7 @@ func TestForgejo_ForgejoSource_Report_Bad(t *core.T) {
 }
 
 func TestForgejo_ForgejoSource_Report_Ugly(t *core.T) {
-	source := New(Config{}, ax7ForgeClient(t))
+	source := New(Config{}, testForgeClient(t))
 	err := source.Report(context.Background(), &jobrunner.ActionResult{Action: "report", RepoOwner: "owner", RepoName: "repo", EpicNumber: 7})
 	core.AssertError(t, err)
 }

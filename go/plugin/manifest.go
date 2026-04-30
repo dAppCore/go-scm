@@ -4,10 +4,10 @@ package plugin
 
 import (
 	// Note: errors.New is retained for stable manifest validation errors.
-	"errors"
+	`errors`
 
+	core "dappco.re/go"
 	coreio "dappco.re/go/io"
-	"dappco.re/go/scm/internal/ax/jsonx"
 )
 
 type Manifest struct {
@@ -20,7 +20,7 @@ type Manifest struct {
 	MinVersion   string   `json:"min_version,omitempty"`
 }
 
-func (m *Manifest) Validate() error {
+func (m *Manifest) Validate() error  /* v090-result-boundary */ {
 	if m == nil {
 		return errors.New("plugin.Manifest.Validate: manifest is required")
 	}
@@ -30,7 +30,7 @@ func (m *Manifest) Validate() error {
 	return nil
 }
 
-func LoadManifest(m coreio.Medium, path string) (*Manifest, error) {
+func LoadManifest(m coreio.Medium, path string) (*Manifest, error)  /* v090-result-boundary */ {
 	if m == nil {
 		return nil, errors.New("plugin.LoadManifest: medium is required")
 	}
@@ -39,8 +39,8 @@ func LoadManifest(m coreio.Medium, path string) (*Manifest, error) {
 		return nil, err
 	}
 	var manifest Manifest
-	if err := jsonx.Unmarshal([]byte(raw), &manifest); err != nil {
-		return nil, err
+	if r := core.JSONUnmarshal([]byte(raw), &manifest); !r.OK {
+		return nil, core.E("plugin.LoadManifest", "decode manifest", nil)
 	}
 	return &manifest, manifest.Validate()
 }

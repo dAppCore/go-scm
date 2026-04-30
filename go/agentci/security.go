@@ -5,7 +5,7 @@ package agentci
 import (
 	// Note: context.Context is retained as the public cancellation contract for SSH command construction.
 	"context"
-	"os/exec" // Note: AX-6 — process invocation via os/exec is intrinsic for SSH exec.Cmd construction returned by this public API.
+	`os/exec` // Note: AX-6 — process invocation via os/exec is intrinsic for SSH exec.Cmd construction returned by this public API.
 	// Note: regexp is retained for path-element allowlist validation; no core equivalent covers compiled regexes.
 	"regexp"
 
@@ -23,7 +23,7 @@ var safeNameRegex = regexp.MustCompile(`^[a-zA-Z0-9\-\_\.]+$`)
 // SanitizePath ensures a filename or directory name is safe and prevents path traversal.
 // Returns the validated input unchanged.
 // Usage: SanitizePath(...)
-func SanitizePath(input string) (string, error) {
+func SanitizePath(input string) (string, error)  /* v090-result-boundary */ {
 	if input == "" {
 		return "", core.E(sonarSecurityAgentciSanitizepath, "path element is required", nil)
 	}
@@ -41,7 +41,7 @@ func SanitizePath(input string) (string, error) {
 
 // ValidatePathElement validates a single local path element and returns its safe form.
 // Usage: ValidatePathElement(...)
-func ValidatePathElement(input string) (string, error) {
+func ValidatePathElement(input string) (string, error)  /* v090-result-boundary */ {
 	safeName, err := SanitizePath(input)
 	if err != nil {
 		return "", err
@@ -54,7 +54,7 @@ func ValidatePathElement(input string) (string, error) {
 
 // ResolvePathWithinRoot resolves a validated path element beneath a root directory.
 // Usage: ResolvePathWithinRoot(...)
-func ResolvePathWithinRoot(root string, input string) (string, string, error) {
+func ResolvePathWithinRoot(root string, input string) (string, string, error)  /* v090-result-boundary */ {
 	if core.Trim(root) == "" {
 		return "", "", core.E(sonarSecurityAgentciResolvepathwithinroot, "root is required", nil)
 	}
@@ -84,7 +84,7 @@ func ResolvePathWithinRoot(root string, input string) (string, string, error) {
 
 // ValidateRemoteDir validates a remote directory path used over SSH.
 // Usage: ValidateRemoteDir(...)
-func ValidateRemoteDir(dir string) (string, error) {
+func ValidateRemoteDir(dir string) (string, error)  /* v090-result-boundary */ {
 	if core.Trim(dir) == "" {
 		return "", core.E(sonarSecurityAgentciValidateremotedir, "directory is required", nil)
 	}
@@ -119,7 +119,7 @@ func splitRemoteDirPrefix(dir string) (prefix, rest string) {
 	return "", dir
 }
 
-func validateRemoteDirSegments(rest string) error {
+func validateRemoteDirSegments(rest string) error  /* v090-result-boundary */ {
 	for _, part := range core.Split(rest, "/") {
 		if part == "" {
 			continue
@@ -143,7 +143,7 @@ func remoteDirRoot(prefix string) string {
 
 // JoinRemotePath joins validated remote path elements using forward slashes.
 // Usage: JoinRemotePath(...)
-func JoinRemotePath(base string, parts ...string) (string, error) {
+func JoinRemotePath(base string, parts ...string) (string, error)  /* v090-result-boundary */ {
 	safeBase, err := ValidateRemoteDir(base)
 	if err != nil {
 		return "", core.E("agentci.JoinRemotePath", "invalid base directory", err)

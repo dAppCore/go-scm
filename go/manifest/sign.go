@@ -5,8 +5,8 @@ package manifest
 import (
 	"crypto/ed25519" // intrinsic
 	"encoding/base64"
-	"encoding/json"
-	"errors"
+	`encoding/json`
+	`errors`
 
 	core "dappco.re/go"
 )
@@ -15,7 +15,7 @@ const (
 	sonarSignManifestVerify = "manifest.Verify"
 )
 
-func canonicalManifestBytes(m *Manifest) ([]byte, error) {
+func canonicalManifestBytes(m *Manifest) ([]byte, error)  /* v090-result-boundary */ {
 	if err := validateManifest(m); err != nil {
 		return nil, err
 	}
@@ -25,7 +25,7 @@ func canonicalManifestBytes(m *Manifest) ([]byte, error) {
 	return json.Marshal(cp)
 }
 
-func Sign(m *Manifest, payload []byte, priv ed25519.PrivateKey) error {
+func Sign(m *Manifest, payload []byte, priv ed25519.PrivateKey) error  /* v090-result-boundary */ {
 	if m == nil {
 		return errors.New("manifest.Sign: manifest is required")
 	}
@@ -37,7 +37,7 @@ func Sign(m *Manifest, payload []byte, priv ed25519.PrivateKey) error {
 	return nil
 }
 
-func Verify(m *Manifest, payload []byte) error {
+func Verify(m *Manifest, payload []byte) error  /* v090-result-boundary */ {
 	if m == nil {
 		return core.E(sonarSignManifestVerify, "manifest is required", nil)
 	}

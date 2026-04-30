@@ -15,7 +15,7 @@ const (
 	sonarPluginTestPluginsRegistryJson   = "plugins/registry.json"
 )
 
-func ax7PluginManifestJSON(name string) string {
+func testPluginManifestJSON(name string) string {
 	return `{"name":"` + name + `","version":"1.0.0","entrypoint":"plugin.so"}`
 }
 
@@ -146,7 +146,7 @@ func TestPlugin_Manifest_Validate_Ugly(t *core.T) {
 
 func TestPlugin_LoadManifest_Good(t *core.T) {
 	medium := coreio.NewMockMedium()
-	core.RequireNoError(t, medium.Write(sonarPluginTestPluginsDemoPluginJson, ax7PluginManifestJSON("demo")))
+	core.RequireNoError(t, medium.Write(sonarPluginTestPluginsDemoPluginJson, testPluginManifestJSON("demo")))
 	manifest, err := LoadManifest(medium, sonarPluginTestPluginsDemoPluginJson)
 	core.AssertNoError(t, err)
 	core.AssertEqual(t, "demo", manifest.Name)
@@ -187,7 +187,7 @@ func TestPlugin_NewLoader_Ugly(t *core.T) {
 
 func TestPlugin_Loader_Discover_Good(t *core.T) {
 	medium := coreio.NewMockMedium()
-	core.RequireNoError(t, medium.Write(sonarPluginTestPluginsDemoPluginJson, ax7PluginManifestJSON("demo")))
+	core.RequireNoError(t, medium.Write(sonarPluginTestPluginsDemoPluginJson, testPluginManifestJSON("demo")))
 	loader := NewLoader(medium, "plugins")
 	got, err := loader.Discover()
 	core.AssertNoError(t, err)
@@ -210,7 +210,7 @@ func TestPlugin_Loader_Discover_Ugly(t *core.T) {
 
 func TestPlugin_Loader_LoadPlugin_Good(t *core.T) {
 	medium := coreio.NewMockMedium()
-	core.RequireNoError(t, medium.Write(sonarPluginTestPluginsDemoPluginJson, ax7PluginManifestJSON("demo")))
+	core.RequireNoError(t, medium.Write(sonarPluginTestPluginsDemoPluginJson, testPluginManifestJSON("demo")))
 	loader := NewLoader(medium, "plugins")
 	manifest, err := loader.LoadPlugin("demo")
 	core.AssertNoError(t, err)

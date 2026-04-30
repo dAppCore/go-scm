@@ -5,8 +5,8 @@ package forge
 import (
 	"net/http"
 	"net/http/httptest"
-	"os"
-	"path/filepath"
+	`os`
+	`path/filepath`
 
 	forgejo "codeberg.org/forgejo/go-sdk/forgejo"
 	core "dappco.re/go"
@@ -19,7 +19,7 @@ const (
 	sonarForgeTestUnexpectedHttpStatus = "unexpected HTTP status"
 )
 
-func ax7ForgeClient(t *core.T) *Client {
+func testForgeClient(t *core.T) *Client {
 	t.Helper()
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/api/v1/version" {
@@ -150,7 +150,7 @@ func TestForge_SaveConfig_Ugly(t *core.T) {
 }
 
 func TestForge_Client_API_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	api := client.API()
 	core.AssertNotNil(t, api)
 }
@@ -168,7 +168,7 @@ func TestForge_Client_API_Ugly(t *core.T) {
 }
 
 func TestForge_Client_URL_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	url := client.URL()
 	core.AssertContains(t, url, "127.0.0.1")
 }
@@ -186,7 +186,7 @@ func TestForge_Client_URL_Ugly(t *core.T) {
 }
 
 func TestForge_Client_Token_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	token := client.Token()
 	core.AssertEqual(t, "token", token)
 }
@@ -222,7 +222,7 @@ func TestForge_Error_Error_Ugly(t *core.T) {
 }
 
 func TestForge_Client_GetCurrentUser_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	_, err := client.GetCurrentUser()
 	core.AssertError(t, err)
 }
@@ -240,7 +240,7 @@ func TestForge_Client_GetCurrentUser_Ugly(t *core.T) {
 }
 
 func TestForge_Client_CreatePullRequest_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	_, err := client.CreatePullRequest("owner", "repo", forgejo.CreatePullRequestOption{Title: "demo", Head: "feature", Base: "dev"})
 	core.AssertError(t, err)
 }
@@ -258,7 +258,7 @@ func TestForge_Client_CreatePullRequest_Ugly(t *core.T) {
 }
 
 func TestForge_Client_ForkRepo_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	_, err := client.ForkRepo("owner", "repo", "org")
 	core.AssertError(t, err)
 }
@@ -276,7 +276,7 @@ func TestForge_Client_ForkRepo_Ugly(t *core.T) {
 }
 
 func TestForge_Client_GetIssue_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	_, err := client.GetIssue("owner", "repo", 7)
 	core.AssertError(t, err)
 }
@@ -294,7 +294,7 @@ func TestForge_Client_GetIssue_Ugly(t *core.T) {
 }
 
 func TestForge_Client_EditIssue_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	_, err := client.EditIssue("owner", "repo", 7, forgejo.EditIssueOption{})
 	core.AssertError(t, err)
 }
@@ -312,7 +312,7 @@ func TestForge_Client_EditIssue_Ugly(t *core.T) {
 }
 
 func TestForge_Client_CloseIssue_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	err := client.CloseIssue("owner", "repo", 7)
 	core.AssertError(t, err)
 }
@@ -330,7 +330,7 @@ func TestForge_Client_CloseIssue_Ugly(t *core.T) {
 }
 
 func TestForge_Client_CreateIssue_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	_, err := client.CreateIssue("owner", "repo", forgejo.CreateIssueOption{Title: "demo"})
 	core.AssertError(t, err)
 }
@@ -348,7 +348,7 @@ func TestForge_Client_CreateIssue_Ugly(t *core.T) {
 }
 
 func TestForge_Client_CreateIssueComment_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	err := client.CreateIssueComment("owner", "repo", 7, "body")
 	core.AssertError(t, err)
 }
@@ -366,7 +366,7 @@ func TestForge_Client_CreateIssueComment_Ugly(t *core.T) {
 }
 
 func TestForge_Client_AssignIssue_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	err := client.AssignIssue("owner", "repo", 7, []string{"agent"})
 	core.AssertError(t, err)
 }
@@ -384,7 +384,7 @@ func TestForge_Client_AssignIssue_Ugly(t *core.T) {
 }
 
 func TestForge_Client_ListIssueComments_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	_, err := client.ListIssueComments("owner", "repo", 7)
 	core.AssertError(t, err)
 }
@@ -402,7 +402,7 @@ func TestForge_Client_ListIssueComments_Ugly(t *core.T) {
 }
 
 func TestForge_Client_ListIssueCommentsIter_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	var gotErr error
 	for _, err := range client.ListIssueCommentsIter("owner", "repo", 7) {
 		gotErr = err
@@ -432,7 +432,7 @@ func TestForge_Client_ListIssueCommentsIter_Ugly(t *core.T) {
 }
 
 func TestForge_Client_GetIssueLabels_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	_, err := client.GetIssueLabels("owner", "repo", 7)
 	core.AssertError(t, err)
 }
@@ -450,7 +450,7 @@ func TestForge_Client_GetIssueLabels_Ugly(t *core.T) {
 }
 
 func TestForge_Client_ListIssues_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	_, err := client.ListIssues("owner", "repo", ListIssuesOpts{State: "all", Limit: 1})
 	core.AssertError(t, err)
 }
@@ -468,7 +468,7 @@ func TestForge_Client_ListIssues_Ugly(t *core.T) {
 }
 
 func TestForge_Client_ListPullRequests_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	_, err := client.ListPullRequests("owner", "repo", "all")
 	core.AssertError(t, err)
 }
@@ -486,7 +486,7 @@ func TestForge_Client_ListPullRequests_Ugly(t *core.T) {
 }
 
 func TestForge_Client_ListPullRequestsIter_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	var gotErr error
 	for _, err := range client.ListPullRequestsIter("owner", "repo", "all") {
 		gotErr = err
@@ -516,7 +516,7 @@ func TestForge_Client_ListPullRequestsIter_Ugly(t *core.T) {
 }
 
 func TestForge_Client_GetPullRequest_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	_, err := client.GetPullRequest("owner", "repo", 7)
 	core.AssertError(t, err)
 }
@@ -534,7 +534,7 @@ func TestForge_Client_GetPullRequest_Ugly(t *core.T) {
 }
 
 func TestForge_Client_CreateOrgRepo_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	_, err := client.CreateOrgRepo("org", forgejo.CreateRepoOption{Name: "repo"})
 	core.AssertError(t, err)
 }
@@ -552,7 +552,7 @@ func TestForge_Client_CreateOrgRepo_Ugly(t *core.T) {
 }
 
 func TestForge_Client_DeleteRepo_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	err := client.DeleteRepo("owner", "repo")
 	core.AssertError(t, err)
 }
@@ -570,7 +570,7 @@ func TestForge_Client_DeleteRepo_Ugly(t *core.T) {
 }
 
 func TestForge_Client_GetRepo_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	_, err := client.GetRepo("owner", "repo")
 	core.AssertError(t, err)
 }
@@ -588,7 +588,7 @@ func TestForge_Client_GetRepo_Ugly(t *core.T) {
 }
 
 func TestForge_Client_ListOrgRepos_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	_, err := client.ListOrgRepos("org")
 	core.AssertError(t, err)
 }
@@ -606,7 +606,7 @@ func TestForge_Client_ListOrgRepos_Ugly(t *core.T) {
 }
 
 func TestForge_Client_ListOrgReposIter_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	var gotErr error
 	for _, err := range client.ListOrgReposIter("org") {
 		gotErr = err
@@ -636,7 +636,7 @@ func TestForge_Client_ListOrgReposIter_Ugly(t *core.T) {
 }
 
 func TestForge_Client_ListUserRepos_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	_, err := client.ListUserRepos()
 	core.AssertError(t, err)
 }
@@ -654,7 +654,7 @@ func TestForge_Client_ListUserRepos_Ugly(t *core.T) {
 }
 
 func TestForge_Client_ListUserReposIter_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	var gotErr error
 	for _, err := range client.ListUserReposIter() {
 		gotErr = err
@@ -684,7 +684,7 @@ func TestForge_Client_ListUserReposIter_Ugly(t *core.T) {
 }
 
 func TestForge_Client_MigrateRepo_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	_, err := client.MigrateRepo(forgejo.MigrateRepoOption{RepoName: "repo", CloneAddr: "https://example.test/repo.git"})
 	core.AssertError(t, err)
 }
@@ -702,7 +702,7 @@ func TestForge_Client_MigrateRepo_Ugly(t *core.T) {
 }
 
 func TestForge_Client_CreateRepoLabel_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	_, err := client.CreateRepoLabel("owner", "repo", forgejo.CreateLabelOption{Name: "ready", Color: "00ff00"})
 	core.AssertError(t, err)
 }
@@ -720,7 +720,7 @@ func TestForge_Client_CreateRepoLabel_Ugly(t *core.T) {
 }
 
 func TestForge_Client_ListRepoLabels_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	_, err := client.ListRepoLabels("owner", "repo")
 	core.AssertError(t, err)
 }
@@ -738,7 +738,7 @@ func TestForge_Client_ListRepoLabels_Ugly(t *core.T) {
 }
 
 func TestForge_Client_ListRepoLabelsIter_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	var gotErr error
 	for _, err := range client.ListRepoLabelsIter("owner", "repo") {
 		gotErr = err
@@ -768,7 +768,7 @@ func TestForge_Client_ListRepoLabelsIter_Ugly(t *core.T) {
 }
 
 func TestForge_Client_ListOrgLabels_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	_, err := client.ListOrgLabels("org")
 	core.AssertError(t, err)
 }
@@ -786,7 +786,7 @@ func TestForge_Client_ListOrgLabels_Ugly(t *core.T) {
 }
 
 func TestForge_Client_ListOrgLabelsIter_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	var gotErr error
 	for _, err := range client.ListOrgLabelsIter("org") {
 		gotErr = err
@@ -816,7 +816,7 @@ func TestForge_Client_ListOrgLabelsIter_Ugly(t *core.T) {
 }
 
 func TestForge_Client_GetLabelByName_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	_, err := client.GetLabelByName("owner", "repo", "ready")
 	core.AssertError(t, err)
 }
@@ -834,7 +834,7 @@ func TestForge_Client_GetLabelByName_Ugly(t *core.T) {
 }
 
 func TestForge_Client_EnsureLabel_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	_, err := client.EnsureLabel("owner", "repo", "ready", "00ff00")
 	core.AssertError(t, err)
 }
@@ -852,7 +852,7 @@ func TestForge_Client_EnsureLabel_Ugly(t *core.T) {
 }
 
 func TestForge_Client_AddIssueLabels_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	err := client.AddIssueLabels("owner", "repo", 7, []int64{1})
 	core.AssertError(t, err)
 }
@@ -870,7 +870,7 @@ func TestForge_Client_AddIssueLabels_Ugly(t *core.T) {
 }
 
 func TestForge_Client_RemoveIssueLabel_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	err := client.RemoveIssueLabel("owner", "repo", 7, 1)
 	core.AssertError(t, err)
 }
@@ -888,7 +888,7 @@ func TestForge_Client_RemoveIssueLabel_Ugly(t *core.T) {
 }
 
 func TestForge_Client_MergePullRequest_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	err := client.MergePullRequest("owner", "repo", 7, "squash")
 	core.AssertNoError(t, err)
 }
@@ -906,7 +906,7 @@ func TestForge_Client_MergePullRequest_Ugly(t *core.T) {
 }
 
 func TestForge_Client_SetPRDraft_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	err := client.SetPRDraft("owner", "repo", 7, false)
 	core.AssertError(t, err)
 }
@@ -924,7 +924,7 @@ func TestForge_Client_SetPRDraft_Ugly(t *core.T) {
 }
 
 func TestForge_Client_ListPRReviews_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	_, err := client.ListPRReviews("owner", "repo", 7)
 	core.AssertError(t, err)
 }
@@ -942,7 +942,7 @@ func TestForge_Client_ListPRReviews_Ugly(t *core.T) {
 }
 
 func TestForge_Client_ListPRReviewsIter_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	var gotErr error
 	for _, err := range client.ListPRReviewsIter("owner", "repo", 7) {
 		gotErr = err
@@ -972,7 +972,7 @@ func TestForge_Client_ListPRReviewsIter_Ugly(t *core.T) {
 }
 
 func TestForge_Client_GetCombinedStatus_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	_, err := client.GetCombinedStatus("owner", "repo", "sha")
 	core.AssertError(t, err)
 }
@@ -990,7 +990,7 @@ func TestForge_Client_GetCombinedStatus_Ugly(t *core.T) {
 }
 
 func TestForge_Client_DismissReview_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	err := client.DismissReview("owner", "repo", 7, 9, "stale")
 	core.AssertError(t, err)
 }
@@ -1008,7 +1008,7 @@ func TestForge_Client_DismissReview_Ugly(t *core.T) {
 }
 
 func TestForge_Client_UndismissReview_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	err := client.UndismissReview("owner", "repo", 7, 9)
 	core.AssertError(t, err)
 }
@@ -1026,7 +1026,7 @@ func TestForge_Client_UndismissReview_Ugly(t *core.T) {
 }
 
 func TestForge_Client_GetIssueBody_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	_, err := client.GetIssueBody("owner", "repo", 7)
 	core.AssertError(t, err)
 }
@@ -1044,7 +1044,7 @@ func TestForge_Client_GetIssueBody_Ugly(t *core.T) {
 }
 
 func TestForge_Client_GetCommentBodies_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	_, err := client.GetCommentBodies("owner", "repo", 7)
 	core.AssertError(t, err)
 }
@@ -1062,7 +1062,7 @@ func TestForge_Client_GetCommentBodies_Ugly(t *core.T) {
 }
 
 func TestForge_Client_GetPRMeta_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	_, err := client.GetPRMeta("owner", "repo", 7)
 	core.AssertError(t, err)
 }
@@ -1080,7 +1080,7 @@ func TestForge_Client_GetPRMeta_Ugly(t *core.T) {
 }
 
 func TestForge_Client_CreateOrg_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	_, err := client.CreateOrg(forgejo.CreateOrgOption{Name: "org"})
 	core.AssertError(t, err)
 }
@@ -1098,7 +1098,7 @@ func TestForge_Client_CreateOrg_Ugly(t *core.T) {
 }
 
 func TestForge_Client_GetOrg_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	_, err := client.GetOrg("org")
 	core.AssertError(t, err)
 }
@@ -1116,7 +1116,7 @@ func TestForge_Client_GetOrg_Ugly(t *core.T) {
 }
 
 func TestForge_Client_ListMyOrgs_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	_, err := client.ListMyOrgs()
 	core.AssertError(t, err)
 }
@@ -1134,7 +1134,7 @@ func TestForge_Client_ListMyOrgs_Ugly(t *core.T) {
 }
 
 func TestForge_Client_ListMyOrgsIter_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	var gotErr error
 	for _, err := range client.ListMyOrgsIter() {
 		gotErr = err
@@ -1164,7 +1164,7 @@ func TestForge_Client_ListMyOrgsIter_Ugly(t *core.T) {
 }
 
 func TestForge_Client_CreateRepoWebhook_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	_, err := client.CreateRepoWebhook("owner", "repo", forgejo.CreateHookOption{Type: "gitea"})
 	core.AssertError(t, err)
 }
@@ -1182,7 +1182,7 @@ func TestForge_Client_CreateRepoWebhook_Ugly(t *core.T) {
 }
 
 func TestForge_Client_ListRepoWebhooks_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	_, err := client.ListRepoWebhooks("owner", "repo")
 	core.AssertError(t, err)
 }
@@ -1200,7 +1200,7 @@ func TestForge_Client_ListRepoWebhooks_Ugly(t *core.T) {
 }
 
 func TestForge_Client_ListRepoWebhooksIter_Good(t *core.T) {
-	client := ax7ForgeClient(t)
+	client := testForgeClient(t)
 	var gotErr error
 	for _, err := range client.ListRepoWebhooksIter("owner", "repo") {
 		gotErr = err

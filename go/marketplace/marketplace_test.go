@@ -6,8 +6,8 @@ import (
 	"context"
 	"crypto/ed25519"
 	"encoding/base64"
-	"os"
-	"path/filepath"
+	`os`
+	`path/filepath`
 	"testing"
 
 	core "dappco.re/go"
@@ -40,11 +40,11 @@ func TestBuildIndexFromManifestsCarriesSignKey(t *testing.T) {
 	}
 }
 
-func ax7MarketplaceManifest(code string) *manifest.Manifest {
+func testMarketplaceManifest(code string) *manifest.Manifest {
 	return &manifest.Manifest{Code: code, Name: "Demo " + code, Version: "1.0.0", Modules: []string{"provider"}}
 }
 
-func ax7SignedModule(t *core.T) Module {
+func testSignedModule(t *core.T) Module {
 	pub, priv, err := ed25519.GenerateKey(nil)
 	core.RequireNoError(t, err)
 	mod := Module{Code: "demo", Name: "Demo", Version: "1.0.0", Repo: "https://forge.example/core/demo", SignKey: base64.StdEncoding.EncodeToString(pub), Category: "provider"}
@@ -129,7 +129,7 @@ func TestMarketplace_Index_Search_Ugly(t *core.T) {
 }
 
 func TestMarketplace_BuildIndexFromManifests_Good(t *core.T) {
-	idx := BuildIndexFromManifests([]*manifest.Manifest{ax7MarketplaceManifest("b"), ax7MarketplaceManifest("a")})
+	idx := BuildIndexFromManifests([]*manifest.Manifest{testMarketplaceManifest("b"), testMarketplaceManifest("a")})
 	core.AssertEqual(t, 1, idx.Version)
 	core.AssertEqual(t, []string{"provider"}, idx.Categories)
 	core.AssertEqual(t, "a", idx.Modules[0].Code)
@@ -149,7 +149,7 @@ func TestMarketplace_BuildIndexFromManifests_Ugly(t *core.T) {
 }
 
 func TestMarketplace_BuildFromManifests_Good(t *core.T) {
-	idx := BuildFromManifests([]*manifest.Manifest{ax7MarketplaceManifest("demo")})
+	idx := BuildFromManifests([]*manifest.Manifest{testMarketplaceManifest("demo")})
 	core.AssertEqual(
 		t, "demo", idx.Modules[0].Code,
 	)
@@ -281,7 +281,7 @@ func TestMarketplace_NewInstaller_Ugly(t *core.T) {
 func TestMarketplace_Installer_Install_Good(t *core.T) {
 	medium := coreio.NewMemoryMedium()
 	installer := NewInstaller(medium, "modules")
-	err := installer.Install(context.Background(), ax7SignedModule(t))
+	err := installer.Install(context.Background(), testSignedModule(t))
 	core.AssertNoError(t, err)
 	raw, readErr := medium.Read("modules/demo/module.json")
 	core.RequireNoError(t, readErr)
@@ -298,14 +298,14 @@ func TestMarketplace_Installer_Install_Bad(t *core.T) {
 func TestMarketplace_Installer_Install_Ugly(t *core.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	err := NewInstaller(coreio.NewMemoryMedium(), "modules").Install(ctx, ax7SignedModule(t))
+	err := NewInstaller(coreio.NewMemoryMedium(), "modules").Install(ctx, testSignedModule(t))
 	core.AssertErrorIs(t, err, context.Canceled)
 }
 
 func TestMarketplace_Installer_Installed_Good(t *core.T) {
 	medium := coreio.NewMemoryMedium()
 	installer := NewInstaller(medium, "modules")
-	core.RequireNoError(t, installer.Install(context.Background(), ax7SignedModule(t)))
+	core.RequireNoError(t, installer.Install(context.Background(), testSignedModule(t)))
 	got, err := installer.Installed()
 	core.AssertNoError(t, err)
 	core.AssertLen(t, got, 1)
@@ -327,7 +327,7 @@ func TestMarketplace_Installer_Installed_Ugly(t *core.T) {
 func TestMarketplace_Installer_Remove_Good(t *core.T) {
 	medium := coreio.NewMemoryMedium()
 	installer := NewInstaller(medium, "modules")
-	core.RequireNoError(t, installer.Install(context.Background(), ax7SignedModule(t)))
+	core.RequireNoError(t, installer.Install(context.Background(), testSignedModule(t)))
 	err := installer.Remove("demo")
 	core.AssertNoError(t, err)
 	_, readErr := medium.Read("modules/demo/module.json")
@@ -350,7 +350,7 @@ func TestMarketplace_Installer_Remove_Ugly(t *core.T) {
 func TestMarketplace_Installer_Update_Good(t *core.T) {
 	medium := coreio.NewMemoryMedium()
 	installer := NewInstaller(medium, "modules")
-	core.RequireNoError(t, installer.Install(context.Background(), ax7SignedModule(t)))
+	core.RequireNoError(t, installer.Install(context.Background(), testSignedModule(t)))
 	err := installer.Update(context.Background(), "demo")
 	core.AssertNoError(t, err)
 }
@@ -393,10 +393,10 @@ func TestMarketplace_ProviderRegistryFile_Add_Ugly(t *core.T) {
 }
 
 func TestMarketplace_ProviderRegistryFile_Get_Good(t *core.T) {
-	reg := &ProviderRegistryFile{Providers: map[string]ProviderRegistryEntry{"demo": {Installed: "path"}}}
+	reg := &ProviderRegistryFile{Providers: map[string]ProviderRegistryEntry{"demo": {Installed: `path`}}}
 	entry, ok := reg.Get("demo")
 	core.AssertTrue(t, ok)
-	core.AssertEqual(t, "path", entry.Installed)
+	core.AssertEqual(t, `path`, entry.Installed)
 }
 
 func TestMarketplace_ProviderRegistryFile_Get_Bad(t *core.T) {

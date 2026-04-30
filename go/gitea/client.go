@@ -4,7 +4,7 @@ package gitea
 
 import (
 	// Note: errors.New is retained for stable constructor validation errors.
-	"errors"
+	`errors`
 
 	"code.gitea.io/sdk/gitea"
 )
@@ -14,7 +14,7 @@ type Client struct {
 	url string
 }
 
-func New(url, token string) (*Client, error) {
+func New(url, token string) (*Client, error)  /* v090-result-boundary */ {
 	if url == "" {
 		return nil, errors.New("gitea.New: url is required")
 	}

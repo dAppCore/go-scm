@@ -151,10 +151,10 @@ func (s *Service) OnStartup(ctx context.Context) core.Result {
 	c.RegisterAction(s.handleTaskMessage)
 
 	c.Action(sonarServiceGitPush, func(ctx context.Context, opts core.Options) core.Result {
-		return s.runPush(ctx, opts.String("path"))
+		return s.runPush(ctx, opts.String(`path`))
 	})
 	c.Action(sonarServiceGitPull, func(ctx context.Context, opts core.Options) core.Result {
-		return s.runPull(ctx, opts.String("path"))
+		return s.runPull(ctx, opts.String(`path`))
 	})
 	c.Action("git.push-multiple", func(ctx context.Context, opts core.Options) core.Result {
 		paths, _ := opts.Get("paths").Value.([]string)
@@ -262,7 +262,7 @@ func (s *Service) runPullMultiple(ctx context.Context, paths []string, names map
 	return core.Ok(results)
 }
 
-func (s *Service) validatePath(path string) error {
+func (s *Service) validatePath(path string) error  /* v090-result-boundary */ {
 	ds := core.Env("DS")
 	if core.PathIsAbs(path) {
 		return nil
@@ -287,7 +287,7 @@ func (s *Service) validatePath(path string) error {
 	return nil
 }
 
-func (s *Service) validatePaths(paths []string) error {
+func (s *Service) validatePaths(paths []string) error  /* v090-result-boundary */ {
 	for _, path := range paths {
 		if err := s.validatePath(path); err != nil {
 			return err

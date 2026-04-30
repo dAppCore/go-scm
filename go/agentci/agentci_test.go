@@ -4,7 +4,7 @@ package agentci
 
 import (
 	"context"
-	"path/filepath"
+	`path/filepath`
 
 	core "dappco.re/go"
 	"dappco.re/go/config"
@@ -20,14 +20,14 @@ const (
 	sonarAgentciTestEchoReady      = "echo ready"
 )
 
-func ax7AgentConfig(t *core.T) *config.Config {
+func testAgentConfig(t *core.T) *config.Config {
 	r := config.New(config.WithPath(filepath.Join(t.TempDir(), "config.yaml")))
 	core.RequireNoError(t, configResultError(r))
 	return core.MustCast[*config.Config](r)
 }
 
 func TestAgentci_LoadAgents_Good(t *core.T) {
-	cfg := ax7AgentConfig(t)
+	cfg := testAgentConfig(t)
 	core.RequireNoError(t, configResultError(cfg.Set("agents", map[string]AgentConfig{"codex": {Active: true, Roles: []string{"coder"}}})))
 	agents, err := LoadAgents(cfg)
 	core.AssertNoError(t, err)
@@ -41,7 +41,7 @@ func TestAgentci_LoadAgents_Bad(t *core.T) {
 }
 
 func TestAgentci_LoadAgents_Ugly(t *core.T) {
-	cfg := ax7AgentConfig(t)
+	cfg := testAgentConfig(t)
 	core.RequireNoError(t, configResultError(cfg.Set("agents", map[string]AgentConfig{"codex": {Roles: []string{"coder"}}})))
 	agents, err := LoadAgents(cfg)
 	core.AssertNoError(t, err)
@@ -52,7 +52,7 @@ func TestAgentci_LoadAgents_Ugly(t *core.T) {
 }
 
 func TestAgentci_ListAgents_Good(t *core.T) {
-	cfg := ax7AgentConfig(t)
+	cfg := testAgentConfig(t)
 	core.RequireNoError(t, configResultError(cfg.Set("agents", map[string]AgentConfig{"codex": {Active: true}})))
 	agents, err := ListAgents(cfg)
 	core.AssertNoError(t, err)
@@ -66,14 +66,14 @@ func TestAgentci_ListAgents_Bad(t *core.T) {
 }
 
 func TestAgentci_ListAgents_Ugly(t *core.T) {
-	cfg := ax7AgentConfig(t)
+	cfg := testAgentConfig(t)
 	agents, err := ListAgents(cfg)
 	core.AssertNoError(t, err)
 	core.AssertEmpty(t, agents)
 }
 
 func TestAgentci_LoadActiveAgents_Good(t *core.T) {
-	cfg := ax7AgentConfig(t)
+	cfg := testAgentConfig(t)
 	core.RequireNoError(t, configResultError(cfg.Set("agents", map[string]AgentConfig{"codex": {Active: true}, "idle": {Active: false}})))
 	agents, err := LoadActiveAgents(cfg)
 	core.AssertNoError(t, err)
@@ -88,7 +88,7 @@ func TestAgentci_LoadActiveAgents_Bad(t *core.T) {
 }
 
 func TestAgentci_LoadActiveAgents_Ugly(t *core.T) {
-	cfg := ax7AgentConfig(t)
+	cfg := testAgentConfig(t)
 	core.RequireNoError(t, configResultError(cfg.Set("agents", map[string]AgentConfig{"idle": {Active: false}})))
 	agents, err := LoadActiveAgents(cfg)
 	core.AssertNoError(t, err)
@@ -96,7 +96,7 @@ func TestAgentci_LoadActiveAgents_Ugly(t *core.T) {
 }
 
 func TestAgentci_LoadClothoConfig_Good(t *core.T) {
-	cfg := ax7AgentConfig(t)
+	cfg := testAgentConfig(t)
 	core.RequireNoError(t, configResultError(cfg.Set("clotho", map[string]any{"strategy": sonarAgentciTestClothoVerified, "validation_threshold": 0.75})))
 	got, err := LoadClothoConfig(cfg)
 	core.AssertNoError(t, err)
@@ -105,7 +105,7 @@ func TestAgentci_LoadClothoConfig_Good(t *core.T) {
 }
 
 func TestAgentci_LoadClothoConfig_Bad(t *core.T) {
-	cfg := ax7AgentConfig(t)
+	cfg := testAgentConfig(t)
 	core.RequireNoError(t, configResultError(cfg.Set("clotho", map[string]any{"strategy": "unknown"})))
 	_, err := LoadClothoConfig(cfg)
 	core.AssertError(t, err)
@@ -119,7 +119,7 @@ func TestAgentci_LoadClothoConfig_Ugly(t *core.T) {
 }
 
 func TestAgentci_SaveAgent_Good(t *core.T) {
-	cfg := ax7AgentConfig(t)
+	cfg := testAgentConfig(t)
 	err := SaveAgent(cfg, "codex", AgentConfig{Host: sonarAgentciTestAgentLocal, Active: true})
 	core.AssertNoError(t, err)
 	agents, loadErr := LoadAgents(cfg)
@@ -135,14 +135,14 @@ func TestAgentci_SaveAgent_Bad(t *core.T) {
 }
 
 func TestAgentci_SaveAgent_Ugly(t *core.T) {
-	err := SaveAgent(ax7AgentConfig(t), "", AgentConfig{})
+	err := SaveAgent(testAgentConfig(t), "", AgentConfig{})
 	core.AssertError(
 		t, err,
 	)
 }
 
 func TestAgentci_RemoveAgent_Good(t *core.T) {
-	cfg := ax7AgentConfig(t)
+	cfg := testAgentConfig(t)
 	core.RequireNoError(t, SaveAgent(cfg, "codex", AgentConfig{Active: true}))
 	err := RemoveAgent(cfg, "codex")
 	core.AssertNoError(t, err)
@@ -160,7 +160,7 @@ func TestAgentci_RemoveAgent_Bad(t *core.T) {
 }
 
 func TestAgentci_RemoveAgent_Ugly(t *core.T) {
-	err := RemoveAgent(ax7AgentConfig(t), "")
+	err := RemoveAgent(testAgentConfig(t), "")
 	core.AssertError(
 		t, err,
 	)

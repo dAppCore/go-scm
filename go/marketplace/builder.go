@@ -3,13 +3,10 @@
 package marketplace
 
 import (
-	"errors"
+	`errors`
 	"io/fs"
-	"path/filepath"
-	"strings"
 
-	"dappco.re/go/scm/internal/ax/jsonx"
-	"dappco.re/go/scm/internal/ax/osx"
+	core "dappco.re/go"
 	"dappco.re/go/scm/manifest"
 )
 
@@ -22,7 +19,7 @@ func BuildFromManifests(manifests []*manifest.Manifest) *Index {
 	return BuildIndexFromManifests(manifests)
 }
 
-func (b *Builder) BuildFromDirs(dirs ...string) (*Index, error) {
+func (b *Builder) BuildFromDirs(dirs ...string) (*Index, error)  /* v090-result-boundary */ {
 	manifests, err := loadManifestsFromDirs(dirs)
 	if err != nil {
 		return nil, err
@@ -32,13 +29,14 @@ func (b *Builder) BuildFromDirs(dirs ...string) (*Index, error) {
 	return idx, nil
 }
 
-func loadManifestsFromDirs(dirs []string) ([]*manifest.Manifest, error) {
+func loadManifestsFromDirs(dirs []string) ([]*manifest.Manifest, error)  /* v090-result-boundary */ {
 	var manifests []*manifest.Manifest
 	for _, dir := range dirs {
-		entries, err := osx.ReadDir(dir)
-		if err != nil {
-			return nil, err
+		readResult := core.ReadDir(core.DirFS(dir), ".")
+		if !readResult.OK {
+			return nil, core.E("marketplace.loadManifestsFromDirs", "read provider directory", nil)
 		}
+		entries := readResult.Value.([]core.FsDirEntry)
 		manifests = append(manifests, loadManifestsFromEntries(dir, entries)...)
 	}
 	return manifests, nil
@@ -50,7 +48,7 @@ func loadManifestsFromEntries(dir string, entries []fs.DirEntry) []*manifest.Man
 		if entry == nil || !entry.IsDir() {
 			continue
 		}
-		root := filepath.Join(dir, entry.Name())
+		root := core.PathJoin(dir, entry.Name())
 		if m, err := loadManifestFromRoot(root); err == nil && m != nil {
 			manifests = append(manifests, m)
 		}
@@ -72,30 +70,34 @@ func (b *Builder) moduleRepo(code string) string {
 	if org == "" {
 		org = "core"
 	}
-	return strings.TrimRight(b.BaseURL, "/") + "/" + org + "/" + code
+	return core.TrimSuffix(b.BaseURL, "/") + "/" + org + "/" + code
 }
 
-func loadManifestFromRoot(root string) (*manifest.Manifest, error) {
-	if raw, err := osx.ReadFile(filepath.Join(root, "core.json")); err == nil {
-		if cm, err := manifest.ParseCompiled(raw); err == nil {
+func loadManifestFromRoot(root string) (*manifest.Manifest, error)  /* v090-result-boundary */ {
+	if readResult := core.ReadFile(core.PathJoin(root, "core.json")); readResult.OK {
+		if cm, err := manifest.ParseCompiled(readResult.Value.([]byte)); err == nil {
 			m := cm.Manifest
 			return &m, nil
 		}
 	}
-	raw, err := osx.ReadFile(filepath.Join(root, ".core", "manifest.yaml"))
-	if err != nil {
-		return nil, err
+	readResult := core.ReadFile(core.PathJoin(root, ".core", "manifest.yaml"))
+	if !readResult.OK {
+		return nil, core.E("marketplace.loadManifestFromRoot", "read manifest", nil)
 	}
-	return manifest.Parse(raw)
+	return manifest.Parse(readResult.Value.([]byte))
 }
 
-func WriteIndex(path string, idx *Index) error {
+func WriteIndex(path string, idx *Index) error  /* v090-result-boundary */ {
 	if idx == nil {
 		return errors.New("marketplace.WriteIndex: index is required")
 	}
-	raw, err := jsonx.MarshalIndent(idx, "", "  ")
-	if err != nil {
-		return err
+	marshalResult := core.JSONMarshalIndent(idx, "", "  ")
+	if !marshalResult.OK {
+		return core.E("marketplace.WriteIndex", "encode index", nil)
 	}
-	return osx.WriteFile(path, raw, 0o600)
+	writeResult := core.WriteFile(path, marshalResult.Value.([]byte), 0o600)
+	if !writeResult.OK {
+		return core.E("marketplace.WriteIndex", "write index", nil)
+	}
+	return nil
 }

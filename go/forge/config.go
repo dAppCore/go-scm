@@ -4,16 +4,16 @@ package forge
 
 import (
 	// Note: errors.New is retained for stable config validation errors.
-	"errors"
+	`errors`
 	// Note: os is retained for environment and home-directory config discovery before a Core runtime exists.
-	"os"
+	`os`
 	// Note: filepath is retained for OS-specific config file paths.
-	"path/filepath"
+	`path/filepath`
 
 	"gopkg.in/yaml.v3"
 )
 
-func ResolveConfig(flagURL, flagToken string) (url, token string, err error) {
+func ResolveConfig(flagURL, flagToken string) (url, token string, err error)  /* v090-result-boundary */ {
 	url, token = loadForgeConfigValues()
 	if v := os.Getenv("FORGE_URL"); v != "" {
 		url = v
@@ -52,7 +52,7 @@ func loadForgeConfigValues() (string, string) {
 	return url, token
 }
 
-func NewFromConfig(flagURL, flagToken string) (*Client, error) {
+func NewFromConfig(flagURL, flagToken string) (*Client, error)  /* v090-result-boundary */ {
 	url, token, err := ResolveConfig(flagURL, flagToken)
 	if err != nil {
 		return nil, err
@@ -60,7 +60,7 @@ func NewFromConfig(flagURL, flagToken string) (*Client, error) {
 	return New(url, token)
 }
 
-func SaveConfig(url, token string) error {
+func SaveConfig(url, token string) error  /* v090-result-boundary */ {
 	if url == "" && token == "" {
 		return errors.New("forge.SaveConfig: url or token required")
 	}

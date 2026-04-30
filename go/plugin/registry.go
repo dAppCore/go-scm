@@ -8,7 +8,6 @@ import (
 
 	core "dappco.re/go"
 	coreio "dappco.re/go/io"
-	"dappco.re/go/scm/internal/ax/jsonx"
 )
 
 type Registry struct {
@@ -21,7 +20,7 @@ func NewRegistry(m coreio.Medium, basePath string) *Registry {
 	return &Registry{medium: m, basePath: basePath, plugins: map[string]*PluginConfig{}}
 }
 
-func (r *Registry) Add(cfg *PluginConfig) error {
+func (r *Registry) Add(cfg *PluginConfig) error  /* v090-result-boundary */ {
 	if r == nil || cfg == nil {
 		return core.E("plugin.Registry.Add", "config is required", nil)
 	}
@@ -56,7 +55,7 @@ func (r *Registry) List() []*PluginConfig {
 	return out
 }
 
-func (r *Registry) Load() error {
+func (r *Registry) Load() error  /* v090-result-boundary */ {
 	if r == nil || r.medium == nil {
 		return nil
 	}
@@ -67,8 +66,8 @@ func (r *Registry) Load() error {
 	var data struct {
 		Plugins map[string]*PluginConfig `json:"plugins"`
 	}
-	if err := jsonx.Unmarshal([]byte(raw), &data); err != nil {
-		return err
+	if r := core.JSONUnmarshal([]byte(raw), &data); !r.OK {
+		return core.E("plugin.Registry.Load", "decode registry", nil)
 	}
 	r.plugins = data.Plugins
 	if r.plugins == nil {
@@ -77,7 +76,7 @@ func (r *Registry) Load() error {
 	return nil
 }
 
-func (r *Registry) Remove(name string) error {
+func (r *Registry) Remove(name string) error  /* v090-result-boundary */ {
 	if r == nil {
 		return core.E("plugin.Registry.Remove", "registry is required", nil)
 	}
@@ -85,13 +84,13 @@ func (r *Registry) Remove(name string) error {
 	return nil
 }
 
-func (r *Registry) Save() error {
+func (r *Registry) Save() error  /* v090-result-boundary */ {
 	if r == nil || r.medium == nil {
 		return nil
 	}
-	raw, err := jsonx.MarshalIndent(map[string]any{"plugins": r.plugins}, "", "  ")
-	if err != nil {
-		return err
+	marshalResult := core.JSONMarshalIndent(map[string]any{"plugins": r.plugins}, "", "  ")
+	if !marshalResult.OK {
+		return core.E("plugin.Registry.Save", "encode registry", nil)
 	}
-	return r.medium.Write(r.basePath+"/registry.json", string(raw))
+	return r.medium.Write(r.basePath+"/registry.json", string(marshalResult.Value.([]byte)))
 }

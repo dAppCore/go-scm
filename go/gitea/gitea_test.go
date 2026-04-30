@@ -5,8 +5,8 @@ package gitea
 import (
 	"net/http"
 	"net/http/httptest"
-	"os"
-	"path/filepath"
+	`os`
+	`path/filepath`
 
 	sdk "code.gitea.io/sdk/gitea"
 	core "dappco.re/go"
@@ -19,7 +19,7 @@ const (
 	sonarGiteaTestHttpsExampleTestRepoGit = "https://example.test/repo.git"
 )
 
-func ax7GiteaClient(t *core.T) *Client {
+func testGiteaClient(t *core.T) *Client {
 	t.Helper()
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/api/v1/version" {
@@ -150,7 +150,7 @@ func TestGitea_SaveConfig_Ugly(t *core.T) {
 }
 
 func TestGitea_Client_API_Good(t *core.T) {
-	client := ax7GiteaClient(t)
+	client := testGiteaClient(t)
 	api := client.API()
 	core.AssertNotNil(t, api)
 }
@@ -168,7 +168,7 @@ func TestGitea_Client_API_Ugly(t *core.T) {
 }
 
 func TestGitea_Client_URL_Good(t *core.T) {
-	client := ax7GiteaClient(t)
+	client := testGiteaClient(t)
 	url := client.URL()
 	core.AssertContains(t, url, "127.0.0.1")
 }
@@ -186,7 +186,7 @@ func TestGitea_Client_URL_Ugly(t *core.T) {
 }
 
 func TestGitea_Client_ListIssues_Good(t *core.T) {
-	client := ax7GiteaClient(t)
+	client := testGiteaClient(t)
 	_, err := client.ListIssues("owner", "repo", ListIssuesOpts{State: "all", Limit: 1})
 	core.AssertError(t, err)
 }
@@ -204,7 +204,7 @@ func TestGitea_Client_ListIssues_Ugly(t *core.T) {
 }
 
 func TestGitea_Client_ListIssuesIter_Good(t *core.T) {
-	client := ax7GiteaClient(t)
+	client := testGiteaClient(t)
 	var gotErr error
 	for _, err := range client.ListIssuesIter("owner", "repo", ListIssuesOpts{State: "closed", Limit: 1}) {
 		gotErr = err
@@ -234,7 +234,7 @@ func TestGitea_Client_ListIssuesIter_Ugly(t *core.T) {
 }
 
 func TestGitea_Client_GetIssue_Good(t *core.T) {
-	client := ax7GiteaClient(t)
+	client := testGiteaClient(t)
 	_, err := client.GetIssue("owner", "repo", 7)
 	core.AssertError(t, err)
 }
@@ -252,13 +252,13 @@ func TestGitea_Client_GetIssue_Ugly(t *core.T) {
 }
 
 func TestGitea_Client_CreateIssue_Good(t *core.T) {
-	client := ax7GiteaClient(t)
+	client := testGiteaClient(t)
 	_, err := client.CreateIssue("owner", "repo", sdk.CreateIssueOption{Title: "demo"})
 	core.AssertError(t, err)
 }
 
 func TestGitea_Client_CreateIssue_Bad(t *core.T) {
-	client := ax7GiteaClient(t)
+	client := testGiteaClient(t)
 	_, err := client.CreateIssue("", "", sdk.CreateIssueOption{})
 	core.AssertError(t, err)
 }
@@ -270,7 +270,7 @@ func TestGitea_Client_CreateIssue_Ugly(t *core.T) {
 }
 
 func TestGitea_Client_EditIssue_Good(t *core.T) {
-	client := ax7GiteaClient(t)
+	client := testGiteaClient(t)
 	_, err := client.EditIssue("owner", "repo", 7, sdk.EditIssueOption{})
 	core.AssertError(t, err)
 }
@@ -288,7 +288,7 @@ func TestGitea_Client_EditIssue_Ugly(t *core.T) {
 }
 
 func TestGitea_Client_AssignIssue_Good(t *core.T) {
-	client := ax7GiteaClient(t)
+	client := testGiteaClient(t)
 	err := client.AssignIssue("owner", "repo", 7, []string{"agent"})
 	core.AssertError(t, err)
 }
@@ -306,7 +306,7 @@ func TestGitea_Client_AssignIssue_Ugly(t *core.T) {
 }
 
 func TestGitea_Client_CreateIssueComment_Good(t *core.T) {
-	client := ax7GiteaClient(t)
+	client := testGiteaClient(t)
 	err := client.CreateIssueComment("owner", "repo", 7, "body")
 	core.AssertError(t, err)
 }
@@ -324,7 +324,7 @@ func TestGitea_Client_CreateIssueComment_Ugly(t *core.T) {
 }
 
 func TestGitea_Client_ListIssueComments_Good(t *core.T) {
-	client := ax7GiteaClient(t)
+	client := testGiteaClient(t)
 	_, err := client.ListIssueComments("owner", "repo", 7)
 	core.AssertError(t, err)
 }
@@ -342,7 +342,7 @@ func TestGitea_Client_ListIssueComments_Ugly(t *core.T) {
 }
 
 func TestGitea_Client_ListIssueCommentsIter_Good(t *core.T) {
-	client := ax7GiteaClient(t)
+	client := testGiteaClient(t)
 	var gotErr error
 	for _, err := range client.ListIssueCommentsIter("owner", "repo", 7) {
 		gotErr = err
@@ -372,7 +372,7 @@ func TestGitea_Client_ListIssueCommentsIter_Ugly(t *core.T) {
 }
 
 func TestGitea_Client_GetIssueLabels_Good(t *core.T) {
-	client := ax7GiteaClient(t)
+	client := testGiteaClient(t)
 	_, err := client.GetIssueLabels("owner", "repo", 7)
 	core.AssertError(t, err)
 }
@@ -390,7 +390,7 @@ func TestGitea_Client_GetIssueLabels_Ugly(t *core.T) {
 }
 
 func TestGitea_Client_AddIssueLabels_Good(t *core.T) {
-	client := ax7GiteaClient(t)
+	client := testGiteaClient(t)
 	err := client.AddIssueLabels("owner", "repo", 7, []int64{1})
 	core.AssertError(t, err)
 }
@@ -408,7 +408,7 @@ func TestGitea_Client_AddIssueLabels_Ugly(t *core.T) {
 }
 
 func TestGitea_Client_RemoveIssueLabel_Good(t *core.T) {
-	client := ax7GiteaClient(t)
+	client := testGiteaClient(t)
 	err := client.RemoveIssueLabel("owner", "repo", 7, 1)
 	core.AssertError(t, err)
 }
@@ -426,7 +426,7 @@ func TestGitea_Client_RemoveIssueLabel_Ugly(t *core.T) {
 }
 
 func TestGitea_Client_CloseIssue_Good(t *core.T) {
-	client := ax7GiteaClient(t)
+	client := testGiteaClient(t)
 	err := client.CloseIssue("owner", "repo", 7)
 	core.AssertError(t, err)
 }
@@ -444,7 +444,7 @@ func TestGitea_Client_CloseIssue_Ugly(t *core.T) {
 }
 
 func TestGitea_Client_GetPullRequest_Good(t *core.T) {
-	client := ax7GiteaClient(t)
+	client := testGiteaClient(t)
 	_, err := client.GetPullRequest("owner", "repo", 7)
 	core.AssertError(t, err)
 }
@@ -462,7 +462,7 @@ func TestGitea_Client_GetPullRequest_Ugly(t *core.T) {
 }
 
 func TestGitea_Client_ListPullRequests_Good(t *core.T) {
-	client := ax7GiteaClient(t)
+	client := testGiteaClient(t)
 	_, err := client.ListPullRequests("owner", "repo", "all")
 	core.AssertError(t, err)
 }
@@ -480,7 +480,7 @@ func TestGitea_Client_ListPullRequests_Ugly(t *core.T) {
 }
 
 func TestGitea_Client_ListPullRequestsIter_Good(t *core.T) {
-	client := ax7GiteaClient(t)
+	client := testGiteaClient(t)
 	var gotErr error
 	for _, err := range client.ListPullRequestsIter("owner", "repo", "all") {
 		gotErr = err
@@ -510,13 +510,13 @@ func TestGitea_Client_ListPullRequestsIter_Ugly(t *core.T) {
 }
 
 func TestGitea_Client_CreateOrgRepo_Good(t *core.T) {
-	client := ax7GiteaClient(t)
+	client := testGiteaClient(t)
 	_, err := client.CreateOrgRepo("org", sdk.CreateRepoOption{Name: "repo"})
 	core.AssertError(t, err)
 }
 
 func TestGitea_Client_CreateOrgRepo_Bad(t *core.T) {
-	client := ax7GiteaClient(t)
+	client := testGiteaClient(t)
 	_, err := client.CreateOrgRepo("", sdk.CreateRepoOption{})
 	core.AssertError(t, err)
 }
@@ -528,7 +528,7 @@ func TestGitea_Client_CreateOrgRepo_Ugly(t *core.T) {
 }
 
 func TestGitea_Client_DeleteRepo_Good(t *core.T) {
-	client := ax7GiteaClient(t)
+	client := testGiteaClient(t)
 	err := client.DeleteRepo("owner", "repo")
 	core.AssertError(t, err)
 }
@@ -546,7 +546,7 @@ func TestGitea_Client_DeleteRepo_Ugly(t *core.T) {
 }
 
 func TestGitea_Client_GetRepo_Good(t *core.T) {
-	client := ax7GiteaClient(t)
+	client := testGiteaClient(t)
 	_, err := client.GetRepo("owner", "repo")
 	core.AssertError(t, err)
 }
@@ -564,7 +564,7 @@ func TestGitea_Client_GetRepo_Ugly(t *core.T) {
 }
 
 func TestGitea_Client_ListOrgRepos_Good(t *core.T) {
-	client := ax7GiteaClient(t)
+	client := testGiteaClient(t)
 	_, err := client.ListOrgRepos("org")
 	core.AssertError(t, err)
 }
@@ -582,7 +582,7 @@ func TestGitea_Client_ListOrgRepos_Ugly(t *core.T) {
 }
 
 func TestGitea_Client_ListOrgReposIter_Good(t *core.T) {
-	client := ax7GiteaClient(t)
+	client := testGiteaClient(t)
 	var gotErr error
 	for _, err := range client.ListOrgReposIter("org") {
 		gotErr = err
@@ -612,7 +612,7 @@ func TestGitea_Client_ListOrgReposIter_Ugly(t *core.T) {
 }
 
 func TestGitea_Client_ListUserRepos_Good(t *core.T) {
-	client := ax7GiteaClient(t)
+	client := testGiteaClient(t)
 	_, err := client.ListUserRepos()
 	core.AssertError(t, err)
 }
@@ -630,7 +630,7 @@ func TestGitea_Client_ListUserRepos_Ugly(t *core.T) {
 }
 
 func TestGitea_Client_ListUserReposIter_Good(t *core.T) {
-	client := ax7GiteaClient(t)
+	client := testGiteaClient(t)
 	var gotErr error
 	for _, err := range client.ListUserReposIter() {
 		gotErr = err
@@ -660,7 +660,7 @@ func TestGitea_Client_ListUserReposIter_Ugly(t *core.T) {
 }
 
 func TestGitea_Client_CreateMirror_Good(t *core.T) {
-	client := ax7GiteaClient(t)
+	client := testGiteaClient(t)
 	_, err := client.CreateMirror("owner", "repo", sonarGiteaTestHttpsExampleTestRepoGit, "token")
 	core.AssertError(t, err)
 }
@@ -678,7 +678,7 @@ func TestGitea_Client_CreateMirror_Ugly(t *core.T) {
 }
 
 func TestGitea_Client_CreateMirrorFromService_Good(t *core.T) {
-	client := ax7GiteaClient(t)
+	client := testGiteaClient(t)
 	_, err := client.CreateMirrorFromService("owner", "repo", sonarGiteaTestHttpsExampleTestRepoGit, sdk.GitServicePlain, "token")
 	core.AssertError(t, err)
 }
@@ -698,7 +698,7 @@ func TestGitea_Client_CreateMirrorFromService_Ugly(t *core.T) {
 }
 
 func TestGitea_Client_GetIssueBody_Good(t *core.T) {
-	client := ax7GiteaClient(t)
+	client := testGiteaClient(t)
 	_, err := client.GetIssueBody("owner", "repo", 7)
 	core.AssertError(t, err)
 }
@@ -716,7 +716,7 @@ func TestGitea_Client_GetIssueBody_Ugly(t *core.T) {
 }
 
 func TestGitea_Client_GetCommentBodies_Good(t *core.T) {
-	client := ax7GiteaClient(t)
+	client := testGiteaClient(t)
 	_, err := client.GetCommentBodies("owner", "repo", 7)
 	core.AssertError(t, err)
 }
@@ -734,7 +734,7 @@ func TestGitea_Client_GetCommentBodies_Ugly(t *core.T) {
 }
 
 func TestGitea_Client_GetPRMeta_Good(t *core.T) {
-	client := ax7GiteaClient(t)
+	client := testGiteaClient(t)
 	_, err := client.GetPRMeta("owner", "repo", 7)
 	core.AssertError(t, err)
 }

@@ -59,7 +59,7 @@ func run(app *core.Core) core.CommandAction {
 	}
 }
 
-func loadManifest(app *core.Core, opts core.Options, defaultInput string) (*manifest.Manifest, string, error) {
+func loadManifest(app *core.Core, opts core.Options, defaultInput string) (*manifest.Manifest, string, error)  /* v090-result-boundary */ {
 	if path := core.Trim(opts.String("manifest")); path != "" {
 		raw, err := readFile(app, path)
 		if err != nil {
@@ -83,7 +83,7 @@ func loadManifest(app *core.Core, opts core.Options, defaultInput string) (*mani
 	return &cm.Manifest, defaultInput, nil
 }
 
-func publicKey(app *core.Core, opts core.Options) (string, error) {
+func publicKey(app *core.Core, opts core.Options) (string, error)  /* v090-result-boundary */ {
 	value := core.Trim(opts.String("key"))
 	if path := core.Trim(opts.String("key-file")); path != "" {
 		raw, err := readFile(app, path)
@@ -108,7 +108,7 @@ func publicKey(app *core.Core, opts core.Options) (string, error) {
 	return base64.StdEncoding.EncodeToString(decoded), nil
 }
 
-func canonicalManifestBytes(m *manifest.Manifest) ([]byte, error) {
+func canonicalManifestBytes(m *manifest.Manifest) ([]byte, error)  /* v090-result-boundary */ {
 	if m == nil {
 		return nil, core.E("cmd.verify.canonicalManifestBytes", "manifest is required", nil)
 	}
@@ -141,7 +141,7 @@ func failed(err error) core.Result {
 	return core.Fail(err)
 }
 
-func readFile(app *core.Core, path string) ([]byte, error) {
+func readFile(app *core.Core, path string) ([]byte, error)  /* v090-result-boundary */ {
 	if app == nil {
 		return nil, core.E("cmd.verify.readFile", "core app is required", nil)
 	}
@@ -156,7 +156,7 @@ func readFile(app *core.Core, path string) ([]byte, error) {
 	return []byte(raw), nil
 }
 
-func resultError(op, msg string, r core.Result) error {
+func resultError(op, msg string, r core.Result) error  /* v090-result-boundary */ {
 	if err, ok := r.Value.(error); ok {
 		return core.E(op, msg, err)
 	}

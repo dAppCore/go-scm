@@ -25,7 +25,7 @@ type PapersCollector struct {
 func (p *PapersCollector) Name() string { return "papers" }
 
 // Collect gathers papers from the configured sources.
-func (p *PapersCollector) Collect(ctx context.Context, cfg *Config) (*Result, error) {
+func (p *PapersCollector) Collect(ctx context.Context, cfg *Config) (*Result, error)  /* v090-result-boundary */ {
 	if cfg == nil {
 		return nil, core.E("collect.PapersCollector.Collect", "config is required", nil)
 	}
@@ -68,7 +68,7 @@ func (p *PapersCollector) Collect(ctx context.Context, cfg *Config) (*Result, er
 	return result, nil
 }
 
-func (p *PapersCollector) waitForLimiter(ctx context.Context, cfg *Config) error {
+func (p *PapersCollector) waitForLimiter(ctx context.Context, cfg *Config) error  /* v090-result-boundary */ {
 	if cfg == nil || cfg.Limiter == nil {
 		return nil
 	}

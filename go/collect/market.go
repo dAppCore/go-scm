@@ -34,7 +34,7 @@ type coinData struct {
 func (m *MarketCollector) Name() string { return "market" }
 
 // Collect gathers market data from CoinGecko.
-func (m *MarketCollector) Collect(ctx context.Context, cfg *Config) (*Result, error) {
+func (m *MarketCollector) Collect(ctx context.Context, cfg *Config) (*Result, error)  /* v090-result-boundary */ {
 	if cfg == nil {
 		return nil, core.E("collect.MarketCollector.Collect", "config is required", nil)
 	}
@@ -77,7 +77,7 @@ func (m *MarketCollector) Collect(ctx context.Context, cfg *Config) (*Result, er
 	return result, nil
 }
 
-func (m *MarketCollector) validateHistoricalDate() error {
+func (m *MarketCollector) validateHistoricalDate() error  /* v090-result-boundary */ {
 	fromDate := core.Trim(m.FromDate)
 	if !m.Historical || fromDate == "" {
 		return nil

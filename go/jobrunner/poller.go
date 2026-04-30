@@ -104,7 +104,7 @@ func (p *Poller) SetDryRun(v bool) {
 }
 
 // Run starts a blocking poll-dispatch loop.
-func (p *Poller) Run(ctx context.Context) error {
+func (p *Poller) Run(ctx context.Context) error  /* v090-result-boundary */ {
 	if ctx == nil {
 		ctx = context.Background()
 	}
@@ -129,7 +129,7 @@ func (p *Poller) Run(ctx context.Context) error {
 }
 
 // RunOnce performs a single poll-dispatch cycle.
-func (p *Poller) RunOnce(ctx context.Context) error {
+func (p *Poller) RunOnce(ctx context.Context) error  /* v090-result-boundary */ {
 	if ctx == nil {
 		ctx = context.Background()
 	}
@@ -153,7 +153,7 @@ func (p *Poller) RunOnce(ctx context.Context) error {
 	return nil
 }
 
-func (p *Poller) runSource(ctx context.Context, source JobSource, handlers []JobHandler, journal *Journal, dryRun bool) error {
+func (p *Poller) runSource(ctx context.Context, source JobSource, handlers []JobHandler, journal *Journal, dryRun bool) error  /* v090-result-boundary */ {
 	signals, err := source.Poll(ctx)
 	if err != nil {
 		return core.E(sonarPollerJobrunnerPollerRunonce, core.Sprintf("poll %s", source.Name()), err)
@@ -172,7 +172,7 @@ func (p *Poller) runSource(ctx context.Context, source JobSource, handlers []Job
 	return nil
 }
 
-func dispatchSignal(ctx context.Context, source JobSource, handlers []JobHandler, journal *Journal, dryRun bool, signal *PipelineSignal) error {
+func dispatchSignal(ctx context.Context, source JobSource, handlers []JobHandler, journal *Journal, dryRun bool, signal *PipelineSignal) error  /* v090-result-boundary */ {
 	handler := firstMatchingHandler(handlers, signal)
 	if handler == nil || dryRun {
 		return nil
@@ -193,7 +193,7 @@ func dispatchSignal(ctx context.Context, source JobSource, handlers []JobHandler
 	return nil
 }
 
-func appendJournal(journal *Journal, signal *PipelineSignal, result *ActionResult) error {
+func appendJournal(journal *Journal, signal *PipelineSignal, result *ActionResult) error  /* v090-result-boundary */ {
 	if journal == nil {
 		return nil
 	}

@@ -60,7 +60,7 @@ type Manifest struct {
 	Build       BuildInfo             `yaml:"build,omitempty" json:"build,omitempty"`
 }
 
-func Parse(data []byte) (*Manifest, error) {
+func Parse(data []byte) (*Manifest, error)  /* v090-result-boundary */ {
 	var m Manifest
 	if err := yaml.Unmarshal(data, &m); err != nil {
 		return nil, err
@@ -125,7 +125,7 @@ func (m *Manifest) DefaultDaemon() (string, DaemonSpec, bool) {
 	return "", DaemonSpec{}, false
 }
 
-func validateManifest(m *Manifest) error {
+func validateManifest(m *Manifest) error  /* v090-result-boundary */ {
 	if m == nil {
 		return core.E("", "manifest is required", nil)
 	}
