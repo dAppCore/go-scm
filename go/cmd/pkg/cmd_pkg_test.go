@@ -3,8 +3,7 @@
 package pkg
 
 import (
-	"io"
-	"os"
+	cli "dappco.re/go/cli/pkg/cli"
 	"testing"
 
 	core "dappco.re/go"
@@ -68,26 +67,11 @@ modules: [provider]
 
 func captureStdout(t *testing.T, fn func()) string {
 	t.Helper()
-
-	old := os.Stdout
-	r, w, err := os.Pipe()
-	if err != nil {
-		t.Fatalf("pipe stdout: %v", err)
-	}
-	os.Stdout = w
-	defer func() {
-		os.Stdout = old
-	}()
-
+	out := core.NewBuilder()
+	cli.SetStdout(out)
+	defer cli.SetStdout(nil)
 	fn()
-	if err := w.Close(); err != nil {
-		t.Fatalf("close stdout pipe: %v", err)
-	}
-	out, err := io.ReadAll(r)
-	if err != nil {
-		t.Fatalf("read stdout: %v", err)
-	}
-	return string(out)
+	return out.String()
 }
 
 func TestCmdPkg_Register_Good(t *core.T) {

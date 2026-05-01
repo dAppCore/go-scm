@@ -15,7 +15,9 @@ require (
 )
 
 require (
+	dappco.re/go/cli v0.10.0 // indirect
 	dappco.re/go/log v0.9.0 // indirect
+	dappco.re/go/process v0.14.0 // indirect
 	github.com/42wim/httpsig v1.2.4 // indirect
 	github.com/bytedance/gopkg v0.1.3 // indirect
 	github.com/bytedance/sonic v1.15.0 // indirect

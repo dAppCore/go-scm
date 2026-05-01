@@ -5,8 +5,6 @@ package collect
 import (
 	// Note: context.Context is retained as the rate limiter cancellation contract.
 	"context"
-	// Note: AX-6 — structural boundary: gh CLI rate-limit probing intentionally invokes a binary until collect has a process-service boundary.
-	`os/exec`
 	// Note: strconv.Atoi is retained for parsing gh rate-limit output.
 	"strconv"
 	// Note: sync.Mutex protects limiter state and has no core equivalent.
@@ -15,6 +13,7 @@ import (
 	"time"
 
 	core "dappco.re/go"
+	process "dappco.re/go/process"
 )
 
 const (
@@ -134,13 +133,16 @@ func (r *RateLimiter) CheckGitHubRateLimitCtx(ctx context.Context) (used, limit 
 		ctx = context.Background()
 	}
 
-	cmd := exec.CommandContext(ctx, "gh", "api", "rate_limit", "--jq", ".rate | \"\\(.used) \\(.limit)\"")
-	out, err := cmd.Output()
-	if err != nil {
-		return 0, 0, core.E(sonarRatelimitCollectRatelimiterCheckgithubratelimitctx, "gh api rate_limit", err)
+	r2 := process.RunWithOptions(ctx, process.RunOptions{
+		Command: "gh",
+		Args:    []string{"api", "rate_limit", "--jq", ".rate | \"\\(.used) \\(.limit)\""},
+	})
+	if !r2.OK {
+		return 0, 0, core.E(sonarRatelimitCollectRatelimiterCheckgithubratelimitctx, "gh api rate_limit", r2.Value.(error))
 	}
+	out, _ := r2.Value.(string)
 
-	trimmed := core.Trim(string(out))
+	trimmed := core.Trim(out)
 	parts := textFields(trimmed)
 	if len(parts) != 2 {
 		return 0, 0, core.E(sonarRatelimitCollectRatelimiterCheckgithubratelimitctx, core.Sprintf("unexpected output %q", trimmed), nil)
