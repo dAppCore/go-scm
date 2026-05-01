@@ -5,8 +5,6 @@ package forge
 import (
 	"net/http"
 	"net/http/httptest"
-	`os`
-	`path/filepath`
 
 	forgejo "codeberg.org/forgejo/go-sdk/forgejo"
 	core "dappco.re/go"
@@ -115,8 +113,12 @@ func TestForge_ResolveConfig_Ugly(t *core.T) {
 	t.Setenv("HOME", home)
 	t.Setenv("FORGE_URL", "")
 	t.Setenv("FORGE_TOKEN", "")
-	core.RequireNoError(t, os.MkdirAll(filepath.Join(home, ".core"), 0o755))
-	core.RequireNoError(t, os.WriteFile(filepath.Join(home, ".core", sonarForgeTestConfigYaml), []byte("forge:\n  url: http://file.test\n  token: file-token\n"), 0o600))
+	if r := core.MkdirAll(core.PathJoin(home, ".core"), 0o755); !r.OK {
+		core.RequireNoError(t, r.Value.(error))
+	}
+	if r := core.WriteFile(core.PathJoin(home, ".core", sonarForgeTestConfigYaml), []byte("forge:\n  url: http://file.test\n  token: file-token\n"), 0o600); !r.OK {
+		core.RequireNoError(t, r.Value.(error))
+	}
 	url, token, err := ResolveConfig("", "")
 	core.AssertNoError(t, err)
 	core.AssertEqual(t, "http://file.test", url)
@@ -128,8 +130,11 @@ func TestForge_SaveConfig_Good(t *core.T) {
 	t.Setenv("HOME", home)
 	err := SaveConfig("http://save.test", "saved-token")
 	core.AssertNoError(t, err)
-	raw, readErr := os.ReadFile(filepath.Join(home, ".core", sonarForgeTestConfigYaml))
-	core.RequireNoError(t, readErr)
+	r := core.ReadFile(core.PathJoin(home, ".core", sonarForgeTestConfigYaml))
+	if !r.OK {
+		core.RequireNoError(t, r.Value.(error))
+	}
+	raw := r.Value.([]byte)
 	core.AssertContains(t, string(raw), "saved-token")
 }
 
@@ -144,8 +149,11 @@ func TestForge_SaveConfig_Ugly(t *core.T) {
 	t.Setenv("HOME", home)
 	err := SaveConfig("", "token-only")
 	core.AssertNoError(t, err)
-	raw, readErr := os.ReadFile(filepath.Join(home, ".core", sonarForgeTestConfigYaml))
-	core.RequireNoError(t, readErr)
+	r := core.ReadFile(core.PathJoin(home, ".core", sonarForgeTestConfigYaml))
+	if !r.OK {
+		core.RequireNoError(t, r.Value.(error))
+	}
+	raw := r.Value.([]byte)
 	core.AssertContains(t, string(raw), "token-only")
 }
 

@@ -6,8 +6,6 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
-	`os`
-	`path/filepath`
 
 	core "dappco.re/go"
 	"dappco.re/go/scm/agentci"
@@ -69,8 +67,10 @@ func testHandlersCanceled() context.Context {
 func testHandlersFakeSSH(t *core.T) {
 	t.Helper()
 	dir := t.TempDir()
-	path := filepath.Join(dir, "ssh")
-	core.RequireNoError(t, os.WriteFile(path, []byte("#!/bin/sh\nexit 0\n"), 0o700))
+	path := core.PathJoin(dir, "ssh")
+	if r := core.WriteFile(path, []byte("#!/bin/sh\nexit 0\n"), 0o700); !r.OK {
+		core.RequireNoError(t, r.Value.(error))
+	}
 	t.Setenv("PATH", dir)
 }
 
