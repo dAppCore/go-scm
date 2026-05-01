@@ -6,9 +6,7 @@ import (
 	"crypto/ed25519"
 	"encoding/base64"
 	"io"
-	`os`
-	`path/filepath`
-	`strings`
+	"os"
 	"testing"
 
 	core "dappco.re/go"
@@ -27,7 +25,7 @@ func TestRegisterHelp(t *testing.T) {
 		}
 	})
 
-	if !strings.Contains(output, "usage: scm sign") {
+	if !core.Contains(output, "usage: scm sign") {
 		t.Fatalf("expected sign usage, got %q", output)
 	}
 }
@@ -51,8 +49,8 @@ func TestSignWritesSignature(t *testing.T) {
 	if err != nil {
 		t.Fatalf("marshal manifest: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(root, "core.json"), raw, 0o600); err != nil {
-		t.Fatalf("write core.json: %v", err)
+	if r := core.WriteFile(core.PathJoin(root, "core.json"), raw, 0o600); !r.OK {
+		t.Fatalf("write core.json: %v", r.Error())
 	}
 
 	app := core.New(core.WithOption("name", "scm"))
@@ -64,10 +62,11 @@ func TestSignWritesSignature(t *testing.T) {
 		t.Fatalf("sign failed: %v", result.Value)
 	}
 
-	signedRaw, err := os.ReadFile(filepath.Join(root, "core.json"))
-	if err != nil {
-		t.Fatalf("read signed core.json: %v", err)
+	signedRawR := core.ReadFile(core.PathJoin(root, "core.json"))
+	if !signedRawR.OK {
+		t.Fatalf("read signed core.json: %v", signedRawR.Error())
 	}
+	signedRaw := signedRawR.Value.([]byte)
 	signed, err := manifest.ParseCompiled(signedRaw)
 	if err != nil {
 		t.Fatalf("parse signed core.json: %v", err)

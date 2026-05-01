@@ -6,9 +6,7 @@ import (
 	"crypto/ed25519"
 	"encoding/base64"
 	"io"
-	`os`
-	`path/filepath`
-	`strings`
+	"os"
 	"testing"
 
 	core "dappco.re/go"
@@ -27,7 +25,7 @@ func TestRegisterHelp(t *testing.T) {
 		}
 	})
 
-	if !strings.Contains(output, "usage: scm verify") {
+	if !core.Contains(output, "usage: scm verify") {
 		t.Fatalf("expected verify usage, got %q", output)
 	}
 }
@@ -52,8 +50,8 @@ func TestVerifySignedCoreJSON(t *testing.T) {
 	if err != nil {
 		t.Fatalf("marshal manifest: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(root, "core.json"), raw, 0o600); err != nil {
-		t.Fatalf("write core.json: %v", err)
+	if r := core.WriteFile(core.PathJoin(root, "core.json"), raw, 0o600); !r.OK {
+		t.Fatalf("write core.json: %v", r.Error())
 	}
 
 	app := core.New(core.WithOption("name", "scm"))
@@ -66,7 +64,7 @@ func TestVerifySignedCoreJSON(t *testing.T) {
 		}
 	})
 
-	if !strings.Contains(output, "verified") {
+	if !core.Contains(output, "verified") {
 		t.Fatalf("expected verification output, got %q", output)
 	}
 }
