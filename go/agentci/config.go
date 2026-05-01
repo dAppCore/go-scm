@@ -3,13 +3,7 @@
 package agentci
 
 import (
-	// Note: errors.New is retained for stable validation errors in the agentci config API.
-	`errors`
-	// Note: fmt.Errorf is retained for wrapped config load/save errors; replacing here would add churn across load-bearing config paths.
-	`fmt`
-	// Note: strings helpers are retained for case-insensitive strategy matching and config error classification.
-	`strings`
-
+	core "dappco.re/go"
 	"dappco.re/go/config"
 	"gopkg.in/yaml.v3"
 )
@@ -53,7 +47,7 @@ func LoadAgents(cfg *config.Config) (map[string]AgentConfig, error)  /* v090-res
 		if isMissingKeyError(r.Error()) {
 			return agents, nil
 		}
-		return nil, fmt.Errorf("agentci.LoadAgents: get agents: %s", r.Error())
+		return nil, core.E("agentci.LoadAgents", "get agents: "+r.Error(), nil)
 	}
 	if agents == nil {
 		agents = make(map[string]AgentConfig)
@@ -93,10 +87,10 @@ func LoadClothoConfig(cfg *config.Config) (ClothoConfig, error)  /* v090-result-
 		if isMissingKeyError(r.Error()) {
 			return clotho, nil
 		}
-		return clotho, fmt.Errorf("agentci.LoadClothoConfig: get clotho: %s", r.Error())
+		return clotho, core.E("agentci.LoadClothoConfig", "get clotho: "+r.Error(), nil)
 	}
 	if r := cfg.Get("clotho", &clotho); !r.OK {
-		return clotho, fmt.Errorf("agentci.LoadClothoConfig: decode clotho: %s", r.Error())
+		return clotho, core.E("agentci.LoadClothoConfig", "decode clotho: "+r.Error(), nil)
 	}
 	if raw == nil {
 		raw = map[string]any{}
@@ -111,26 +105,29 @@ func LoadClothoConfig(cfg *config.Config) (ClothoConfig, error)  /* v090-result-
 		clotho.ValidationThreshold = defaultClothoConfig().ValidationThreshold
 	}
 	if clotho.ValidationThreshold < 0 || clotho.ValidationThreshold > 1 {
-		return clotho, fmt.Errorf(
-			"agentci.LoadClothoConfig: validation_threshold must be between 0.0 and 1.0, got %v",
-			clotho.ValidationThreshold,
+		return clotho, core.E(
+			"agentci.LoadClothoConfig",
+			core.Sprintf("validation_threshold must be between 0.0 and 1.0, got %v", clotho.ValidationThreshold),
+			nil,
 		)
 	}
 	return clotho, nil
 }
 
 func validateClothoStrategy(strategy string) error  /* v090-result-boundary */ {
+	lower := core.Lower(strategy)
 	switch {
-	case strategy == "":
+	case lower == "":
 		return nil
-	case strings.EqualFold(strategy, "direct"):
+	case lower == "direct":
 		return nil
-	case strings.EqualFold(strategy, "clotho-verified"):
+	case lower == "clotho-verified":
 		return nil
 	default:
-		return fmt.Errorf(
-			"agentci.LoadClothoConfig: strategy must be direct or clotho-verified, got %q",
-			strategy,
+		return core.E(
+			"agentci.LoadClothoConfig",
+			core.Sprintf("strategy must be direct or clotho-verified, got %q", strategy),
+			nil,
 		)
 	}
 }
@@ -138,25 +135,25 @@ func validateClothoStrategy(strategy string) error  /* v090-result-boundary */ {
 // SaveAgent writes an agent config entry to the config file.
 func SaveAgent(cfg *config.Config, name string, ac AgentConfig) error  /* v090-result-boundary */ {
 	if cfg == nil {
-		return errors.New("agentci.SaveAgent: config is required")
+		return core.E("agentci.SaveAgent", "config is required", nil)
 	}
 	if name == "" {
-		return errors.New("agentci.SaveAgent: name is required")
+		return core.E("agentci.SaveAgent", "name is required", nil)
 	}
 
 	agents, err := LoadAgents(cfg)
 	if err != nil {
-		return fmt.Errorf("agentci.SaveAgent: load agents: %w", err)
+		return core.E("agentci.SaveAgent", "load agents", err)
 	}
 	if agents == nil {
 		agents = make(map[string]AgentConfig)
 	}
 	agents[name] = ac
 	if r := cfg.Set("agents", agents); !r.OK {
-		return fmt.Errorf("agentci.SaveAgent: set agents: %s", r.Error())
+		return core.E("agentci.SaveAgent", "set agents: "+r.Error(), nil)
 	}
 	if r := cfg.Commit(); !r.OK {
-		return fmt.Errorf("agentci.SaveAgent: commit: %s", r.Error())
+		return core.E("agentci.SaveAgent", "commit: "+r.Error(), nil)
 	}
 	return nil
 }
@@ -164,22 +161,22 @@ func SaveAgent(cfg *config.Config, name string, ac AgentConfig) error  /* v090-r
 // RemoveAgent removes an agent from the config file.
 func RemoveAgent(cfg *config.Config, name string) error  /* v090-result-boundary */ {
 	if cfg == nil {
-		return errors.New("agentci.RemoveAgent: config is required")
+		return core.E("agentci.RemoveAgent", "config is required", nil)
 	}
 	if name == "" {
-		return errors.New("agentci.RemoveAgent: name is required")
+		return core.E("agentci.RemoveAgent", "name is required", nil)
 	}
 
 	agents, err := LoadAgents(cfg)
 	if err != nil {
-		return fmt.Errorf("agentci.RemoveAgent: load agents: %w", err)
+		return core.E("agentci.RemoveAgent", "load agents", err)
 	}
 	delete(agents, name)
 	if r := cfg.Set("agents", agents); !r.OK {
-		return fmt.Errorf("agentci.RemoveAgent: set agents: %s", r.Error())
+		return core.E("agentci.RemoveAgent", "set agents: "+r.Error(), nil)
 	}
 	if r := cfg.Commit(); !r.OK {
-		return fmt.Errorf("agentci.RemoveAgent: commit: %s", r.Error())
+		return core.E("agentci.RemoveAgent", "commit: "+r.Error(), nil)
 	}
 	return nil
 }
@@ -202,7 +199,7 @@ func (a *AgentConfig) UnmarshalYAML(value *yaml.Node) error  /* v090-result-boun
 }
 
 func isMissingKeyError(msg string) bool {
-	return strings.Contains(msg, "key not found")
+	return core.Contains(msg, "key not found")
 }
 
 func cloneAgents(src map[string]AgentConfig) map[string]AgentConfig {

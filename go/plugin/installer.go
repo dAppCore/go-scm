@@ -5,13 +5,10 @@ package plugin
 import (
 	// Note: context.Context is retained as the installer API cancellation contract.
 	"context"
-	// Note: errors.New is retained for stable installer validation errors.
-	`errors`
-	// Note: strings helpers are retained for parsing plugin source identifiers.
-	`strings`
 	// Note: time is retained for RFC3339 install timestamps in plugin metadata.
 	"time"
 
+	core "dappco.re/go"
 	coreio "dappco.re/go/io"
 )
 
@@ -26,22 +23,33 @@ func NewInstaller(m coreio.Medium, registry *Registry) *Installer {
 
 func ParseSource(source string) (org, repo, version string, err error)  /* v090-result-boundary */ {
 	if source == "" {
-		return "", "", "", errors.New("plugin.ParseSource: source is required")
+		return "", "", "", core.E("plugin.ParseSource", "source is required", nil)
 	}
 	base := source
-	if idx := strings.LastIndex(source, "@"); idx >= 0 {
+	if idx := lastIndexAt(source); idx >= 0 {
 		base, version = source[:idx], source[idx+1:]
 	}
-	parts := strings.SplitN(base, "/", 2)
+	parts := core.SplitN(base, "/", 2)
 	if len(parts) != 2 {
-		return "", "", "", errors.New("plugin.ParseSource: expected org/repo or org/repo@version")
+		return "", "", "", core.E("plugin.ParseSource", "expected org/repo or org/repo@version", nil)
 	}
 	return parts[0], parts[1], version, nil
 }
 
+// lastIndexAt returns the byte offset of the last "@" in s, or -1 if absent.
+// Equivalent of strings.LastIndex(s, "@") without importing strings.
+func lastIndexAt(s string) int {
+	for i := len(s) - 1; i >= 0; i-- {
+		if s[i] == '@' {
+			return i
+		}
+	}
+	return -1
+}
+
 func (i *Installer) Install(ctx context.Context, source string) error  /* v090-result-boundary */ {
 	if i == nil {
-		return errors.New("plugin.Installer.Install: installer is required")
+		return core.E("plugin.Installer.Install", "installer is required", nil)
 	}
 	if ctx != nil {
 		if err := ctx.Err(); err != nil {
@@ -71,7 +79,7 @@ func (i *Installer) Install(ctx context.Context, source string) error  /* v090-r
 
 func (i *Installer) Remove(name string) error  /* v090-result-boundary */ {
 	if i == nil {
-		return errors.New("plugin.Installer.Remove: installer is required")
+		return core.E("plugin.Installer.Remove", "installer is required", nil)
 	}
 	if i.registry != nil {
 		if err := i.registry.Remove(name); err != nil {
@@ -84,7 +92,7 @@ func (i *Installer) Remove(name string) error  /* v090-result-boundary */ {
 
 func (i *Installer) Update(ctx context.Context, name string) error  /* v090-result-boundary */ {
 	if i == nil {
-		return errors.New("plugin.Installer.Update: installer is required")
+		return core.E("plugin.Installer.Update", "installer is required", nil)
 	}
 	if ctx != nil {
 		if err := ctx.Err(); err != nil {
@@ -96,7 +104,7 @@ func (i *Installer) Update(ctx context.Context, name string) error  /* v090-resu
 	}
 	cfg, ok := i.registry.Get(name)
 	if !ok || cfg == nil {
-		return errors.New("plugin.Installer.Update: plugin not found")
+		return core.E("plugin.Installer.Update", "plugin not found", nil)
 	}
 	cfg.InstalledAt = time.Now().UTC().Format(time.RFC3339Nano)
 	if err := i.registry.Add(cfg); err != nil {
