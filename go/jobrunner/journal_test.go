@@ -3,11 +3,10 @@
 package jobrunner
 
 import (
-	`encoding/json`
-	`os`
-	`path/filepath`
 	"testing"
 	"time"
+
+	core "dappco.re/go"
 )
 
 func TestJournalAppendWritesDatePartitionedJSONL(t *testing.T) {
@@ -44,11 +43,12 @@ func TestJournalAppendWritesDatePartitionedJSONL(t *testing.T) {
 		t.Fatalf("append: %v", err)
 	}
 
-	path := filepath.Join(journal.baseDir, "2026", "04", "15.jsonl")
-	raw, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatalf("read journal: %v", err)
+	path := core.PathJoin(journal.baseDir, "2026", "04", "15.jsonl")
+	rawR := core.ReadFile(path)
+	if !rawR.OK {
+		t.Fatalf("read journal: %v", rawR.Error())
 	}
+	raw := rawR.Value.([]byte)
 
 	lines := splitLines(string(raw))
 	if len(lines) != 1 {
@@ -56,8 +56,8 @@ func TestJournalAppendWritesDatePartitionedJSONL(t *testing.T) {
 	}
 
 	var entry JournalEntry
-	if err := json.Unmarshal([]byte(lines[0]), &entry); err != nil {
-		t.Fatalf("unmarshal entry: %v", err)
+	if r := core.JSONUnmarshal([]byte(lines[0]), &entry); !r.OK {
+		t.Fatalf("unmarshal entry: %v", r.Error())
 	}
 	if entry.Timestamp != ts.Format(time.RFC3339Nano) {
 		t.Fatalf("unexpected timestamp: %q", entry.Timestamp)
@@ -83,14 +83,15 @@ func TestActionResultJSONUsesMilliseconds(t *testing.T) {
 		Cycle:     4,
 	}
 
-	raw, err := json.Marshal(original)
-	if err != nil {
-		t.Fatalf("marshal: %v", err)
+	rawR := core.JSONMarshal(original)
+	if !rawR.OK {
+		t.Fatalf("marshal: %v", rawR.Error())
 	}
+	raw := rawR.Value.([]byte)
 
 	var decoded map[string]any
-	if err := json.Unmarshal(raw, &decoded); err != nil {
-		t.Fatalf("unmarshal map: %v", err)
+	if r := core.JSONUnmarshal(raw, &decoded); !r.OK {
+		t.Fatalf("unmarshal map: %v", r.Error())
 	}
 
 	if got := decoded["duration_ms"]; got != float64(1500) {
@@ -98,8 +99,8 @@ func TestActionResultJSONUsesMilliseconds(t *testing.T) {
 	}
 
 	var roundTrip ActionResult
-	if err := json.Unmarshal(raw, &roundTrip); err != nil {
-		t.Fatalf("round trip unmarshal: %v", err)
+	if r := core.JSONUnmarshal(raw, &roundTrip); !r.OK {
+		t.Fatalf("round trip unmarshal: %v", r.Error())
 	}
 	if roundTrip.Duration != original.Duration {
 		t.Fatalf("unexpected duration round trip: %v", roundTrip.Duration)
