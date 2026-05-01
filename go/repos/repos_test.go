@@ -4,13 +4,11 @@ package repos
 
 import (
 	"context"
-	`os`
-	`os/exec`
-	`path/filepath`
 	"time"
 
 	core "dappco.re/go"
 	coreio "dappco.re/go/io"
+	process "dappco.re/go/process"
 )
 
 const (
@@ -32,24 +30,29 @@ func testReposRegistry() *Registry {
 
 func testReposGitCommand(t *core.T, dir string, args ...string) {
 	t.Helper()
-	cmd := exec.Command("git", args...)
-	cmd.Dir = dir
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		t.Fatalf("git %v failed: %v\n%s", args, err, string(out))
+	r := process.RunWithOptions(context.Background(), process.RunOptions{
+		Command: "git",
+		Args:    args,
+		Dir:     dir,
+	})
+	if !r.OK {
+		out, _ := r.Value.(string)
+		t.Fatalf("git %v failed: %s\n%s", args, r.Error(), out)
 	}
 }
 
 func testReposGitRepo(t *core.T) string {
 	root := t.TempDir()
-	remote := filepath.Join(root, "remote.git")
-	work := filepath.Join(root, "work")
+	remote := core.PathJoin(root, "remote.git")
+	work := core.PathJoin(root, "work")
 	testReposGitCommand(t, root, "init", "--bare", remote)
 	testReposGitCommand(t, root, "clone", remote, work)
 	testReposGitCommand(t, work, "config", "user.name", "AX7")
 	testReposGitCommand(t, work, "config", "user.email", "ax7@example.test")
 	testReposGitCommand(t, work, "checkout", "-b", "dev")
-	core.RequireNoError(t, os.WriteFile(filepath.Join(work, "README.md"), []byte("ready\n"), 0o600))
+	if r := core.WriteFile(core.PathJoin(work, "README.md"), []byte("ready\n"), 0o600); !r.OK {
+		t.Fatalf("write README: %s", r.Error())
+	}
 	testReposGitCommand(t, work, "add", "README.md")
 	testReposGitCommand(t, work, "commit", "-m", "initial")
 	testReposGitCommand(t, work, "push", "-u", "origin", "dev")
@@ -63,7 +66,7 @@ func TestRepos_Repo_Exists_Good(t *core.T) {
 }
 
 func TestRepos_Repo_Exists_Bad(t *core.T) {
-	repo := &Repo{Path: filepath.Join(t.TempDir(), "missing")}
+	repo := &Repo{Path: core.PathJoin(t.TempDir(), "missing")}
 	got := repo.Exists()
 	core.AssertFalse(t, got)
 }
@@ -76,7 +79,9 @@ func TestRepos_Repo_Exists_Ugly(t *core.T) {
 
 func TestRepos_Repo_IsGitRepo_Good(t *core.T) {
 	dir := t.TempDir()
-	core.RequireNoError(t, os.Mkdir(filepath.Join(dir, ".git"), 0o755))
+	if r := core.MkdirAll(core.PathJoin(dir, ".git"), 0o755); !r.OK {
+		t.Fatalf("mkdir .git: %s", r.Error())
+	}
 	repo := &Repo{Path: dir}
 	got := repo.IsGitRepo()
 	core.AssertTrue(t, got)
@@ -260,7 +265,7 @@ func TestRepos_Registry_Save_Bad(t *core.T) {
 
 func TestRepos_Registry_Save_Ugly(t *core.T) {
 	registry := testReposRegistry()
-	path := filepath.Join(t.TempDir(), sonarReposTestReposYaml)
+	path := core.PathJoin(t.TempDir(), sonarReposTestReposYaml)
 	err := registry.Save(path)
 	core.AssertNoError(t, err)
 }
@@ -637,19 +642,19 @@ func TestRepos_KBConfig_WikiRepoURL_Ugly(t *core.T) {
 func TestRepos_KBConfig_WikiLocalPath_Good(t *core.T) {
 	cfg := &KBConfig{Wiki: WikiConfig{Dir: "wiki"}}
 	got := cfg.WikiLocalPath("/root", sonarReposTestGoScm)
-	core.AssertEqual(t, filepath.Join("/root", "wiki", sonarReposTestGoScm), got)
+	core.AssertEqual(t, core.PathJoin("/root", "wiki", sonarReposTestGoScm), got)
 }
 
 func TestRepos_KBConfig_WikiLocalPath_Bad(t *core.T) {
 	cfg := &KBConfig{}
 	got := cfg.WikiLocalPath("/root", sonarReposTestGoScm)
-	core.AssertEqual(t, filepath.Join("/root", sonarReposTestCoreWiki, sonarReposTestGoScm), got)
+	core.AssertEqual(t, core.PathJoin("/root", sonarReposTestCoreWiki, sonarReposTestGoScm), got)
 }
 
 func TestRepos_KBConfig_WikiLocalPath_Ugly(t *core.T) {
 	var cfg *KBConfig
 	got := cfg.WikiLocalPath("", "")
-	core.AssertEqual(t, filepath.Join(sonarReposTestCoreWiki), got)
+	core.AssertEqual(t, core.PathJoin(sonarReposTestCoreWiki), got)
 }
 
 func TestRepos_LoadKBConfig_Good(t *core.T) {
@@ -722,8 +727,12 @@ func TestRepos_Service_OnStartup_Good(t *core.T) {
 		t.Fatal(reference)
 	}
 	root := t.TempDir()
-	core.RequireNoError(t, os.MkdirAll(filepath.Join(root, ".core"), 0o755))
-	core.RequireNoError(t, os.WriteFile(filepath.Join(root, ".core", sonarReposTestReposYaml), []byte("version: 1\nrepos: {}\n"), 0o600))
+	if r := core.MkdirAll(core.PathJoin(root, ".core"), 0o755); !r.OK {
+		t.Fatalf("mkdir .core: %s", r.Error())
+	}
+	if r := core.WriteFile(core.PathJoin(root, ".core", sonarReposTestReposYaml), []byte("version: 1\nrepos: {}\n"), 0o600); !r.OK {
+		t.Fatalf("write repos.yaml: %s", r.Error())
+	}
 	c := core.New(core.WithService(NewService(ServiceOptions{Root: root})))
 	result := c.ServiceStartup(context.Background(), nil)
 	core.AssertTrue(t, result.OK)

@@ -37,3 +37,7 @@ func ExampleSecureSSHCommandContext() {
 func ExampleMaskToken() {
 	_ = "MaskToken"
 }
+
+func ExampleSecureSSHArgs() {
+	_ = SecureSSHArgs
+}

@@ -4,12 +4,10 @@ package repos
 
 import (
 	"context"
-	`os`
-	`os/exec`
-	`path/filepath`
 	"testing"
 
 	core "dappco.re/go"
+	process "dappco.re/go/process"
 	"gopkg.in/yaml.v3"
 )
 
@@ -32,21 +30,21 @@ const (
 
 func TestServiceRegistersRepoSyncActions(t *testing.T) {
 	root := t.TempDir()
-	repoPath := filepath.Join(root, "repo1")
-	remotePath := filepath.Join(root, sonarServiceTestRemoteGit)
-	filePath := filepath.Join(repoPath, sonarServiceTestStateTxt)
+	repoPath := core.PathJoin(root, "repo1")
+	remotePath := core.PathJoin(root, sonarServiceTestRemoteGit)
+	filePath := core.PathJoin(repoPath, sonarServiceTestStateTxt)
 
 	runGitCmd(t, root, "git", "init", sonarServiceTestBare, remotePath)
-	if err := os.MkdirAll(filepath.Dir(repoPath), 0o755); err != nil {
-		t.Fatalf("mkdir workspace parent: %v", err)
+	if r := core.MkdirAll(core.PathDir(repoPath), 0o755); !r.OK {
+		t.Fatalf("mkdir workspace parent: %s", r.Error())
 	}
 	runGitCmd(t, root, "git", "clone", remotePath, repoPath)
 	runGitCmd(t, repoPath, "git", "-C", repoPath, "config", sonarServiceTestUserName, sonarServiceTestTestUser)
 	runGitCmd(t, repoPath, "git", "-C", repoPath, "config", sonarServiceTestUserEmail, sonarServiceTestTestExampleCom)
 	runGitCmd(t, repoPath, "git", "-C", repoPath, "checkout", "-b", "dev")
 
-	if err := os.WriteFile(filePath, []byte(sonarServiceTestRemoteState), 0o600); err != nil {
-		t.Fatalf(sonarServiceTestWriteSeedFileV, err)
+	if r := core.WriteFile(filePath, []byte(sonarServiceTestRemoteState), 0o600); !r.OK {
+		t.Fatalf(sonarServiceTestWriteSeedFileV, r.Error())
 	}
 	runGitCmd(t, repoPath, "git", "-C", repoPath, "add", sonarServiceTestStateTxt)
 	runGitCmd(t, repoPath, "git", "-C", repoPath, "commit", "-m", "initial")
@@ -76,8 +74,8 @@ func TestServiceRegistersRepoSyncActions(t *testing.T) {
 		t.Fatalf("repo.sync.all action was not registered")
 	}
 
-	if err := os.WriteFile(filePath, []byte(sonarServiceTestLocalChanges), 0o600); err != nil {
-		t.Fatalf(sonarServiceTestWriteLocalChangeV, err)
+	if r := core.WriteFile(filePath, []byte(sonarServiceTestLocalChanges), 0o600); !r.OK {
+		t.Fatalf(sonarServiceTestWriteLocalChangeV, r.Error())
 	}
 	runGitCmd(t, repoPath, "git", "-C", repoPath, "commit", "-am", sonarServiceTestLocalChange)
 
@@ -86,16 +84,17 @@ func TestServiceRegistersRepoSyncActions(t *testing.T) {
 		t.Fatalf("repo.sync failed: %v", syncResult.Value)
 	}
 
-	raw, err := os.ReadFile(filePath)
-	if err != nil {
-		t.Fatalf(sonarServiceTestReadSyncedFileV, err)
+	rRead := core.ReadFile(filePath)
+	if !rRead.OK {
+		t.Fatalf(sonarServiceTestReadSyncedFileV, rRead.Error())
 	}
+	raw := rRead.Value.([]byte)
 	if got := string(raw); got != sonarServiceTestRemoteState {
 		t.Fatalf(sonarServiceTestUnexpectedSyncedFileContentsQ, got)
 	}
 
-	if err := os.WriteFile(filePath, []byte("local changes again\n"), 0o600); err != nil {
-		t.Fatalf("write local change for ipc: %v", err)
+	if r := core.WriteFile(filePath, []byte("local changes again\n"), 0o600); !r.OK {
+		t.Fatalf("write local change for ipc: %s", r.Error())
 	}
 	runGitCmd(t, repoPath, "git", "-C", repoPath, "commit", "-am", "local change again")
 
@@ -103,10 +102,11 @@ func TestServiceRegistersRepoSyncActions(t *testing.T) {
 		t.Fatalf("workspace push broadcast failed: %v", r.Value)
 	}
 
-	raw, err = os.ReadFile(filePath)
-	if err != nil {
-		t.Fatalf("read ipc-synced file: %v", err)
+	rRead2 := core.ReadFile(filePath)
+	if !rRead2.OK {
+		t.Fatalf("read ipc-synced file: %s", rRead2.Error())
 	}
+	raw = rRead2.Value.([]byte)
 	if got := string(raw); got != sonarServiceTestRemoteState {
 		t.Fatalf("unexpected ipc synced file contents: %q", got)
 	}
@@ -117,8 +117,8 @@ func TestServiceLoadsProjectAndHomeRegistries(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 
-	projectRepo := filepath.Join(root, "project-repo")
-	homeRepo := filepath.Join(home, "home-repo")
+	projectRepo := core.PathJoin(root, "project-repo")
+	homeRepo := core.PathJoin(home, "home-repo")
 
 	projectRegistry := &Registry{
 		Version:  1,
@@ -179,9 +179,9 @@ func TestServiceSyncRepoFallsBackToWorkspacePath(t *testing.T) {
 	t.Setenv("CORE_REPOS", "")
 	org := "core"
 	repoName := "repo1"
-	repoPath := filepath.Join(root, org, repoName)
-	remotePath := filepath.Join(root, sonarServiceTestRemoteGit)
-	filePath := filepath.Join(repoPath, sonarServiceTestStateTxt)
+	repoPath := core.PathJoin(root, org, repoName)
+	remotePath := core.PathJoin(root, sonarServiceTestRemoteGit)
+	filePath := core.PathJoin(repoPath, sonarServiceTestStateTxt)
 
 	runGitCmd(t, root, "git", "init", sonarServiceTestBare, remotePath)
 	runGitCmd(t, root, "git", "clone", remotePath, repoPath)
@@ -189,8 +189,8 @@ func TestServiceSyncRepoFallsBackToWorkspacePath(t *testing.T) {
 	runGitCmd(t, repoPath, "git", "-C", repoPath, "config", sonarServiceTestUserEmail, sonarServiceTestTestExampleCom)
 	runGitCmd(t, repoPath, "git", "-C", repoPath, "checkout", "-b", "dev")
 
-	if err := os.WriteFile(filePath, []byte(sonarServiceTestRemoteState), 0o600); err != nil {
-		t.Fatalf(sonarServiceTestWriteSeedFileV, err)
+	if r := core.WriteFile(filePath, []byte(sonarServiceTestRemoteState), 0o600); !r.OK {
+		t.Fatalf(sonarServiceTestWriteSeedFileV, r.Error())
 	}
 	runGitCmd(t, repoPath, "git", "-C", repoPath, "add", sonarServiceTestStateTxt)
 	runGitCmd(t, repoPath, "git", "-C", repoPath, "commit", "-m", "initial")
@@ -198,11 +198,11 @@ func TestServiceSyncRepoFallsBackToWorkspacePath(t *testing.T) {
 
 	svc := &Service{ServiceRuntime: core.NewServiceRuntime(core.New(), ServiceOptions{
 		Root:         root,
-		RegistryPath: filepath.Join(root, ".core", "missing.yaml"),
+		RegistryPath: core.PathJoin(root, ".core", "missing.yaml"),
 	})}
 
-	if err := os.WriteFile(filePath, []byte(sonarServiceTestLocalChanges), 0o600); err != nil {
-		t.Fatalf(sonarServiceTestWriteLocalChangeV, err)
+	if r := core.WriteFile(filePath, []byte(sonarServiceTestLocalChanges), 0o600); !r.OK {
+		t.Fatalf(sonarServiceTestWriteLocalChangeV, r.Error())
 	}
 	runGitCmd(t, repoPath, "git", "-C", repoPath, "commit", "-am", sonarServiceTestLocalChange)
 
@@ -220,10 +220,11 @@ func TestServiceSyncRepoFallsBackToWorkspacePath(t *testing.T) {
 		t.Fatalf("unexpected sync result: %#v", result)
 	}
 
-	raw, err := os.ReadFile(filePath)
-	if err != nil {
-		t.Fatalf(sonarServiceTestReadSyncedFileV, err)
+	rRead := core.ReadFile(filePath)
+	if !rRead.OK {
+		t.Fatalf(sonarServiceTestReadSyncedFileV, rRead.Error())
 	}
+	raw := rRead.Value.([]byte)
 	if got := string(raw); got != sonarServiceTestRemoteState {
 		t.Fatalf(sonarServiceTestUnexpectedSyncedFileContentsQ, got)
 	}
@@ -234,9 +235,9 @@ func TestServiceSyncRepoFallsBackWhenRegistryMissesRepo(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
 	org := "core"
 	repoName := "repo1"
-	repoPath := filepath.Join(root, org, repoName)
-	remotePath := filepath.Join(root, sonarServiceTestRemoteGit)
-	filePath := filepath.Join(repoPath, sonarServiceTestStateTxt)
+	repoPath := core.PathJoin(root, org, repoName)
+	remotePath := core.PathJoin(root, sonarServiceTestRemoteGit)
+	filePath := core.PathJoin(repoPath, sonarServiceTestStateTxt)
 
 	runGitCmd(t, root, "git", "init", sonarServiceTestBare, remotePath)
 	runGitCmd(t, root, "git", "clone", remotePath, repoPath)
@@ -244,8 +245,8 @@ func TestServiceSyncRepoFallsBackWhenRegistryMissesRepo(t *testing.T) {
 	runGitCmd(t, repoPath, "git", "-C", repoPath, "config", sonarServiceTestUserEmail, sonarServiceTestTestExampleCom)
 	runGitCmd(t, repoPath, "git", "-C", repoPath, "checkout", "-b", "dev")
 
-	if err := os.WriteFile(filePath, []byte(sonarServiceTestRemoteState), 0o600); err != nil {
-		t.Fatalf(sonarServiceTestWriteSeedFileV, err)
+	if r := core.WriteFile(filePath, []byte(sonarServiceTestRemoteState), 0o600); !r.OK {
+		t.Fatalf(sonarServiceTestWriteSeedFileV, r.Error())
 	}
 	runGitCmd(t, repoPath, "git", "-C", repoPath, "add", sonarServiceTestStateTxt)
 	runGitCmd(t, repoPath, "git", "-C", repoPath, "commit", "-m", "initial")
@@ -255,7 +256,7 @@ func TestServiceSyncRepoFallsBackWhenRegistryMissesRepo(t *testing.T) {
 		Version:  1,
 		BasePath: root,
 		Repos: map[string]*Repo{
-			"other": {Path: filepath.Join(root, org, "other")},
+			"other": {Path: core.PathJoin(root, org, "other")},
 		},
 	}
 	if err := writeRegistry(root, registry); err != nil {
@@ -268,8 +269,8 @@ func TestServiceSyncRepoFallsBackWhenRegistryMissesRepo(t *testing.T) {
 		Remote: "origin",
 	})}
 
-	if err := os.WriteFile(filePath, []byte(sonarServiceTestLocalChanges), 0o600); err != nil {
-		t.Fatalf(sonarServiceTestWriteLocalChangeV, err)
+	if r := core.WriteFile(filePath, []byte(sonarServiceTestLocalChanges), 0o600); !r.OK {
+		t.Fatalf(sonarServiceTestWriteLocalChangeV, r.Error())
 	}
 	runGitCmd(t, repoPath, "git", "-C", repoPath, "commit", "-am", sonarServiceTestLocalChange)
 
@@ -290,10 +291,11 @@ func TestServiceSyncRepoFallsBackWhenRegistryMissesRepo(t *testing.T) {
 		t.Fatalf("unexpected fallback path: %q", got)
 	}
 
-	raw, err := os.ReadFile(filePath)
-	if err != nil {
-		t.Fatalf(sonarServiceTestReadSyncedFileV, err)
+	rRead := core.ReadFile(filePath)
+	if !rRead.OK {
+		t.Fatalf(sonarServiceTestReadSyncedFileV, rRead.Error())
 	}
+	raw := rRead.Value.([]byte)
 	if got := string(raw); got != sonarServiceTestRemoteState {
 		t.Fatalf(sonarServiceTestUnexpectedSyncedFileContentsQ, got)
 	}
@@ -304,19 +306,25 @@ func writeRegistry(root string, reg *Registry) error {
 	if err != nil {
 		return err
 	}
-	if err := os.MkdirAll(filepath.Join(root, ".core"), 0o755); err != nil {
-		return err
+	if r := core.MkdirAll(core.PathJoin(root, ".core"), 0o755); !r.OK {
+		return r.Value.(error)
 	}
-	return os.WriteFile(filepath.Join(root, ".core", "repos.yaml"), raw, 0o600)
+	if r := core.WriteFile(core.PathJoin(root, ".core", "repos.yaml"), raw, 0o600); !r.OK {
+		return r.Value.(error)
+	}
+	return nil
 }
 
 func runGitCmd(t *testing.T, dir string, name string, args ...string) {
 	t.Helper()
-	cmd := exec.Command(name, args...)
-	cmd.Dir = dir
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		t.Fatalf("%s %v failed: %v\n%s", name, args, err, string(out))
+	r := process.RunWithOptions(context.Background(), process.RunOptions{
+		Command: name,
+		Args:    args,
+		Dir:     dir,
+	})
+	if !r.OK {
+		out, _ := r.Value.(string)
+		t.Fatalf("%s %v failed: %s\n%s", name, args, r.Error(), out)
 	}
 }
 

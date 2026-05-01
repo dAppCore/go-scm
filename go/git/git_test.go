@@ -4,19 +4,16 @@ package git
 
 import (
 	"context"
-	`errors`
-	`os`
-	`os/exec`
-	`path/filepath`
 	"testing"
 
 	core "dappco.re/go"
+	process "dappco.re/go/process"
 )
 
 func TestSyncWithRemoteResetsWorkingTree(t *testing.T) {
 	tempDir := t.TempDir()
-	remoteDir := filepath.Join(tempDir, "remote.git")
-	workDir := filepath.Join(tempDir, "work")
+	remoteDir := core.PathJoin(tempDir, "remote.git")
+	workDir := core.PathJoin(tempDir, "work")
 
 	runGitCmd(t, tempDir, "git", "init", "--bare", remoteDir)
 	runGitCmd(t, tempDir, "git", "clone", remoteDir, workDir)
@@ -24,16 +21,16 @@ func TestSyncWithRemoteResetsWorkingTree(t *testing.T) {
 	runGitCmd(t, workDir, "git", "-C", workDir, "config", "user.email", "test@example.com")
 	runGitCmd(t, workDir, "git", "-C", workDir, "checkout", "-b", "dev")
 
-	filePath := filepath.Join(workDir, "state.txt")
-	if err := os.WriteFile(filePath, []byte("remote state\n"), 0o600); err != nil {
-		t.Fatalf("write initial file: %v", err)
+	filePath := core.PathJoin(workDir, "state.txt")
+	if r := core.WriteFile(filePath, []byte("remote state\n"), 0o600); !r.OK {
+		t.Fatalf("write initial file: %s", r.Error())
 	}
 	runGitCmd(t, workDir, "git", "-C", workDir, "add", "state.txt")
 	runGitCmd(t, workDir, "git", "-C", workDir, "commit", "-m", "initial")
 	runGitCmd(t, workDir, "git", "-C", workDir, "push", "-u", "origin", "dev")
 
-	if err := os.WriteFile(filePath, []byte("local changes\n"), 0o600); err != nil {
-		t.Fatalf("write modified file: %v", err)
+	if r := core.WriteFile(filePath, []byte("local changes\n"), 0o600); !r.OK {
+		t.Fatalf("write modified file: %s", r.Error())
 	}
 	runGitCmd(t, workDir, "git", "-C", workDir, "commit", "-am", "local change")
 
@@ -41,10 +38,11 @@ func TestSyncWithRemoteResetsWorkingTree(t *testing.T) {
 		t.Fatalf("sync: %v", err)
 	}
 
-	raw, err := os.ReadFile(filePath)
-	if err != nil {
-		t.Fatalf("read synced file: %v", err)
+	rRead := core.ReadFile(filePath)
+	if !rRead.OK {
+		t.Fatalf("read synced file: %s", rRead.Error())
 	}
+	raw := rRead.Value.([]byte)
 	if got := string(raw); got != "remote state\n" {
 		t.Fatalf("unexpected synced file contents: %q", got)
 	}
@@ -52,34 +50,42 @@ func TestSyncWithRemoteResetsWorkingTree(t *testing.T) {
 
 func runGitCmd(t *testing.T, dir string, name string, args ...string) {
 	t.Helper()
-	cmd := exec.Command(name, args...)
-	cmd.Dir = dir
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		t.Fatalf("%s %v failed: %v\n%s", name, args, err, string(out))
+	r := process.RunWithOptions(context.Background(), process.RunOptions{
+		Command: name,
+		Args:    args,
+		Dir:     dir,
+	})
+	if !r.OK {
+		out, _ := r.Value.(string)
+		t.Fatalf("%s %v failed: %s\n%s", name, args, r.Error(), out)
 	}
 }
 
 func testGitCommand(t *core.T, dir string, args ...string) {
 	t.Helper()
-	cmd := exec.Command("git", args...)
-	cmd.Dir = dir
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		t.Fatalf("git %v failed: %v\n%s", args, err, string(out))
+	r := process.RunWithOptions(context.Background(), process.RunOptions{
+		Command: "git",
+		Args:    args,
+		Dir:     dir,
+	})
+	if !r.OK {
+		out, _ := r.Value.(string)
+		t.Fatalf("git %v failed: %s\n%s", args, r.Error(), out)
 	}
 }
 
 func testGitRepo(t *core.T) string {
 	root := t.TempDir()
-	remote := filepath.Join(root, "remote.git")
-	work := filepath.Join(root, "work")
+	remote := core.PathJoin(root, "remote.git")
+	work := core.PathJoin(root, "work")
 	testGitCommand(t, root, "init", "--bare", remote)
 	testGitCommand(t, root, "clone", remote, work)
 	testGitCommand(t, work, "config", "user.name", "AX7")
 	testGitCommand(t, work, "config", "user.email", "ax7@example.test")
 	testGitCommand(t, work, "checkout", "-b", "dev")
-	core.RequireNoError(t, os.WriteFile(filepath.Join(work, "README.md"), []byte("ready\n"), 0o600))
+	if r := core.WriteFile(core.PathJoin(work, "README.md"), []byte("ready\n"), 0o600); !r.OK {
+		t.Fatalf("write README: %s", r.Error())
+	}
 	testGitCommand(t, work, "add", "README.md")
 	testGitCommand(t, work, "commit", "-m", "initial")
 	testGitCommand(t, work, "push", "-u", "origin", "dev")
@@ -94,7 +100,7 @@ func TestGit_GitError_Error_Good(t *core.T) {
 }
 
 func TestGit_GitError_Error_Bad(t *core.T) {
-	err := (&GitError{Err: errors.New("failed")}).Error()
+	err := (&GitError{Err: core.E("test", "failed", nil)}).Error()
 	core.AssertEqual(
 		t, "failed", err,
 	)
@@ -108,7 +114,7 @@ func TestGit_GitError_Error_Ugly(t *core.T) {
 }
 
 func TestGit_GitError_Unwrap_Good(t *core.T) {
-	cause := errors.New("failed")
+	cause := core.E("test", "failed", nil)
 	err := (&GitError{Err: cause}).Unwrap()
 	core.AssertEqual(t, cause, err)
 }
@@ -181,14 +187,14 @@ func TestGit_RepoStatus_IsDirty_Ugly(t *core.T) {
 }
 
 func TestGit_IsNonFastForward_Good(t *core.T) {
-	got := IsNonFastForward(errors.New("push rejected: non-fast-forward"))
+	got := IsNonFastForward(core.E("test", "push rejected: non-fast-forward", nil))
 	core.AssertTrue(
 		t, got,
 	)
 }
 
 func TestGit_IsNonFastForward_Bad(t *core.T) {
-	got := IsNonFastForward(errors.New("permission denied"))
+	got := IsNonFastForward(core.E("test", "permission denied", nil))
 	core.AssertFalse(
 		t, got,
 	)
@@ -396,7 +402,9 @@ func TestGit_PullMultipleIter_Ugly(t *core.T) {
 
 func TestGit_Status_Good(t *core.T) {
 	repo := testGitRepo(t)
-	core.RequireNoError(t, os.WriteFile(filepath.Join(repo, "new.txt"), []byte("new\n"), 0o600))
+	if r := core.WriteFile(core.PathJoin(repo, "new.txt"), []byte("new\n"), 0o600); !r.OK {
+		t.Fatalf("write new.txt: %s", r.Error())
+	}
 	got := Status(context.Background(), StatusOptions{Paths: []string{repo}, Names: map[string]string{repo: "demo"}})
 	core.AssertLen(t, got, 1)
 	core.AssertEqual(t, "demo", got[0].Name)
@@ -404,7 +412,7 @@ func TestGit_Status_Good(t *core.T) {
 }
 
 func TestGit_Status_Bad(t *core.T) {
-	got := Status(context.Background(), StatusOptions{Paths: []string{filepath.Join(t.TempDir(), "missing")}})
+	got := Status(context.Background(), StatusOptions{Paths: []string{core.PathJoin(t.TempDir(), "missing")}})
 	core.AssertLen(t, got, 1)
 	core.AssertNotNil(t, got[0].Error)
 }
@@ -423,12 +431,12 @@ func TestGit_StatusIter_Good(t *core.T) {
 		got = append(got, status)
 	}
 	core.AssertLen(t, got, 1)
-	core.AssertEqual(t, filepath.Base(repo), got[0].Name)
+	core.AssertEqual(t, core.PathBase(repo), got[0].Name)
 }
 
 func TestGit_StatusIter_Bad(t *core.T) {
 	var got []RepoStatus
-	for status := range StatusIter(context.Background(), StatusOptions{Paths: []string{filepath.Join(t.TempDir(), "missing")}}) {
+	for status := range StatusIter(context.Background(), StatusOptions{Paths: []string{core.PathJoin(t.TempDir(), "missing")}}) {
 		got = append(got, status)
 	}
 	core.AssertLen(t, got, 1)
