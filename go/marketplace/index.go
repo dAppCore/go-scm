@@ -3,7 +3,6 @@
 package marketplace
 
 import (
-	`errors`
 	"io/fs"
 
 	core "dappco.re/go"
@@ -29,11 +28,11 @@ type mediumWriteFileString interface {
 // LoadIndex reads a marketplace index through an io.Medium.
 func LoadIndex(m coreio.Medium, path string) (*Index, error)  /* v090-result-boundary */ {
 	if m == nil {
-		return nil, errors.New("marketplace.LoadIndex: medium is required")
+		return nil, core.E("marketplace.LoadIndex", "medium is required", nil)
 	}
 	raw, err := readMediumFile(m, path)
 	if err != nil {
-		if errors.Is(err, fs.ErrNotExist) {
+		if core.Is(err, fs.ErrNotExist) {
 			return &Index{Version: 1, Modules: []Module{}}, nil
 		}
 		return nil, err
@@ -44,10 +43,10 @@ func LoadIndex(m coreio.Medium, path string) (*Index, error)  /* v090-result-bou
 // WriteIndexToMedium writes a marketplace index through an io.Medium.
 func WriteIndexToMedium(m coreio.Medium, path string, idx *Index) error  /* v090-result-boundary */ {
 	if m == nil {
-		return errors.New("marketplace.WriteIndexToMedium: medium is required")
+		return core.E("marketplace.WriteIndexToMedium", "medium is required", nil)
 	}
 	if idx == nil {
-		return errors.New("marketplace.WriteIndexToMedium: index is required")
+		return core.E("marketplace.WriteIndexToMedium", "index is required", nil)
 	}
 	marshalResult := core.JSONMarshalIndent(idx, "", "  ")
 	if !marshalResult.OK {
@@ -58,7 +57,7 @@ func WriteIndexToMedium(m coreio.Medium, path string, idx *Index) error  /* v090
 
 func readMediumFile(m coreio.Medium, path string) ([]byte, error)  /* v090-result-boundary */ {
 	if m == nil {
-		return nil, errors.New("marketplace.readMediumFile: medium is required")
+		return nil, core.E("marketplace.readMediumFile", "medium is required", nil)
 	}
 	if reader, ok := m.(mediumReadFile); ok {
 		return reader.ReadFile(path)
@@ -72,7 +71,7 @@ func readMediumFile(m coreio.Medium, path string) ([]byte, error)  /* v090-resul
 
 func writeMediumFile(m coreio.Medium, path string, data []byte) error  /* v090-result-boundary */ {
 	if m == nil {
-		return errors.New("marketplace.writeMediumFile: medium is required")
+		return core.E("marketplace.writeMediumFile", "medium is required", nil)
 	}
 	if writer, ok := m.(mediumWriteFile); ok {
 		return writer.WriteFile(path, data, 0o600)

@@ -3,7 +3,6 @@
 package repos
 
 import (
-	`errors`
 	"time"
 
 	core "dappco.re/go"
@@ -125,7 +124,7 @@ func (gs *GitState) NeedsPull(name string, maxAge time.Duration) bool {
 
 func LoadGitState(m coreio.Medium, root string) (*GitState, error)  /* v090-result-boundary */ {
 	if m == nil {
-		return nil, errors.New("repos.LoadGitState: medium is required")
+		return nil, core.E("repos.LoadGitState", "medium is required", nil)
 	}
 	raw, err := m.Read(core.PathJoin(root, ".core", "git.yaml"))
 	if err != nil {
@@ -141,7 +140,7 @@ func LoadGitState(m coreio.Medium, root string) (*GitState, error)  /* v090-resu
 
 func SaveGitState(m coreio.Medium, root string, gs *GitState) error  /* v090-result-boundary */ {
 	if m == nil {
-		return errors.New("repos.SaveGitState: medium is required")
+		return core.E("repos.SaveGitState", "medium is required", nil)
 	}
 	if gs == nil {
 		gs = NewGitState()

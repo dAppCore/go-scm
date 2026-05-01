@@ -3,8 +3,6 @@
 package agentci
 
 import (
-	// Note: filepath.Join is retained in tests to build temporary config paths without touching production path helpers.
-	`path/filepath`
 	// Note: testing is the standard Go test harness.
 	"testing"
 
@@ -35,7 +33,7 @@ func testConfig(t *testing.T, opts ...config.Option) *config.Config {
 }
 
 func TestLoadAgentsAndRoundTrip(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "config.yaml")
+	path := core.PathJoin(t.TempDir(), "config.yaml")
 	cfg := testConfig(t, config.WithPath(path))
 
 	agent := AgentConfig{

@@ -6,9 +6,9 @@ import (
 	"context"
 	"crypto/ed25519" // intrinsic
 	"encoding/base64"
-	`path/filepath`
 	"testing"
 
+	core "dappco.re/go"
 	coreio "dappco.re/go/io"
 	"dappco.re/go/scm/manifest"
 )
@@ -28,7 +28,7 @@ func TestInstallerPersistsInstalledModulesToMedium(t *testing.T) {
 		t.Fatalf("install: %v", err)
 	}
 
-	raw, ok := medium.Files[filepath.Join("modules", "go-io", "module.json")]
+	raw, ok := medium.Files[core.PathJoin("modules", "go-io", "module.json")]
 	if !ok || raw == "" {
 		t.Fatalf("expected module.json to be written")
 	}
@@ -85,7 +85,7 @@ func TestInstallerRejectsVerifyFailBeforeMediumWrite(t *testing.T) {
 	if err := installer.Install(context.Background(), mod); err == nil {
 		t.Fatal("expected install to reject invalid signature")
 	}
-	if _, ok := medium.Files[filepath.Join("modules", "go-io", "module.json")]; ok {
+	if _, ok := medium.Files[core.PathJoin("modules", "go-io", "module.json")]; ok {
 		t.Fatal("module.json was written after signature verification failed")
 	}
 }

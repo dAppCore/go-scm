@@ -4,7 +4,6 @@ package marketplace
 
 import (
 	"context"
-	`errors`
 	"time"
 
 	core "dappco.re/go"
@@ -38,7 +37,7 @@ func NewInstaller(m coreio.Medium, modulesDir string, _ ...any) *Installer {
 
 func (i *Installer) Install(ctx context.Context, mod Module) error  /* v090-result-boundary */ {
 	if i == nil {
-		return errors.New("marketplace.Installer.Install: installer is required")
+		return core.E("marketplace.Installer.Install", "installer is required", nil)
 	}
 	if ctx != nil {
 		if err := ctx.Err(); err != nil {
@@ -46,10 +45,10 @@ func (i *Installer) Install(ctx context.Context, mod Module) error  /* v090-resu
 		}
 	}
 	if i.medium == nil {
-		return errors.New("marketplace.Installer.Install: medium is required")
+		return core.E("marketplace.Installer.Install", "medium is required", nil)
 	}
 	if mod.Code == "" {
-		return errors.New("marketplace.Installer.Install: module code is required")
+		return core.E("marketplace.Installer.Install", "module code is required", nil)
 	}
 	if err := verifyModuleSignature(mod); err != nil {
 		return err
@@ -122,7 +121,7 @@ func (i *Installer) Installed() ([]InstalledModule, error)  /* v090-result-bound
 
 func (i *Installer) Remove(code string) error  /* v090-result-boundary */ {
 	if i == nil || i.medium == nil {
-		return errors.New("marketplace.Installer.Remove: installer is required")
+		return core.E("marketplace.Installer.Remove", "installer is required", nil)
 	}
 	if err := i.medium.DeleteAll(core.PathJoin(i.modulesDir, code)); err != nil {
 		return err
@@ -132,7 +131,7 @@ func (i *Installer) Remove(code string) error  /* v090-result-boundary */ {
 
 func (i *Installer) Update(ctx context.Context, code string) error  /* v090-result-boundary */ {
 	if i == nil {
-		return errors.New("marketplace.Installer.Update: installer is required")
+		return core.E("marketplace.Installer.Update", "installer is required", nil)
 	}
 	if ctx != nil {
 		if err := ctx.Err(); err != nil {
@@ -140,7 +139,7 @@ func (i *Installer) Update(ctx context.Context, code string) error  /* v090-resu
 		}
 	}
 	if i.medium == nil {
-		return errors.New("marketplace.Installer.Update: medium is required")
+		return core.E("marketplace.Installer.Update", "medium is required", nil)
 	}
 	path := core.PathJoin(i.modulesDir, code, sonarInstallerModuleJson)
 	raw, err := readMediumFile(i.medium, path)
@@ -152,7 +151,7 @@ func (i *Installer) Update(ctx context.Context, code string) error  /* v090-resu
 		return core.E("marketplace.Installer.Update", "decode installed module", nil)
 	}
 	if core.Trim(entry.Code) == "" {
-		return errors.New("marketplace.Installer.Update: installed module is invalid")
+		return core.E("marketplace.Installer.Update", "installed module is invalid", nil)
 	}
 	entry.InstalledAt = time.Now().UTC().Format(time.RFC3339Nano)
 	updatedResult := core.JSONMarshalIndent(entry, "", "  ")

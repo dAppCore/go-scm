@@ -5,7 +5,6 @@ package manifest
 import (
 	"crypto/ed25519"
 	"encoding/base64"
-	`encoding/json`
 	"testing"
 
 	core "dappco.re/go"
@@ -41,8 +40,8 @@ func TestManifest_Compile_Good(t *testing.T) {
 	}
 
 	var got Manifest
-	if err := json.Unmarshal(raw, &got); err != nil {
-		t.Fatalf("unmarshal core json: %v", err)
+	if r := core.JSONUnmarshal(raw, &got); !r.OK {
+		t.Fatalf("unmarshal core json: %v", r.Value)
 	}
 	if got.Code != m.Code || got.Name != m.Name || got.Version != m.Version {
 		t.Fatalf("manifest fields did not round-trip: %#v", got)

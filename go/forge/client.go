@@ -3,10 +3,9 @@
 package forge
 
 import (
-	// Note: errors.New is retained for stable constructor validation errors.
-	`errors`
-
 	"codeberg.org/forgejo/go-sdk/forgejo"
+
+	core "dappco.re/go"
 )
 
 type Client struct {
@@ -17,7 +16,7 @@ type Client struct {
 
 func New(url, token string) (*Client, error)  /* v090-result-boundary */ {
 	if url == "" {
-		return nil, errors.New("forge.New: url is required")
+		return nil, core.E("forge.New", "url is required", nil)
 	}
 	api, err := forgejo.NewClient(url, forgejo.SetToken(token))
 	if err != nil {

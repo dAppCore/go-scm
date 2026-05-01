@@ -5,10 +5,10 @@ package collect
 import (
 	// Note: context.Context is retained in tests to exercise processor public APIs.
 	"context"
-	// Note: strings.Contains is retained for assertions over generated Markdown.
-	`strings`
 	// Note: testing is the standard Go test harness.
 	"testing"
+
+	core "dappco.re/go"
 )
 
 func TestProcessorDryRunDoesNotRequireOutputMedium(t *testing.T) {
@@ -28,7 +28,7 @@ func TestJSONToMarkdownHandlesJSONL(t *testing.T) {
 	if err != nil {
 		t.Fatalf("json to markdown: %v", err)
 	}
-	if !strings.Contains(md, `"a": 1`) || !strings.Contains(md, `"b": 2`) {
+	if !core.Contains(md, `"a": 1`) || !core.Contains(md, `"b": 2`) {
 		t.Fatalf("unexpected markdown output: %q", md)
 	}
 }

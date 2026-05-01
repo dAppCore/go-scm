@@ -5,11 +5,10 @@ package plugin
 import (
 	// Note: context.Context is retained in tests to exercise installer public APIs.
 	"context"
-	// Note: strings.Contains is retained for assertions against persisted registry YAML.
-	`strings`
 	// Note: testing is the standard Go test harness.
 	"testing"
 
+	core "dappco.re/go"
 	coreio "dappco.re/go/io"
 )
 
@@ -30,7 +29,7 @@ func TestInstallerPersistsInstallUpdateAndRemove(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected registry to be saved after install")
 	}
-	if !strings.Contains(raw, `"foo"`) {
+	if !core.Contains(raw, `"foo"`) {
 		t.Fatalf("expected saved registry to contain plugin entry: %s", raw)
 	}
 
@@ -48,7 +47,7 @@ func TestInstallerPersistsInstallUpdateAndRemove(t *testing.T) {
 		t.Fatalf("Remove: %v", err)
 	}
 	final := medium.Files[sonarInstallerTestPluginsRegistryJson]
-	if strings.Contains(final, `"foo"`) {
+	if core.Contains(final, `"foo"`) {
 		t.Fatalf("expected plugin entry to be removed: %s", final)
 	}
 }

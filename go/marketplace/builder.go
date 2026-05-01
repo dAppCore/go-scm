@@ -3,7 +3,6 @@
 package marketplace
 
 import (
-	`errors`
 	"io/fs"
 
 	core "dappco.re/go"
@@ -89,7 +88,7 @@ func loadManifestFromRoot(root string) (*manifest.Manifest, error)  /* v090-resu
 
 func WriteIndex(path string, idx *Index) error  /* v090-result-boundary */ {
 	if idx == nil {
-		return errors.New("marketplace.WriteIndex: index is required")
+		return core.E("marketplace.WriteIndex", "index is required", nil)
 	}
 	marshalResult := core.JSONMarshalIndent(idx, "", "  ")
 	if !marshalResult.OK {
