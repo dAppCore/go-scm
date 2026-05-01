@@ -6,14 +6,22 @@ import (
 	"context"
 	"crypto/ed25519"
 	"encoding/base64"
-	`os`
-	`path/filepath`
 	"testing"
 
 	core "dappco.re/go"
 	coreio "dappco.re/go/io"
 	"dappco.re/go/scm/manifest"
 )
+
+// requireR fails the test when a core.Result reports failure.
+//
+//	requireR(t, core.MkdirAll(p, 0o755))
+func requireR(t *testing.T, r core.Result) {
+	t.Helper()
+	if !r.OK {
+		t.Fatal(r.Error())
+	}
+}
 
 const (
 	sonarMarketplaceTestIndexJson            = "index.json"
@@ -170,16 +178,16 @@ func TestMarketplace_BuildFromManifests_Ugly(t *core.T) {
 
 func TestMarketplace_Builder_BuildFromDirs_Good(t *core.T) {
 	root := t.TempDir()
-	pkg := filepath.Join(root, "demo", ".core")
-	core.RequireNoError(t, os.MkdirAll(pkg, 0o755))
-	core.RequireNoError(t, os.WriteFile(filepath.Join(pkg, "manifest.yaml"), []byte("code: demo\nname: Demo\nversion: 1.0.0\nmodules: [provider]\n"), 0o600))
+	pkg := core.PathJoin(root, "demo", ".core")
+	requireR(t, core.MkdirAll(pkg, 0o755))
+	requireR(t, core.WriteFile(core.PathJoin(pkg, "manifest.yaml"), []byte("code: demo\nname: Demo\nversion: 1.0.0\nmodules: [provider]\n"), 0o600))
 	idx, err := (&Builder{BaseURL: "https://forge.example", Org: "core"}).BuildFromDirs(root)
 	core.AssertNoError(t, err)
 	core.AssertEqual(t, "https://forge.example/core/demo", idx.Modules[0].Repo)
 }
 
 func TestMarketplace_Builder_BuildFromDirs_Bad(t *core.T) {
-	_, err := (&Builder{}).BuildFromDirs(filepath.Join(t.TempDir(), "missing"))
+	_, err := (&Builder{}).BuildFromDirs(core.PathJoin(t.TempDir(), "missing"))
 	core.AssertError(
 		t, err,
 	)
@@ -193,23 +201,23 @@ func TestMarketplace_Builder_BuildFromDirs_Ugly(t *core.T) {
 }
 
 func TestMarketplace_WriteIndex_Good(t *core.T) {
-	path := filepath.Join(t.TempDir(), sonarMarketplaceTestIndexJson)
+	path := core.PathJoin(t.TempDir(), sonarMarketplaceTestIndexJson)
 	err := WriteIndex(path, &Index{Version: 1, Modules: []Module{{Code: "demo"}}})
 	core.AssertNoError(t, err)
-	raw, readErr := os.ReadFile(path)
-	core.RequireNoError(t, readErr)
-	core.AssertContains(t, string(raw), "demo")
+	rawR := core.ReadFile(path)
+	requireR(t, rawR)
+	core.AssertContains(t, string(rawR.Value.([]byte)), "demo")
 }
 
 func TestMarketplace_WriteIndex_Bad(t *core.T) {
-	err := WriteIndex(filepath.Join(t.TempDir(), sonarMarketplaceTestIndexJson), nil)
+	err := WriteIndex(core.PathJoin(t.TempDir(), sonarMarketplaceTestIndexJson), nil)
 	core.AssertError(
 		t, err,
 	)
 }
 
 func TestMarketplace_WriteIndex_Ugly(t *core.T) {
-	err := WriteIndex(filepath.Join(t.TempDir(), "missing", sonarMarketplaceTestIndexJson), &Index{Version: 1})
+	err := WriteIndex(core.PathJoin(t.TempDir(), "missing", sonarMarketplaceTestIndexJson), &Index{Version: 1})
 	core.AssertError(
 		t, err,
 	)
@@ -469,16 +477,16 @@ func TestMarketplace_ProviderRegistryFile_Remove_Ugly(t *core.T) {
 
 func TestMarketplace_DiscoverProviders_Good(t *core.T) {
 	root := t.TempDir()
-	pkg := filepath.Join(root, "demo", ".core")
-	core.RequireNoError(t, os.MkdirAll(pkg, 0o755))
-	core.RequireNoError(t, os.WriteFile(filepath.Join(pkg, "manifest.yaml"), []byte("code: demo\nname: Demo\nversion: 1.0.0\nnamespace: demo\nbinary: demo\n"), 0o600))
+	pkg := core.PathJoin(root, "demo", ".core")
+	requireR(t, core.MkdirAll(pkg, 0o755))
+	requireR(t, core.WriteFile(core.PathJoin(pkg, "manifest.yaml"), []byte("code: demo\nname: Demo\nversion: 1.0.0\nnamespace: demo\nbinary: demo\n"), 0o600))
 	got, err := DiscoverProviders(root)
 	core.AssertNoError(t, err)
 	core.AssertLen(t, got, 1)
 }
 
 func TestMarketplace_DiscoverProviders_Bad(t *core.T) {
-	_, err := DiscoverProviders(filepath.Join(t.TempDir(), "missing"))
+	_, err := DiscoverProviders(core.PathJoin(t.TempDir(), "missing"))
 	core.AssertError(
 		t, err,
 	)
@@ -491,8 +499,8 @@ func TestMarketplace_DiscoverProviders_Ugly(t *core.T) {
 }
 
 func TestMarketplace_LoadProviderRegistry_Good(t *core.T) {
-	path := filepath.Join(t.TempDir(), sonarMarketplaceTestProvidersYaml)
-	core.RequireNoError(t, os.WriteFile(path, []byte("version: 1\nproviders:\n  demo:\n    version: 1.0.0\n"), 0o600))
+	path := core.PathJoin(t.TempDir(), sonarMarketplaceTestProvidersYaml)
+	requireR(t, core.WriteFile(path, []byte("version: 1\nproviders:\n  demo:\n    version: 1.0.0\n"), 0o600))
 	reg, err := LoadProviderRegistry(path)
 	core.AssertNoError(t, err)
 	entry, ok := reg.Get("demo")
@@ -501,40 +509,40 @@ func TestMarketplace_LoadProviderRegistry_Good(t *core.T) {
 }
 
 func TestMarketplace_LoadProviderRegistry_Bad(t *core.T) {
-	reg, err := LoadProviderRegistry(filepath.Join(t.TempDir(), "missing.yaml"))
+	reg, err := LoadProviderRegistry(core.PathJoin(t.TempDir(), "missing.yaml"))
 	core.AssertNoError(t, err)
 	core.AssertEqual(t, 1, reg.Version)
 }
 
 func TestMarketplace_LoadProviderRegistry_Ugly(t *core.T) {
-	path := filepath.Join(t.TempDir(), sonarMarketplaceTestProvidersYaml)
-	core.RequireNoError(t, os.WriteFile(path, []byte("providers: ["), 0o600))
+	path := core.PathJoin(t.TempDir(), sonarMarketplaceTestProvidersYaml)
+	requireR(t, core.WriteFile(path, []byte("providers: ["), 0o600))
 	_, err := LoadProviderRegistry(path)
 	core.AssertError(t, err)
 }
 
 func TestMarketplace_SaveProviderRegistry_Good(t *core.T) {
-	path := filepath.Join(t.TempDir(), sonarMarketplaceTestProvidersYaml)
+	path := core.PathJoin(t.TempDir(), sonarMarketplaceTestProvidersYaml)
 	reg := &ProviderRegistryFile{Version: 1, Providers: map[string]ProviderRegistryEntry{"demo": {Version: "1.0.0"}}}
 	err := SaveProviderRegistry(path, reg)
 	core.AssertNoError(t, err)
-	raw, readErr := os.ReadFile(path)
-	core.RequireNoError(t, readErr)
-	core.AssertContains(t, string(raw), "demo")
+	rawR := core.ReadFile(path)
+	requireR(t, rawR)
+	core.AssertContains(t, string(rawR.Value.([]byte)), "demo")
 }
 
 func TestMarketplace_SaveProviderRegistry_Bad(t *core.T) {
-	err := SaveProviderRegistry(filepath.Join(t.TempDir(), "missing", sonarMarketplaceTestProvidersYaml), &ProviderRegistryFile{})
+	err := SaveProviderRegistry(core.PathJoin(t.TempDir(), "missing", sonarMarketplaceTestProvidersYaml), &ProviderRegistryFile{})
 	core.AssertError(
 		t, err,
 	)
 }
 
 func TestMarketplace_SaveProviderRegistry_Ugly(t *core.T) {
-	path := filepath.Join(t.TempDir(), sonarMarketplaceTestProvidersYaml)
+	path := core.PathJoin(t.TempDir(), sonarMarketplaceTestProvidersYaml)
 	err := SaveProviderRegistry(path, nil)
 	core.AssertNoError(t, err)
-	raw, readErr := os.ReadFile(path)
-	core.RequireNoError(t, readErr)
-	core.AssertContains(t, string(raw), "version")
+	rawR := core.ReadFile(path)
+	requireR(t, rawR)
+	core.AssertContains(t, string(rawR.Value.([]byte)), "version")
 }
