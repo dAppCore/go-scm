@@ -7,7 +7,7 @@ use (
 	./go
 	./external/go
 	./external/config/go
-	./external/io
-	./external/ws
-	./external/log
+	./external/io/go
+	./external/ws/go
+	./external/log/go
 )
