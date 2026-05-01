@@ -5,8 +5,6 @@ package manifest
 import (
 	"crypto/ed25519" // intrinsic
 	"encoding/base64"
-	`encoding/json`
-	`errors`
 
 	core "dappco.re/go"
 )
@@ -22,15 +20,21 @@ func canonicalManifestBytes(m *Manifest) ([]byte, error)  /* v090-result-boundar
 	cp := *m
 	cp.Sign = ""
 	cp.SignKey = ""
-	return json.Marshal(cp)
+	r := core.JSONMarshal(cp)
+	if !r.OK {
+		err, _ := r.Value.(error)
+		return nil, err
+	}
+	data, _ := r.Value.([]byte)
+	return data, nil
 }
 
 func Sign(m *Manifest, payload []byte, priv ed25519.PrivateKey) error  /* v090-result-boundary */ {
 	if m == nil {
-		return errors.New("manifest.Sign: manifest is required")
+		return core.E("manifest.Sign", "manifest is required", nil)
 	}
 	if len(priv) != ed25519.PrivateKeySize {
-		return errors.New("manifest.Sign: private key is required")
+		return core.E("manifest.Sign", "private key is required", nil)
 	}
 	sig := ed25519.Sign(priv, payload)
 	m.Sign = base64.StdEncoding.EncodeToString(sig)

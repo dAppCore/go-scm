@@ -6,10 +6,8 @@ import (
 	"context"
 	"crypto/ed25519"
 	"encoding/base64"
-	`encoding/json`
 	"net/http"
 	"net/http/httptest"
-	`strings`
 	"testing"
 
 	core "dappco.re/go"
@@ -96,10 +94,11 @@ func signedMarketplaceModule(t *testing.T, mod marketplace.Module) marketplace.M
 	mod.SignKey = base64.StdEncoding.EncodeToString(pub)
 	cp := mod
 	cp.Sign = ""
-	payload, err := json.Marshal(cp)
-	if err != nil {
-		t.Fatalf("module payload: %v", err)
+	r := core.JSONMarshal(cp)
+	if !r.OK {
+		t.Fatalf("module payload: %v", r.Value)
 	}
+	payload, _ := r.Value.([]byte)
 	sig := &manifest.Manifest{SignKey: mod.SignKey}
 	if err := manifest.Sign(sig, payload, priv); err != nil {
 		t.Fatalf("sign module: %v", err)
@@ -116,7 +115,7 @@ func assertRouteOK(t *testing.T, router *gin.Engine, path, want string) {
 	if rec.Code != http.StatusOK {
 		t.Fatalf("%s: expected 200, got %d with body %s", path, rec.Code, rec.Body.String())
 	}
-	if !strings.Contains(rec.Body.String(), want) {
+	if !core.Contains(rec.Body.String(), want) {
 		t.Fatalf("%s: expected body to contain %q, got %s", path, want, rec.Body.String())
 	}
 }

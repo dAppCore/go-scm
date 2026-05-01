@@ -3,11 +3,7 @@
 package plugin
 
 import (
-	// Note: errors.New is retained for stable loader validation errors.
-	`errors`
-	// Note: filepath.Join is retained because plugin manifests are stored on an OS-specific local path layout.
-	`path/filepath`
-
+	core "dappco.re/go"
 	coreio "dappco.re/go/io"
 )
 
@@ -33,7 +29,7 @@ func (l *Loader) Discover() ([]*Manifest, error)  /* v090-result-boundary */ {
 		if entry == nil || !entry.IsDir() {
 			continue
 		}
-		manifest, err := LoadManifest(l.medium, filepath.Join(l.baseDir, entry.Name(), "plugin.json"))
+		manifest, err := LoadManifest(l.medium, core.PathJoin(l.baseDir, entry.Name(), "plugin.json"))
 		if err != nil {
 			continue
 		}
@@ -44,7 +40,7 @@ func (l *Loader) Discover() ([]*Manifest, error)  /* v090-result-boundary */ {
 
 func (l *Loader) LoadPlugin(name string) (*Manifest, error)  /* v090-result-boundary */ {
 	if l == nil || l.medium == nil {
-		return nil, errors.New("plugin.Loader.LoadPlugin: loader is required")
+		return nil, core.E("plugin.Loader.LoadPlugin", "loader is required", nil)
 	}
-	return LoadManifest(l.medium, filepath.Join(l.baseDir, name, "plugin.json"))
+	return LoadManifest(l.medium, core.PathJoin(l.baseDir, name, "plugin.json"))
 }
