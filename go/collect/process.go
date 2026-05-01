@@ -3,12 +3,8 @@
 package collect
 
 import (
-	// Note: bytes.Buffer is retained for efficient Markdown assembly in processors.
-	`bytes`
 	// Note: context.Context is retained as the processor API cancellation contract.
 	"context"
-	// Note: encoding/json is retained for JSON and JSONL pretty-print processing.
-	`encoding/json`
 	// Note: regexp is retained for HTML conversion patterns; no core equivalent covers compiled regexes.
 	"regexp"
 
@@ -171,10 +167,10 @@ func JSONToMarkdown(content string) (string, error)  /* v090-result-boundary */ 
 	if core.Trim(content) == "" {
 		return "", nil
 	}
-	buf := &bytes.Buffer{}
+	buf := &core.Buffer{}
 	buf.WriteString("```json\n")
 	var value any
-	if err := json.Unmarshal([]byte(content), &value); err == nil {
+	if r := core.JSONUnmarshal([]byte(content), &value); r.OK {
 		if err := encodeJSONValue(buf, value); err != nil {
 			return "", err
 		}
@@ -189,13 +185,17 @@ func JSONToMarkdown(content string) (string, error)  /* v090-result-boundary */ 
 	return core.Trim(buf.String()), nil
 }
 
-func encodeJSONValue(buf *bytes.Buffer, value any) error  /* v090-result-boundary */ {
-	enc := json.NewEncoder(buf)
-	enc.SetIndent("", "  ")
-	return enc.Encode(value)
+func encodeJSONValue(buf *core.Buffer, value any) error  /* v090-result-boundary */ {
+	r := core.JSONMarshalIndent(value, "", "  ")
+	if !r.OK {
+		return r.Value.(error)
+	}
+	buf.Write(r.Value.([]byte))
+	buf.WriteByte('\n')
+	return nil
 }
 
-func encodeJSONLines(buf *bytes.Buffer, content string) (bool, error)  /* v090-result-boundary */ {
+func encodeJSONLines(buf *core.Buffer, content string) (bool, error)  /* v090-result-boundary */ {
 	encoded := false
 	for _, line := range core.Split(content, "\n") {
 		line = core.Trim(line)
@@ -213,10 +213,10 @@ func encodeJSONLines(buf *bytes.Buffer, content string) (bool, error)  /* v090-r
 	return encoded, nil
 }
 
-func encodeJSONLine(buf *bytes.Buffer, line string) error  /* v090-result-boundary */ {
+func encodeJSONLine(buf *core.Buffer, line string) error  /* v090-result-boundary */ {
 	var lineValue any
-	if err := json.Unmarshal([]byte(line), &lineValue); err != nil {
-		return err
+	if r := core.JSONUnmarshal([]byte(line), &lineValue); !r.OK {
+		return r.Value.(error)
 	}
 	return encodeJSONValue(buf, lineValue)
 }
