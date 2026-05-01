@@ -4,12 +4,10 @@ package handlers
 
 import (
 	"context"
-	`encoding/json`
-	`fmt`
-	`os/exec`
-	`strings`
 	"time"
 
+	core "dappco.re/go"
+	process "dappco.re/go/process"
 	forgejo "codeberg.org/forgejo/go-sdk/forgejo"
 	"dappco.re/go/scm/agentci"
 	coreforge "dappco.re/go/scm/forge"
@@ -63,7 +61,7 @@ func (h *CompletionHandler) Match(signal *jobrunner.PipelineSignal) bool {
 	return signal != nil && signal.Type == "agent_completion"
 }
 func (h *DismissReviewsHandler) Match(signal *jobrunner.PipelineSignal) bool {
-	return signal != nil && strings.EqualFold(signal.PRState, "OPEN") && signal.HasUnresolvedThreads()
+	return signal != nil && core.Lower(signal.PRState) == "open" && signal.HasUnresolvedThreads()
 }
 func (h *DispatchHandler) Match(signal *jobrunner.PipelineSignal) bool {
 	if signal == nil || !signal.NeedsCoding || signal.Assignee == "" {
@@ -76,16 +74,16 @@ func (h *DispatchHandler) Match(signal *jobrunner.PipelineSignal) bool {
 	return ok
 }
 func (h *EnableAutoMergeHandler) Match(signal *jobrunner.PipelineSignal) bool {
-	return signal != nil && strings.EqualFold(signal.PRState, "OPEN") && !signal.IsDraft && strings.EqualFold(signal.CheckStatus, "SUCCESS") && strings.EqualFold(signal.Mergeable, "MERGEABLE") && !signal.HasUnresolvedThreads()
+	return signal != nil && core.Lower(signal.PRState) == "open" && !signal.IsDraft && core.Lower(signal.CheckStatus) == "success" && core.Lower(signal.Mergeable) == "mergeable" && !signal.HasUnresolvedThreads()
 }
 func (h *PublishDraftHandler) Match(signal *jobrunner.PipelineSignal) bool {
-	return signal != nil && strings.EqualFold(signal.PRState, "OPEN") && signal.IsDraft && strings.EqualFold(signal.CheckStatus, "SUCCESS")
+	return signal != nil && core.Lower(signal.PRState) == "open" && signal.IsDraft && core.Lower(signal.CheckStatus) == "success"
 }
 func (h *SendFixCommandHandler) Match(signal *jobrunner.PipelineSignal) bool {
-	return signal != nil && strings.EqualFold(signal.PRState, "OPEN") && (strings.EqualFold(signal.Mergeable, "CONFLICTING") || (signal.HasUnresolvedThreads() && !strings.EqualFold(signal.CheckStatus, "SUCCESS")))
+	return signal != nil && core.Lower(signal.PRState) == "open" && (core.Lower(signal.Mergeable) == "conflicting" || (signal.HasUnresolvedThreads() && core.Lower(signal.CheckStatus) != "success"))
 }
 func (h *TickParentHandler) Match(signal *jobrunner.PipelineSignal) bool {
-	return signal != nil && strings.EqualFold(signal.PRState, "MERGED")
+	return signal != nil && core.Lower(signal.PRState) == "merged"
 }
 
 func result(name string, signal *jobrunner.PipelineSignal, success bool, msg string) *jobrunner.ActionResult {
@@ -112,7 +110,7 @@ func (h *CompletionHandler) Execute(ctx context.Context, signal *jobrunner.Pipel
 		}
 	}
 	if h.forge == nil || signal == nil {
-		err := fmt.Errorf("handlers.CompletionHandler.Execute: forge client and signal are required")
+		err := core.E("handlers.CompletionHandler.Execute", "forge client and signal are required", nil)
 		return result(h.Name(), signal, false, err.Error()), err
 	}
 	body := completionComment(signal)
@@ -128,7 +126,7 @@ func (h *DismissReviewsHandler) Execute(ctx context.Context, signal *jobrunner.P
 		}
 	}
 	if h.forge == nil || signal == nil {
-		err := fmt.Errorf("handlers.DismissReviewsHandler.Execute: forge client and signal are required")
+		err := core.E("handlers.DismissReviewsHandler.Execute", "forge client and signal are required", nil)
 		return result(h.Name(), signal, false, err.Error()), err
 	}
 	reviews, err := h.forge.ListPRReviews(signal.RepoOwner, signal.RepoName, int64(signal.PRNumber))
@@ -140,7 +138,7 @@ func (h *DismissReviewsHandler) Execute(ctx context.Context, signal *jobrunner.P
 		if review == nil {
 			continue
 		}
-		if !review.Stale || !strings.EqualFold(string(review.State), "REQUEST_CHANGES") {
+		if !review.Stale || core.Lower(string(review.State)) != "request_changes" {
 			continue
 		}
 		if err := h.forge.DismissReview(signal.RepoOwner, signal.RepoName, int64(signal.PRNumber), review.ID, "stale request changes review"); err != nil {
@@ -148,7 +146,7 @@ func (h *DismissReviewsHandler) Execute(ctx context.Context, signal *jobrunner.P
 		}
 		dismissed++
 	}
-	return result(h.Name(), signal, true, fmt.Sprintf("dismissed %d reviews", dismissed)), nil
+	return result(h.Name(), signal, true, core.Sprintf("dismissed %d reviews", dismissed)), nil
 }
 func (h *DispatchHandler) Execute(ctx context.Context, signal *jobrunner.PipelineSignal) (*jobrunner.ActionResult, error)  /* v090-result-boundary */ {
 	if ctx != nil {
@@ -157,39 +155,43 @@ func (h *DispatchHandler) Execute(ctx context.Context, signal *jobrunner.Pipelin
 		}
 	}
 	if signal == nil {
-		err := fmt.Errorf("handlers.DispatchHandler.Execute: signal is required")
+		err := core.E("handlers.DispatchHandler.Execute", "signal is required", nil)
 		return result(h.Name(), nil, false, err.Error()), err
 	}
 	agentName, agent, ok := h.resolveAgent(signal.Assignee)
 	if !ok {
-		err := fmt.Errorf("handlers.DispatchHandler.Execute: unknown agent %q", signal.Assignee)
+		err := core.E("handlers.DispatchHandler.Execute", core.Sprintf("unknown agent %q", signal.Assignee), nil)
 		return result(h.Name(), signal, false, err.Error()), err
 	}
-	if strings.TrimSpace(agent.Host) == "" {
-		err := fmt.Errorf("handlers.DispatchHandler.Execute: agent %q has no host", agentName)
+	if core.Trim(agent.Host) == "" {
+		err := core.E("handlers.DispatchHandler.Execute", core.Sprintf("agent %q has no host", agentName), nil)
 		return result(h.Name(), signal, false, err.Error()), err
 	}
-	if strings.TrimSpace(agent.QueueDir) == "" {
-		err := fmt.Errorf("handlers.DispatchHandler.Execute: agent %q has no queue dir", agentName)
+	if core.Trim(agent.QueueDir) == "" {
+		err := core.E("handlers.DispatchHandler.Execute", core.Sprintf("agent %q has no queue dir", agentName), nil)
 		return result(h.Name(), signal, false, err.Error()), err
 	}
 	payload, err := buildDispatchTicket(h.forgeURL, agentName, agent, signal)
 	if err != nil {
 		return result(h.Name(), signal, false, err.Error()), err
 	}
-	cmd, err := buildDispatchSSHCommand(ctx, agent, h.token, payload)
+	host, remoteCmd, err := buildDispatchSSHCommand(ctx, agent, h.token, payload)
 	if err != nil {
 		return result(h.Name(), signal, false, err.Error()), err
 	}
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		msg := strings.TrimSpace(string(out))
+	r := process.RunWithOptions(ctx, process.RunOptions{
+		Command: "ssh",
+		Args:    agentci.SecureSSHArgs(host, remoteCmd),
+	})
+	out, _ := r.Value.(string)
+	if !r.OK {
+		msg := core.Trim(out)
 		if msg == "" {
-			msg = err.Error()
+			msg = r.Value.(error).Error()
 		}
-		return result(h.Name(), signal, false, msg), fmt.Errorf("handlers.DispatchHandler.Execute: %s", msg)
+		return result(h.Name(), signal, false, msg), core.E("handlers.DispatchHandler.Execute", msg, nil)
 	}
-	return result(h.Name(), signal, true, fmt.Sprintf("dispatched to %s", agentName)), nil
+	return result(h.Name(), signal, true, core.Sprintf("dispatched to %s", agentName)), nil
 }
 func (h *EnableAutoMergeHandler) Execute(ctx context.Context, signal *jobrunner.PipelineSignal) (*jobrunner.ActionResult, error)  /* v090-result-boundary */ {
 	if ctx != nil {
@@ -198,7 +200,7 @@ func (h *EnableAutoMergeHandler) Execute(ctx context.Context, signal *jobrunner.
 		}
 	}
 	if h.forge == nil || signal == nil {
-		err := fmt.Errorf("handlers.EnableAutoMergeHandler.Execute: forge client and signal are required")
+		err := core.E("handlers.EnableAutoMergeHandler.Execute", "forge client and signal are required", nil)
 		return result(h.Name(), signal, false, err.Error()), err
 	}
 	if err := h.forge.MergePullRequest(signal.RepoOwner, signal.RepoName, int64(signal.PRNumber), "squash"); err != nil {
@@ -213,7 +215,7 @@ func (h *PublishDraftHandler) Execute(ctx context.Context, signal *jobrunner.Pip
 		}
 	}
 	if h.forge == nil || signal == nil {
-		err := fmt.Errorf("handlers.PublishDraftHandler.Execute: forge client and signal are required")
+		err := core.E("handlers.PublishDraftHandler.Execute", "forge client and signal are required", nil)
 		return result(h.Name(), signal, false, err.Error()), err
 	}
 	if err := h.forge.SetPRDraft(signal.RepoOwner, signal.RepoName, int64(signal.PRNumber), false); err != nil {
@@ -228,7 +230,7 @@ func (h *SendFixCommandHandler) Execute(ctx context.Context, signal *jobrunner.P
 		}
 	}
 	if h.forge == nil || signal == nil {
-		err := fmt.Errorf("handlers.SendFixCommandHandler.Execute: forge client and signal are required")
+		err := core.E("handlers.SendFixCommandHandler.Execute", "forge client and signal are required", nil)
 		return result(h.Name(), signal, false, err.Error()), err
 	}
 	body := fixCommandComment(signal)
@@ -244,7 +246,7 @@ func (h *TickParentHandler) Execute(ctx context.Context, signal *jobrunner.Pipel
 		}
 	}
 	if h.forge == nil || signal == nil {
-		err := fmt.Errorf("handlers.TickParentHandler.Execute: forge client and signal are required")
+		err := core.E("handlers.TickParentHandler.Execute", "forge client and signal are required", nil)
 		return result(h.Name(), signal, false, err.Error()), err
 	}
 	epicBody, err := h.forge.GetIssueBody(signal.RepoOwner, signal.RepoName, int64(signal.EpicNumber))
@@ -253,7 +255,7 @@ func (h *TickParentHandler) Execute(ctx context.Context, signal *jobrunner.Pipel
 	}
 	updatedBody, changed := tickCheckbox(epicBody, signal.ChildNumber)
 	if !changed {
-		err := fmt.Errorf("handlers.TickParentHandler.Execute: child %d not found in epic %d", signal.ChildNumber, signal.EpicNumber)
+		err := core.E("handlers.TickParentHandler.Execute", core.Sprintf("child %d not found in epic %d", signal.ChildNumber, signal.EpicNumber), nil)
 		return result(h.Name(), signal, false, err.Error()), err
 	}
 	body := updatedBody
@@ -273,7 +275,7 @@ func (h *DispatchHandler) resolveAgent(name string) (string, agentci.AgentConfig
 	if resolved, cfg, ok := h.spinner.FindByForgejoUser(name); ok {
 		return resolved, cfg, true
 	}
-	if resolved, cfg, ok := h.spinner.FindByForgejoUser(strings.TrimSpace(name)); ok {
+	if resolved, cfg, ok := h.spinner.FindByForgejoUser(core.Trim(name)); ok {
 		return resolved, cfg, true
 	}
 	return "", agentci.AgentConfig{}, false
@@ -281,7 +283,7 @@ func (h *DispatchHandler) resolveAgent(name string) (string, agentci.AgentConfig
 
 func buildDispatchTicket(forgeURL, agentName string, agent agentci.AgentConfig, signal *jobrunner.PipelineSignal) ([]byte, error)  /* v090-result-boundary */ {
 	ticket := DispatchTicket{
-		ID:           fmt.Sprintf("%s-%d-%d", signal.RepoName, signal.EpicNumber, signal.ChildNumber),
+		ID:           core.Sprintf("%s-%d-%d", signal.RepoName, signal.EpicNumber, signal.ChildNumber),
 		RepoOwner:    signal.RepoOwner,
 		RepoName:     signal.RepoName,
 		IssueNumber:  signal.ChildNumber,
@@ -303,28 +305,35 @@ func buildDispatchTicket(forgeURL, agentName string, agent agentci.AgentConfig, 
 	if ticket.TargetBranch == "" {
 		ticket.TargetBranch = "dev"
 	}
-	return json.MarshalIndent(ticket, "", "  ")
+	r := core.JSONMarshalIndent(ticket, "", "  ")
+	if !r.OK {
+		return nil, r.Value.(error)
+	}
+	return r.Value.([]byte), nil
 }
 
-func buildDispatchSSHCommand(ctx context.Context, agent agentci.AgentConfig, token string, payload []byte) (*exec.Cmd, error)  /* v090-result-boundary */ {
+// buildDispatchSSHCommand returns (host, shellCommand, error) for the
+// dispatch SSH transfer. The caller runs it via process.RunWithOptions
+// using agentci.SecureSSHArgs to get the SSH command-line.
+func buildDispatchSSHCommand(_ context.Context, agent agentci.AgentConfig, token string, payload []byte) (string, string, error)  /* v090-result-boundary */ {
 	queueDir, err := agentci.ValidateRemoteDir(agent.QueueDir)
 	if err != nil {
-		return nil, err
+		return "", "", err
 	}
-	ticketName := fmt.Sprintf("%s-%d.json", sanitizeName(agent.ForgejoUser), time.Now().UTC().UnixNano())
+	ticketName := core.Sprintf("%s-%d.json", sanitizeName(agent.ForgejoUser), time.Now().UTC().UnixNano())
 	if agent.ForgejoUser == "" {
-		ticketName = fmt.Sprintf("ticket-%d.json", time.Now().UTC().UnixNano())
+		ticketName = core.Sprintf("ticket-%d.json", time.Now().UTC().UnixNano())
 	}
 	ticketPath, err := agentci.JoinRemotePath(queueDir, ticketName)
 	if err != nil {
-		return nil, err
+		return "", "", err
 	}
 	envPath, err := agentci.JoinRemotePath(queueDir, ".env")
 	if err != nil {
-		return nil, err
+		return "", "", err
 	}
 
-	var shell strings.Builder
+	shell := core.NewBuilder()
 	shell.WriteString("mkdir -p ")
 	shell.WriteString(agentci.EscapeShellArg(queueDir))
 	shell.WriteString(" && cat > ")
@@ -341,16 +350,16 @@ func buildDispatchSSHCommand(ctx context.Context, agent agentci.AgentConfig, tok
 	shell.WriteString("chmod 0600 ")
 	shell.WriteString(agentci.EscapeShellArg(envPath))
 
-	return agentci.SecureSSHCommandContext(ctx, agent.Host, shell.String()), nil
+	return agent.Host, shell.String(), nil
 }
 
 func completionComment(signal *jobrunner.PipelineSignal) string {
-	return fmt.Sprintf("Agent completion recorded for PR #%d.\n\n%s", signal.PRNumber, signal.Message)
+	return core.Sprintf("Agent completion recorded for PR #%d.\n\n%s", signal.PRNumber, signal.Message)
 }
 
 func fixCommandComment(signal *jobrunner.PipelineSignal) string {
 	switch {
-	case strings.EqualFold(signal.Mergeable, "CONFLICTING"):
+	case core.Lower(signal.Mergeable) == "conflicting":
 		return "Please resolve the merge conflicts and push an updated branch."
 	case signal.HasUnresolvedThreads():
 		return "Please address the unresolved review threads and push an updated branch."
@@ -360,34 +369,39 @@ func fixCommandComment(signal *jobrunner.PipelineSignal) string {
 }
 
 func tickCheckbox(body string, childNumber int) (string, bool) {
-	lines := strings.Split(body, "\n")
-	target := fmt.Sprintf("#%d", childNumber)
+	lines := core.Split(body, "\n")
+	target := core.Sprintf("#%d", childNumber)
 	changed := false
 	for i, line := range lines {
 		if changed {
 			break
 		}
-		if !strings.Contains(line, target) {
+		if !core.Contains(line, target) {
 			continue
 		}
-		if strings.Contains(line, "[ ]") {
-			lines[i] = strings.Replace(line, "[ ]", "[x]", 1)
+		if core.Contains(line, "[ ]") {
+			lines[i] = core.Replace(line, "[ ]", "[x]")
 			changed = true
 			break
 		}
-		if strings.Contains(line, "[X]") {
+		if core.Contains(line, "[X]") {
 			changed = true
 			break
 		}
 	}
-	return strings.Join(lines, "\n"), changed
+	return core.Join("\n", lines...), changed
 }
 
 func sanitizeName(input string) string {
 	if input == "" {
 		return "ticket"
 	}
-	return strings.NewReplacer("/", "-", " ", "-", ":", "-", "@", "-").Replace(input)
+	s := input
+	s = core.Replace(s, "/", "-")
+	s = core.Replace(s, " ", "-")
+	s = core.Replace(s, ":", "-")
+	s = core.Replace(s, "@", "-")
+	return s
 }
 
 // DispatchTicket is the JSON payload written to the agent's queue.
