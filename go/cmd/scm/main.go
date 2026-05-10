@@ -24,7 +24,7 @@ func main() {
 func newApp() core.Result {
 	app := core.New(
 		core.WithOption("name", "scm"),
-		core.WithService(scm.NewCoreService(scm.Options{})),
+		core.WithService(scm.NewService(scm.Options{})),
 	)
 	app.App().Version = "dev"
 
