@@ -1,0 +1,1578 @@
+# Sonar sweeps — core_go-scm findings
+
+1527 findings across 13 rules. One rule per commit; fix every line listed under each rule.
+
+## CRITICAL
+
+### go:S1192 — String literals should not be duplicated (1228×, code smell)
+
+- `external/config/external/go/action.go:54` — Define a constant instead of duplicating this literal "action.Run" 4 times.
+- `external/config/external/go/action_test.go:9` — Define a constant instead of duplicating this literal "process.run" 9 times.
+- `external/config/external/go/action_test.go:124` — Define a constant instead of duplicating this literal "hot.reload" 3 times.
+- `external/config/external/go/action_test.go:246` — Define a constant instead of duplicating this literal "agent.dispatch" 33 times.
+- `external/config/external/go/action_test.go:255` — Define a constant instead of duplicating this literal "agent.missing" 6 times.
+- `external/config/external/go/action_test.go:313` — Define a constant instead of duplicating this literal "agent.prepare" 16 times.
+- `external/config/external/go/action_test.go:357` — Define a constant instead of duplicating this literal "agent.pipeline" 6 times.
+- `external/config/external/go/api_test.go:363` — Define a constant instead of duplicating this literal "://missing-scheme" 3 times.
+- `external/config/external/go/api_test.go:387` — Define a constant instead of duplicating this literal "application/json" 3 times.
+- `external/config/external/go/api_test.go:422` — Define a constant instead of duplicating this literal "session-token" 3 times.
+- `external/config/external/go/api_test.go:462` — Define a constant instead of duplicating this literal "http://[::1" 3 times.
+- `external/config/external/go/api_test.go:467` — Define a constant instead of duplicating this literal "https://api.lethean.example/health" 3 times.
+- `external/config/external/go/app.go:59` — Define a constant instead of duplicating this literal "app.Find" 3 times.
+- `external/config/external/go/app_test.go:103` — Define a constant instead of duplicating this literal "Agent Dispatch" 3 times.
+- `external/config/external/go/assert.go:253` — Define a constant instead of duplicating this literal "incomparable got" 4 times.
+- `external/config/external/go/assert.go:311` — Define a constant instead of duplicating this literal "normal-return" 3 times.
+- `external/config/external/go/assert_internal_test.go:290` — Define a constant instead of duplicating this literal "agent failed" 3 times.
+- `external/config/external/go/cli_test.go:172` — Define a constant instead of duplicating this literal "agent/status" 5 times.
+- `external/config/external/go/cli_test.go:181` — Define a constant instead of duplicating this literal "homelab ops" 4 times.
+- `external/config/external/go/command_example_test.go:10` — Define a constant instead of duplicating this literal "deploy/to/homelab" 3 times.
+- `external/config/external/go/command_test.go:54` — Define a constant instead of duplicating this literal "deploy/to/homelab" 10 times.
+- `external/config/external/go/command_test.go:108` — Define a constant instead of duplicating this literal "process.daemon" 3 times.
+- `external/config/external/go/command_test.go:184` — Define a constant instead of duplicating this literal "agent/run" 3 times.
+- `external/config/external/go/command_test.go:252` — Define a constant instead of duplicating this literal "agent/prepare" 4 times.
+- `external/config/external/go/config_test.go:106` — Define a constant instead of duplicating this literal "agent.host" 8 times.
+- `external/config/external/go/config_test.go:119` — Define a constant instead of duplicating this literal "homelab.lthn.sh" 7 times.
+- `external/config/external/go/config_test.go:150` — Define a constant instead of duplicating this literal "agent.mode" 4 times.
+- `external/config/external/go/config_test.go:176` — Define a constant instead of duplicating this literal "agent.port" 7 times.
+- `external/config/external/go/config_test.go:204` — Define a constant instead of duplicating this literal "agent.enabled" 5 times.
+- `external/config/external/go/config_test.go:221` — Define a constant instead of duplicating this literal "session.token" 3 times.
+- `external/config/external/go/config_test.go:239` — Define a constant instead of duplicating this literal "agent.dispatch" 15 times.
+- `external/config/external/go/config_test.go:293` — Define a constant instead of duplicating this literal "agent.review" 4 times.
+- `external/config/external/go/context_test.go:98` — Define a constant instead of duplicating this literal "req-123" 3 times.
+- `external/config/external/go/contract_example_test.go:79` — Define a constant instead of duplicating this literal "task-1" 3 times.
+- `external/config/external/go/contract_test.go:118` — Define a constant instead of duplicating this literal "factory failed" 3 times.
+- `external/config/external/go/core_test.go:114` — Define a constant instead of duplicating this literal "test.Operation" 4 times.
+- `external/config/external/go/core_test.go:251` — Define a constant instead of duplicating this literal "agent.dispatch" 7 times.
+- `external/config/external/go/core_test.go:479` — Define a constant instead of duplicating this literal "agent.Dispatch" 10 times.
+- `external/config/external/go/core_test.go:499` — Define a constant instead of duplicating this literal "agent.refused" 4 times.
+- `external/config/external/go/data_example_test.go:9` — Define a constant instead of duplicating this literal "core-data-example" 5 times.
+- `external/config/external/go/data_example_test.go:11` — Define a constant instead of duplicating this literal "hello.txt" 5 times.
+- `external/config/external/go/data_test.go:15` — Define a constant instead of duplicating this literal "tests/data" 3 times.
+- `external/config/external/go/data_test.go:49` — Define a constant instead of duplicating this literal "hello from testdata\n" 5 times.
+- `external/config/external/go/data_test.go:73` — Define a constant instead of duplicating this literal "test.txt" 3 times.
+- `external/config/external/go/data_test.go:163` — Define a constant instead of duplicating this literal "agent/test.txt" 4 times.
+- `external/config/external/go/data_test.go:205` — Define a constant instead of duplicating this literal "agent/." 5 times.
+- `external/config/external/go/data_test.go:212` — Define a constant instead of duplicating this literal "missing/." 3 times.
+- `external/config/external/go/drive_test.go:13` — Define a constant instead of duplicating this literal "https://api.lthn.ai" 5 times.
+- `external/config/external/go/drive_test.go:33` — Define a constant instead of duplicating this literal "ssh://claude@10.69.69.165" 3 times.
+- `external/config/external/go/embed_example_test.go:8` — Define a constant instead of duplicating this literal "H4sIAAAAAAAC/8pIzcnJBwQAAP//hqYQNgUAAAA=" 3 times.
+- `external/config/external/go/embed_example_test.go:8` — Define a constant instead of duplicating this literal "hello.txt" 19 times.
+- `external/config/external/go/embed_example_test.go:39` — Define a constant instead of duplicating this literal "main.go" 4 times.
+- `external/config/external/go/embed_example_test.go:115` — Define a constant instead of duplicating this literal "core-embed-example" 7 times.
+- `external/config/external/go/embed_example_test.go:228` — Define a constant instead of duplicating this literal "README.md" 3 times.
+- `external/config/external/go/embed_internal_test.go:71` — Define a constant instead of duplicating this literal "agent.txt" 8 times.
+- `external/config/external/go/embed_test.go:16` — Define a constant instead of duplicating this literal "tests/data" 35 times.
+- `external/config/external/go/embed_test.go:29` — Define a constant instead of duplicating this literal "test.txt" 8 times.
+- `external/config/external/go/embed_test.go:31` — Define a constant instead of duplicating this literal "hello from testdata\n" 6 times.
+- `external/config/external/go/embed_test.go:76` — Define a constant instead of duplicating this literal "tests/data/test.txt" 5 times.
+- `external/config/external/go/embed_test.go:95` — Define a constant instead of duplicating this literal "hello world" 3 times.
+- `external/config/external/go/embed_test.go:291` — Define a constant instead of duplicating this literal "lane-c-overwrite" 3 times.
+- `external/config/external/go/embed_test.go:291` — Define a constant instead of duplicating this literal "status.txt" 3 times.
+- `external/config/external/go/embed_test.go:299` — Define a constant instead of duplicating this literal "agent.txt" 17 times.
+- `external/config/external/go/embed_test.go:312` — Define a constant instead of duplicating this literal "missing.txt" 6 times.
+- `external/config/external/go/embed_test.go:331` — Define a constant instead of duplicating this literal "dispatch ready" 3 times.
+- `external/config/external/go/embed_test.go:448` — Define a constant instead of duplicating this literal "path traversal rejected" 3 times.
+- `external/config/external/go/embed_test.go:625` — Define a constant instead of duplicating this literal "skip.txt" 3 times.
+- `external/config/external/go/encode_test.go:53` — Define a constant instead of duplicating this literal "aGVsbG8=" 4 times.
+- `external/config/external/go/entitlement_example_test.go:41` — Define a constant instead of duplicating this literal "ai.credits" 5 times.
+- `external/config/external/go/entitlement_example_test.go:64` — Define a constant instead of duplicating this literal "social.accounts" 4 times.
+- `external/config/external/go/entitlement_test.go:17` — Define a constant instead of duplicating this literal "premium.feature" 3 times.
+- `external/config/external/go/entitlement_test.go:31` — Define a constant instead of duplicating this literal "social.accounts" 6 times.
+- `external/config/external/go/entitlement_test.go:36` — Define a constant instead of duplicating this literal "limit exceeded" 3 times.
+- `external/config/external/go/entitlement_test.go:173` — Define a constant instead of duplicating this literal "ai.credits" 5 times.
+- `external/config/external/go/entitlement_test.go:265` — Define a constant instead of duplicating this literal "agent.dispatch" 14 times.
+- `external/config/external/go/error_example_test.go:18` — Define a constant instead of duplicating this literal "cache.Get" 5 times.
+- `external/config/external/go/error_example_test.go:159` — Define a constant instead of duplicating this literal "api.Get" 3 times.
+- `external/config/external/go/error_example_test.go:159` — Define a constant instead of duplicating this literal "db.Query" 3 times.
+- `external/config/external/go/error_internal_test.go:22` — Define a constant instead of duplicating this literal "crash.json" 3 times.
+- `external/config/external/go/error_test.go:24` — Define a constant instead of duplicating this literal "request failed" 3 times.
+- `external/config/external/go/error_test.go:103` — Define a constant instead of duplicating this literal "test.Operation" 5 times.
+- `external/config/external/go/error_test.go:271` — Define a constant instead of duplicating this literal "agent.Token" 3 times.
+- `external/config/external/go/error_test.go:271` — Define a constant instead of duplicating this literal "agent.Dispatch" 20 times.
+- `external/config/external/go/error_test.go:281` — Define a constant instead of duplicating this literal "plain failure" 8 times.
+- `external/config/external/go/error_test.go:363` — Define a constant instead of duplicating this literal "agent.refused" 7 times.
+- `external/config/external/go/error_test.go:363` — Define a constant instead of duplicating this literal "dispatch refused" 5 times.
+- `external/config/external/go/format_test.go:15` — Define a constant instead of duplicating this literal "agent %s" 3 times.
+- `external/config/external/go/fs_example_test.go:19` — Define a constant instead of duplicating this literal "core-fs-example" 21 times.
+- `external/config/external/go/fs_example_test.go:21` — Define a constant instead of duplicating this literal "hello.txt" 17 times.
+- `external/config/external/go/fs_example_test.go:341` — Define a constant instead of duplicating this literal "main.go" 3 times.
+- `external/config/external/go/fs_internal_test.go:11` — Define a constant instead of duplicating this literal "agent.txt" 7 times.
+- `external/config/external/go/fs_test.go:147` — Define a constant instead of duplicating this literal "file.txt" 3 times.
+- `external/config/external/go/fs_test.go:249` — Define a constant instead of duplicating this literal "status.json" 4 times.
+- `external/config/external/go/fs_test.go:362` — Define a constant instead of duplicating this literal "skipme.txt" 6 times.
+- `external/config/external/go/fs_test.go:491` — Define a constant instead of duplicating this literal "agent.log" 12 times.
+- `external/config/external/go/fs_test.go:580` — Define a constant instead of duplicating this literal "agent-" 4 times.
+- `external/config/external/go/fs_test.go:609` — Define a constant instead of duplicating this literal "config/agent.json" 5 times.
+- `external/config/external/go/fs_test.go:629` — Define a constant instead of duplicating this literal "empty.txt" 8 times.
+- `external/config/external/go/fs_test.go:640` — Define a constant instead of duplicating this literal "secrets/session.token" 3 times.
+- `external/config/external/go/fs_test.go:673` — Define a constant instead of duplicating this literal "status/agent.json" 3 times.
+- `external/config/external/go/fs_test.go:742` — Define a constant instead of duplicating this literal "logs/agent" 3 times.
+- `external/config/external/go/fs_test.go:788` — Define a constant instead of duplicating this literal "config.json" 4 times.
+- `external/config/external/go/fs_test.go:816` — Define a constant instead of duplicating this literal "missing.json" 3 times.
+- `external/config/external/go/fs_test.go:856` — Define a constant instead of duplicating this literal "agent.json" 11 times.
+- `external/config/external/go/fs_test.go:913` — Define a constant instead of duplicating this literal "logs/agent.log" 7 times.
+- `external/config/external/go/fs_test.go:992` — Define a constant instead of duplicating this literal "empty.log" 6 times.
+- `external/config/external/go/fs_test.go:1033` — Define a constant instead of duplicating this literal "old.log" 3 times.
+- `external/config/external/go/fs_test.go:1107` — Define a constant instead of duplicating this literal "agent.tmp" 5 times.
+- `external/config/external/go/fs_test.go:1232` — Define a constant instead of duplicating this literal "agent.txt" 4 times.
+- `external/config/external/go/hash_test.go:27` — Define a constant instead of duplicating this literal "The quick brown fox jumps over the lazy dog" 4 times.
+- `external/config/external/go/i18n_test.go:19` — Define a constant instead of duplicating this literal "tests/data" 4 times.
+- `external/config/external/go/io_test.go:42` — Define a constant instead of duplicating this literal "agent ready" 5 times.
+- `external/config/external/go/ipc_test.go:143` — Define a constant instead of duplicating this literal "agent.status" 4 times.
+- `external/config/external/go/ipc_test.go:211` — Define a constant instead of duplicating this literal "agent.dispatch" 5 times.
+- `external/config/external/go/lock_test.go:144` — Define a constant instead of duplicating this literal "agent.dispatch" 27 times.
+- `external/config/external/go/lock_test.go:251` — Define a constant instead of duplicating this literal "agent.prepare" 4 times.
+- `external/config/external/go/log_example_test.go:20` — Define a constant instead of duplicating this literal "00:00:00" 14 times.
+- `external/config/external/go/log_test.go:181` — Define a constant instead of duplicating this literal "agent trace" 3 times.
+- `external/config/external/go/log_test.go:234` — Define a constant instead of duplicating this literal "agent failed" 3 times.
+- `external/config/external/go/log_test.go:268` — Define a constant instead of duplicating this literal "agent ready" 4 times.
+- `external/config/external/go/log_test.go:332` — Define a constant instead of duplicating this literal "key=<nil>" 3 times.
+- `external/config/external/go/log_test.go:357` — Define a constant instead of duplicating this literal "agent.Dispatch" 4 times.
+- `external/config/external/go/lsp.go:419` — Define a constant instead of duplicating this literal "_test.go" 4 times.
+- `external/config/external/go/lsp.go:419` — Define a constant instead of duplicating this literal "_internal_test.go" 3 times.
+- `external/config/external/go/lsp.go:426` — Define a constant instead of duplicating this literal "math.go" 3 times.
+- `external/config/external/go/lsp.go:427` — Define a constant instead of duplicating this literal "embed.go" 5 times.
+- `external/config/external/go/lsp.go:429` — Define a constant instead of duplicating this literal "hash.go" 5 times.
+- `external/config/external/go/lsp.go:437` — Define a constant instead of duplicating this literal "encode.go" 3 times.
+- `external/config/external/go/lsp.go:447` — Define a constant instead of duplicating this literal "string.go" 3 times.
+- `external/config/external/go/lsp.go:457` — Define a constant instead of duplicating this literal "api.go" 4 times.
+- `external/config/external/go/lsp_internal_test.go:56` — Define a constant instead of duplicating this literal "file:///agent_test.go" 14 times.
+- `external/config/external/go/lsp_internal_test.go:93` — Define a constant instead of duplicating this literal "file:///x" 5 times.
+- `external/config/external/go/lsp_internal_test.go:142` — Define a constant instead of duplicating this literal "file:///agent.go" 6 times.
+- `external/config/external/go/lsp_internal_test.go:229` — Define a constant instead of duplicating this literal "file://" 4 times.
+- `external/config/external/go/lsp_internal_test.go:229` — Define a constant instead of duplicating this literal "agent.go" 4 times.
+- `external/config/external/go/lsp_internal_test.go:409` — Define a constant instead of duplicating this literal "core-go-lsp" 4 times.
+- `external/config/external/go/lsp_internal_test.go:445` — Define a constant instead of duplicating this literal "Content-Length:" 3 times.
+- `external/config/external/go/lsp_internal_test.go:559` — Define a constant instead of duplicating this literal "textDocument/didOpen" 3 times.
+- `external/config/external/go/lsp_test.go:33` — Define a constant instead of duplicating this literal "test-overwrite" 3 times.
+- `external/config/external/go/lsp_test.go:52` — Define a constant instead of duplicating this literal "test-imports" 5 times.
+- `external/config/external/go/net_example_test.go:28` — Define a constant instead of duplicating this literal "127.0.0.1:0" 4 times.
+- `external/config/external/go/net_test.go:10` — Define a constant instead of duplicating this literal "127.0.0.1:0" 7 times.
+- `external/config/external/go/net_test.go:28` — Define a constant instead of duplicating this literal "bad-network" 4 times.
+- `external/config/external/go/options_test.go:206` — Define a constant instead of duplicating this literal "empty-key" 5 times.
+- `external/config/external/go/os_test.go:89` — Define a constant instead of duplicating this literal "agent.log" 4 times.
+- `external/config/external/go/os_test.go:110` — Define a constant instead of duplicating this literal "agent.txt" 6 times.
+- `external/config/external/go/os_test.go:120` — Define a constant instead of duplicating this literal "missing.txt" 7 times.
+- `external/config/external/go/os_test.go:428` — Define a constant instead of duplicating this literal "empty.txt" 3 times.
+- `external/config/external/go/path_fuzz_test.go:10` — Define a constant instead of duplicating this literal "/var/lib/foo" 6 times.
+- `external/config/external/go/path_fuzz_test.go:14` — Define a constant instead of duplicating this literal "C:\\foo" 6 times.
+- `external/config/external/go/path_fuzz_test.go:28` — Define a constant instead of duplicating this literal "../../etc" 5 times.
+- `external/config/external/go/path_fuzz_test.go:30` — Define a constant instead of duplicating this literal "a/./b/../c" 5 times.
+- `external/config/external/go/path_internal_test.go:6` — Define a constant instead of duplicating this literal "deploy/to/homelab" 3 times.
+- `external/config/external/go/path_test.go:38` — Define a constant instead of duplicating this literal "deploy/to/homelab" 3 times.
+- `external/config/external/go/path_test.go:180` — Define a constant instead of duplicating this literal "agent.json" 5 times.
+- `external/config/external/go/path_test.go:192` — Define a constant instead of duplicating this literal "/srv/dappcore" 5 times.
+- `external/config/external/go/path_test.go:312` — Define a constant instead of duplicating this literal "agent.txt" 6 times.
+- `external/config/external/go/process.go:60` — Define a constant instead of duplicating this literal "process.run" 4 times.
+- `external/config/external/go/process_example_test.go:18` — Define a constant instead of duplicating this literal "process.run" 4 times.
+- `external/config/external/go/process_test.go:31` — Define a constant instead of duplicating this literal "process.run" 7 times.
+- `external/config/external/go/process_test.go:44` — Define a constant instead of duplicating this literal "process.start" 3 times.
+- `external/config/external/go/process_test.go:55` — Define a constant instead of duplicating this literal "agent-42" 3 times.
+- `external/config/external/go/process_test.go:117` — Define a constant instead of duplicating this literal "/srv/dappcore" 4 times.
+- `external/config/external/go/process_test.go:149` — Define a constant instead of duplicating this literal "GOWORK=off" 3 times.
+- `external/config/external/go/regexp_test.go:138` — Define a constant instead of duplicating this literal "agent.dispatch" 3 times.
+- `external/config/external/go/registry.go:175` — Define a constant instead of duplicating this literal "not found: " 3 times.
+- `external/config/external/go/registry_test.go:401` — Define a constant instead of duplicating this literal "nil-service" 3 times.
+- `external/config/external/go/registry_test.go:409` — Define a constant instead of duplicating this literal "agent.dispatch" 44 times.
+- `external/config/external/go/registry_test.go:430` — Define a constant instead of duplicating this literal "homelab.health" 3 times.
+- `external/config/external/go/registry_test.go:453` — Define a constant instead of duplicating this literal "session.token" 6 times.
+- `external/config/external/go/registry_test.go:471` — Define a constant instead of duplicating this literal "agent.prepare" 22 times.
+- `external/config/external/go/registry_test.go:495` — Define a constant instead of duplicating this literal "agent.*" 3 times.
+- `external/config/external/go/registry_test.go:668` — Define a constant instead of duplicating this literal "late.agent" 3 times.
+- `external/config/external/go/result_test.go:23` — Define a constant instead of duplicating this literal "agent.refused" 3 times.
+- `external/config/external/go/result_test.go:23` — Define a constant instead of duplicating this literal "dispatch refused" 4 times.
+- `external/config/external/go/result_test.go:58` — Define a constant instead of duplicating this literal "fallback agent" 4 times.
+- `external/config/external/go/runtime_test.go:16` — Define a constant instead of duplicating this literal "https://api.lthn.ai" 4 times.
+- `external/config/external/go/service.go:64` — Define a constant instead of duplicating this literal "core.Service" 3 times.
+- `external/config/external/go/service.go:86` — Define a constant instead of duplicating this literal "core.RegisterService" 3 times.
+- `external/config/external/go/sha3_test.go:34` — Define a constant instead of duplicating this literal "The quick brown fox jumps over the lazy dog" 4 times.
+- `external/config/external/go/signal_example_test.go:43` — Define a constant instead of duplicating this literal "signal.received" 3 times.
+- `external/config/external/go/signal_test.go:8` — Define a constant instead of duplicating this literal "signal.received" 3 times.
+- `external/config/external/go/signal_test.go:36` — Define a constant instead of duplicating this literal "signal.stop" 6 times.
+- `external/config/external/go/sql_test.go:14` — Define a constant instead of duplicating this literal "dappcore-missing-driver" 3 times.
+- `external/config/external/go/sql_test.go:44` — Define a constant instead of duplicating this literal "unknown driver" 3 times.
+- `external/config/external/go/string_test.go:16` — Define a constant instead of duplicating this literal "test.go" 5 times.
+- `external/config/external/go/string_test.go:82` — Define a constant instead of duplicating this literal "agent dispatch" 3 times.
+- `external/config/external/go/string_test.go:90` — Define a constant instead of duplicating this literal "agent.dispatch" 8 times.
+- `external/config/external/go/string_test.go:98` — Define a constant instead of duplicating this literal "agent.yaml" 6 times.
+- `external/config/external/go/sync_test.go:650` — Define a constant instead of duplicating this literal "agent.dispatch.status" 10 times.
+- `external/config/external/go/sync_test.go:715` — Define a constant instead of duplicating this literal "session.token" 10 times.
+- `external/config/external/go/sync_test.go:900` — Define a constant instead of duplicating this literal "agent.a" 6 times.
+- `external/config/external/go/sync_test.go:901` — Define a constant instead of duplicating this literal "agent.b" 3 times.
+- `external/config/external/go/template_example_test.go:8` — Define a constant instead of duplicating this literal "hello {{.Name}}" 4 times.
+- `external/config/external/go/template_test.go:92` — Define a constant instead of duplicating this literal "status.tmpl" 5 times.
+- `external/config/external/go/test_test.go:11` — Define a constant instead of duplicating this literal "agent-dispatch" 3 times.
+- `external/config/external/go/time_test.go:89` — Define a constant instead of duplicating this literal "2026-04-28T07:00:00Z" 3 times.
+- `external/config/external/go/url_test.go:11` — Define a constant instead of duplicating this literal "agent dispatch/ready" 3 times.
+- `external/config/external/io/actions_test.go:84` — Define a constant instead of duplicating this literal "missing.txt" 8 times.
+- `external/config/external/io/actions_test.go:215` — Define a constant instead of duplicating this literal "config/app.yaml" 4 times.
+- `external/config/external/io/actions_test.go:216` — Define a constant instead of duplicating this literal "port: 8080" 4 times.
+- `external/config/external/io/actions_test.go:265` — Define a constant instead of duplicating this literal "input.txt" 3 times.
+- `external/config/external/io/actions_test.go:271` — Define a constant instead of duplicating this literal "backup/input.txt" 3 times.
+- `external/config/external/io/actions_test.go:398` — Define a constant instead of duplicating this literal "secret.txt" 3 times.
+- `external/config/external/io/actions_test.go:652` — Define a constant instead of duplicating this literal "old.txt" 3 times.
+- `external/config/external/io/bench_test.go:11` — Define a constant instead of duplicating this literal "test.txt" 3 times.
+- `external/config/external/io/cube/actions_test.go:43` — Define a constant instead of duplicating this literal "secret.txt" 4 times.
+- `external/config/external/io/cube/cube.go:588` — Define a constant instead of duplicating this literal "failed to read entry: " 3 times.
+- `external/config/external/io/cube/cube.go:603` — Define a constant instead of duplicating this literal "invalid tar entry path: " 3 times.
+- `external/config/external/io/cube/cube_test.go:59` — Define a constant instead of duplicating this literal "missing.txt" 13 times.
+- `external/config/external/io/cube/cube_test.go:69` — Define a constant instead of duplicating this literal "secret.txt" 13 times.
+- `external/config/external/io/cube/cube_test.go:110` — Define a constant instead of duplicating this literal "empty.txt" 7 times.
+- `external/config/external/io/cube/cube_test.go:121` — Define a constant instead of duplicating this literal "log.txt" 5 times.
+- `external/config/external/io/cube/cube_test.go:123` — Define a constant instead of duplicating this literal "line one\n" 3 times.
+- `external/config/external/io/cube/cube_test.go:194` — Define a constant instead of duplicating this literal "not ciphertext" 4 times.
+- `external/config/external/io/cube/cube_test.go:206` — Define a constant instead of duplicating this literal "data/one.txt" 4 times.
+- `external/config/external/io/cube/cube_test.go:237` — Define a constant instead of duplicating this literal "old.txt" 4 times.
+- `external/config/external/io/cube/cube_test.go:238` — Define a constant instead of duplicating this literal "new.txt" 7 times.
+- `external/config/external/io/cube/cube_test.go:254` — Define a constant instead of duplicating this literal "/app.cube" 5 times.
+- `external/config/external/io/cube/cube_test.go:257` — Define a constant instead of duplicating this literal "port: 8080" 5 times.
+- `external/config/external/io/cube/cube_test.go:257` — Define a constant instead of duplicating this literal "config/app.yaml" 5 times.
+- `external/config/external/io/cube/cube_test.go:258` — Define a constant instead of duplicating this literal "data/user.json" 3 times.
+- `external/config/external/io/cube/cube_test.go:451` — Define a constant instead of duplicating this literal "raw.txt" 8 times.
+- `external/config/external/io/cube/cube_test.go:532` — Define a constant instead of duplicating this literal "file.txt" 10 times.
+- `external/config/external/io/cube/cube_test.go:566` — Define a constant instead of duplicating this literal "delete.txt" 3 times.
+- `external/config/external/io/cube/cube_test.go:656` — Define a constant instead of duplicating this literal "stat.txt" 3 times.
+- `external/config/external/io/datanode/medium.go:129` — Define a constant instead of duplicating this literal "not found: " 7 times.
+- `external/config/external/io/datanode/medium.go:129` — Define a constant instead of duplicating this literal "datanode.Read" 4 times.
+- `external/config/external/io/datanode/medium.go:154` — Define a constant instead of duplicating this literal "empty path" 3 times.
+- `external/config/external/io/datanode/medium.go:207` — Define a constant instead of duplicating this literal "datanode.Delete" 7 times.
+- `external/config/external/io/datanode/medium.go:239` — Define a constant instead of duplicating this literal "failed to delete file: " 3 times.
+- `external/config/external/io/datanode/medium.go:250` — Define a constant instead of duplicating this literal "datanode.DeleteAll" 5 times.
+- `external/config/external/io/datanode/medium.go:299` — Define a constant instead of duplicating this literal "datanode.Rename" 6 times.
+- `external/config/external/io/datanode/medium_test.go:27` — Define a constant instead of duplicating this literal "missing.txt" 10 times.
+- `external/config/external/io/datanode/medium_test.go:74` — Define a constant instead of duplicating this literal "foo/bar/baz" 3 times.
+- `external/config/external/io/datanode/medium_test.go:85` — Define a constant instead of duplicating this literal "delete-me.txt" 4 times.
+- `external/config/external/io/datanode/medium_test.go:121` — Define a constant instead of duplicating this literal "tree/a.txt" 3 times.
+- `external/config/external/io/datanode/medium_test.go:123` — Define a constant instead of duplicating this literal "keep.txt" 3 times.
+- `external/config/external/io/datanode/medium_test.go:156` — Define a constant instead of duplicating this literal "read failed" 3 times.
+- `external/config/external/io/datanode/medium_test.go:170` — Define a constant instead of duplicating this literal "old.txt" 5 times.
+- `external/config/external/io/datanode/medium_test.go:171` — Define a constant instead of duplicating this literal "new.txt" 13 times.
+- `external/config/external/io/datanode/medium_test.go:182` — Define a constant instead of duplicating this literal "package a" 3 times.
+- `external/config/external/io/datanode/medium_test.go:182` — Define a constant instead of duplicating this literal "src/a.go" 3 times.
+- `external/config/external/io/datanode/medium_test.go:247` — Define a constant instead of duplicating this literal "stat.txt" 5 times.
+- `external/config/external/io/datanode/medium_test.go:262` — Define a constant instead of duplicating this literal "open.txt" 4 times.
+- `external/config/external/io/datanode/medium_test.go:315` — Define a constant instead of duplicating this literal "stream.txt" 5 times.
+- `external/config/external/io/datanode/medium_test.go:353` — Define a constant instead of duplicating this literal "original.txt" 3 times.
+- `external/config/external/io/datanode/medium_test.go:390` — Define a constant instead of duplicating this literal "file.txt" 16 times.
+- `external/config/external/io/datanode/medium_test.go:642` — Define a constant instead of duplicating this literal "delete.txt" 3 times.
+- `external/config/external/io/datanode/medium_test.go:973` — Define a constant instead of duplicating this literal "nested/path" 3 times.
+- `external/config/external/io/io.go:349` — Define a constant instead of duplicating this literal "path not found: " 4 times.
+- `external/config/external/io/io_test.go:12` — Define a constant instead of duplicating this literal "file.txt" 37 times.
+- `external/config/external/io/io_test.go:61` — Define a constant instead of duplicating this literal "empty.txt" 10 times.
+- `external/config/external/io/io_test.go:259` — Define a constant instead of duplicating this literal "read.txt" 4 times.
+- `external/config/external/io/io_test.go:267` — Define a constant instead of duplicating this literal "missing.txt" 12 times.
+- `external/config/external/io/io_test.go:280` — Define a constant instead of duplicating this literal "write.txt" 5 times.
+- `external/config/external/io/io_test.go:300` — Define a constant instead of duplicating this literal "stream.txt" 6 times.
+- `external/config/external/io/io_test.go:390` — Define a constant instead of duplicating this literal "destination.txt" 5 times.
+- `external/config/external/io/io_test.go:553` — Define a constant instead of duplicating this literal "delete.txt" 3 times.
+- `external/config/external/io/io_test.go:599` — Define a constant instead of duplicating this literal "new.txt" 5 times.
+- `external/config/external/io/io_test.go:621` — Define a constant instead of duplicating this literal "open.txt" 4 times.
+- `external/config/external/io/io_test.go:767` — Define a constant instead of duplicating this literal "stat.txt" 3 times.
+- `external/config/external/io/local/medium.go:372` — Define a constant instead of duplicating this literal "local.Delete" 3 times.
+- `external/config/external/io/local/medium.go:387` — Define a constant instead of duplicating this literal "local.DeleteAll" 3 times.
+- `external/config/external/io/local/medium.go:454` — Define a constant instead of duplicating this literal "unexpected result type" 5 times.
+- `external/config/external/io/local/medium_test.go:22` — Define a constant instead of duplicating this literal "/home/user/file.txt" 5 times.
+- `external/config/external/io/local/medium_test.go:22` — Define a constant instead of duplicating this literal "file.txt" 19 times.
+- `external/config/external/io/local/medium_test.go:30` — Define a constant instead of duplicating this literal "/etc/passwd" 3 times.
+- `external/config/external/io/local/medium_test.go:257` — Define a constant instead of duplicating this literal "old.txt" 7 times.
+- `external/config/external/io/local/medium_test.go:259` — Define a constant instead of duplicating this literal "new.txt" 9 times.
+- `external/config/external/io/local/medium_test.go:371` — Define a constant instead of duplicating this literal "stream.txt" 5 times.
+- `external/config/external/io/local/medium_test.go:507` — Define a constant instead of duplicating this literal "missing.txt" 9 times.
+- `external/config/external/io/local/medium_test.go:606` — Define a constant instead of duplicating this literal "delete.txt" 3 times.
+- `external/config/external/io/local/medium_test.go:695` — Define a constant instead of duplicating this literal "stat.txt" 3 times.
+- `external/config/external/io/medium_test.go:20` — Define a constant instead of duplicating this literal "app.yaml" 6 times.
+- `external/config/external/io/medium_test.go:46` — Define a constant instead of duplicating this literal "test.txt" 20 times.
+- `external/config/external/io/medium_test.go:46` — Define a constant instead of duplicating this literal "hello world" 3 times.
+- `external/config/external/io/medium_test.go:54` — Define a constant instead of duplicating this literal "nonexistent.txt" 5 times.
+- `external/config/external/io/medium_test.go:72` — Define a constant instead of duplicating this literal "secure.txt" 4 times.
+- `external/config/external/io/medium_test.go:109` — Define a constant instead of duplicating this literal "exists.txt" 4 times.
+- `external/config/external/io/medium_test.go:144` — Define a constant instead of duplicating this literal "mydir/file.txt" 3 times.
+- `external/config/external/io/medium_test.go:174` — Define a constant instead of duplicating this literal "old.txt" 3 times.
+- `external/config/external/io/medium_test.go:176` — Define a constant instead of duplicating this literal "new.txt" 3 times.
+- `external/config/external/io/medium_test.go:253` — Define a constant instead of duplicating this literal "file.txt" 7 times.
+- `external/config/external/io/medium_test.go:274` — Define a constant instead of duplicating this literal "dir/file.txt" 3 times.
+- `external/config/external/io/medium_test.go:310` — Define a constant instead of duplicating this literal "created.txt" 3 times.
+- `external/config/external/io/medium_test.go:329` — Define a constant instead of duplicating this literal "streamed.txt" 3 times.
+- `external/config/external/io/mock_test.go:39` — Define a constant instead of duplicating this literal "missing.txt" 9 times.
+- `external/config/external/io/mock_test.go:46` — Define a constant instead of duplicating this literal "empty.txt" 6 times.
+- `external/config/external/io/mock_test.go:119` — Define a constant instead of duplicating this literal "file.txt" 7 times.
+- `external/config/external/io/mock_test.go:139` — Define a constant instead of duplicating this literal "delete.txt" 3 times.
+- `external/config/external/io/mock_test.go:184` — Define a constant instead of duplicating this literal "old.txt" 4 times.
+- `external/config/external/io/mock_test.go:185` — Define a constant instead of duplicating this literal "new.txt" 7 times.
+- `external/config/external/io/mock_test.go:229` — Define a constant instead of duplicating this literal "stat.txt" 3 times.
+- `external/config/external/io/mock_test.go:252` — Define a constant instead of duplicating this literal "open.txt" 4 times.
+- `external/config/external/io/mock_test.go:326` — Define a constant instead of duplicating this literal "stream.txt" 3 times.
+- `external/config/external/io/node/node.go:189` — Define a constant instead of duplicating this literal "path not found: " 8 times.
+- `external/config/external/io/node/node.go:205` — Define a constant instead of duplicating this literal "node.ExportFile" 4 times.
+- `external/config/external/io/node/node_test.go:21` — Define a constant instead of duplicating this literal "foo.txt" 26 times.
+- `external/config/external/io/node/node_test.go:55` — Define a constant instead of duplicating this literal "hello.txt" 8 times.
+- `external/config/external/io/node/node_test.go:83` — Define a constant instead of duplicating this literal "bar/baz.txt" 13 times.
+- `external/config/external/io/node/node_test.go:142` — Define a constant instead of duplicating this literal "missing.txt" 14 times.
+- `external/config/external/io/node/node_test.go:149` — Define a constant instead of duplicating this literal "data.bin" 3 times.
+- `external/config/external/io/node/node_test.go:164` — Define a constant instead of duplicating this literal "bar/qux.txt" 3 times.
+- `external/config/external/io/node/node_test.go:272` — Define a constant instead of duplicating this literal "root.txt" 3 times.
+- `external/config/external/io/node/node_test.go:319` — Define a constant instead of duplicating this literal "test.txt" 4 times.
+- `external/config/external/io/node/node_test.go:352` — Define a constant instead of duplicating this literal "port: 8080" 3 times.
+- `external/config/external/io/node/node_test.go:382` — Define a constant instead of duplicating this literal "docs/readme.txt" 4 times.
+- `external/config/external/io/node/node_test.go:422` — Define a constant instead of duplicating this literal "docs/generated.txt" 3 times.
+- `external/config/external/io/node/node_test.go:447` — Define a constant instead of duplicating this literal "docs/stream-renamed.txt" 4 times.
+- `external/config/external/io/node/node_test.go:602` — Define a constant instead of duplicating this literal "file.txt" 62 times.
+- `external/config/external/io/node/node_test.go:679` — Define a constant instead of duplicating this literal "dir/file.txt" 12 times.
+- `external/config/external/io/node/node_test.go:722` — Define a constant instead of duplicating this literal "/file.txt" 7 times.
+- `external/config/external/io/node/node_test.go:754` — Define a constant instead of duplicating this literal "copy.txt" 3 times.
+- `external/config/external/io/node/node_test.go:1036` — Define a constant instead of duplicating this literal "new.txt" 5 times.
+- `external/config/external/io/node/node_test.go:1216` — Define a constant instead of duplicating this literal "empty.txt" 4 times.
+- `external/config/external/io/pkg/api/handlers_test.go:24` — Define a constant instead of duplicating this literal "/v1/workspace" 4 times.
+- `external/config/external/io/pkg/api/handlers_test.go:26` — Define a constant instead of duplicating this literal "expected 200, got %d: %s" 3 times.
+- `external/config/external/io/pkg/api/handlers_test.go:38` — Define a constant instead of duplicating this literal "expected 400, got %d: %s" 3 times.
+- `external/config/external/io/pkg/api/handlers_test.go:73` — Define a constant instead of duplicating this literal "/v1/workspace/ws-1/command" 3 times.
+- `external/config/external/io/pkg/medium/github/github_test.go:70` — Define a constant instead of duplicating this literal "missing.txt" 3 times.
+- `external/config/external/io/pkg/medium/github/github_test.go:79` — Define a constant instead of duplicating this literal "safe/file.txt" 4 times.
+- `external/config/external/io/pkg/medium/github/github_test.go:91` — Define a constant instead of duplicating this literal "/repos/Snider/demo/contents/dir" 7 times.
+- `external/config/external/io/pkg/medium/github/github_test.go:126` — Define a constant instead of duplicating this literal "dir/file.txt" 9 times.
+- `external/config/external/io/pkg/medium/github/github_test.go:286` — Define a constant instead of duplicating this literal "file.txt" 8 times.
+- `external/config/external/io/pkg/medium/github/github_test.go:339` — Define a constant instead of duplicating this literal "../escape" 4 times.
+- `external/config/external/io/pkg/medium/github/github_test.go:345` — Define a constant instead of duplicating this literal "new.txt" 3 times.
+- `external/config/external/io/pkg/medium/github/github_test.go:391` — Define a constant instead of duplicating this literal "stat.txt" 3 times.
+- `external/config/external/io/pkg/medium/github/github_test.go:480` — Define a constant instead of duplicating this literal "stream.txt" 3 times.
+- `external/config/external/io/pkg/medium/github/github_test.go:565` — Define a constant instead of duplicating this literal "clone.txt" 3 times.
+- `external/config/external/io/pkg/medium/pwa/pwa.go:111` — Define a constant instead of duplicating this literal "not found: " 4 times.
+- `external/config/external/io/pkg/medium/pwa/pwa_test.go:44` — Define a constant instead of duplicating this literal "index.html" 4 times.
+- `external/config/external/io/pkg/medium/pwa/pwa_test.go:46` — Define a constant instead of duplicating this literal "icon.png" 4 times.
+- `external/config/external/io/pkg/medium/pwa/pwa_test.go:107` — Define a constant instead of duplicating this literal "https://example.test" 3 times.
+- `external/config/external/io/pkg/medium/pwa/pwa_test.go:149` — Define a constant instead of duplicating this literal "../page" 13 times.
+- `external/config/external/io/pkg/medium/pwa/pwa_test.go:212` — Define a constant instead of duplicating this literal "../pages" 6 times.
+- `external/config/external/io/pkg/medium/sftp/sftp_test.go:54` — Define a constant instead of duplicating this literal "missing.txt" 5 times.
+- `external/config/external/io/pkg/medium/sftp/sftp_test.go:72` — Define a constant instead of duplicating this literal "nested/path/file.txt" 3 times.
+- `external/config/external/io/pkg/medium/sftp/sftp_test.go:133` — Define a constant instead of duplicating this literal "file.txt" 5 times.
+- `external/config/external/io/pkg/medium/sftp/sftp_test.go:292` — Define a constant instead of duplicating this literal "delete.txt" 3 times.
+- `external/config/external/io/pkg/medium/sftp/sftp_test.go:336` — Define a constant instead of duplicating this literal "old.txt" 4 times.
+- `external/config/external/io/pkg/medium/sftp/sftp_test.go:337` — Define a constant instead of duplicating this literal "new.txt" 5 times.
+- `external/config/external/io/pkg/medium/sftp/sftp_test.go:381` — Define a constant instead of duplicating this literal "stat.txt" 3 times.
+- `external/config/external/io/pkg/medium/sftp/sftp_test.go:477` — Define a constant instead of duplicating this literal "stream.txt" 3 times.
+- `external/config/external/io/pkg/medium/webdav/webdav_test.go:40` — Define a constant instead of duplicating this literal "missing.txt" 5 times.
+- `external/config/external/io/pkg/medium/webdav/webdav_test.go:58` — Define a constant instead of duplicating this literal "nested/path/file.txt" 3 times.
+- `external/config/external/io/pkg/medium/webdav/webdav_test.go:119` — Define a constant instead of duplicating this literal "file.txt" 9 times.
+- `external/config/external/io/pkg/medium/webdav/webdav_test.go:259` — Define a constant instead of duplicating this literal "delete.txt" 3 times.
+- `external/config/external/io/pkg/medium/webdav/webdav_test.go:303` — Define a constant instead of duplicating this literal "old.txt" 4 times.
+- `external/config/external/io/pkg/medium/webdav/webdav_test.go:304` — Define a constant instead of duplicating this literal "new.txt" 5 times.
+- `external/config/external/io/pkg/medium/webdav/webdav_test.go:348` — Define a constant instead of duplicating this literal "stat.txt" 3 times.
+- `external/config/external/io/pkg/medium/webdav/webdav_test.go:444` — Define a constant instead of duplicating this literal "stream.txt" 3 times.
+- `external/config/external/io/pkg/medium/webdav/webdav_test.go:546` — Define a constant instead of duplicating this literal "empty.txt" 3 times.
+- `external/config/external/io/s3/actions_test.go:42` — Define a constant instead of duplicating this literal "reports/daily.txt" 4 times.
+- `external/config/external/io/s3/s3.go:70` — Define a constant instead of duplicating this literal "s3.DeleteAll" 5 times.
+- `external/config/external/io/s3/s3.go:142` — Define a constant instead of duplicating this literal "s3.Read" 3 times.
+- `external/config/external/io/s3/s3.go:142` — Define a constant instead of duplicating this literal "path is required" 9 times.
+- `external/config/external/io/s3/s3.go:150` — Define a constant instead of duplicating this literal "failed to get object: " 3 times.
+- `external/config/external/io/s3/s3.go:290` — Define a constant instead of duplicating this literal "s3.Rename" 3 times.
+- `external/config/external/io/s3/s3.go:422` — Define a constant instead of duplicating this literal "s3.Open" 3 times.
+- `external/config/external/io/s3/s3_test.go:268` — Define a constant instead of duplicating this literal "nonexistent.txt" 7 times.
+- `external/config/external/io/s3/s3_test.go:287` — Define a constant instead of duplicating this literal "file.txt" 24 times.
+- `external/config/external/io/s3/s3_test.go:318` — Define a constant instead of duplicating this literal "to-delete.txt" 4 times.
+- `external/config/external/io/s3/s3_test.go:336` — Define a constant instead of duplicating this literal "dir/file1.txt" 5 times.
+- `external/config/external/io/s3/s3_test.go:367` — Define a constant instead of duplicating this literal "dir/file2.txt" 6 times.
+- `external/config/external/io/s3/s3_test.go:385` — Define a constant instead of duplicating this literal "old.txt" 9 times.
+- `external/config/external/io/s3/s3_test.go:388` — Define a constant instead of duplicating this literal "new.txt" 14 times.
+- `external/config/external/io/s3/s3_test.go:533` — Define a constant instead of duplicating this literal "append.txt" 5 times.
+- `external/config/external/io/s3/s3_test.go:567` — Define a constant instead of duplicating this literal "stream.txt" 5 times.
+- `external/config/external/io/s3/s3_test.go:612` — Define a constant instead of duplicating this literal "dir/file.txt" 6 times.
+- `external/config/external/io/s3/s3_test.go:697` — Define a constant instead of duplicating this literal "missing.txt" 9 times.
+- `external/config/external/io/s3/s3_test.go:732` — Define a constant instead of duplicating this literal "mode.txt" 4 times.
+- `external/config/external/io/s3/s3_test.go:796` — Define a constant instead of duplicating this literal "delete.txt" 3 times.
+- `external/config/external/io/s3/s3_test.go:885` — Define a constant instead of duplicating this literal "stat.txt" 3 times.
+- `external/config/external/io/s3/s3_test.go:1068` — Define a constant instead of duplicating this literal "info.txt" 3 times.
+- `external/config/external/io/sigil/sigil_test.go:213` — Define a constant instead of duplicating this literal "sha512-224" 3 times.
+- `external/config/external/io/sigil/sigil_test.go:214` — Define a constant instead of duplicating this literal "sha512-256" 3 times.
+- `external/config/external/io/sigil/sigil_test.go:215` — Define a constant instead of duplicating this literal "sha3-224" 3 times.
+- `external/config/external/io/sigil/sigil_test.go:216` — Define a constant instead of duplicating this literal "sha3-256" 3 times.
+- `external/config/external/io/sigil/sigil_test.go:217` — Define a constant instead of duplicating this literal "sha3-384" 3 times.
+- `external/config/external/io/sigil/sigil_test.go:218` — Define a constant instead of duplicating this literal "sha3-512" 3 times.
+- `external/config/external/io/sigil/sigil_test.go:220` — Define a constant instead of duplicating this literal "blake2s-256" 3 times.
+- `external/config/external/io/sigil/sigil_test.go:221` — Define a constant instead of duplicating this literal "blake2b-256" 3 times.
+- `external/config/external/io/sigil/sigil_test.go:222` — Define a constant instead of duplicating this literal "blake2b-384" 3 times.
+- `external/config/external/io/sigil/sigil_test.go:223` — Define a constant instead of duplicating this literal "blake2b-512" 3 times.
+- `external/config/external/io/sigil/sigils_test.go:228` — Define a constant instead of duplicating this literal "not json" 3 times.
+- `external/config/external/io/sqlite/sqlite.go:65` — Define a constant instead of duplicating this literal "sqlite.New" 5 times.
+- `external/config/external/io/sqlite/sqlite.go:121` — Define a constant instead of duplicating this literal "sqlite.Read" 4 times.
+- `external/config/external/io/sqlite/sqlite.go:121` — Define a constant instead of duplicating this literal "path is required" 9 times.
+- `external/config/external/io/sqlite/sqlite.go:130` — Define a constant instead of duplicating this literal "file not found: " 3 times.
+- `external/config/external/io/sqlite/sqlite.go:133` — Define a constant instead of duplicating this literal "query failed: " 7 times.
+- `external/config/external/io/sqlite/sqlite.go:136` — Define a constant instead of duplicating this literal "path is a directory: " 3 times.
+- `external/config/external/io/sqlite/sqlite.go:203` — Define a constant instead of duplicating this literal "sqlite.Delete" 7 times.
+- `external/config/external/io/sqlite/sqlite.go:211` — Define a constant instead of duplicating this literal "path not found: " 4 times.
+- `external/config/external/io/sqlite/sqlite.go:246` — Define a constant instead of duplicating this literal "sqlite.DeleteAll" 3 times.
+- `external/config/external/io/sqlite/sqlite.go:270` — Define a constant instead of duplicating this literal "sqlite.Rename" 10 times.
+- `external/config/external/io/sqlite/sqlite.go:370` — Define a constant instead of duplicating this literal "sqlite.List" 3 times.
+- `external/config/external/io/sqlite/sqlite.go:437` — Define a constant instead of duplicating this literal "sqlite.Stat" 3 times.
+- `external/config/external/io/sqlite/sqlite.go:468` — Define a constant instead of duplicating this literal "sqlite.Open" 4 times.
+- `external/config/external/io/sqlite/sqlite.go:534` — Define a constant instead of duplicating this literal "sqlite.ReadStream" 4 times.
+- `external/config/external/io/sqlite/sqlite_test.go:11` — Define a constant instead of duplicating this literal ":memory:" 7 times.
+- `external/config/external/io/sqlite/sqlite_test.go:51` — Define a constant instead of duplicating this literal "file.txt" 35 times.
+- `external/config/external/io/sqlite/sqlite_test.go:73` — Define a constant instead of duplicating this literal "nonexistent.txt" 3 times.
+- `external/config/external/io/sqlite/sqlite_test.go:136` — Define a constant instead of duplicating this literal "to-delete.txt" 4 times.
+- `external/config/external/io/sqlite/sqlite_test.go:182` — Define a constant instead of duplicating this literal "dir/file1.txt" 3 times.
+- `external/config/external/io/sqlite/sqlite_test.go:221` — Define a constant instead of duplicating this literal "old.txt" 7 times.
+- `external/config/external/io/sqlite/sqlite_test.go:223` — Define a constant instead of duplicating this literal "new.txt" 12 times.
+- `external/config/external/io/sqlite/sqlite_test.go:440` — Define a constant instead of duplicating this literal "append.txt" 5 times.
+- `external/config/external/io/sqlite/sqlite_test.go:479` — Define a constant instead of duplicating this literal "stream.txt" 5 times.
+- `external/config/external/io/sqlite/sqlite_test.go:607` — Define a constant instead of duplicating this literal "missing.txt" 9 times.
+- `external/config/external/io/sqlite/sqlite_test.go:642` — Define a constant instead of duplicating this literal "mode.txt" 4 times.
+- `external/config/external/io/sqlite/sqlite_test.go:706` — Define a constant instead of duplicating this literal "delete.txt" 3 times.
+- `external/config/external/io/sqlite/sqlite_test.go:795` — Define a constant instead of duplicating this literal "stat.txt" 3 times.
+- `external/config/external/io/sqlite/sqlite_test.go:1011` — Define a constant instead of duplicating this literal "info.txt" 3 times.
+- `external/config/external/io/store/medium.go:69` — Define a constant instead of duplicating this literal "path must include group/key" 6 times.
+- `external/config/external/io/store/medium.go:106` — Define a constant instead of duplicating this literal "path is required" 3 times.
+- `external/config/external/io/store/medium_test.go:11` — Define a constant instead of duplicating this literal ":memory:" 5 times.
+- `external/config/external/io/store/medium_test.go:42` — Define a constant instead of duplicating this literal "group/key" 69 times.
+- `external/config/external/io/store/medium_test.go:68` — Define a constant instead of duplicating this literal "group/a" 4 times.
+- `external/config/external/io/store/medium_test.go:69` — Define a constant instead of duplicating this literal "group/b" 3 times.
+- `external/config/external/io/store/medium_test.go:78` — Define a constant instead of duplicating this literal "old/key" 3 times.
+- `external/config/external/io/store/medium_test.go:144` — Define a constant instead of duplicating this literal "hello world" 3 times.
+- `external/config/external/io/store/medium_test.go:376` — Define a constant instead of duplicating this literal "/group/key" 5 times.
+- `external/config/external/io/store/medium_test.go:513` — Define a constant instead of duplicating this literal "group/new" 5 times.
+- `external/config/external/io/store/medium_test.go:597` — Define a constant instead of duplicating this literal "group/empty" 4 times.
+- `external/config/external/io/store/store.go:32` — Define a constant instead of duplicating this literal "store.New" 4 times.
+- `external/config/external/io/store/store.go:118` — Define a constant instead of duplicating this literal "store.ListGroups" 3 times.
+- `external/config/external/io/store/store.go:140` — Define a constant instead of duplicating this literal "store.GetAll" 3 times.
+- `external/config/external/io/store/store.go:164` — Define a constant instead of duplicating this literal "store.Render" 5 times.
+- `external/config/external/io/store/store_test.go:10` — Define a constant instead of duplicating this literal ":memory:" 12 times.
+- `external/config/external/io/workspace/command_test.go:30` — Define a constant instead of duplicating this literal "legacy-id" 3 times.
+- `external/config/external/io/workspace/service.go:107` — Define a constant instead of duplicating this literal "workspace.New" 4 times.
+- `external/config/external/io/workspace/service.go:147` — Define a constant instead of duplicating this literal "workspace.CreateWorkspace" 6 times.
+- `external/config/external/io/workspace/service.go:239` — Define a constant instead of duplicating this literal "workspace.ReadWorkspaceFile" 3 times.
+- `external/config/external/io/workspace/service.go:263` — Define a constant instead of duplicating this literal "workspace.WriteWorkspaceFile" 3 times.
+- `external/config/external/io/workspace/service.go:284` — Define a constant instead of duplicating this literal "workspace.HandleWorkspaceCommand" 3 times.
+- `external/config/external/io/workspace/service_test.go:27` — Define a constant instead of duplicating this literal "private-key" 7 times.
+- `external/config/external/io/workspace/service_test.go:62` — Define a constant instead of duplicating this literal "private.key" 3 times.
+- `external/config/external/io/workspace/service_test.go:111` — Define a constant instead of duplicating this literal "../keys/private.key" 3 times.
+- `external/config/external/io/workspace/service_test.go:421` — Define a constant instead of duplicating this literal "note.txt" 5 times.
+- `external/config/external/io/workspace/workspace_test.go:30` — Define a constant instead of duplicating this literal "../escape" 29 times.
+- `external/config/external/io/workspace/workspace_test.go:51` — Define a constant instead of duplicating this literal "note.txt" 6 times.
+- `external/config/external/io/workspace/workspace_test.go:112` — Define a constant instead of duplicating this literal "notes/todo.txt" 7 times.
+- `external/config/external/io/workspace/workspace_test.go:125` — Define a constant instead of duplicating this literal "missing.txt" 6 times.
+- `external/config/external/io/workspace/workspace_test.go:509` — Define a constant instead of duplicating this literal "file.txt" 4 times.
+- `external/config/external/io/workspace/workspace_test.go:529` — Define a constant instead of duplicating this literal "delete.txt" 3 times.
+- `external/config/external/io/workspace/workspace_test.go:574` — Define a constant instead of duplicating this literal "new.txt" 5 times.
+- `external/config/external/io/workspace/workspace_test.go:618` — Define a constant instead of duplicating this literal "stat.txt" 3 times.
+- `external/config/external/io/workspace/workspace_test.go:713` — Define a constant instead of duplicating this literal "stream.txt" 3 times.
+- `external/config/external/log/errors_test.go:22` — Define a constant instead of duplicating this literal "want %v, got %v" 54 times.
+- `external/config/external/log/errors_test.go:26` — Define a constant instead of duplicating this literal "api.Call" 6 times.
+- `external/config/external/log/errors_test.go:94` — Define a constant instead of duplicating this literal "expected true" 24 times.
+- `external/config/external/log/errors_test.go:102` — Define a constant instead of duplicating this literal "op.Name" 4 times.
+- `external/config/external/log/errors_test.go:105` — Define a constant instead of duplicating this literal "expected non-nil" 19 times.
+- `external/config/external/log/errors_test.go:160` — Define a constant instead of duplicating this literal "handler.Process" 3 times.
+- `external/config/external/log/errors_test.go:160` — Define a constant instead of duplicating this literal "processing failed" 3 times.
+- `external/config/external/log/errors_test.go:166` — Define a constant instead of duplicating this literal "expected %q to contain %q" 16 times.
+- `external/config/external/log/errors_test.go:178` — Define a constant instead of duplicating this literal "validation failed" 5 times.
+- `external/config/external/log/errors_test.go:178` — Define a constant instead of duplicating this literal "inner.Op" 4 times.
+- `external/config/external/log/errors_test.go:181` — Define a constant instead of duplicating this literal "outer.Op" 5 times.
+- `external/config/external/log/errors_test.go:181` — Define a constant instead of duplicating this literal "outer context" 4 times.
+- `external/config/external/log/errors_test.go:189` — Define a constant instead of duplicating this literal "[VALIDATION_ERROR]" 4 times.
+- `external/config/external/log/errors_test.go:239` — Define a constant instead of duplicating this literal "inner failed" 3 times.
+- `external/config/external/log/errors_test.go:253` — Define a constant instead of duplicating this literal "expected nil, got %v" 6 times.
+- `external/config/external/log/errors_test.go:259` — Define a constant instead of duplicating this literal "api.Validate" 3 times.
+- `external/config/external/log/errors_test.go:354` — Define a constant instead of duplicating this literal "resource not found" 3 times.
+- `external/config/external/log/errors_test.go:455` — Define a constant instead of duplicating this literal "plain error" 3 times.
+- `external/config/external/log/errors_test.go:591` — Define a constant instead of duplicating this literal "database unavailable" 6 times.
+- `external/config/external/log/errors_test.go:591` — Define a constant instead of duplicating this literal "db.Connect" 4 times.
+- `external/config/external/log/errors_test.go:615` — Define a constant instead of duplicating this literal "op=\"db.Connect\"" 4 times.
+- `external/config/external/log/errors_test.go:656` — Define a constant instead of duplicating this literal "expected empty, got %v" 8 times.
+- `external/config/external/log/errors_test.go:667` — Define a constant instead of duplicating this literal "falling back to db" 3 times.
+- `external/config/external/log/log_test.go:58` — Define a constant instead of duplicating this literal "test message" 3 times.
+- `external/config/external/log/log_test.go:202` — Define a constant instead of duplicating this literal "expected 1 line, got %d" 3 times.
+- `external/config/external/log/tests/cli/log/main.go:61` — Define a constant instead of duplicating this literal "driver.outer" 3 times.
+- `external/config/external/log/v090_ax7_test.go:62` — Define a constant instead of duplicating this literal "want %q, got %q" 3 times.
+- `external/config/external/log/v090_ax7_test.go:131` — Define a constant instead of duplicating this literal "want quiet, got %v" 3 times.
+- `external/config/external/log/v090_ax7_test.go:268` — Define a constant instead of duplicating this literal "line\nbreak" 4 times.
+- `external/config/external/log/v090_ax7_test.go:616` — Define a constant instead of duplicating this literal "agent.Dispatch" 19 times.
+- `external/config/external/log/v090_ax7_test.go:616` — Define a constant instead of duplicating this literal "agent.failed" 14 times.
+- `external/config/external/log/v090_ax7_test.go:690` — Define a constant instead of duplicating this literal "retry later" 4 times.
+- `external/config/external/log/v090_ax7_test.go:821` — Define a constant instead of duplicating this literal "dispatch failed" 3 times.
+- `external/config/external/log/v090_ax7_test.go:1224` — Define a constant instead of duplicating this literal "[ERR] failed" 3 times.
+- `external/config/external/log/v090_ax7_test.go:1248` — Define a constant instead of duplicating this literal "cache.Get" 3 times.
+- `external/config/go/conclave_test.go:19` — Define a constant instead of duplicating this literal "config.yaml" 6 times.
+- `external/config/go/config.go:247` — Define a constant instead of duplicating this literal "unsupported config file type: " 3 times.
+- `external/config/go/config.go:358` — Define a constant instead of duplicating this literal "config.Get" 3 times.
+- `external/config/go/config.go:667` — Define a constant instead of duplicating this literal "config.Save" 4 times.
+- `external/config/go/config_example_test.go:22` — Define a constant instead of duplicating this literal "/example/config.yaml" 21 times.
+- `external/config/go/config_example_test.go:59` — Define a constant instead of duplicating this literal "app.name" 7 times.
+- `external/config/go/config_example_test.go:95` — Define a constant instead of duplicating this literal "dev.editor" 5 times.
+- `external/config/go/config_extra_test.go:33` — Define a constant instead of duplicating this literal "app.name" 7 times.
+- `external/config/go/config_extra_test.go:38` — Define a constant instead of duplicating this literal "dev.editor" 9 times.
+- `external/config/go/config_extra_test.go:130` — Define a constant instead of duplicating this literal "feature.beta" 3 times.
+- `external/config/go/config_extra_test.go:231` — Define a constant instead of duplicating this literal "/store.yaml" 3 times.
+- `external/config/go/config_test.go:182` — Define a constant instead of duplicating this literal "/tmp/test/config.yaml" 30 times.
+- `external/config/go/config_test.go:185` — Define a constant instead of duplicating this literal "app.name" 16 times.
+- `external/config/go/config_test.go:212` — Define a constant instead of duplicating this literal "dev.editor" 21 times.
+- `external/config/go/config_test.go:302` — Define a constant instead of duplicating this literal "app.version" 3 times.
+- `external/config/go/config_test.go:312` — Define a constant instead of duplicating this literal "app:\n  name: core\n" 3 times.
+- `external/config/go/config_test.go:500` — Define a constant instead of duplicating this literal "/tmp/test/config.json" 6 times.
+- `external/config/go/config_test.go:504` — Define a constant instead of duplicating this literal "unsupported config file type" 7 times.
+- `external/config/go/config_test.go:531` — Define a constant instead of duplicating this literal "/tmp/test/config" 4 times.
+- `external/config/go/config_test.go:558` — Define a constant instead of duplicating this literal "/tmp/test/config.txt" 5 times.
+- `external/config/go/config_test.go:635` — Define a constant instead of duplicating this literal "/config.yaml" 3 times.
+- `external/config/go/config_test.go:725` — Define a constant instead of duplicating this literal "/ax7/medium.yaml" 3 times.
+- `external/config/go/config_test.go:780` — Define a constant instead of duplicating this literal "/ax7/core.yaml" 3 times.
+- `external/config/go/config_test.go:801` — Define a constant instead of duplicating this literal "/ax7/store.yaml" 3 times.
+- `external/config/go/config_test.go:882` — Define a constant instead of duplicating this literal "/ax7/new.yaml" 5 times.
+- `external/config/go/config_test.go:903` — Define a constant instead of duplicating this literal "/ax7/load.yaml" 4 times.
+- `external/config/go/config_test.go:972` — Define a constant instead of duplicating this literal "agent.name" 3 times.
+- `external/config/go/discover_test.go:17` — Define a constant instead of duplicating this literal "config.yaml" 8 times.
+- `external/config/go/discover_test.go:25` — Define a constant instead of duplicating this literal "app.name" 5 times.
+- `external/config/go/feature_example_test.go:11` — Define a constant instead of duplicating this literal "dark-mode" 3 times.
+- `external/config/go/feature_test.go:12` — Define a constant instead of duplicating this literal "dark-mode" 18 times.
+- `external/config/go/feature_test.go:40` — Define a constant instead of duplicating this literal "beta-api" 3 times.
+- `external/config/go/feature_test.go:54` — Define a constant instead of duplicating this literal "/cfg.yaml" 6 times.
+- `external/config/go/feature_test.go:80` — Define a constant instead of duplicating this literal "features:\n  dark-mode: true\n" 3 times.
+- `external/config/go/images_manifest_test.go:36` — Define a constant instead of duplicating this literal "core-dev" 6 times.
+- `external/config/go/manifest.go:646` — Define a constant instead of duplicating this literal "config.buildmanifestldflags.UnmarshalYAML" 4 times.
+- `external/config/go/manifest_test.go:47` — Define a constant instead of duplicating this literal "not-hex" 4 times.
+- `external/config/go/manifest_test.go:137` — Define a constant instead of duplicating this literal "trusted.pub" 4 times.
+- `external/config/go/manifest_test.go:146` — Define a constant instead of duplicating this literal "symlink test is not portable on Windows in this environment" 3 times.
+- `external/config/go/manifest_test.go:229` — Define a constant instead of duplicating this literal "photo-browser" 6 times.
+- `external/config/go/manifest_test.go:230` — Define a constant instead of duplicating this literal "Photo Browser" 5 times.
+- `external/config/go/manifest_test.go:283` — Define a constant instead of duplicating this literal "Core I/O" 10 times.
+- `external/config/go/manifest_test.go:285` — Define a constant instead of duplicating this literal "Mandatory I/O abstraction layer" 6 times.
+- `external/config/go/manifest_test.go:286` — Define a constant instead of duplicating this literal "EUPL-1.2" 10 times.
+- `external/config/go/manifest_test.go:312` — Define a constant instead of duplicating this literal "decode package sign_key failed" 3 times.
+- `external/config/go/manifest_test.go:353` — Define a constant instead of duplicating this literal "\nsign: " 5 times.
+- `external/config/go/manifest_test.go:382` — Define a constant instead of duplicating this literal "/.core/build.yaml" 8 times.
+- `external/config/go/manifest_test.go:521` — Define a constant instead of duplicating this literal "/.core/view.yaml" 12 times.
+- `external/config/go/manifest_test.go:616` — Define a constant instead of duplicating this literal "/.core/manifest.yaml" 15 times.
+- `external/config/go/manifest_test.go:723` — Define a constant instead of duplicating this literal "code: go-io\nname: Core I/O\nversion: 0.3.0\ndescription: Mandatory I/O abstraction layer\nlicence: EUPL-1.2\nsign_key: " 3 times.
+- `external/config/go/manifest_test.go:1032` — Define a constant instead of duplicating this literal "keep-me" 4 times.
+- `external/config/go/resolve_test.go:42` — Define a constant instead of duplicating this literal "version: 1\norg: host-uk\nrepos:\n  - path: core/go\n    remote: ssh://forge.example/core/go.git\n" 5 times.
+- `external/config/go/resolve_test.go:424` — Define a constant instead of duplicating this literal "failed to parse manifest" 4 times.
+- `external/config/go/resolve_test.go:463` — Define a constant instead of duplicating this literal "version: [broken" 5 times.
+- `external/config/go/resolve_test.go:494` — Define a constant instead of duplicating this literal "version: 1\norg: host-uk\nrepos: []\n" 3 times.
+- `external/config/go/resolve_test.go:590` — Define a constant instead of duplicating this literal "main.go" 4 times.
+- `external/config/go/resolve_test.go:591` — Define a constant instead of duplicating this literal "status.json" 4 times.
+- `external/config/go/resolve_test.go:598` — Define a constant instead of duplicating this literal "../repo" 3 times.
+- `external/config/go/service_example_test.go:12` — Define a constant instead of duplicating this literal "/example/.core/config.yaml" 3 times.
+- `external/config/go/service_example_test.go:60` — Define a constant instead of duplicating this literal "dev.editor" 3 times.
+- `external/config/go/service_test.go:13` — Define a constant instead of duplicating this literal "/tmp/svc/config.yaml" 25 times.
+- `external/config/go/service_test.go:13` — Define a constant instead of duplicating this literal "app:\n  name: svc\n" 17 times.
+- `external/config/go/service_test.go:27` — Define a constant instead of duplicating this literal "app.name" 9 times.
+- `external/config/go/service_test.go:61` — Define a constant instead of duplicating this literal "dev.editor" 9 times.
+- `external/config/go/service_test.go:61` — Define a constant instead of duplicating this literal "config.get" 5 times.
+- `external/config/go/service_test.go:67` — Define a constant instead of duplicating this literal "dev.shell" 5 times.
+- `external/config/go/service_test.go:90` — Define a constant instead of duplicating this literal "config/get" 4 times.
+- `external/config/go/service_test.go:92` — Define a constant instead of duplicating this literal "config/list" 4 times.
+- `external/config/go/service_test.go:267` — Define a constant instead of duplicating this literal "config not loaded" 3 times.
+- `external/config/go/service_test.go:301` — Define a constant instead of duplicating this literal "dev:\n  shell: zsh\n" 4 times.
+- `external/config/go/service_test.go:312` — Define a constant instead of duplicating this literal ".core/override.yaml" 7 times.
+- `external/config/go/service_test.go:340` — Define a constant instead of duplicating this literal "config.yaml" 8 times.
+- `external/config/go/service_test.go:342` — Define a constant instead of duplicating this literal "config paths must remain under .core/" 3 times.
+- `external/config/go/service_test.go:347` — Define a constant instead of duplicating this literal "symlink test is not portable on Windows in this environment" 4 times.
+- `external/config/go/service_test.go:351` — Define a constant instead of duplicating this literal "shared-core" 3 times.
+- `external/config/go/service_test.go:353` — Define a constant instead of duplicating this literal "override.yaml" 5 times.
+- `external/config/go/service_test.go:368` — Define a constant instead of duplicating this literal "symlinked .core directories are not allowed" 3 times.
+- `external/config/go/service_test.go:534` — Define a constant instead of duplicating this literal "config.all" 3 times.
+- `external/config/go/service_test.go:538` — Define a constant instead of duplicating this literal "config.path" 3 times.
+- `external/config/go/service_test.go:550` — Define a constant instead of duplicating this literal "config/path" 3 times.
+- `external/config/go/watch_example_test.go:13` — Define a constant instead of duplicating this literal "/example/config.yaml" 4 times.
+- `external/config/go/watch_test.go:162` — Define a constant instead of duplicating this literal "dev.editor" 4 times.
+- `external/config/go/watch_test.go:163` — Define a constant instead of duplicating this literal "app.name" 3 times.
+- `external/config/go/watch_test.go:368` — Define a constant instead of duplicating this literal "ax7/watch.yaml" 6 times.
+- `external/config/go/watch_test.go:369` — Define a constant instead of duplicating this literal "name: one\n" 5 times.
+- `external/config/go/xdg_test.go:10` — Define a constant instead of duplicating this literal "\\core" 4 times.
+- `external/config/go/xdg_test.go:55` — Define a constant instead of duplicating this literal "core tools" 4 times.
+- `external/go/action.go:54` — Define a constant instead of duplicating this literal "action.Run" 4 times.
+- `external/go/action_test.go:9` — Define a constant instead of duplicating this literal "process.run" 9 times.
+- `external/go/action_test.go:124` — Define a constant instead of duplicating this literal "hot.reload" 3 times.
+- `external/go/action_test.go:246` — Define a constant instead of duplicating this literal "agent.dispatch" 33 times.
+- `external/go/action_test.go:255` — Define a constant instead of duplicating this literal "agent.missing" 6 times.
+- `external/go/action_test.go:313` — Define a constant instead of duplicating this literal "agent.prepare" 16 times.
+- `external/go/action_test.go:357` — Define a constant instead of duplicating this literal "agent.pipeline" 6 times.
+- `external/go/api_test.go:363` — Define a constant instead of duplicating this literal "://missing-scheme" 3 times.
+- `external/go/api_test.go:387` — Define a constant instead of duplicating this literal "application/json" 3 times.
+- `external/go/api_test.go:422` — Define a constant instead of duplicating this literal "session-token" 3 times.
+- `external/go/api_test.go:462` — Define a constant instead of duplicating this literal "http://[::1" 3 times.
+- `external/go/api_test.go:467` — Define a constant instead of duplicating this literal "https://api.lethean.example/health" 3 times.
+- `external/go/app.go:59` — Define a constant instead of duplicating this literal "app.Find" 3 times.
+- `external/go/app_test.go:103` — Define a constant instead of duplicating this literal "Agent Dispatch" 3 times.
+- `external/go/assert.go:253` — Define a constant instead of duplicating this literal "incomparable got" 4 times.
+- `external/go/assert.go:311` — Define a constant instead of duplicating this literal "normal-return" 3 times.
+- `external/go/assert_internal_test.go:290` — Define a constant instead of duplicating this literal "agent failed" 3 times.
+- `external/go/cli_test.go:172` — Define a constant instead of duplicating this literal "agent/status" 5 times.
+- `external/go/cli_test.go:181` — Define a constant instead of duplicating this literal "homelab ops" 4 times.
+- `external/go/command_example_test.go:10` — Define a constant instead of duplicating this literal "deploy/to/homelab" 3 times.
+- `external/go/command_test.go:54` — Define a constant instead of duplicating this literal "deploy/to/homelab" 10 times.
+- `external/go/command_test.go:108` — Define a constant instead of duplicating this literal "process.daemon" 3 times.
+- `external/go/command_test.go:184` — Define a constant instead of duplicating this literal "agent/run" 3 times.
+- `external/go/command_test.go:252` — Define a constant instead of duplicating this literal "agent/prepare" 4 times.
+- `external/go/config_test.go:106` — Define a constant instead of duplicating this literal "agent.host" 8 times.
+- `external/go/config_test.go:119` — Define a constant instead of duplicating this literal "homelab.lthn.sh" 7 times.
+- `external/go/config_test.go:150` — Define a constant instead of duplicating this literal "agent.mode" 4 times.
+- `external/go/config_test.go:176` — Define a constant instead of duplicating this literal "agent.port" 7 times.
+- `external/go/config_test.go:204` — Define a constant instead of duplicating this literal "agent.enabled" 5 times.
+- `external/go/config_test.go:221` — Define a constant instead of duplicating this literal "session.token" 3 times.
+- `external/go/config_test.go:239` — Define a constant instead of duplicating this literal "agent.dispatch" 15 times.
+- `external/go/config_test.go:293` — Define a constant instead of duplicating this literal "agent.review" 4 times.
+- `external/go/context_test.go:98` — Define a constant instead of duplicating this literal "req-123" 3 times.
+- `external/go/contract_example_test.go:79` — Define a constant instead of duplicating this literal "task-1" 3 times.
+- `external/go/contract_test.go:118` — Define a constant instead of duplicating this literal "factory failed" 3 times.
+- `external/go/core_test.go:114` — Define a constant instead of duplicating this literal "test.Operation" 4 times.
+- `external/go/core_test.go:251` — Define a constant instead of duplicating this literal "agent.dispatch" 7 times.
+- `external/go/core_test.go:479` — Define a constant instead of duplicating this literal "agent.Dispatch" 10 times.
+- `external/go/core_test.go:499` — Define a constant instead of duplicating this literal "agent.refused" 4 times.
+- `external/go/data_example_test.go:9` — Define a constant instead of duplicating this literal "core-data-example" 5 times.
+- `external/go/data_example_test.go:11` — Define a constant instead of duplicating this literal "hello.txt" 5 times.
+- `external/go/data_test.go:15` — Define a constant instead of duplicating this literal "tests/data" 3 times.
+- `external/go/data_test.go:49` — Define a constant instead of duplicating this literal "hello from testdata\n" 5 times.
+- `external/go/data_test.go:73` — Define a constant instead of duplicating this literal "test.txt" 3 times.
+- `external/go/data_test.go:163` — Define a constant instead of duplicating this literal "agent/test.txt" 4 times.
+- `external/go/data_test.go:205` — Define a constant instead of duplicating this literal "agent/." 5 times.
+- `external/go/data_test.go:212` — Define a constant instead of duplicating this literal "missing/." 3 times.
+- `external/go/drive_test.go:13` — Define a constant instead of duplicating this literal "https://api.lthn.ai" 5 times.
+- `external/go/drive_test.go:33` — Define a constant instead of duplicating this literal "ssh://claude@10.69.69.165" 3 times.
+- `external/go/embed_example_test.go:8` — Define a constant instead of duplicating this literal "H4sIAAAAAAAC/8pIzcnJBwQAAP//hqYQNgUAAAA=" 3 times.
+- `external/go/embed_example_test.go:8` — Define a constant instead of duplicating this literal "hello.txt" 19 times.
+- `external/go/embed_example_test.go:39` — Define a constant instead of duplicating this literal "main.go" 4 times.
+- `external/go/embed_example_test.go:115` — Define a constant instead of duplicating this literal "core-embed-example" 7 times.
+- `external/go/embed_example_test.go:228` — Define a constant instead of duplicating this literal "README.md" 3 times.
+- `external/go/embed_internal_test.go:71` — Define a constant instead of duplicating this literal "agent.txt" 8 times.
+- `external/go/embed_test.go:16` — Define a constant instead of duplicating this literal "tests/data" 35 times.
+- `external/go/embed_test.go:29` — Define a constant instead of duplicating this literal "test.txt" 8 times.
+- `external/go/embed_test.go:31` — Define a constant instead of duplicating this literal "hello from testdata\n" 6 times.
+- `external/go/embed_test.go:76` — Define a constant instead of duplicating this literal "tests/data/test.txt" 5 times.
+- `external/go/embed_test.go:95` — Define a constant instead of duplicating this literal "hello world" 3 times.
+- `external/go/embed_test.go:291` — Define a constant instead of duplicating this literal "lane-c-overwrite" 3 times.
+- `external/go/embed_test.go:291` — Define a constant instead of duplicating this literal "status.txt" 3 times.
+- `external/go/embed_test.go:299` — Define a constant instead of duplicating this literal "agent.txt" 17 times.
+- `external/go/embed_test.go:312` — Define a constant instead of duplicating this literal "missing.txt" 6 times.
+- `external/go/embed_test.go:331` — Define a constant instead of duplicating this literal "dispatch ready" 3 times.
+- `external/go/embed_test.go:448` — Define a constant instead of duplicating this literal "path traversal rejected" 3 times.
+- `external/go/embed_test.go:625` — Define a constant instead of duplicating this literal "skip.txt" 3 times.
+- `external/go/encode_test.go:53` — Define a constant instead of duplicating this literal "aGVsbG8=" 4 times.
+- `external/go/entitlement_example_test.go:41` — Define a constant instead of duplicating this literal "ai.credits" 5 times.
+- `external/go/entitlement_example_test.go:64` — Define a constant instead of duplicating this literal "social.accounts" 4 times.
+- `external/go/entitlement_test.go:17` — Define a constant instead of duplicating this literal "premium.feature" 3 times.
+- `external/go/entitlement_test.go:31` — Define a constant instead of duplicating this literal "social.accounts" 6 times.
+- `external/go/entitlement_test.go:36` — Define a constant instead of duplicating this literal "limit exceeded" 3 times.
+- `external/go/entitlement_test.go:173` — Define a constant instead of duplicating this literal "ai.credits" 5 times.
+- `external/go/entitlement_test.go:265` — Define a constant instead of duplicating this literal "agent.dispatch" 14 times.
+- `external/go/error_example_test.go:18` — Define a constant instead of duplicating this literal "cache.Get" 5 times.
+- `external/go/error_example_test.go:159` — Define a constant instead of duplicating this literal "api.Get" 3 times.
+- `external/go/error_example_test.go:159` — Define a constant instead of duplicating this literal "db.Query" 3 times.
+- `external/go/error_internal_test.go:22` — Define a constant instead of duplicating this literal "crash.json" 3 times.
+- `external/go/error_test.go:24` — Define a constant instead of duplicating this literal "request failed" 3 times.
+- `external/go/error_test.go:103` — Define a constant instead of duplicating this literal "test.Operation" 5 times.
+- `external/go/error_test.go:271` — Define a constant instead of duplicating this literal "agent.Dispatch" 20 times.
+- `external/go/error_test.go:271` — Define a constant instead of duplicating this literal "agent.Token" 3 times.
+- `external/go/error_test.go:281` — Define a constant instead of duplicating this literal "plain failure" 8 times.
+- `external/go/error_test.go:363` — Define a constant instead of duplicating this literal "agent.refused" 7 times.
+- `external/go/error_test.go:363` — Define a constant instead of duplicating this literal "dispatch refused" 5 times.
+- `external/go/format_test.go:15` — Define a constant instead of duplicating this literal "agent %s" 3 times.
+- `external/go/fs_example_test.go:19` — Define a constant instead of duplicating this literal "core-fs-example" 21 times.
+- `external/go/fs_example_test.go:21` — Define a constant instead of duplicating this literal "hello.txt" 17 times.
+- `external/go/fs_example_test.go:341` — Define a constant instead of duplicating this literal "main.go" 3 times.
+- `external/go/fs_internal_test.go:11` — Define a constant instead of duplicating this literal "agent.txt" 7 times.
+- `external/go/fs_test.go:147` — Define a constant instead of duplicating this literal "file.txt" 3 times.
+- `external/go/fs_test.go:249` — Define a constant instead of duplicating this literal "status.json" 4 times.
+- `external/go/fs_test.go:362` — Define a constant instead of duplicating this literal "skipme.txt" 6 times.
+- `external/go/fs_test.go:491` — Define a constant instead of duplicating this literal "agent.log" 12 times.
+- `external/go/fs_test.go:580` — Define a constant instead of duplicating this literal "agent-" 4 times.
+- `external/go/fs_test.go:609` — Define a constant instead of duplicating this literal "config/agent.json" 5 times.
+- `external/go/fs_test.go:629` — Define a constant instead of duplicating this literal "empty.txt" 8 times.
+- `external/go/fs_test.go:640` — Define a constant instead of duplicating this literal "secrets/session.token" 3 times.
+- `external/go/fs_test.go:673` — Define a constant instead of duplicating this literal "status/agent.json" 3 times.
+- `external/go/fs_test.go:742` — Define a constant instead of duplicating this literal "logs/agent" 3 times.
+- `external/go/fs_test.go:788` — Define a constant instead of duplicating this literal "config.json" 4 times.
+- `external/go/fs_test.go:816` — Define a constant instead of duplicating this literal "missing.json" 3 times.
+- `external/go/fs_test.go:856` — Define a constant instead of duplicating this literal "agent.json" 11 times.
+- `external/go/fs_test.go:913` — Define a constant instead of duplicating this literal "logs/agent.log" 7 times.
+- `external/go/fs_test.go:992` — Define a constant instead of duplicating this literal "empty.log" 6 times.
+- `external/go/fs_test.go:1033` — Define a constant instead of duplicating this literal "old.log" 3 times.
+- `external/go/fs_test.go:1107` — Define a constant instead of duplicating this literal "agent.tmp" 5 times.
+- `external/go/fs_test.go:1232` — Define a constant instead of duplicating this literal "agent.txt" 4 times.
+- `external/go/hash_test.go:27` — Define a constant instead of duplicating this literal "The quick brown fox jumps over the lazy dog" 4 times.
+- `external/go/i18n_test.go:19` — Define a constant instead of duplicating this literal "tests/data" 4 times.
+- `external/go/io_test.go:42` — Define a constant instead of duplicating this literal "agent ready" 5 times.
+- `external/go/ipc_test.go:143` — Define a constant instead of duplicating this literal "agent.status" 4 times.
+- `external/go/ipc_test.go:211` — Define a constant instead of duplicating this literal "agent.dispatch" 5 times.
+- `external/go/lock_test.go:144` — Define a constant instead of duplicating this literal "agent.dispatch" 27 times.
+- `external/go/lock_test.go:251` — Define a constant instead of duplicating this literal "agent.prepare" 4 times.
+- `external/go/log_example_test.go:20` — Define a constant instead of duplicating this literal "00:00:00" 14 times.
+- `external/go/log_test.go:181` — Define a constant instead of duplicating this literal "agent trace" 3 times.
+- `external/go/log_test.go:234` — Define a constant instead of duplicating this literal "agent failed" 3 times.
+- `external/go/log_test.go:268` — Define a constant instead of duplicating this literal "agent ready" 4 times.
+- `external/go/log_test.go:332` — Define a constant instead of duplicating this literal "key=<nil>" 3 times.
+- `external/go/log_test.go:357` — Define a constant instead of duplicating this literal "agent.Dispatch" 4 times.
+- `external/go/lsp.go:419` — Define a constant instead of duplicating this literal "_internal_test.go" 3 times.
+- `external/go/lsp.go:419` — Define a constant instead of duplicating this literal "_test.go" 4 times.
+- `external/go/lsp.go:426` — Define a constant instead of duplicating this literal "math.go" 3 times.
+- `external/go/lsp.go:427` — Define a constant instead of duplicating this literal "embed.go" 5 times.
+- `external/go/lsp.go:429` — Define a constant instead of duplicating this literal "hash.go" 5 times.
+- `external/go/lsp.go:437` — Define a constant instead of duplicating this literal "encode.go" 3 times.
+- `external/go/lsp.go:447` — Define a constant instead of duplicating this literal "string.go" 3 times.
+- `external/go/lsp.go:457` — Define a constant instead of duplicating this literal "api.go" 4 times.
+- `external/go/lsp_internal_test.go:56` — Define a constant instead of duplicating this literal "file:///agent_test.go" 14 times.
+- `external/go/lsp_internal_test.go:93` — Define a constant instead of duplicating this literal "file:///x" 5 times.
+- `external/go/lsp_internal_test.go:142` — Define a constant instead of duplicating this literal "file:///agent.go" 6 times.
+- `external/go/lsp_internal_test.go:229` — Define a constant instead of duplicating this literal "agent.go" 4 times.
+- `external/go/lsp_internal_test.go:229` — Define a constant instead of duplicating this literal "file://" 4 times.
+- `external/go/lsp_internal_test.go:409` — Define a constant instead of duplicating this literal "core-go-lsp" 4 times.
+- `external/go/lsp_internal_test.go:445` — Define a constant instead of duplicating this literal "Content-Length:" 3 times.
+- `external/go/lsp_internal_test.go:559` — Define a constant instead of duplicating this literal "textDocument/didOpen" 3 times.
+- `external/go/lsp_test.go:33` — Define a constant instead of duplicating this literal "test-overwrite" 3 times.
+- `external/go/lsp_test.go:52` — Define a constant instead of duplicating this literal "test-imports" 5 times.
+- `external/go/net_example_test.go:28` — Define a constant instead of duplicating this literal "127.0.0.1:0" 4 times.
+- `external/go/net_test.go:10` — Define a constant instead of duplicating this literal "127.0.0.1:0" 7 times.
+- `external/go/net_test.go:28` — Define a constant instead of duplicating this literal "bad-network" 4 times.
+- `external/go/options_test.go:206` — Define a constant instead of duplicating this literal "empty-key" 5 times.
+- `external/go/os_test.go:89` — Define a constant instead of duplicating this literal "agent.log" 4 times.
+- `external/go/os_test.go:110` — Define a constant instead of duplicating this literal "agent.txt" 6 times.
+- `external/go/os_test.go:120` — Define a constant instead of duplicating this literal "missing.txt" 7 times.
+- `external/go/os_test.go:428` — Define a constant instead of duplicating this literal "empty.txt" 3 times.
+- `external/go/path_fuzz_test.go:10` — Define a constant instead of duplicating this literal "/var/lib/foo" 6 times.
+- `external/go/path_fuzz_test.go:14` — Define a constant instead of duplicating this literal "C:\\foo" 6 times.
+- `external/go/path_fuzz_test.go:28` — Define a constant instead of duplicating this literal "../../etc" 5 times.
+- `external/go/path_fuzz_test.go:30` — Define a constant instead of duplicating this literal "a/./b/../c" 5 times.
+- `external/go/path_internal_test.go:6` — Define a constant instead of duplicating this literal "deploy/to/homelab" 3 times.
+- `external/go/path_test.go:38` — Define a constant instead of duplicating this literal "deploy/to/homelab" 3 times.
+- `external/go/path_test.go:180` — Define a constant instead of duplicating this literal "agent.json" 5 times.
+- `external/go/path_test.go:192` — Define a constant instead of duplicating this literal "/srv/dappcore" 5 times.
+- `external/go/path_test.go:312` — Define a constant instead of duplicating this literal "agent.txt" 6 times.
+- `external/go/process.go:60` — Define a constant instead of duplicating this literal "process.run" 4 times.
+- `external/go/process_example_test.go:18` — Define a constant instead of duplicating this literal "process.run" 4 times.
+- `external/go/process_test.go:31` — Define a constant instead of duplicating this literal "process.run" 7 times.
+- `external/go/process_test.go:44` — Define a constant instead of duplicating this literal "process.start" 3 times.
+- `external/go/process_test.go:55` — Define a constant instead of duplicating this literal "agent-42" 3 times.
+- `external/go/process_test.go:117` — Define a constant instead of duplicating this literal "/srv/dappcore" 4 times.
+- `external/go/process_test.go:149` — Define a constant instead of duplicating this literal "GOWORK=off" 3 times.
+- `external/go/regexp_test.go:138` — Define a constant instead of duplicating this literal "agent.dispatch" 3 times.
+- `external/go/registry.go:175` — Define a constant instead of duplicating this literal "not found: " 3 times.
+- `external/go/registry_test.go:401` — Define a constant instead of duplicating this literal "nil-service" 3 times.
+- `external/go/registry_test.go:409` — Define a constant instead of duplicating this literal "agent.dispatch" 44 times.
+- `external/go/registry_test.go:430` — Define a constant instead of duplicating this literal "homelab.health" 3 times.
+- `external/go/registry_test.go:453` — Define a constant instead of duplicating this literal "session.token" 6 times.
+- `external/go/registry_test.go:471` — Define a constant instead of duplicating this literal "agent.prepare" 22 times.
+- `external/go/registry_test.go:495` — Define a constant instead of duplicating this literal "agent.*" 3 times.
+- `external/go/registry_test.go:668` — Define a constant instead of duplicating this literal "late.agent" 3 times.
+- `external/go/result_test.go:23` — Define a constant instead of duplicating this literal "dispatch refused" 4 times.
+- `external/go/result_test.go:23` — Define a constant instead of duplicating this literal "agent.refused" 3 times.
+- `external/go/result_test.go:58` — Define a constant instead of duplicating this literal "fallback agent" 4 times.
+- `external/go/runtime_test.go:16` — Define a constant instead of duplicating this literal "https://api.lthn.ai" 4 times.
+- `external/go/service.go:64` — Define a constant instead of duplicating this literal "core.Service" 3 times.
+- `external/go/service.go:86` — Define a constant instead of duplicating this literal "core.RegisterService" 3 times.
+- `external/go/sha3_test.go:34` — Define a constant instead of duplicating this literal "The quick brown fox jumps over the lazy dog" 4 times.
+- `external/go/signal_example_test.go:43` — Define a constant instead of duplicating this literal "signal.received" 3 times.
+- `external/go/signal_test.go:8` — Define a constant instead of duplicating this literal "signal.received" 3 times.
+- `external/go/signal_test.go:36` — Define a constant instead of duplicating this literal "signal.stop" 6 times.
+- `external/go/sql_test.go:14` — Define a constant instead of duplicating this literal "dappcore-missing-driver" 3 times.
+- `external/go/sql_test.go:44` — Define a constant instead of duplicating this literal "unknown driver" 3 times.
+- `external/go/string_test.go:16` — Define a constant instead of duplicating this literal "test.go" 5 times.
+- `external/go/string_test.go:82` — Define a constant instead of duplicating this literal "agent dispatch" 3 times.
+- `external/go/string_test.go:90` — Define a constant instead of duplicating this literal "agent.dispatch" 8 times.
+- `external/go/string_test.go:98` — Define a constant instead of duplicating this literal "agent.yaml" 6 times.
+- `external/go/sync_test.go:650` — Define a constant instead of duplicating this literal "agent.dispatch.status" 10 times.
+- `external/go/sync_test.go:715` — Define a constant instead of duplicating this literal "session.token" 10 times.
+- `external/go/sync_test.go:900` — Define a constant instead of duplicating this literal "agent.a" 6 times.
+- `external/go/sync_test.go:901` — Define a constant instead of duplicating this literal "agent.b" 3 times.
+- `external/go/template_example_test.go:8` — Define a constant instead of duplicating this literal "hello {{.Name}}" 4 times.
+- `external/go/template_test.go:92` — Define a constant instead of duplicating this literal "status.tmpl" 5 times.
+- `external/go/test_test.go:11` — Define a constant instead of duplicating this literal "agent-dispatch" 3 times.
+- `external/go/time_test.go:89` — Define a constant instead of duplicating this literal "2026-04-28T07:00:00Z" 3 times.
+- `external/go/url_test.go:11` — Define a constant instead of duplicating this literal "agent dispatch/ready" 3 times.
+- `external/io/actions_test.go:84` — Define a constant instead of duplicating this literal "missing.txt" 8 times.
+- `external/io/actions_test.go:215` — Define a constant instead of duplicating this literal "config/app.yaml" 4 times.
+- `external/io/actions_test.go:216` — Define a constant instead of duplicating this literal "port: 8080" 4 times.
+- `external/io/actions_test.go:265` — Define a constant instead of duplicating this literal "input.txt" 3 times.
+- `external/io/actions_test.go:271` — Define a constant instead of duplicating this literal "backup/input.txt" 3 times.
+- `external/io/actions_test.go:398` — Define a constant instead of duplicating this literal "secret.txt" 3 times.
+- `external/io/actions_test.go:652` — Define a constant instead of duplicating this literal "old.txt" 3 times.
+- `external/io/bench_test.go:11` — Define a constant instead of duplicating this literal "test.txt" 3 times.
+- `external/io/cube/actions_test.go:43` — Define a constant instead of duplicating this literal "secret.txt" 4 times.
+- `external/io/cube/cube.go:588` — Define a constant instead of duplicating this literal "failed to read entry: " 3 times.
+- `external/io/cube/cube.go:603` — Define a constant instead of duplicating this literal "invalid tar entry path: " 3 times.
+- `external/io/cube/cube_test.go:59` — Define a constant instead of duplicating this literal "missing.txt" 13 times.
+- `external/io/cube/cube_test.go:69` — Define a constant instead of duplicating this literal "secret.txt" 13 times.
+- `external/io/cube/cube_test.go:110` — Define a constant instead of duplicating this literal "empty.txt" 7 times.
+- `external/io/cube/cube_test.go:121` — Define a constant instead of duplicating this literal "log.txt" 5 times.
+- `external/io/cube/cube_test.go:123` — Define a constant instead of duplicating this literal "line one\n" 3 times.
+- `external/io/cube/cube_test.go:194` — Define a constant instead of duplicating this literal "not ciphertext" 4 times.
+- `external/io/cube/cube_test.go:206` — Define a constant instead of duplicating this literal "data/one.txt" 4 times.
+- `external/io/cube/cube_test.go:237` — Define a constant instead of duplicating this literal "old.txt" 4 times.
+- `external/io/cube/cube_test.go:238` — Define a constant instead of duplicating this literal "new.txt" 7 times.
+- `external/io/cube/cube_test.go:254` — Define a constant instead of duplicating this literal "/app.cube" 5 times.
+- `external/io/cube/cube_test.go:257` — Define a constant instead of duplicating this literal "port: 8080" 5 times.
+- `external/io/cube/cube_test.go:257` — Define a constant instead of duplicating this literal "config/app.yaml" 5 times.
+- `external/io/cube/cube_test.go:258` — Define a constant instead of duplicating this literal "data/user.json" 3 times.
+- `external/io/cube/cube_test.go:451` — Define a constant instead of duplicating this literal "raw.txt" 8 times.
+- `external/io/cube/cube_test.go:532` — Define a constant instead of duplicating this literal "file.txt" 10 times.
+- `external/io/cube/cube_test.go:566` — Define a constant instead of duplicating this literal "delete.txt" 3 times.
+- `external/io/cube/cube_test.go:656` — Define a constant instead of duplicating this literal "stat.txt" 3 times.
+- `external/io/datanode/medium.go:129` — Define a constant instead of duplicating this literal "not found: " 7 times.
+- `external/io/datanode/medium.go:129` — Define a constant instead of duplicating this literal "datanode.Read" 4 times.
+- `external/io/datanode/medium.go:154` — Define a constant instead of duplicating this literal "empty path" 3 times.
+- `external/io/datanode/medium.go:207` — Define a constant instead of duplicating this literal "datanode.Delete" 7 times.
+- `external/io/datanode/medium.go:239` — Define a constant instead of duplicating this literal "failed to delete file: " 3 times.
+- `external/io/datanode/medium.go:250` — Define a constant instead of duplicating this literal "datanode.DeleteAll" 5 times.
+- `external/io/datanode/medium.go:299` — Define a constant instead of duplicating this literal "datanode.Rename" 6 times.
+- `external/io/datanode/medium_test.go:27` — Define a constant instead of duplicating this literal "missing.txt" 10 times.
+- `external/io/datanode/medium_test.go:74` — Define a constant instead of duplicating this literal "foo/bar/baz" 3 times.
+- `external/io/datanode/medium_test.go:85` — Define a constant instead of duplicating this literal "delete-me.txt" 4 times.
+- `external/io/datanode/medium_test.go:121` — Define a constant instead of duplicating this literal "tree/a.txt" 3 times.
+- `external/io/datanode/medium_test.go:123` — Define a constant instead of duplicating this literal "keep.txt" 3 times.
+- `external/io/datanode/medium_test.go:156` — Define a constant instead of duplicating this literal "read failed" 3 times.
+- `external/io/datanode/medium_test.go:170` — Define a constant instead of duplicating this literal "old.txt" 5 times.
+- `external/io/datanode/medium_test.go:171` — Define a constant instead of duplicating this literal "new.txt" 13 times.
+- `external/io/datanode/medium_test.go:182` — Define a constant instead of duplicating this literal "package a" 3 times.
+- `external/io/datanode/medium_test.go:182` — Define a constant instead of duplicating this literal "src/a.go" 3 times.
+- `external/io/datanode/medium_test.go:247` — Define a constant instead of duplicating this literal "stat.txt" 5 times.
+- `external/io/datanode/medium_test.go:262` — Define a constant instead of duplicating this literal "open.txt" 4 times.
+- `external/io/datanode/medium_test.go:315` — Define a constant instead of duplicating this literal "stream.txt" 5 times.
+- `external/io/datanode/medium_test.go:353` — Define a constant instead of duplicating this literal "original.txt" 3 times.
+- `external/io/datanode/medium_test.go:390` — Define a constant instead of duplicating this literal "file.txt" 16 times.
+- `external/io/datanode/medium_test.go:642` — Define a constant instead of duplicating this literal "delete.txt" 3 times.
+- `external/io/datanode/medium_test.go:973` — Define a constant instead of duplicating this literal "nested/path" 3 times.
+- `external/io/io.go:349` — Define a constant instead of duplicating this literal "path not found: " 4 times.
+- `external/io/io_test.go:12` — Define a constant instead of duplicating this literal "file.txt" 37 times.
+- `external/io/io_test.go:61` — Define a constant instead of duplicating this literal "empty.txt" 10 times.
+- `external/io/io_test.go:259` — Define a constant instead of duplicating this literal "read.txt" 4 times.
+- `external/io/io_test.go:267` — Define a constant instead of duplicating this literal "missing.txt" 12 times.
+- `external/io/io_test.go:280` — Define a constant instead of duplicating this literal "write.txt" 5 times.
+- `external/io/io_test.go:300` — Define a constant instead of duplicating this literal "stream.txt" 6 times.
+- `external/io/io_test.go:390` — Define a constant instead of duplicating this literal "destination.txt" 5 times.
+- `external/io/io_test.go:553` — Define a constant instead of duplicating this literal "delete.txt" 3 times.
+- `external/io/io_test.go:599` — Define a constant instead of duplicating this literal "new.txt" 5 times.
+- `external/io/io_test.go:621` — Define a constant instead of duplicating this literal "open.txt" 4 times.
+- `external/io/io_test.go:767` — Define a constant instead of duplicating this literal "stat.txt" 3 times.
+- `external/io/local/medium.go:372` — Define a constant instead of duplicating this literal "local.Delete" 3 times.
+- `external/io/local/medium.go:387` — Define a constant instead of duplicating this literal "local.DeleteAll" 3 times.
+- `external/io/local/medium.go:454` — Define a constant instead of duplicating this literal "unexpected result type" 5 times.
+- `external/io/local/medium_test.go:22` — Define a constant instead of duplicating this literal "file.txt" 19 times.
+- `external/io/local/medium_test.go:22` — Define a constant instead of duplicating this literal "/home/user/file.txt" 5 times.
+- `external/io/local/medium_test.go:30` — Define a constant instead of duplicating this literal "/etc/passwd" 3 times.
+- `external/io/local/medium_test.go:257` — Define a constant instead of duplicating this literal "old.txt" 7 times.
+- `external/io/local/medium_test.go:259` — Define a constant instead of duplicating this literal "new.txt" 9 times.
+- `external/io/local/medium_test.go:371` — Define a constant instead of duplicating this literal "stream.txt" 5 times.
+- `external/io/local/medium_test.go:507` — Define a constant instead of duplicating this literal "missing.txt" 9 times.
+- `external/io/local/medium_test.go:606` — Define a constant instead of duplicating this literal "delete.txt" 3 times.
+- `external/io/local/medium_test.go:695` — Define a constant instead of duplicating this literal "stat.txt" 3 times.
+- `external/io/medium_test.go:20` — Define a constant instead of duplicating this literal "app.yaml" 6 times.
+- `external/io/medium_test.go:46` — Define a constant instead of duplicating this literal "hello world" 3 times.
+- `external/io/medium_test.go:46` — Define a constant instead of duplicating this literal "test.txt" 20 times.
+- `external/io/medium_test.go:54` — Define a constant instead of duplicating this literal "nonexistent.txt" 5 times.
+- `external/io/medium_test.go:72` — Define a constant instead of duplicating this literal "secure.txt" 4 times.
+- `external/io/medium_test.go:109` — Define a constant instead of duplicating this literal "exists.txt" 4 times.
+- `external/io/medium_test.go:144` — Define a constant instead of duplicating this literal "mydir/file.txt" 3 times.
+- `external/io/medium_test.go:174` — Define a constant instead of duplicating this literal "old.txt" 3 times.
+- `external/io/medium_test.go:176` — Define a constant instead of duplicating this literal "new.txt" 3 times.
+- `external/io/medium_test.go:253` — Define a constant instead of duplicating this literal "file.txt" 7 times.
+- `external/io/medium_test.go:274` — Define a constant instead of duplicating this literal "dir/file.txt" 3 times.
+- `external/io/medium_test.go:310` — Define a constant instead of duplicating this literal "created.txt" 3 times.
+- `external/io/medium_test.go:329` — Define a constant instead of duplicating this literal "streamed.txt" 3 times.
+- `external/io/mock_test.go:39` — Define a constant instead of duplicating this literal "missing.txt" 9 times.
+- `external/io/mock_test.go:46` — Define a constant instead of duplicating this literal "empty.txt" 6 times.
+- `external/io/mock_test.go:119` — Define a constant instead of duplicating this literal "file.txt" 7 times.
+- `external/io/mock_test.go:139` — Define a constant instead of duplicating this literal "delete.txt" 3 times.
+- `external/io/mock_test.go:184` — Define a constant instead of duplicating this literal "old.txt" 4 times.
+- `external/io/mock_test.go:185` — Define a constant instead of duplicating this literal "new.txt" 7 times.
+- `external/io/mock_test.go:229` — Define a constant instead of duplicating this literal "stat.txt" 3 times.
+- `external/io/mock_test.go:252` — Define a constant instead of duplicating this literal "open.txt" 4 times.
+- `external/io/mock_test.go:326` — Define a constant instead of duplicating this literal "stream.txt" 3 times.
+- `external/io/node/node.go:189` — Define a constant instead of duplicating this literal "path not found: " 8 times.
+- `external/io/node/node.go:205` — Define a constant instead of duplicating this literal "node.ExportFile" 4 times.
+- `external/io/node/node_test.go:21` — Define a constant instead of duplicating this literal "foo.txt" 26 times.
+- `external/io/node/node_test.go:55` — Define a constant instead of duplicating this literal "hello.txt" 8 times.
+- `external/io/node/node_test.go:83` — Define a constant instead of duplicating this literal "bar/baz.txt" 13 times.
+- `external/io/node/node_test.go:142` — Define a constant instead of duplicating this literal "missing.txt" 14 times.
+- `external/io/node/node_test.go:149` — Define a constant instead of duplicating this literal "data.bin" 3 times.
+- `external/io/node/node_test.go:164` — Define a constant instead of duplicating this literal "bar/qux.txt" 3 times.
+- `external/io/node/node_test.go:272` — Define a constant instead of duplicating this literal "root.txt" 3 times.
+- `external/io/node/node_test.go:319` — Define a constant instead of duplicating this literal "test.txt" 4 times.
+- `external/io/node/node_test.go:352` — Define a constant instead of duplicating this literal "port: 8080" 3 times.
+- `external/io/node/node_test.go:382` — Define a constant instead of duplicating this literal "docs/readme.txt" 4 times.
+- `external/io/node/node_test.go:422` — Define a constant instead of duplicating this literal "docs/generated.txt" 3 times.
+- `external/io/node/node_test.go:447` — Define a constant instead of duplicating this literal "docs/stream-renamed.txt" 4 times.
+- `external/io/node/node_test.go:602` — Define a constant instead of duplicating this literal "file.txt" 62 times.
+- `external/io/node/node_test.go:679` — Define a constant instead of duplicating this literal "dir/file.txt" 12 times.
+- `external/io/node/node_test.go:722` — Define a constant instead of duplicating this literal "/file.txt" 7 times.
+- `external/io/node/node_test.go:754` — Define a constant instead of duplicating this literal "copy.txt" 3 times.
+- `external/io/node/node_test.go:1036` — Define a constant instead of duplicating this literal "new.txt" 5 times.
+- `external/io/node/node_test.go:1216` — Define a constant instead of duplicating this literal "empty.txt" 4 times.
+- `external/io/pkg/api/handlers_test.go:24` — Define a constant instead of duplicating this literal "/v1/workspace" 4 times.
+- `external/io/pkg/api/handlers_test.go:26` — Define a constant instead of duplicating this literal "expected 200, got %d: %s" 3 times.
+- `external/io/pkg/api/handlers_test.go:38` — Define a constant instead of duplicating this literal "expected 400, got %d: %s" 3 times.
+- `external/io/pkg/api/handlers_test.go:73` — Define a constant instead of duplicating this literal "/v1/workspace/ws-1/command" 3 times.
+- `external/io/pkg/medium/github/github_test.go:70` — Define a constant instead of duplicating this literal "missing.txt" 3 times.
+- `external/io/pkg/medium/github/github_test.go:79` — Define a constant instead of duplicating this literal "safe/file.txt" 4 times.
+- `external/io/pkg/medium/github/github_test.go:91` — Define a constant instead of duplicating this literal "/repos/Snider/demo/contents/dir" 7 times.
+- `external/io/pkg/medium/github/github_test.go:126` — Define a constant instead of duplicating this literal "dir/file.txt" 9 times.
+- `external/io/pkg/medium/github/github_test.go:286` — Define a constant instead of duplicating this literal "file.txt" 8 times.
+- `external/io/pkg/medium/github/github_test.go:339` — Define a constant instead of duplicating this literal "../escape" 4 times.
+- `external/io/pkg/medium/github/github_test.go:345` — Define a constant instead of duplicating this literal "new.txt" 3 times.
+- `external/io/pkg/medium/github/github_test.go:391` — Define a constant instead of duplicating this literal "stat.txt" 3 times.
+- `external/io/pkg/medium/github/github_test.go:480` — Define a constant instead of duplicating this literal "stream.txt" 3 times.
+- `external/io/pkg/medium/github/github_test.go:565` — Define a constant instead of duplicating this literal "clone.txt" 3 times.
+- `external/io/pkg/medium/pwa/pwa.go:111` — Define a constant instead of duplicating this literal "not found: " 4 times.
+- `external/io/pkg/medium/pwa/pwa_test.go:44` — Define a constant instead of duplicating this literal "index.html" 4 times.
+- `external/io/pkg/medium/pwa/pwa_test.go:46` — Define a constant instead of duplicating this literal "icon.png" 4 times.
+- `external/io/pkg/medium/pwa/pwa_test.go:107` — Define a constant instead of duplicating this literal "https://example.test" 3 times.
+- `external/io/pkg/medium/pwa/pwa_test.go:149` — Define a constant instead of duplicating this literal "../page" 13 times.
+- `external/io/pkg/medium/pwa/pwa_test.go:212` — Define a constant instead of duplicating this literal "../pages" 6 times.
+- `external/io/pkg/medium/sftp/sftp_test.go:54` — Define a constant instead of duplicating this literal "missing.txt" 5 times.
+- `external/io/pkg/medium/sftp/sftp_test.go:72` — Define a constant instead of duplicating this literal "nested/path/file.txt" 3 times.
+- `external/io/pkg/medium/sftp/sftp_test.go:133` — Define a constant instead of duplicating this literal "file.txt" 5 times.
+- `external/io/pkg/medium/sftp/sftp_test.go:292` — Define a constant instead of duplicating this literal "delete.txt" 3 times.
+- `external/io/pkg/medium/sftp/sftp_test.go:336` — Define a constant instead of duplicating this literal "old.txt" 4 times.
+- `external/io/pkg/medium/sftp/sftp_test.go:337` — Define a constant instead of duplicating this literal "new.txt" 5 times.
+- `external/io/pkg/medium/sftp/sftp_test.go:381` — Define a constant instead of duplicating this literal "stat.txt" 3 times.
+- `external/io/pkg/medium/sftp/sftp_test.go:477` — Define a constant instead of duplicating this literal "stream.txt" 3 times.
+- `external/io/pkg/medium/webdav/webdav_test.go:40` — Define a constant instead of duplicating this literal "missing.txt" 5 times.
+- `external/io/pkg/medium/webdav/webdav_test.go:58` — Define a constant instead of duplicating this literal "nested/path/file.txt" 3 times.
+- `external/io/pkg/medium/webdav/webdav_test.go:119` — Define a constant instead of duplicating this literal "file.txt" 9 times.
+- `external/io/pkg/medium/webdav/webdav_test.go:259` — Define a constant instead of duplicating this literal "delete.txt" 3 times.
+- `external/io/pkg/medium/webdav/webdav_test.go:303` — Define a constant instead of duplicating this literal "old.txt" 4 times.
+- `external/io/pkg/medium/webdav/webdav_test.go:304` — Define a constant instead of duplicating this literal "new.txt" 5 times.
+- `external/io/pkg/medium/webdav/webdav_test.go:348` — Define a constant instead of duplicating this literal "stat.txt" 3 times.
+- `external/io/pkg/medium/webdav/webdav_test.go:444` — Define a constant instead of duplicating this literal "stream.txt" 3 times.
+- `external/io/pkg/medium/webdav/webdav_test.go:546` — Define a constant instead of duplicating this literal "empty.txt" 3 times.
+- `external/io/s3/actions_test.go:42` — Define a constant instead of duplicating this literal "reports/daily.txt" 4 times.
+- `external/io/s3/s3.go:70` — Define a constant instead of duplicating this literal "s3.DeleteAll" 5 times.
+- `external/io/s3/s3.go:142` — Define a constant instead of duplicating this literal "path is required" 9 times.
+- `external/io/s3/s3.go:142` — Define a constant instead of duplicating this literal "s3.Read" 3 times.
+- `external/io/s3/s3.go:150` — Define a constant instead of duplicating this literal "failed to get object: " 3 times.
+- `external/io/s3/s3.go:290` — Define a constant instead of duplicating this literal "s3.Rename" 3 times.
+- `external/io/s3/s3.go:422` — Define a constant instead of duplicating this literal "s3.Open" 3 times.
+- `external/io/s3/s3_test.go:268` — Define a constant instead of duplicating this literal "nonexistent.txt" 7 times.
+- `external/io/s3/s3_test.go:287` — Define a constant instead of duplicating this literal "file.txt" 24 times.
+- `external/io/s3/s3_test.go:318` — Define a constant instead of duplicating this literal "to-delete.txt" 4 times.
+- `external/io/s3/s3_test.go:336` — Define a constant instead of duplicating this literal "dir/file1.txt" 5 times.
+- `external/io/s3/s3_test.go:367` — Define a constant instead of duplicating this literal "dir/file2.txt" 6 times.
+- `external/io/s3/s3_test.go:385` — Define a constant instead of duplicating this literal "old.txt" 9 times.
+- `external/io/s3/s3_test.go:388` — Define a constant instead of duplicating this literal "new.txt" 14 times.
+- `external/io/s3/s3_test.go:533` — Define a constant instead of duplicating this literal "append.txt" 5 times.
+- `external/io/s3/s3_test.go:567` — Define a constant instead of duplicating this literal "stream.txt" 5 times.
+- `external/io/s3/s3_test.go:612` — Define a constant instead of duplicating this literal "dir/file.txt" 6 times.
+- `external/io/s3/s3_test.go:697` — Define a constant instead of duplicating this literal "missing.txt" 9 times.
+- `external/io/s3/s3_test.go:732` — Define a constant instead of duplicating this literal "mode.txt" 4 times.
+- `external/io/s3/s3_test.go:796` — Define a constant instead of duplicating this literal "delete.txt" 3 times.
+- `external/io/s3/s3_test.go:885` — Define a constant instead of duplicating this literal "stat.txt" 3 times.
+- `external/io/s3/s3_test.go:1068` — Define a constant instead of duplicating this literal "info.txt" 3 times.
+- `external/io/sigil/sigil_test.go:213` — Define a constant instead of duplicating this literal "sha512-224" 3 times.
+- `external/io/sigil/sigil_test.go:214` — Define a constant instead of duplicating this literal "sha512-256" 3 times.
+- `external/io/sigil/sigil_test.go:215` — Define a constant instead of duplicating this literal "sha3-224" 3 times.
+- `external/io/sigil/sigil_test.go:216` — Define a constant instead of duplicating this literal "sha3-256" 3 times.
+- `external/io/sigil/sigil_test.go:217` — Define a constant instead of duplicating this literal "sha3-384" 3 times.
+- `external/io/sigil/sigil_test.go:218` — Define a constant instead of duplicating this literal "sha3-512" 3 times.
+- `external/io/sigil/sigil_test.go:220` — Define a constant instead of duplicating this literal "blake2s-256" 3 times.
+- `external/io/sigil/sigil_test.go:221` — Define a constant instead of duplicating this literal "blake2b-256" 3 times.
+- `external/io/sigil/sigil_test.go:222` — Define a constant instead of duplicating this literal "blake2b-384" 3 times.
+- `external/io/sigil/sigil_test.go:223` — Define a constant instead of duplicating this literal "blake2b-512" 3 times.
+- `external/io/sigil/sigils_test.go:228` — Define a constant instead of duplicating this literal "not json" 3 times.
+- `external/io/sqlite/sqlite.go:65` — Define a constant instead of duplicating this literal "sqlite.New" 5 times.
+- `external/io/sqlite/sqlite.go:121` — Define a constant instead of duplicating this literal "sqlite.Read" 4 times.
+- `external/io/sqlite/sqlite.go:121` — Define a constant instead of duplicating this literal "path is required" 9 times.
+- `external/io/sqlite/sqlite.go:130` — Define a constant instead of duplicating this literal "file not found: " 3 times.
+- `external/io/sqlite/sqlite.go:133` — Define a constant instead of duplicating this literal "query failed: " 7 times.
+- `external/io/sqlite/sqlite.go:136` — Define a constant instead of duplicating this literal "path is a directory: " 3 times.
+- `external/io/sqlite/sqlite.go:203` — Define a constant instead of duplicating this literal "sqlite.Delete" 7 times.
+- `external/io/sqlite/sqlite.go:211` — Define a constant instead of duplicating this literal "path not found: " 4 times.
+- `external/io/sqlite/sqlite.go:246` — Define a constant instead of duplicating this literal "sqlite.DeleteAll" 3 times.
+- `external/io/sqlite/sqlite.go:270` — Define a constant instead of duplicating this literal "sqlite.Rename" 10 times.
+- `external/io/sqlite/sqlite.go:370` — Define a constant instead of duplicating this literal "sqlite.List" 3 times.
+- `external/io/sqlite/sqlite.go:437` — Define a constant instead of duplicating this literal "sqlite.Stat" 3 times.
+- `external/io/sqlite/sqlite.go:468` — Define a constant instead of duplicating this literal "sqlite.Open" 4 times.
+- `external/io/sqlite/sqlite.go:534` — Define a constant instead of duplicating this literal "sqlite.ReadStream" 4 times.
+- `external/io/sqlite/sqlite_test.go:11` — Define a constant instead of duplicating this literal ":memory:" 7 times.
+- `external/io/sqlite/sqlite_test.go:51` — Define a constant instead of duplicating this literal "file.txt" 35 times.
+- `external/io/sqlite/sqlite_test.go:73` — Define a constant instead of duplicating this literal "nonexistent.txt" 3 times.
+- `external/io/sqlite/sqlite_test.go:136` — Define a constant instead of duplicating this literal "to-delete.txt" 4 times.
+- `external/io/sqlite/sqlite_test.go:182` — Define a constant instead of duplicating this literal "dir/file1.txt" 3 times.
+- `external/io/sqlite/sqlite_test.go:221` — Define a constant instead of duplicating this literal "old.txt" 7 times.
+- `external/io/sqlite/sqlite_test.go:223` — Define a constant instead of duplicating this literal "new.txt" 12 times.
+- `external/io/sqlite/sqlite_test.go:440` — Define a constant instead of duplicating this literal "append.txt" 5 times.
+- `external/io/sqlite/sqlite_test.go:479` — Define a constant instead of duplicating this literal "stream.txt" 5 times.
+- `external/io/sqlite/sqlite_test.go:607` — Define a constant instead of duplicating this literal "missing.txt" 9 times.
+- `external/io/sqlite/sqlite_test.go:642` — Define a constant instead of duplicating this literal "mode.txt" 4 times.
+- `external/io/sqlite/sqlite_test.go:706` — Define a constant instead of duplicating this literal "delete.txt" 3 times.
+- `external/io/sqlite/sqlite_test.go:795` — Define a constant instead of duplicating this literal "stat.txt" 3 times.
+- `external/io/sqlite/sqlite_test.go:1011` — Define a constant instead of duplicating this literal "info.txt" 3 times.
+- `external/io/store/medium.go:69` — Define a constant instead of duplicating this literal "path must include group/key" 6 times.
+- `external/io/store/medium.go:106` — Define a constant instead of duplicating this literal "path is required" 3 times.
+- `external/io/store/medium_test.go:11` — Define a constant instead of duplicating this literal ":memory:" 5 times.
+- `external/io/store/medium_test.go:42` — Define a constant instead of duplicating this literal "group/key" 69 times.
+- `external/io/store/medium_test.go:68` — Define a constant instead of duplicating this literal "group/a" 4 times.
+- `external/io/store/medium_test.go:69` — Define a constant instead of duplicating this literal "group/b" 3 times.
+- `external/io/store/medium_test.go:78` — Define a constant instead of duplicating this literal "old/key" 3 times.
+- `external/io/store/medium_test.go:144` — Define a constant instead of duplicating this literal "hello world" 3 times.
+- `external/io/store/medium_test.go:376` — Define a constant instead of duplicating this literal "/group/key" 5 times.
+- `external/io/store/medium_test.go:513` — Define a constant instead of duplicating this literal "group/new" 5 times.
+- `external/io/store/medium_test.go:597` — Define a constant instead of duplicating this literal "group/empty" 4 times.
+- `external/io/store/store.go:32` — Define a constant instead of duplicating this literal "store.New" 4 times.
+- `external/io/store/store.go:118` — Define a constant instead of duplicating this literal "store.ListGroups" 3 times.
+- `external/io/store/store.go:140` — Define a constant instead of duplicating this literal "store.GetAll" 3 times.
+- `external/io/store/store.go:164` — Define a constant instead of duplicating this literal "store.Render" 5 times.
+- `external/io/store/store_test.go:10` — Define a constant instead of duplicating this literal ":memory:" 12 times.
+- `external/io/workspace/command_test.go:30` — Define a constant instead of duplicating this literal "legacy-id" 3 times.
+- `external/io/workspace/service.go:107` — Define a constant instead of duplicating this literal "workspace.New" 4 times.
+- `external/io/workspace/service.go:147` — Define a constant instead of duplicating this literal "workspace.CreateWorkspace" 6 times.
+- `external/io/workspace/service.go:239` — Define a constant instead of duplicating this literal "workspace.ReadWorkspaceFile" 3 times.
+- `external/io/workspace/service.go:263` — Define a constant instead of duplicating this literal "workspace.WriteWorkspaceFile" 3 times.
+- `external/io/workspace/service.go:284` — Define a constant instead of duplicating this literal "workspace.HandleWorkspaceCommand" 3 times.
+- `external/io/workspace/service_test.go:27` — Define a constant instead of duplicating this literal "private-key" 7 times.
+- `external/io/workspace/service_test.go:62` — Define a constant instead of duplicating this literal "private.key" 3 times.
+- `external/io/workspace/service_test.go:111` — Define a constant instead of duplicating this literal "../keys/private.key" 3 times.
+- `external/io/workspace/service_test.go:421` — Define a constant instead of duplicating this literal "note.txt" 5 times.
+- `external/io/workspace/workspace_test.go:30` — Define a constant instead of duplicating this literal "../escape" 29 times.
+- `external/io/workspace/workspace_test.go:51` — Define a constant instead of duplicating this literal "note.txt" 6 times.
+- `external/io/workspace/workspace_test.go:112` — Define a constant instead of duplicating this literal "notes/todo.txt" 7 times.
+- `external/io/workspace/workspace_test.go:125` — Define a constant instead of duplicating this literal "missing.txt" 6 times.
+- `external/io/workspace/workspace_test.go:509` — Define a constant instead of duplicating this literal "file.txt" 4 times.
+- `external/io/workspace/workspace_test.go:529` — Define a constant instead of duplicating this literal "delete.txt" 3 times.
+- `external/io/workspace/workspace_test.go:574` — Define a constant instead of duplicating this literal "new.txt" 5 times.
+- `external/io/workspace/workspace_test.go:618` — Define a constant instead of duplicating this literal "stat.txt" 3 times.
+- `external/io/workspace/workspace_test.go:713` — Define a constant instead of duplicating this literal "stream.txt" 3 times.
+- `external/log/errors_test.go:22` — Define a constant instead of duplicating this literal "want %v, got %v" 54 times.
+- `external/log/errors_test.go:26` — Define a constant instead of duplicating this literal "api.Call" 6 times.
+- `external/log/errors_test.go:94` — Define a constant instead of duplicating this literal "expected true" 24 times.
+- `external/log/errors_test.go:102` — Define a constant instead of duplicating this literal "op.Name" 4 times.
+- `external/log/errors_test.go:105` — Define a constant instead of duplicating this literal "expected non-nil" 19 times.
+- `external/log/errors_test.go:160` — Define a constant instead of duplicating this literal "processing failed" 3 times.
+- `external/log/errors_test.go:160` — Define a constant instead of duplicating this literal "handler.Process" 3 times.
+- `external/log/errors_test.go:166` — Define a constant instead of duplicating this literal "expected %q to contain %q" 16 times.
+- `external/log/errors_test.go:178` — Define a constant instead of duplicating this literal "inner.Op" 4 times.
+- `external/log/errors_test.go:178` — Define a constant instead of duplicating this literal "validation failed" 5 times.
+- `external/log/errors_test.go:181` — Define a constant instead of duplicating this literal "outer context" 4 times.
+- `external/log/errors_test.go:181` — Define a constant instead of duplicating this literal "outer.Op" 5 times.
+- `external/log/errors_test.go:189` — Define a constant instead of duplicating this literal "[VALIDATION_ERROR]" 4 times.
+- `external/log/errors_test.go:239` — Define a constant instead of duplicating this literal "inner failed" 3 times.
+- `external/log/errors_test.go:253` — Define a constant instead of duplicating this literal "expected nil, got %v" 6 times.
+- `external/log/errors_test.go:259` — Define a constant instead of duplicating this literal "api.Validate" 3 times.
+- `external/log/errors_test.go:354` — Define a constant instead of duplicating this literal "resource not found" 3 times.
+- `external/log/errors_test.go:455` — Define a constant instead of duplicating this literal "plain error" 3 times.
+- `external/log/errors_test.go:591` — Define a constant instead of duplicating this literal "db.Connect" 4 times.
+- `external/log/errors_test.go:591` — Define a constant instead of duplicating this literal "database unavailable" 6 times.
+- `external/log/errors_test.go:615` — Define a constant instead of duplicating this literal "op=\"db.Connect\"" 4 times.
+- `external/log/errors_test.go:656` — Define a constant instead of duplicating this literal "expected empty, got %v" 8 times.
+- `external/log/errors_test.go:667` — Define a constant instead of duplicating this literal "falling back to db" 3 times.
+- `external/log/log_test.go:58` — Define a constant instead of duplicating this literal "test message" 3 times.
+- `external/log/log_test.go:202` — Define a constant instead of duplicating this literal "expected 1 line, got %d" 3 times.
+- `external/log/tests/cli/log/main.go:61` — Define a constant instead of duplicating this literal "driver.outer" 3 times.
+- `external/log/v090_ax7_test.go:62` — Define a constant instead of duplicating this literal "want %q, got %q" 3 times.
+- `external/log/v090_ax7_test.go:131` — Define a constant instead of duplicating this literal "want quiet, got %v" 3 times.
+- `external/log/v090_ax7_test.go:268` — Define a constant instead of duplicating this literal "line\nbreak" 4 times.
+- `external/log/v090_ax7_test.go:616` — Define a constant instead of duplicating this literal "agent.Dispatch" 19 times.
+- `external/log/v090_ax7_test.go:616` — Define a constant instead of duplicating this literal "agent.failed" 14 times.
+- `external/log/v090_ax7_test.go:690` — Define a constant instead of duplicating this literal "retry later" 4 times.
+- `external/log/v090_ax7_test.go:821` — Define a constant instead of duplicating this literal "dispatch failed" 3 times.
+- `external/log/v090_ax7_test.go:1224` — Define a constant instead of duplicating this literal "[ERR] failed" 3 times.
+- `external/log/v090_ax7_test.go:1248` — Define a constant instead of duplicating this literal "cache.Get" 3 times.
+- `external/ws/auth.go:543` — Define a constant instead of duplicating this literal "validate function is not configured" 4 times.
+- `external/ws/auth.go:554` — Define a constant instead of duplicating this literal "authenticator is nil" 3 times.
+- `external/ws/auth.go:561` — Define a constant instead of duplicating this literal "request is nil" 3 times.
+- `external/ws/auth.go:627` — Define a constant instead of duplicating this literal "BearerTokenAuth.Authenticate" 3 times.
+- `external/ws/auth.go:714` — Define a constant instead of duplicating this literal "QueryTokenAuth.Authenticate" 5 times.
+- `external/ws/auth_example_test.go:13` — Define a constant instead of duplicating this literal "user-1" 7 times.
+- `external/ws/auth_example_test.go:24` — Define a constant instead of duplicating this literal "Bearer secret" 3 times.
+- `external/ws/auth_test.go:25` — Define a constant instead of duplicating this literal "key-abc" 18 times.
+- `external/ws/auth_test.go:25` — Define a constant instead of duplicating this literal "user-1" 43 times.
+- `external/ws/auth_test.go:26` — Define a constant instead of duplicating this literal "user-2" 7 times.
+- `external/ws/auth_test.go:30` — Define a constant instead of duplicating this literal "Bearer key-abc" 7 times.
+- `external/ws/auth_test.go:34` — Define a constant instead of duplicating this literal "expected true" 63 times.
+- `external/ws/auth_test.go:40` — Define a constant instead of duplicating this literal "expected %v, got %v" 88 times.
+- `external/ws/auth_test.go:46` — Define a constant instead of duplicating this literal "expected no error, got %v" 17 times.
+- `external/ws/auth_test.go:61` — Define a constant instead of duplicating this literal "expected false" 51 times.
+- `external/ws/auth_test.go:64` — Define a constant instead of duplicating this literal "expected empty value, got %v" 4 times.
+- `external/ws/auth_test.go:99` — Define a constant instead of duplicating this literal "Bearer " 3 times.
+- `external/ws/auth_test.go:219` — Define a constant instead of duplicating this literal "expected error" 35 times.
+- `external/ws/auth_test.go:251` — Define a constant instead of duplicating this literal "expected non-nil value" 13 times.
+- `external/ws/auth_test.go:281` — Define a constant instead of duplicating this literal "func-user" 3 times.
+- `external/ws/auth_test.go:300` — Define a constant instead of duplicating this literal "custom rejection" 3 times.
+- `external/ws/auth_test.go:309` — Define a constant instead of duplicating this literal "expected error %q, got %v" 3 times.
+- `external/ws/auth_test.go:325` — Define a constant instead of duplicating this literal "authenticator function is nil" 3 times.
+- `external/ws/auth_test.go:326` — Define a constant instead of duplicating this literal "expected %v to contain %v" 20 times.
+- `external/ws/auth_test.go:335` — Define a constant instead of duplicating this literal "Bearer token-123" 3 times.
+- `external/ws/auth_test.go:344` — Define a constant instead of duplicating this literal "validate function is not configured" 16 times.
+- `external/ws/auth_test.go:387` — Define a constant instead of duplicating this literal "custom-user" 3 times.
+- `external/ws/auth_test.go:389` — Define a constant instead of duplicating this literal "bad token" 3 times.
+- `external/ws/auth_test.go:413` — Define a constant instead of duplicating this literal "user-123" 13 times.
+- `external/ws/auth_test.go:598` — Define a constant instead of duplicating this literal "/ws?token=query-123" 3 times.
+- `external/ws/auth_test.go:625` — Define a constant instead of duplicating this literal "missing token query parameter" 6 times.
+- `external/ws/auth_test.go:666` — Define a constant instead of duplicating this literal "browser-user" 6 times.
+- `external/ws/auth_test.go:802` — Define a constant instead of duplicating this literal "expected values to differ: %v" 3 times.
+- `external/ws/auth_test.go:851` — Define a constant instead of duplicating this literal "expected different references" 4 times.
+- `external/ws/auth_test.go:900` — Define a constant instead of duplicating this literal "expected nil, got %T" 14 times.
+- `external/ws/auth_test.go:1343` — Define a constant instead of duplicating this literal "authenticator is nil" 8 times.
+- `external/ws/auth_test.go:1393` — Define a constant instead of duplicating this literal "request is nil" 6 times.
+- `external/ws/auth_test.go:1475` — Define a constant instead of duplicating this literal "valid-key" 4 times.
+- `external/ws/auth_test.go:1475` — Define a constant instead of duplicating this literal "user-42" 9 times.
+- `external/ws/auth_test.go:1731` — Define a constant instead of duplicating this literal "magic-user" 3 times.
+- `external/ws/auth_test.go:1958` — Define a constant instead of duplicating this literal "token expired" 3 times.
+- `external/ws/auth_test.go:1978` — Define a constant instead of duplicating this literal "should-not-reach" 6 times.
+- `external/ws/auth_test.go:2059` — Define a constant instead of duplicating this literal "jwt-user" 3 times.
+- `external/ws/auth_test.go:2149` — Define a constant instead of duplicating this literal "unknown token" 4 times.
+- `external/ws/auth_test.go:2245` — Define a constant instead of duplicating this literal "request URL is nil" 3 times.
+- `external/ws/auth_test.go:2265` — Define a constant instead of duplicating this literal "browser-user-99" 3 times.
+- `external/ws/auth_test.go:2412` — Define a constant instead of duplicating this literal "hello alice" 3 times.
+- `external/ws/auth_test.go:2481` — Define a constant instead of duplicating this literal "Bearer secret" 7 times.
+- `external/ws/auth_test.go:2589` — Define a constant instead of duplicating this literal "/ws?token=secret" 3 times.
+- `external/ws/errors_test.go:36` — Define a constant instead of duplicating this literal "expected values to differ: %v" 3 times.
+- `external/ws/redis.go:112` — Define a constant instead of duplicating this literal "hub must not be nil" 3 times.
+- `external/ws/redis.go:121` — Define a constant instead of duplicating this literal "invalid redis prefix" 3 times.
+- `external/ws/redis.go:166` — Define a constant instead of duplicating this literal "bridge must not be nil" 4 times.
+- `external/ws/redis.go:166` — Define a constant instead of duplicating this literal "RedisBridge.Start" 4 times.
+- `external/ws/redis.go:190` — Define a constant instead of duplicating this literal ":broadcast" 3 times.
+- `external/ws/redis.go:252` — Define a constant instead of duplicating this literal "RedisBridge.PublishToChannel" 4 times.
+- `external/ws/redis.go:265` — Define a constant instead of duplicating this literal "invalid process ID" 3 times.
+- `external/ws/redis.go:282` — Define a constant instead of duplicating this literal "RedisBridge.PublishBroadcast" 4 times.
+- `external/ws/redis.go:310` — Define a constant instead of duplicating this literal "RedisBridge.publish" 6 times.
+- `external/ws/redis.go:393` — Define a constant instead of duplicating this literal "RedisBridge.listen" 3 times.
+- `external/ws/redis_test.go:90` — Define a constant instead of duplicating this literal "expected no error, got %v" 77 times.
+- `external/ws/redis_test.go:93` — Define a constant instead of duplicating this literal "expected non-nil value" 9 times.
+- `external/ws/redis_test.go:119` — Define a constant instead of duplicating this literal "expected error" 28 times.
+- `external/ws/redis_test.go:121` — Define a constant instead of duplicating this literal "hub must not be nil" 8 times.
+- `external/ws/redis_test.go:122` — Define a constant instead of duplicating this literal "expected %v to contain %v" 28 times.
+- `external/ws/redis_test.go:147` — Define a constant instead of duplicating this literal "127.0.0.1:1" 11 times.
+- `external/ws/redis_test.go:164` — Define a constant instead of duplicating this literal "bad prefix" 5 times.
+- `external/ws/redis_test.go:170` — Define a constant instead of duplicating this literal "invalid redis prefix" 7 times.
+- `external/ws/redis_test.go:210` — Define a constant instead of duplicating this literal "expected %v, got %v" 28 times.
+- `external/ws/redis_test.go:227` — Define a constant instead of duplicating this literal "redis.example:6380" 3 times.
+- `external/ws/redis_test.go:249` — Define a constant instead of duplicating this literal "redis.example:6379" 3 times.
+- `external/ws/redis_test.go:272` — Define a constant instead of duplicating this literal "expected true" 15 times.
+- `external/ws/redis_test.go:278` — Define a constant instead of duplicating this literal "bad process" 6 times.
+- `external/ws/redis_test.go:279` — Define a constant instead of duplicating this literal "expected false" 5 times.
+- `external/ws/redis_test.go:331` — Define a constant instead of duplicating this literal "redis client is not available" 7 times.
+- `external/ws/redis_test.go:438` — Define a constant instead of duplicating this literal "cross-broadcast" 5 times.
+- `external/ws/redis_test.go:544` — Define a constant instead of duplicating this literal "line of output" 3 times.
+- `external/ws/redis_test.go:593` — Define a constant instead of duplicating this literal "invalid process ID" 9 times.
+- `external/ws/redis_test.go:609` — Define a constant instead of duplicating this literal "valid-channel" 4 times.
+- `external/ws/redis_test.go:648` — Define a constant instead of duplicating this literal "failed to marshal message" 4 times.
+- `external/ws/redis_test.go:661` — Define a constant instead of duplicating this literal "bridge must not be nil" 10 times.
+- `external/ws/redis_test.go:724` — Define a constant instead of duplicating this literal "failed to marshal redis envelope" 4 times.
+- `external/ws/redis_test.go:747` — Define a constant instead of duplicating this literal "source-123" 6 times.
+- `external/ws/redis_test.go:836` — Define a constant instead of duplicating this literal "external-source" 3 times.
+- `external/ws/redis_test.go:839` — Define a constant instead of duplicating this literal "listener-restart" 3 times.
+- `external/ws/redis_test.go:846` — Define a constant instead of duplicating this literal ":broadcast" 6 times.
+- `external/ws/redis_test.go:1094` — Define a constant instead of duplicating this literal "ws:broadcast" 5 times.
+- `external/ws/redis_test.go:1212` — Define a constant instead of duplicating this literal "self-echo" 3 times.
+- `external/ws/redis_test.go:1299` — Define a constant instead of duplicating this literal "from-A" 5 times.
+- `external/ws/redis_test.go:1333` — Define a constant instead of duplicating this literal "from-B" 5 times.
+- `external/ws/redis_test.go:1401` — Define a constant instead of duplicating this literal "echo-test" 3 times.
+- `external/ws/redis_test.go:1666` — Define a constant instead of duplicating this literal "for-user-1" 3 times.
+- `external/ws/test_stdlib_helpers_test.go:408` — Define a constant instead of duplicating this literal "+OK\r\n" 3 times.
+- `external/ws/ws.go:333` — Define a constant instead of duplicating this literal "invalid process ID" 4 times.
+- `external/ws/ws.go:352` — Define a constant instead of duplicating this literal "process:" 4 times.
+- `external/ws/ws.go:712` — Define a constant instead of duplicating this literal "failed to marshal message" 3 times.
+- `external/ws/ws.go:1244` — Define a constant instead of duplicating this literal "Client.readPump" 3 times.
+- `external/ws/ws.go:1797` — Define a constant instead of duplicating this literal "ReconnectingClient.Send" 5 times.
+- `external/ws/ws_test.go:41` — Define a constant instead of duplicating this literal "expected non-nil value" 31 times.
+- `external/ws/ws_test.go:65` — Define a constant instead of duplicating this literal "https://app.example" 4 times.
+- `external/ws/ws_test.go:76` — Define a constant instead of duplicating this literal "expected true" 49 times.
+- `external/ws/ws_test.go:94` — Define a constant instead of duplicating this literal "https://evil.example" 7 times.
+- `external/ws/ws_test.go:95` — Define a constant instead of duplicating this literal "expected false" 44 times.
+- `external/ws/ws_test.go:122` — Define a constant instead of duplicating this literal "expected empty value, got %v" 12 times.
+- `external/ws/ws_test.go:128` — Define a constant instead of duplicating this literal "expected %v to contain %v" 68 times.
+- `external/ws/ws_test.go:193` — Define a constant instead of duplicating this literal "expected no error, got %v" 174 times.
+- `external/ws/ws_test.go:206` — Define a constant instead of duplicating this literal "process:" 4 times.
+- `external/ws/ws_test.go:208` — Define a constant instead of duplicating this literal "expected error" 62 times.
+- `external/ws/ws_test.go:210` — Define a constant instead of duplicating this literal "invalid process ID" 19 times.
+- `external/ws/ws_test.go:249` — Define a constant instead of duplicating this literal "bad process" 5 times.
+- `external/ws/ws_test.go:372` — Define a constant instead of duplicating this literal "expected %v, got %v" 266 times.
+- `external/ws/ws_test.go:394` — Define a constant instead of duplicating this literal "test-channel" 51 times.
+- `external/ws/ws_test.go:466` — Define a constant instead of duplicating this literal "non-existent" 4 times.
+- `external/ws/ws_test.go:540` — Define a constant instead of duplicating this literal "bad channel" 5 times.
+- `external/ws/ws_test.go:544` — Define a constant instead of duplicating this literal "invalid channel name" 8 times.
+- `external/ws/ws_test.go:598` — Define a constant instead of duplicating this literal "temp-channel" 3 times.
+- `external/ws/ws_test.go:657` — Define a constant instead of duplicating this literal "expected message on client send channel" 5 times.
+- `external/ws/ws_test.go:710` — Define a constant instead of duplicating this literal "process:proc-1" 4 times.
+- `external/ws/ws_test.go:712` — Define a constant instead of duplicating this literal "proc-1" 15 times.
+- `external/ws/ws_test.go:712` — Define a constant instead of duplicating this literal "hello world" 4 times.
+- `external/ws/ws_test.go:738` — Define a constant instead of duplicating this literal "rejects invalid process IDs" 4 times.
+- `external/ws/ws_test.go:830` — Define a constant instead of duplicating this literal "something went wrong" 3 times.
+- `external/ws/ws_test.go:1027` — Define a constant instead of duplicating this literal "expected length %v, got %v" 11 times.
+- `external/ws/ws_test.go:1042` — Define a constant instead of duplicating this literal "expected nil, got %T" 9 times.
+- `external/ws/ws_test.go:1229` — Define a constant instead of duplicating this literal "expected values to differ: %v" 4 times.
+- `external/ws/ws_test.go:1421` — Define a constant instead of duplicating this literal "condition was not met before timeout" 22 times.
+- `external/ws/ws_test.go:1878` — Define a constant instead of duplicating this literal "broadcast test" 3 times.
+- `external/ws/ws_test.go:2006` — Define a constant instead of duplicating this literal "shared-channel" 4 times.
+- `external/ws/ws_test.go:2065` — Define a constant instead of duplicating this literal "expected %v to be greater than or equal to %v" 3 times.
+- `external/ws/ws_test.go:2150` — Define a constant instead of duplicating this literal "shutdown-channel" 5 times.
+- `external/ws/ws_test.go:2328` — Define a constant instead of duplicating this literal "returns error for unmarshalable message" 3 times.
+- `external/ws/ws_test.go:2341` — Define a constant instead of duplicating this literal "failed to marshal message" 10 times.
+- `external/ws/ws_test.go:2408` — Define a constant instead of duplicating this literal "Hub is not configured" 4 times.
+- `external/ws/ws_test.go:2475` — Define a constant instead of duplicating this literal "user-123" 5 times.
+- `external/ws/ws_test.go:2593` — Define a constant instead of duplicating this literal "authenticator panicked" 4 times.
+- `external/ws/ws_test.go:2769` — Define a constant instead of duplicating this literal "nil receiver" 3 times.
+- `external/ws/ws_test.go:2826` — Define a constant instead of duplicating this literal "field-channel" 7 times.
+- `external/ws/ws_test.go:2841` — Define a constant instead of duplicating this literal "data-channel" 8 times.
+- `external/ws/ws_test.go:3315` — Define a constant instead of duplicating this literal "hello all" 3 times.
+- `external/ws/ws_test.go:3367` — Define a constant instead of duplicating this literal "race-channel" 4 times.
+- `external/ws/ws_test.go:3380` — Define a constant instead of duplicating this literal "another-channel" 3 times.
+- `external/ws/ws_test.go:3428` — Define a constant instead of duplicating this literal "build-42" 3 times.
+- `external/ws/ws_test.go:3809` — Define a constant instead of duplicating this literal "public:news" 6 times.
+- `external/ws/ws_test.go:3814` — Define a constant instead of duplicating this literal "private:ops" 8 times.
+- `external/ws/ws_test.go:3818` — Define a constant instead of duplicating this literal "subscription unauthorised" 10 times.
+- `external/ws/ws_test.go:4179` — Define a constant instead of duplicating this literal "raw-bytes" 3 times.
+- `external/ws/ws_test.go:4397` — Define a constant instead of duplicating this literal "ws://127.0.0.1:1" 12 times.
+- `external/ws/ws_test.go:4541` — Define a constant instead of duplicating this literal "ws://localhost:1" 10 times.
+- `external/ws/ws_test.go:4548` — Define a constant instead of duplicating this literal "not connected" 8 times.
+- `external/ws/ws_test.go:4977` — Define a constant instead of duplicating this literal "max retries (1) exceeded" 8 times.
+- `external/ws/ws_test.go:5183` — Define a constant instead of duplicating this literal "lifecycle-test" 3 times.
+- `external/ws/ws_test.go:5229` — Define a constant instead of duplicating this literal "lifecycle-chan" 5 times.
+- `external/ws/ws_test.go:5419` — Define a constant instead of duplicating this literal "fail-1" 3 times.
+- `external/ws/ws_test.go:5572` — Define a constant instead of duplicating this literal "temp:feed" 4 times.
+- `external/ws/ws_test.go:5580` — Define a constant instead of duplicating this literal "before-unsub" 3 times.
+- `external/ws/ws_test.go:5655` — Define a constant instead of duplicating this literal "global-alert" 3 times.
+- `external/ws/ws_test.go:5962` — Define a constant instead of duplicating this literal "hub must not be nil" 18 times.
+- `external/ws/ws_test.go:6101` — Define a constant instead of duplicating this literal "invalid channel" 3 times.
+- `external/ws/ws_test.go:6441` — Define a constant instead of duplicating this literal "client must not be nil" 6 times.
+- `external/ws/ws_test.go:6660` — Define a constant instead of duplicating this literal "http://example.com/ws" 20 times.
+- `external/ws/ws_test.go:6668` — Define a constant instead of duplicating this literal "http://example.com" 6 times.
+- `external/ws/ws_test.go:6953` — Define a constant instead of duplicating this literal "example.com" 6 times.
+- `external/ws/ws_test.go:7624` — Define a constant instead of duplicating this literal "agent.dispatch" 13 times.
+- `external/ws/ws_test.go:7632` — Define a constant instead of duplicating this literal " agent.dispatch" 3 times.
+- `external/ws/ws_test.go:7681` — Define a constant instead of duplicating this literal "bad:id" 3 times.
+- `external/ws/ws_test.go:7762` — Define a constant instead of duplicating this literal "server refused" 3 times.
+- `go/cmd/compile/cmd_compile.go:102` — Define a constant instead of duplicating this literal "cmd.compile.readFile" 3 times.
+- `go/cmd/pkg/cmd_pkg.go:185` — Define a constant instead of duplicating this literal "cmd.pkg.writeIndex" 4 times.
+- `go/cmd/pkg/cmd_pkg.go:203` — Define a constant instead of duplicating this literal "cmd.pkg.readFile" 3 times.
+- `go/cmd/sign/cmd_sign.go:135` — Define a constant instead of duplicating this literal "cmd.sign.canonicalManifestBytes" 3 times.
+- `go/cmd/sign/cmd_sign.go:168` — Define a constant instead of duplicating this literal "cmd.sign.readFile" 3 times.
+- `go/cmd/verify/cmd_verify.go:113` — Define a constant instead of duplicating this literal "cmd.verify.canonicalManifestBytes" 3 times.
+- `go/cmd/verify/cmd_verify.go:146` — Define a constant instead of duplicating this literal "cmd.verify.readFile" 3 times.
+
+### go:S3776 — Cognitive Complexity of functions should not be too high (101×, code smell)
+
+- `external/config/external/go/action.go:183` — Refactor this method to reduce its Cognitive Complexity from 19 to the 15 allowed.
+- `external/config/external/go/assert.go:403` — Refactor this method to reduce its Cognitive Complexity from 16 to the 15 allowed.
+- `external/config/external/go/assert.go:546` — Refactor this method to reduce its Cognitive Complexity from 21 to the 15 allowed.
+- `external/config/external/go/cli.go:55` — Refactor this method to reduce its Cognitive Complexity from 23 to the 15 allowed.
+- `external/config/external/go/command.go:106` — Refactor this method to reduce its Cognitive Complexity from 17 to the 15 allowed.
+- `external/config/external/go/embed.go:137` — Refactor this method to reduce its Cognitive Complexity from 79 to the 15 allowed.
+- `external/config/external/go/embed.go:241` — Refactor this method to reduce its Cognitive Complexity from 21 to the 15 allowed.
+- `external/config/external/go/embed.go:546` — Refactor this method to reduce its Cognitive Complexity from 51 to the 15 allowed.
+- `external/config/external/go/fs.go:115` — Refactor this method to reduce its Cognitive Complexity from 21 to the 15 allowed.
+- `external/config/external/go/fs.go:594` — Refactor this method to reduce its Cognitive Complexity from 35 to the 15 allowed.
+- `external/config/external/go/hmac_fuzz_test.go:9` — Refactor this method to reduce its Cognitive Complexity from 17 to the 15 allowed.
+- `external/config/external/go/log.go:213` — Refactor this method to reduce its Cognitive Complexity from 64 to the 15 allowed.
+- `external/config/external/go/lsp.go:415` — Refactor this method to reduce its Cognitive Complexity from 27 to the 15 allowed.
+- `external/config/external/go/lsp.go:537` — Refactor this method to reduce its Cognitive Complexity from 35 to the 15 allowed.
+- `external/config/external/go/lsp.go:622` — Refactor this method to reduce its Cognitive Complexity from 18 to the 15 allowed.
+- `external/config/external/go/lsp.go:759` — Refactor this method to reduce its Cognitive Complexity from 37 to the 15 allowed.
+- `external/config/external/go/lsp.go:821` — Refactor this method to reduce its Cognitive Complexity from 24 to the 15 allowed.
+- `external/config/external/go/runtime.go:76` — Refactor this method to reduce its Cognitive Complexity from 16 to the 15 allowed.
+- `external/config/external/go/sha3.go:128` — Refactor this method to reduce its Cognitive Complexity from 20 to the 15 allowed.
+- `external/config/external/io/datanode/medium.go:201` — Refactor this method to reduce its Cognitive Complexity from 16 to the 15 allowed.
+- `external/config/external/io/datanode/medium.go:244` — Refactor this method to reduce its Cognitive Complexity from 18 to the 15 allowed.
+- `external/config/external/io/datanode/medium.go:290` — Refactor this method to reduce its Cognitive Complexity from 21 to the 15 allowed.
+- `external/config/external/io/io.go:316` — Refactor this method to reduce its Cognitive Complexity from 21 to the 15 allowed.
+- `external/config/external/io/io.go:391` — Refactor this method to reduce its Cognitive Complexity from 32 to the 15 allowed.
+- `external/config/external/io/io.go:570` — Refactor this method to reduce its Cognitive Complexity from 47 to the 15 allowed.
+- `external/config/external/io/local/medium.go:95` — Refactor this method to reduce its Cognitive Complexity from 18 to the 15 allowed.
+- `external/config/external/io/node/node.go:101` — Refactor this method to reduce its Cognitive Complexity from 18 to the 15 allowed.
+- `external/config/external/io/node/node.go:146` — Refactor this method to reduce its Cognitive Complexity from 27 to the 15 allowed.
+- `external/config/external/io/s3/s3.go:223` — Refactor this method to reduce its Cognitive Complexity from 18 to the 15 allowed.
+- `external/config/external/io/s3/s3.go:316` — Refactor this method to reduce its Cognitive Complexity from 18 to the 15 allowed.
+- `external/config/external/io/s3/s3_test.go:110` — Refactor this method to reduce its Cognitive Complexity from 20 to the 15 allowed.
+- `external/config/external/io/sigil/sigils.go:317` — Refactor this method to reduce its Cognitive Complexity from 25 to the 15 allowed.
+- `external/config/external/io/sqlite/sqlite.go:266` — Refactor this method to reduce its Cognitive Complexity from 22 to the 15 allowed.
+- `external/config/external/io/sqlite/sqlite.go:359` — Refactor this method to reduce its Cognitive Complexity from 17 to the 15 allowed.
+- `external/config/external/log/log.go:232` — Refactor this method to reduce its Cognitive Complexity from 54 to the 15 allowed.
+- `external/go/action.go:183` — Refactor this method to reduce its Cognitive Complexity from 19 to the 15 allowed.
+- `external/go/assert.go:403` — Refactor this method to reduce its Cognitive Complexity from 16 to the 15 allowed.
+- `external/go/assert.go:546` — Refactor this method to reduce its Cognitive Complexity from 21 to the 15 allowed.
+- `external/go/cli.go:55` — Refactor this method to reduce its Cognitive Complexity from 23 to the 15 allowed.
+- `external/go/command.go:106` — Refactor this method to reduce its Cognitive Complexity from 17 to the 15 allowed.
+- `external/go/embed.go:137` — Refactor this method to reduce its Cognitive Complexity from 79 to the 15 allowed.
+- `external/go/embed.go:241` — Refactor this method to reduce its Cognitive Complexity from 21 to the 15 allowed.
+- `external/go/embed.go:546` — Refactor this method to reduce its Cognitive Complexity from 51 to the 15 allowed.
+- `external/go/fs.go:115` — Refactor this method to reduce its Cognitive Complexity from 21 to the 15 allowed.
+- `external/go/fs.go:594` — Refactor this method to reduce its Cognitive Complexity from 35 to the 15 allowed.
+- `external/go/hmac_fuzz_test.go:9` — Refactor this method to reduce its Cognitive Complexity from 17 to the 15 allowed.
+- `external/go/log.go:213` — Refactor this method to reduce its Cognitive Complexity from 64 to the 15 allowed.
+- `external/go/lsp.go:415` — Refactor this method to reduce its Cognitive Complexity from 27 to the 15 allowed.
+- `external/go/lsp.go:537` — Refactor this method to reduce its Cognitive Complexity from 35 to the 15 allowed.
+- `external/go/lsp.go:622` — Refactor this method to reduce its Cognitive Complexity from 18 to the 15 allowed.
+- `external/go/lsp.go:759` — Refactor this method to reduce its Cognitive Complexity from 37 to the 15 allowed.
+- `external/go/lsp.go:821` — Refactor this method to reduce its Cognitive Complexity from 24 to the 15 allowed.
+- `external/go/runtime.go:76` — Refactor this method to reduce its Cognitive Complexity from 16 to the 15 allowed.
+- `external/go/sha3.go:128` — Refactor this method to reduce its Cognitive Complexity from 20 to the 15 allowed.
+- `external/io/datanode/medium.go:201` — Refactor this method to reduce its Cognitive Complexity from 16 to the 15 allowed.
+- `external/io/datanode/medium.go:244` — Refactor this method to reduce its Cognitive Complexity from 18 to the 15 allowed.
+- `external/io/datanode/medium.go:290` — Refactor this method to reduce its Cognitive Complexity from 21 to the 15 allowed.
+- `external/io/io.go:316` — Refactor this method to reduce its Cognitive Complexity from 21 to the 15 allowed.
+- `external/io/io.go:391` — Refactor this method to reduce its Cognitive Complexity from 32 to the 15 allowed.
+- `external/io/io.go:570` — Refactor this method to reduce its Cognitive Complexity from 47 to the 15 allowed.
+- `external/io/local/medium.go:95` — Refactor this method to reduce its Cognitive Complexity from 18 to the 15 allowed.
+- `external/io/node/node.go:101` — Refactor this method to reduce its Cognitive Complexity from 18 to the 15 allowed.
+- `external/io/node/node.go:146` — Refactor this method to reduce its Cognitive Complexity from 27 to the 15 allowed.
+- `external/io/s3/s3.go:223` — Refactor this method to reduce its Cognitive Complexity from 18 to the 15 allowed.
+- `external/io/s3/s3.go:316` — Refactor this method to reduce its Cognitive Complexity from 18 to the 15 allowed.
+- `external/io/s3/s3_test.go:110` — Refactor this method to reduce its Cognitive Complexity from 20 to the 15 allowed.
+- `external/io/sigil/sigils.go:317` — Refactor this method to reduce its Cognitive Complexity from 25 to the 15 allowed.
+- `external/io/sqlite/sqlite.go:266` — Refactor this method to reduce its Cognitive Complexity from 22 to the 15 allowed.
+- `external/io/sqlite/sqlite.go:359` — Refactor this method to reduce its Cognitive Complexity from 17 to the 15 allowed.
+- `external/log/log.go:232` — Refactor this method to reduce its Cognitive Complexity from 54 to the 15 allowed.
+- `external/ws/auth.go:125` — Refactor this method to reduce its Cognitive Complexity from 67 to the 15 allowed.
+- `external/ws/auth.go:273` — Refactor this method to reduce its Cognitive Complexity from 51 to the 15 allowed.
+- `external/ws/auth_test.go:1332` — Refactor this method to reduce its Cognitive Complexity from 18 to the 15 allowed.
+- `external/ws/auth_test.go:1382` — Refactor this method to reduce its Cognitive Complexity from 18 to the 15 allowed.
+- `external/ws/redis.go:355` — Refactor this method to reduce its Cognitive Complexity from 26 to the 15 allowed.
+- `external/ws/redis_test.go:667` — Refactor this method to reduce its Cognitive Complexity from 16 to the 15 allowed.
+- `external/ws/redis_test.go:770` — Refactor this method to reduce its Cognitive Complexity from 26 to the 15 allowed.
+- `external/ws/redis_test.go:1124` — Refactor this method to reduce its Cognitive Complexity from 16 to the 15 allowed.
+- `external/ws/redis_test.go:1243` — Refactor this method to reduce its Cognitive Complexity from 16 to the 15 allowed.
+- `external/ws/test_stdlib_helpers_test.go:381` — Refactor this method to reduce its Cognitive Complexity from 33 to the 15 allowed.
+- `external/ws/ws.go:398` — Refactor this method to reduce its Cognitive Complexity from 31 to the 15 allowed.
+- `external/ws/ws.go:1157` — Refactor this method to reduce its Cognitive Complexity from 20 to the 15 allowed.
+- `external/ws/ws.go:1231` — Refactor this method to reduce its Cognitive Complexity from 41 to the 15 allowed.
+- `external/ws/ws.go:1317` — Refactor this method to reduce its Cognitive Complexity from 34 to the 15 allowed.
+- `external/ws/ws.go:1599` — Refactor this method to reduce its Cognitive Complexity from 62 to the 15 allowed.
+- `external/ws/ws_test.go:487` — Refactor this method to reduce its Cognitive Complexity from 18 to the 15 allowed.
+- `external/ws/ws_test.go:622` — Refactor this method to reduce its Cognitive Complexity from 18 to the 15 allowed.
+- `external/ws/ws_test.go:752` — Refactor this method to reduce its Cognitive Complexity from 18 to the 15 allowed.
+- `external/ws/ws_test.go:1365` — Refactor this method to reduce its Cognitive Complexity from 16 to the 15 allowed.
+- `external/ws/ws_test.go:1413` — Refactor this method to reduce its Cognitive Complexity from 130 to the 15 allowed.
+- `external/ws/ws_test.go:2120` — Refactor this method to reduce its Cognitive Complexity from 16 to the 15 allowed.
+- `external/ws/ws_test.go:3032` — Refactor this method to reduce its Cognitive Complexity from 24 to the 15 allowed.
+- `external/ws/ws_test.go:3269` — Refactor this method to reduce its Cognitive Complexity from 27 to the 15 allowed.
+- `external/ws/ws_test.go:3398` — Refactor this method to reduce its Cognitive Complexity from 38 to the 15 allowed.
+- `external/ws/ws_test.go:3482` — Refactor this method to reduce its Cognitive Complexity from 18 to the 15 allowed.
+- `external/ws/ws_test.go:3596` — Refactor this method to reduce its Cognitive Complexity from 22 to the 15 allowed.
+- `external/ws/ws_test.go:4427` — Refactor this method to reduce its Cognitive Complexity from 21 to the 15 allowed.
+- `external/ws/ws_test.go:4671` — Refactor this method to reduce its Cognitive Complexity from 22 to the 15 allowed.
+- `external/ws/ws_test.go:5495` — Refactor this method to reduce its Cognitive Complexity from 16 to the 15 allowed.
+- `external/ws/ws_test.go:6087` — Refactor this method to reduce its Cognitive Complexity from 18 to the 15 allowed.
+- `external/ws/ws_test.go:6433` — Refactor this method to reduce its Cognitive Complexity from 33 to the 15 allowed.
+
+### go:S1186 — Functions should not be empty (10×, code smell)
+
+- `external/config/external/go/assert_internal_test.go:286` — Add a nested comment explaining why this function is empty or complete the implementation.
+- `external/config/external/go/assert_internal_test.go:294` — Add a nested comment explaining why this function is empty or complete the implementation.
+- `external/config/go/resolve_example_test.go:15` — Add a nested comment explaining why this function is empty or complete the implementation.
+- `external/go/assert_internal_test.go:286` — Add a nested comment explaining why this function is empty or complete the implementation.
+- `external/go/assert_internal_test.go:294` — Add a nested comment explaining why this function is empty or complete the implementation.
+- `external/ws/auth_test.go:1248` — Add a nested comment explaining why this function is empty or complete the implementation.
+- `external/ws/auth_test.go:1304` — Add a nested comment explaining why this function is empty or complete the implementation.
+- `external/ws/ws.go:946` — Add a nested comment explaining why this function is empty or complete the implementation.
+- `external/ws/ws.go:959` — Add a nested comment explaining why this function is empty or complete the implementation.
+- `external/ws/ws.go:1442` — Add a nested comment explaining why this function is empty or complete the implementation.
+
+### python:S3776 — Cognitive Complexity of functions should not be too high (6×, code smell)
+
+- `external/config/external/go/tests/cli/naming/check.py:40` — Refactor this function to reduce its Cognitive Complexity from 20 to the 15 allowed.
+- `external/config/external/go/tests/cli/test_imports/check.py:33` — Refactor this function to reduce its Cognitive Complexity from 24 to the 15 allowed.
+- `external/config/external/go/tests/cli/test_imports/check.py:73` — Refactor this function to reduce its Cognitive Complexity from 18 to the 15 allowed.
+- `external/go/tests/cli/naming/check.py:40` — Refactor this function to reduce its Cognitive Complexity from 20 to the 15 allowed.
+- `external/go/tests/cli/test_imports/check.py:33` — Refactor this function to reduce its Cognitive Complexity from 24 to the 15 allowed.
+- `external/go/tests/cli/test_imports/check.py:73` — Refactor this function to reduce its Cognitive Complexity from 18 to the 15 allowed.
+
+## MAJOR
+
+### go:S4144 — Functions should not have identical implementations (111×, code smell)
+
+- `external/config/external/go/action_test.go:318` — Update this function so that its implementation is not identical to "TestAction_Actions_Bad_Empty" on line 78.
+- `external/config/external/go/atomic_test.go:242` — Update this function so that its implementation is not identical to "TestAtomic_AtomicBool_Load_Good" on line 221.
+- `external/config/external/go/atomic_test.go:250` — Update this function so that its implementation is not identical to "TestAtomic_AtomicBool_Load_Ugly" on line 234.
+- `external/config/external/go/atomic_test.go:642` — Update this function so that its implementation is not identical to "TestAtomic_AtomicUint32_Load_Ugly" on line 618.
+- `external/config/external/go/atomic_test.go:775` — Update this function so that its implementation is not identical to "TestAtomic_AtomicUint64_Load_Ugly" on line 751.
+- `external/config/external/go/config_test.go:274` — Update this function so that its implementation is not identical to "TestConfig_Config_Enable_Good" on line 237.
+- `external/config/external/go/core_test.go:544` — Update this function so that its implementation is not identical to "TestOptions_Accessor_Nil" on line 103.
+- `external/config/external/go/core_test.go:654` — Update this function so that its implementation is not identical to "TestCore_Core_Run_Good" on line 636.
+- `external/config/external/go/embed_test.go:259` — Update this function so that its implementation is not identical to "TestEmbed_EmbedFS_Good" on line 73.
+- `external/config/external/go/embed_test.go:485` — Update this function so that its implementation is not identical to "TestEmbed_ReadFile_Good" on line 27.
+- `external/config/external/go/embed_test.go:512` — Update this function so that its implementation is not identical to "TestEmbed_ReadString_Good" on line 34.
+- `external/config/external/go/embed_test.go:597` — Update this function so that its implementation is not identical to "TestEmbed_BaseDir_Good" on line 63.
+- `external/config/external/go/exit_test.go:267` — Update this function so that its implementation is not identical to "TestExit_Exit_Good" on line 39.
+- `external/config/external/go/exit_test.go:287` — Update this function so that its implementation is not identical to "TestExit_Exit_Ugly" on line 61.
+- `external/config/external/go/exit_test.go:308` — Update this function so that its implementation is not identical to "TestExit_ExitWith_Bad" on line 84.
+- `external/config/external/go/exit_test.go:337` — Update this function so that its implementation is not identical to "TestExit_ExitNow_Good" on line 192.
+- `external/config/external/go/fs_example_test.go:332` — Update this function so that its implementation is not identical to "ExampleFs_New" on line 9.
+- `external/config/external/go/fs_test.go:571` — Update this function so that its implementation is not identical to "TestFs_Fs_New_Bad" on line 521.
+- `external/config/external/go/i18n_test.go:142` — Update this function so that its implementation is not identical to "TestI18n_I18n_AddLocales_Good" on line 114.
+- `external/config/external/go/i18n_test.go:265` — Update this function so that its implementation is not identical to "TestI18n_Language_NoTranslator_Good" on line 52.
+- `external/config/external/go/lock_example_test.go:99` — Update this function so that its implementation is not identical to "ExampleCore_LockEnable" on line 88.
+- `external/config/external/go/lock_test.go:199` — Update this function so that its implementation is not identical to "TestLock_Core_LockEnable_Good" on line 168.
+- `external/config/external/go/lock_test.go:344` — Update this function so that its implementation is not identical to "TestLock_Lock_Unlock_Good" on line 333.
+- `external/config/external/go/lock_test.go:409` — Update this function so that its implementation is not identical to "TestLock_Lock_RUnlock_Good" on line 398.
+- `external/config/external/go/lock_test.go:442` — Update this function so that its implementation is not identical to "TestLock_Lock_Lock_Bad" on line 306.
+- `external/config/external/go/log_test.go:167` — Update this function so that its implementation is not identical to "TestLog_LevelFiltering_Good" on line 35.
+- `external/config/external/go/log_test.go:432` — Update this function so that its implementation is not identical to "TestLog_SetLevel_Good" on line 44.
+- `external/config/external/go/log_test.go:697` — Update this function so that its implementation is not identical to "TestLog_Default_Bad" on line 209.
+- `external/config/external/go/options_test.go:231` — Update this function so that its implementation is not identical to "TestOptions_Int_Good" on line 80.
+- `external/config/external/go/os_test.go:242` — Update this function so that its implementation is not identical to "TestOs_Hostname_Good" on line 236.
+- `external/config/external/go/registry_test.go:477` — Update this function so that its implementation is not identical to "TestRegistry_Names_Bad_Empty" on line 116.
+- `external/config/external/go/registry_test.go:529` — Update this function so that its implementation is not identical to "TestRegistry_Each_Bad_Empty" on line 148.
+- `external/config/external/go/registry_test.go:681` — Update this function so that its implementation is not identical to "TestRegistry_Registry_Lock_Good" on line 659.
+- `external/config/external/go/runtime_test.go:283` — Update this function so that its implementation is not identical to "TestRuntime_ServiceRuntime_Options_Bad" on line 243.
+- `external/config/external/go/signal_test.go:94` — Update this function so that its implementation is not identical to "TestSignal_Exists_Good" on line 5.
+- `external/config/external/go/signal_test.go:103` — Update this function so that its implementation is not identical to "TestSignal_Exists_Bad" on line 14.
+- `external/config/external/go/signal_test.go:118` — Update this function so that its implementation is not identical to "TestSignal_Stop_Good" on line 32.
+- `external/config/external/go/signal_test.go:132` — Update this function so that its implementation is not identical to "TestSignal_Stop_Bad" on line 45.
+- `external/config/external/go/sync_test.go:225` — Update this function so that its implementation is not identical to "TestSync_Mutex_Unlock_Good" on line 214.
+- `external/config/external/go/sync_test.go:258` — Update this function so that its implementation is not identical to "TestSync_Mutex_Lock_Bad" on line 187.
+- `external/config/external/go/sync_test.go:324` — Update this function so that its implementation is not identical to "TestSync_RWMutex_Unlock_Good" on line 313.
+- `external/config/external/go/sync_test.go:389` — Update this function so that its implementation is not identical to "TestSync_RWMutex_RUnlock_Good" on line 378.
+- `external/config/external/go/sync_test.go:432` — Update this function so that its implementation is not identical to "TestSync_RWMutex_Lock_Bad" on line 286.
+- `external/config/external/go/sync_test.go:442` — Update this function so that its implementation is not identical to "TestSync_RWMutex_RLock_Bad" on line 355.
+- `external/config/external/go/sync_test.go:566` — Update this function so that its implementation is not identical to "TestSync_WaitGroup_Bad" on line 152.
+- `external/config/external/go/sync_test.go:677` — Update this function so that its implementation is not identical to "TestSync_SyncMap_Load_Good" on line 648.
+- `external/config/external/go/table_test.go:83` — Update this function so that its implementation is not identical to "TestTable_Row_Good" on line 31.
+- `external/config/external/io/sigil/crypto_sigil.go:51` — Update this function so that its implementation is not identical to "Obfuscate" on line 44.
+- `external/config/external/io/workspace/workspace_test.go:250` — Update this function so that its implementation is not identical to "TestWorkspace_NewWorkspace_Bad_InvalidBase" on line 29.
+- `external/config/go/config_example_test.go:148` — Update this function so that its implementation is not identical to "ExampleWithMedium" on line 20.
+- `external/config/go/manifest_test.go:213` — Update this function so that its implementation is not identical to "TestManifest_TrustedManifestPublicKeys_Good" on line 110.
+- `external/config/go/manifest_test.go:975` — Update this function so that its implementation is not identical to "TestManifest_BuildManifestLDFlags_String_Good" on line 461.
+- `external/config/go/xdg_example_test.go:41` — Update this function so that its implementation is not identical to "ExampleXDGWithPrefix" on line 11.
+- `external/config/go/xdg_test.go:142` — Update this function so that its implementation is not identical to "TestXdg_XDGWithPrefix_Bad" on line 48.
+- `external/go/action_test.go:318` — Update this function so that its implementation is not identical to "TestAction_Actions_Bad_Empty" on line 78.
+- `external/go/atomic_test.go:242` — Update this function so that its implementation is not identical to "TestAtomic_AtomicBool_Load_Good" on line 221.
+- `external/go/atomic_test.go:250` — Update this function so that its implementation is not identical to "TestAtomic_AtomicBool_Load_Ugly" on line 234.
+- `external/go/atomic_test.go:642` — Update this function so that its implementation is not identical to "TestAtomic_AtomicUint32_Load_Ugly" on line 618.
+- `external/go/atomic_test.go:775` — Update this function so that its implementation is not identical to "TestAtomic_AtomicUint64_Load_Ugly" on line 751.
+- `external/go/config_test.go:274` — Update this function so that its implementation is not identical to "TestConfig_Config_Enable_Good" on line 237.
+- `external/go/core_test.go:544` — Update this function so that its implementation is not identical to "TestOptions_Accessor_Nil" on line 103.
+- `external/go/core_test.go:654` — Update this function so that its implementation is not identical to "TestCore_Core_Run_Good" on line 636.
+- `external/go/embed_test.go:259` — Update this function so that its implementation is not identical to "TestEmbed_EmbedFS_Good" on line 73.
+- `external/go/embed_test.go:485` — Update this function so that its implementation is not identical to "TestEmbed_ReadFile_Good" on line 27.
+- `external/go/embed_test.go:512` — Update this function so that its implementation is not identical to "TestEmbed_ReadString_Good" on line 34.
+- `external/go/embed_test.go:597` — Update this function so that its implementation is not identical to "TestEmbed_BaseDir_Good" on line 63.
+- `external/go/exit_test.go:267` — Update this function so that its implementation is not identical to "TestExit_Exit_Good" on line 39.
+- `external/go/exit_test.go:287` — Update this function so that its implementation is not identical to "TestExit_Exit_Ugly" on line 61.
+- `external/go/exit_test.go:308` — Update this function so that its implementation is not identical to "TestExit_ExitWith_Bad" on line 84.
+- `external/go/exit_test.go:337` — Update this function so that its implementation is not identical to "TestExit_ExitNow_Good" on line 192.
+- `external/go/fs_example_test.go:332` — Update this function so that its implementation is not identical to "ExampleFs_New" on line 9.
+- `external/go/fs_test.go:571` — Update this function so that its implementation is not identical to "TestFs_Fs_New_Bad" on line 521.
+- `external/go/i18n_test.go:142` — Update this function so that its implementation is not identical to "TestI18n_I18n_AddLocales_Good" on line 114.
+- `external/go/i18n_test.go:265` — Update this function so that its implementation is not identical to "TestI18n_Language_NoTranslator_Good" on line 52.
+- `external/go/lock_example_test.go:99` — Update this function so that its implementation is not identical to "ExampleCore_LockEnable" on line 88.
+- `external/go/lock_test.go:199` — Update this function so that its implementation is not identical to "TestLock_Core_LockEnable_Good" on line 168.
+- `external/go/lock_test.go:344` — Update this function so that its implementation is not identical to "TestLock_Lock_Unlock_Good" on line 333.
+- `external/go/lock_test.go:409` — Update this function so that its implementation is not identical to "TestLock_Lock_RUnlock_Good" on line 398.
+- `external/go/lock_test.go:442` — Update this function so that its implementation is not identical to "TestLock_Lock_Lock_Bad" on line 306.
+- `external/go/log_test.go:167` — Update this function so that its implementation is not identical to "TestLog_LevelFiltering_Good" on line 35.
+- `external/go/log_test.go:432` — Update this function so that its implementation is not identical to "TestLog_SetLevel_Good" on line 44.
+- `external/go/log_test.go:697` — Update this function so that its implementation is not identical to "TestLog_Default_Bad" on line 209.
+- `external/go/options_test.go:231` — Update this function so that its implementation is not identical to "TestOptions_Int_Good" on line 80.
+- `external/go/os_test.go:242` — Update this function so that its implementation is not identical to "TestOs_Hostname_Good" on line 236.
+- `external/go/registry_test.go:477` — Update this function so that its implementation is not identical to "TestRegistry_Names_Bad_Empty" on line 116.
+- `external/go/registry_test.go:529` — Update this function so that its implementation is not identical to "TestRegistry_Each_Bad_Empty" on line 148.
+- `external/go/registry_test.go:681` — Update this function so that its implementation is not identical to "TestRegistry_Registry_Lock_Good" on line 659.
+- `external/go/runtime_test.go:283` — Update this function so that its implementation is not identical to "TestRuntime_ServiceRuntime_Options_Bad" on line 243.
+- `external/go/signal_test.go:94` — Update this function so that its implementation is not identical to "TestSignal_Exists_Good" on line 5.
+- `external/go/signal_test.go:103` — Update this function so that its implementation is not identical to "TestSignal_Exists_Bad" on line 14.
+- `external/go/signal_test.go:118` — Update this function so that its implementation is not identical to "TestSignal_Stop_Good" on line 32.
+- `external/go/signal_test.go:132` — Update this function so that its implementation is not identical to "TestSignal_Stop_Bad" on line 45.
+- `external/go/sync_test.go:225` — Update this function so that its implementation is not identical to "TestSync_Mutex_Unlock_Good" on line 214.
+- `external/go/sync_test.go:258` — Update this function so that its implementation is not identical to "TestSync_Mutex_Lock_Bad" on line 187.
+- `external/go/sync_test.go:324` — Update this function so that its implementation is not identical to "TestSync_RWMutex_Unlock_Good" on line 313.
+- `external/go/sync_test.go:389` — Update this function so that its implementation is not identical to "TestSync_RWMutex_RUnlock_Good" on line 378.
+- `external/go/sync_test.go:432` — Update this function so that its implementation is not identical to "TestSync_RWMutex_Lock_Bad" on line 286.
+- `external/go/sync_test.go:442` — Update this function so that its implementation is not identical to "TestSync_RWMutex_RLock_Bad" on line 355.
+- `external/go/sync_test.go:566` — Update this function so that its implementation is not identical to "TestSync_WaitGroup_Bad" on line 152.
+- `external/go/sync_test.go:677` — Update this function so that its implementation is not identical to "TestSync_SyncMap_Load_Good" on line 648.
+- `external/go/table_test.go:83` — Update this function so that its implementation is not identical to "TestTable_Row_Good" on line 31.
+- `external/io/sigil/crypto_sigil.go:51` — Update this function so that its implementation is not identical to "Obfuscate" on line 44.
+- `external/io/workspace/workspace_test.go:250` — Update this function so that its implementation is not identical to "TestWorkspace_NewWorkspace_Bad_InvalidBase" on line 29.
+- `external/ws/redis.go:78` — Update this function so that its implementation is not identical to "validRedisForwardedMessage" on line 70.
+- `external/ws/redis_test.go:881` — Update this function so that its implementation is not identical to "TestRedisBridgeStartRejects" on line 324.
+- `external/ws/ws.go:1758` — Update this function so that its implementation is not identical to "safeClientCallback" on line 1018.
+- `go/jobrunner/handlers/handlers_test.go:221` — Update this function so that its implementation is not identical to "TestHandlers_NewCompletionHandler_Ugly" on line 96.
+- `go/jobrunner/handlers/handlers_test.go:276` — Update this function so that its implementation is not identical to "TestHandlers_NewEnableAutoMergeHandler_Ugly" on line 154.
+- `go/jobrunner/handlers/handlers_test.go:295` — Update this function so that its implementation is not identical to "TestHandlers_NewPublishDraftHandler_Ugly" on line 174.
+- `go/jobrunner/handlers/handlers_test.go:314` — Update this function so that its implementation is not identical to "TestHandlers_NewSendFixCommandHandler_Ugly" on line 194.
+- `go/jobrunner/handlers/handlers_test.go:333` — Update this function so that its implementation is not identical to "TestHandlers_NewTickParentHandler_Ugly" on line 214.
+
+### yaml:DocumentStartCheck — For correct parsing especially in the case of multiple or embedded documents, documents should start with a document start marker (16×, code smell)
+
+- `external/config/external/go/tests/cli/assertcli/Taskfile.yaml:6` — missing document start "---" (document-start)
+- `external/config/external/go/tests/cli/core/Taskfile.yaml:1` — missing document start "---" (document-start)
+- `external/config/external/go/tests/cli/imports/Taskfile.yaml:9` — missing document start "---" (document-start)
+- `external/config/external/go/tests/cli/naming/Taskfile.yaml:9` — missing document start "---" (document-start)
+- `external/config/external/go/tests/cli/test_imports/Taskfile.yaml:10` — missing document start "---" (document-start)
+- `external/config/external/io/tests/cli/io/Taskfile.yaml:1` — missing document start "---" (document-start)
+- `external/config/external/log/tests/cli/log/Taskfile.yaml:1` — missing document start "---" (document-start)
+- `external/config/go/tests/cli/config/Taskfile.yaml:1` — missing document start "---" (document-start)
+- `external/go/tests/cli/assertcli/Taskfile.yaml:6` — missing document start "---" (document-start)
+- `external/go/tests/cli/core/Taskfile.yaml:1` — missing document start "---" (document-start)
+- `external/go/tests/cli/imports/Taskfile.yaml:9` — missing document start "---" (document-start)
+- `external/go/tests/cli/naming/Taskfile.yaml:9` — missing document start "---" (document-start)
+- `external/go/tests/cli/test_imports/Taskfile.yaml:10` — missing document start "---" (document-start)
+- `external/io/tests/cli/io/Taskfile.yaml:1` — missing document start "---" (document-start)
+- `external/log/tests/cli/log/Taskfile.yaml:1` — missing document start "---" (document-start)
+- `external/ws/tests/cli/ws/Taskfile.yaml:1` — missing document start "---" (document-start)
+
+### go:S1871 — Two branches in a conditional structure should not have exactly the same implementation (3×, code smell)
+
+- `external/config/external/io/pkg/api/handlers.go:254` — This branch's code block is the same as the block for the branch on line 251.
+- `external/io/pkg/api/handlers.go:254` — This branch's code block is the same as the block for the branch on line 251.
+- `external/ws/test_stdlib_helpers_test.go:429` — This branch's code block is the same as the block for the branch on line 408.
+
+## MINOR
+
+### python:S6353 — Regular expression quantifiers and character classes should be used concisely (6×, code smell)
+
+- `external/config/external/go/tests/cli/naming/check.py:19` — Use concise character class syntax '\w' instead of '[A-Za-z0-9_]'.
+- `external/config/external/go/tests/cli/naming/check.py:24` — Use concise character class syntax '\w' instead of '[A-Za-z0-9_]'.
+- `external/config/external/go/tests/cli/naming/check.py:68` — Use concise character class syntax '\w' instead of '[A-Za-z0-9_]'.
+- `external/go/tests/cli/naming/check.py:19` — Use concise character class syntax '\w' instead of '[A-Za-z0-9_]'.
+- `external/go/tests/cli/naming/check.py:24` — Use concise character class syntax '\w' instead of '[A-Za-z0-9_]'.
+- `external/go/tests/cli/naming/check.py:68` — Use concise character class syntax '\w' instead of '[A-Za-z0-9_]'.
+
+### go:S100 — Function names should comply with a naming convention (4×, code smell)
+
+- `external/config/external/go/sha3.go:60` — Rename function "SHA3_256" to match the regular expression ^(_|[a-zA-Z0-9]+)$
+- `external/config/external/go/sha3.go:67` — Rename function "SHA3_256Hex" to match the regular expression ^(_|[a-zA-Z0-9]+)$
+- `external/go/sha3.go:60` — Rename function "SHA3_256" to match the regular expression ^(_|[a-zA-Z0-9]+)$
+- `external/go/sha3.go:67` — Rename function "SHA3_256Hex" to match the regular expression ^(_|[a-zA-Z0-9]+)$
+
+### go:S1940 — Boolean checks should not be inverted (2×, code smell)
+
+- `external/ws/ws.go:1580` — Use the opposite operator ("<") instead.
+- `external/ws/ws.go:1959` — Use the opposite operator ("<") instead.
+
+### yaml:TruthyCheck — For proper interpretation truthy values other than true and false should explicitly typed (1×, code smell)
+
+- `external/ws/tests/cli/ws/Taskfile.yaml:4` — truthy value should be one of [true, false] (truthy)
+
+## INFO
+
+### go:S1135 — Track uses of "TODO" tags (30×, code smell)
+
+- `external/config/external/go/context.go:37` — Complete the task associated to this TODO comment.
+- `external/config/external/go/context.go:41` — Complete the task associated to this TODO comment.
+- `external/config/external/go/context.go:42` — Complete the task associated to this TODO comment.
+- `external/config/external/io/datanode/medium.go:549` — Complete the task associated to this TODO comment.
+- `external/config/external/io/io.go:39` — Complete the task associated to this TODO comment.
+- `external/config/external/io/io.go:390` — Complete the task associated to this TODO comment.
+- `external/config/external/io/local/medium.go:205` — Complete the task associated to this TODO comment.
+- `external/config/external/io/local/medium.go:395` — Complete the task associated to this TODO comment.
+- `external/config/external/io/node/node.go:440` — Complete the task associated to this TODO comment.
+- `external/config/external/io/s3/s3.go:285` — Complete the task associated to this TODO comment.
+- `external/config/external/io/sqlite/sqlite.go:265` — Complete the task associated to this TODO comment.
+- `external/config/external/io/workspace/command_example_test.go:13` — Complete the task associated to this TODO comment.
+- `external/config/external/io/workspace/doc.go:8` — Complete the task associated to this TODO comment.
+- `external/config/external/io/workspace/service.go:234` — Complete the task associated to this TODO comment.
+- `external/config/external/io/workspace/service.go:258` — Complete the task associated to this TODO comment.
+- `external/go/context.go:37` — Complete the task associated to this TODO comment.
+- `external/go/context.go:41` — Complete the task associated to this TODO comment.
+- `external/go/context.go:42` — Complete the task associated to this TODO comment.
+- `external/io/datanode/medium.go:549` — Complete the task associated to this TODO comment.
+- `external/io/io.go:39` — Complete the task associated to this TODO comment.
+- `external/io/io.go:390` — Complete the task associated to this TODO comment.
+- `external/io/local/medium.go:205` — Complete the task associated to this TODO comment.
+- `external/io/local/medium.go:395` — Complete the task associated to this TODO comment.
+- `external/io/node/node.go:440` — Complete the task associated to this TODO comment.
+- `external/io/s3/s3.go:285` — Complete the task associated to this TODO comment.
+- `external/io/sqlite/sqlite.go:265` — Complete the task associated to this TODO comment.
+- `external/io/workspace/command_example_test.go:13` — Complete the task associated to this TODO comment.
+- `external/io/workspace/doc.go:8` — Complete the task associated to this TODO comment.
+- `external/io/workspace/service.go:234` — Complete the task associated to this TODO comment.
+- `external/io/workspace/service.go:258` — Complete the task associated to this TODO comment.
+
+### yaml:LineLengthCheck — For readability and maintenance lines should not exceed a certain length (9×, code smell)
+
+- `external/config/external/go/tests/cli/assertcli/Taskfile.yaml:10` — line too long (88 > 80 characters) (line-length)
+- `external/config/external/go/tests/cli/imports/Taskfile.yaml:18` — line too long (104 > 80 characters) (line-length)
+- `external/config/external/go/tests/cli/naming/Taskfile.yaml:18` — line too long (81 > 80 characters) (line-length)
+- `external/config/external/io/tests/cli/io/Taskfile.yaml:28` — line too long (113 > 80 characters) (line-length)
+- `external/go/tests/cli/assertcli/Taskfile.yaml:10` — line too long (88 > 80 characters) (line-length)
+- `external/go/tests/cli/imports/Taskfile.yaml:18` — line too long (104 > 80 characters) (line-length)
+- `external/go/tests/cli/naming/Taskfile.yaml:18` — line too long (81 > 80 characters) (line-length)
+- `external/io/tests/cli/io/Taskfile.yaml:28` — line too long (113 > 80 characters) (line-length)
+- `external/ws/tests/cli/ws/Taskfile.yaml:43` — line too long (96 > 80 characters) (line-length)
+
