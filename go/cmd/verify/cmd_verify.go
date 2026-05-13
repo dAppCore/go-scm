@@ -11,6 +11,9 @@ import (
 	"dappco.re/go/scm/manifest"
 )
 
+const cmdVerifyCanonicalManifestBytes = "cmd.verify.canonicalManifestBytes"
+const cmdVerifyReadFile = "cmd.verify.readFile"
+
 const usage = "usage: scm verify [--root=DIR] [--in=core.json] [--manifest=FILE] [--key=BASE64_OR_FILE] [--key-file=FILE]"
 
 // Register attaches the verify command to the parent Core command tree.
@@ -110,18 +113,18 @@ func publicKey(app *core.Core, opts core.Options) (string, error)  /* v090-resul
 
 func canonicalManifestBytes(m *manifest.Manifest) ([]byte, error)  /* v090-result-boundary */ {
 	if m == nil {
-		return nil, core.E("cmd.verify.canonicalManifestBytes", "manifest is required", nil)
+		return nil, core.E(cmdVerifyCanonicalManifestBytes, "manifest is required", nil)
 	}
 	cp := *m
 	cp.Sign = ""
 	cp.SignKey = ""
 	r := core.JSONMarshal(cp)
 	if !r.OK {
-		return nil, resultError("cmd.verify.canonicalManifestBytes", "marshal manifest", r)
+		return nil, resultError(cmdVerifyCanonicalManifestBytes, "marshal manifest", r)
 	}
 	raw, ok := r.Value.([]byte)
 	if !ok {
-		return nil, core.E("cmd.verify.canonicalManifestBytes", "marshal returned invalid payload", nil)
+		return nil, core.E(cmdVerifyCanonicalManifestBytes, "marshal returned invalid payload", nil)
 	}
 	return raw, nil
 }
@@ -143,15 +146,15 @@ func failed(err error) core.Result {
 
 func readFile(app *core.Core, path string) ([]byte, error)  /* v090-result-boundary */ {
 	if app == nil {
-		return nil, core.E("cmd.verify.readFile", "core app is required", nil)
+		return nil, core.E(cmdVerifyReadFile, "core app is required", nil)
 	}
 	r := app.Fs().Read(path)
 	if !r.OK {
-		return nil, resultError("cmd.verify.readFile", "read file", r)
+		return nil, resultError(cmdVerifyReadFile, "read file", r)
 	}
 	raw, ok := r.Value.(string)
 	if !ok {
-		return nil, core.E("cmd.verify.readFile", "read returned invalid payload", nil)
+		return nil, core.E(cmdVerifyReadFile, "read returned invalid payload", nil)
 	}
 	return []byte(raw), nil
 }
