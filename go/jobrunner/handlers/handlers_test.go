@@ -219,9 +219,11 @@ func TestHandlers_NewTickParentHandler_Ugly(t *core.T) {
 }
 
 func TestHandlers_CompletionHandler_Name_Good(t *core.T) {
-	handler := NewCompletionHandler(nil)
+	client := testHandlersForgeClient(t)
+	handler := NewCompletionHandler(client)
 	got := handler.Name()
 	core.AssertEqual(t, "completion", got)
+	core.AssertEqual(t, client, handler.forge)
 }
 
 func TestHandlers_CompletionHandler_Name_Bad(t *core.T) {
@@ -274,10 +276,11 @@ func TestHandlers_DispatchHandler_Name_Ugly(t *core.T) {
 }
 
 func TestHandlers_EnableAutoMergeHandler_Name_Good(t *core.T) {
-	handler := NewEnableAutoMergeHandler(nil)
+	client := testHandlersForgeClient(t)
+	handler := NewEnableAutoMergeHandler(client)
 	got := handler.Name()
 	core.AssertEqual(t, sonarHandlersTestEnableAutoMerge, got)
-	core.AssertTrue(t, handler.Match(&jobrunner.PipelineSignal{PRState: "OPEN", CheckStatus: "SUCCESS", Mergeable: "MERGEABLE"}))
+	core.AssertEqual(t, client, handler.forge)
 }
 
 func TestHandlers_EnableAutoMergeHandler_Name_Bad(t *core.T) {
@@ -293,10 +296,11 @@ func TestHandlers_EnableAutoMergeHandler_Name_Ugly(t *core.T) {
 }
 
 func TestHandlers_PublishDraftHandler_Name_Good(t *core.T) {
-	handler := NewPublishDraftHandler(nil)
+	client := testHandlersForgeClient(t)
+	handler := NewPublishDraftHandler(client)
 	got := handler.Name()
 	core.AssertEqual(t, sonarHandlersTestPublishDraft, got)
-	core.AssertTrue(t, handler.Match(&jobrunner.PipelineSignal{PRState: "OPEN", IsDraft: true, CheckStatus: "SUCCESS"}))
+	core.AssertEqual(t, client, handler.forge)
 }
 
 func TestHandlers_PublishDraftHandler_Name_Bad(t *core.T) {
@@ -312,10 +316,11 @@ func TestHandlers_PublishDraftHandler_Name_Ugly(t *core.T) {
 }
 
 func TestHandlers_SendFixCommandHandler_Name_Good(t *core.T) {
-	handler := NewSendFixCommandHandler(nil)
+	client := testHandlersForgeClient(t)
+	handler := NewSendFixCommandHandler(client)
 	got := handler.Name()
 	core.AssertEqual(t, sonarHandlersTestSendFixCommand, got)
-	core.AssertTrue(t, handler.Match(&jobrunner.PipelineSignal{PRState: "OPEN", Mergeable: "CONFLICTING"}))
+	core.AssertEqual(t, client, handler.forge)
 }
 
 func TestHandlers_SendFixCommandHandler_Name_Bad(t *core.T) {
@@ -331,10 +336,11 @@ func TestHandlers_SendFixCommandHandler_Name_Ugly(t *core.T) {
 }
 
 func TestHandlers_TickParentHandler_Name_Good(t *core.T) {
-	handler := NewTickParentHandler(nil)
+	client := testHandlersForgeClient(t)
+	handler := NewTickParentHandler(client)
 	got := handler.Name()
 	core.AssertEqual(t, sonarHandlersTestTickParent, got)
-	core.AssertTrue(t, handler.Match(&jobrunner.PipelineSignal{PRState: "MERGED"}))
+	core.AssertEqual(t, client, handler.forge)
 }
 
 func TestHandlers_TickParentHandler_Name_Bad(t *core.T) {
