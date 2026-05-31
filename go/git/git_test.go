@@ -102,7 +102,7 @@ func TestGit_GitError_Error_Good(t *core.T) {
 func TestGit_GitError_Error_Bad(t *core.T) {
 	err := (&GitError{Err: core.E("test", "failed", nil)}).Error()
 	core.AssertEqual(
-		t, "failed", err,
+		t, "test: failed", err,
 	)
 }
 
