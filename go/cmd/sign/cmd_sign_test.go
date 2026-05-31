@@ -5,7 +5,8 @@ package sign
 import (
 	"crypto/ed25519"
 	"encoding/base64"
-	cli "dappco.re/go/cli/pkg/cli"
+	"io"
+	"os"
 	"testing"
 
 	core "dappco.re/go"
@@ -82,13 +83,29 @@ func TestSignWritesSignature(t *testing.T) {
 	}
 }
 
+// captureStdout redirects the process stdout for the duration of fn and
+// returns what was written. The sign command emits via core.Print(nil,
+// ...), which targets core.Stdout() (os.Stdout) directly, so the capture
+// has to swap the OS-level stream rather than a cli writer.
 func captureStdout(t *testing.T, fn func()) string {
 	t.Helper()
-	out := core.NewBuilder()
-	cli.SetStdout(out)
-	defer cli.SetStdout(nil)
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("pipe: %v", err)
+	}
+	saved := os.Stdout
+	os.Stdout = w
+	defer func() { os.Stdout = saved }()
+
 	fn()
-	return out.String()
+
+	_ = w.Close()
+	os.Stdout = saved
+	data, err := io.ReadAll(r)
+	if err != nil {
+		t.Fatalf("read captured stdout: %v", err)
+	}
+	return string(data)
 }
 
 func TestCmdSign_Register_Good(t *core.T) {
