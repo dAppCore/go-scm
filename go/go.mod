@@ -5,7 +5,7 @@ go 1.26.2
 require (
 	code.gitea.io/sdk/gitea v0.24.1
 	codeberg.org/forgejo/go-sdk v0.0.0
-	dappco.re/go v0.10.3
+	dappco.re/go v0.10.4
 	dappco.re/go/config v0.3.0
 	dappco.re/go/io v0.9.0
 	dappco.re/go/ws v0.5.0
