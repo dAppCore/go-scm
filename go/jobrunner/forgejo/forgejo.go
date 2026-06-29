@@ -4,13 +4,12 @@ package forgejo
 
 import (
 	"context"
-	`fmt`
 	"regexp"
 	"strconv"
-	`strings`
 	"time"
 
 	forgejo "codeberg.org/forgejo/go-sdk/forgejo"
+	core "dappco.re/go"
 	coreforge "dappco.re/go/scm/forge"
 	"dappco.re/go/scm/jobrunner"
 )
@@ -68,7 +67,7 @@ func (s *ForgejoSource) pollRepo(ctx context.Context, repoRef string) ([]*jobrun
 }
 
 func (s *ForgejoSource) signalsForEpic(ctx context.Context, owner, repo string, epic *forgejo.Issue) []*jobrunner.PipelineSignal {
-	if epic == nil || strings.TrimSpace(epic.Body) == "" {
+	if epic == nil || core.Trim(epic.Body) == "" {
 		return nil
 	}
 	childNumbers := parseChildIssueNumbers(epic.Body)
@@ -92,7 +91,7 @@ func (s *ForgejoSource) Report(ctx context.Context, result *jobrunner.ActionResu
 	if s == nil || s.forge == nil || result == nil {
 		return nil
 	}
-	body := fmt.Sprintf(
+	body := core.Sprintf(
 		"Action `%s` finished.\n\n- Success: `%t`\n- Error: `%s`\n- Cycle: `%d`\n- Duration: `%s`",
 		result.Action,
 		result.Success,
@@ -124,7 +123,7 @@ func (s *ForgejoSource) signalForChild(ctx context.Context, owner, repo string, 
 		if review == nil {
 			continue
 		}
-		if strings.EqualFold(string(review.State), "REQUEST_CHANGES") {
+		if core.Lower(string(review.State)) == "request_changes" {
 			requestChanges++
 		}
 		if review.Submitted.After(lastReviewAt) {
@@ -166,14 +165,14 @@ func (s *ForgejoSource) signalForChild(ctx context.Context, owner, repo string, 
 }
 
 func splitRepoRef(ref string) (owner, repo string, err error)  /* v090-result-boundary */ {
-	parts := strings.Split(ref, "/")
+	parts := core.Split(ref, "/")
 	if len(parts) != 2 {
-		return "", "", fmt.Errorf("jobrunner.forgejo: invalid repo reference %q", ref)
+		return "", "", core.E("jobrunner.forgejo", core.Sprintf("invalid repo reference %q", ref), nil)
 	}
-	owner = strings.TrimSpace(parts[0])
-	repo = strings.TrimSpace(parts[1])
+	owner = core.Trim(parts[0])
+	repo = core.Trim(parts[1])
 	if owner == "" || repo == "" {
-		return "", "", fmt.Errorf("jobrunner.forgejo: invalid repo reference %q", ref)
+		return "", "", core.E("jobrunner.forgejo", core.Sprintf("invalid repo reference %q", ref), nil)
 	}
 	return owner, repo, nil
 }
@@ -181,7 +180,7 @@ func splitRepoRef(ref string) (owner, repo string, err error)  /* v090-result-bo
 var childCheckboxRE = regexp.MustCompile(`(?mi)^\s*[-*]\s*\[\s*\]\s*(?:#|issue\s*)?(\d+)\b`)
 
 func parseChildIssueNumbers(body string) []int64 {
-	if strings.TrimSpace(body) == "" {
+	if core.Trim(body) == "" {
 		return nil
 	}
 	matches := childCheckboxRE.FindAllStringSubmatch(body, -1)
@@ -214,13 +213,13 @@ func pullState(pr *forgejo.PullRequest) string {
 	if pr.HasMerged {
 		return "MERGED"
 	}
-	switch strings.ToLower(string(pr.State)) {
+	switch core.Lower(string(pr.State)) {
 	case "open":
 		return "OPEN"
 	case "closed":
 		return "CLOSED"
 	default:
-		return strings.ToUpper(string(pr.State))
+		return core.Upper(string(pr.State))
 	}
 }
 
@@ -238,14 +237,14 @@ func mergeableState(pr *forgejo.PullRequest) string {
 }
 
 func (s *ForgejoSource) combinedStatusState(owner, repo, ref string) string {
-	if strings.TrimSpace(ref) == "" {
+	if core.Trim(ref) == "" {
 		return "UNKNOWN"
 	}
 	status, err := s.forge.GetCombinedStatus(owner, repo, ref)
 	if err != nil || status == nil {
 		return "UNKNOWN"
 	}
-	switch strings.ToLower(string(status.State)) {
+	switch core.Lower(string(status.State)) {
 	case "success":
 		return "SUCCESS"
 	case "failure":

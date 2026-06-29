@@ -5,8 +5,8 @@ package forge
 import (
 	// Note: iter.Seq2 is retained because the forge client exposes lazy paginated iterators directly.
 	"iter"
-	// Note: strings helpers are retained for label de-duplication and case-insensitive matching.
-	`strings`
+
+	core "dappco.re/go"
 
 	"codeberg.org/forgejo/go-sdk/forgejo"
 )
@@ -57,7 +57,7 @@ func (c *Client) ListOrgLabels(org string) ([]*forgejo.Label, error)  /* v090-re
 
 func appendUniqueLabels(all []*forgejo.Label, seen map[string]struct{}, labels []*forgejo.Label) []*forgejo.Label {
 	for _, label := range labels {
-		key := strings.ToLower(label.Name)
+		key := core.Lower(label.Name)
 		if _, ok := seen[key]; ok {
 			continue
 		}
@@ -89,7 +89,7 @@ func (c *Client) yieldRepoLabels(yield func(*forgejo.Label, error) bool, seen ma
 		return yield(nil, err)
 	}
 	for _, label := range labels {
-		key := strings.ToLower(label.Name)
+		key := core.Lower(label.Name)
 		if _, ok := seen[key]; ok {
 			continue
 		}
@@ -107,7 +107,7 @@ func (c *Client) GetLabelByName(owner, repo, name string) (*forgejo.Label, error
 		return nil, err
 	}
 	for _, label := range labels {
-		if strings.EqualFold(label.Name, name) {
+		if core.Lower(label.Name) == core.Lower(name) {
 			return label, nil
 		}
 	}

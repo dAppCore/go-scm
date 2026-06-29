@@ -4,8 +4,6 @@ package scm
 
 import (
 	"context"
-	`os`
-	`path/filepath`
 	"testing"
 
 	core "dappco.re/go"
@@ -44,9 +42,9 @@ func TestScm_NewCoreService_Bad(t *testing.T) {
 }
 
 func TestScm_NewCoreService_Ugly(t *testing.T) {
-	registryPath := filepath.Join(t.TempDir(), "repos.yaml")
-	if err := os.WriteFile(registryPath, []byte("repos: ["), 0o600); err != nil {
-		t.Fatalf("write malformed registry: %v", err)
+	registryPath := core.PathJoin(t.TempDir(), "repos.yaml")
+	if r := core.WriteFile(registryPath, []byte("repos: ["), 0o600); !r.OK {
+		t.Fatalf("write malformed registry: %v", r.Value)
 	}
 
 	c := core.New(core.WithService(NewCoreService(Options{RegistryPath: registryPath})))

@@ -3,8 +3,6 @@
 package forge
 
 import (
-	// Note: bytes.NewReader is retained for constructing the small PATCH payload body.
-	`bytes`
 	// Note: iter.Seq2 is retained because the forge client exposes lazy paginated iterators directly.
 	"iter"
 	// Note: net/http is retained for the raw PATCH endpoint not covered by the Forgejo SDK.
@@ -14,6 +12,7 @@ import (
 	// Note: strconv is retained for bool/int path and JSON literal formatting in the raw PATCH call.
 	"strconv"
 
+	core "dappco.re/go"
 	"codeberg.org/forgejo/go-sdk/forgejo"
 )
 
@@ -42,7 +41,7 @@ func (c *Client) SetPRDraft(owner, repo string, index int64, draft bool) error  
 	if err != nil {
 		return err
 	}
-	req, err := http.NewRequest(http.MethodPatch, path, bytes.NewReader(payload))
+	req, err := http.NewRequest(http.MethodPatch, path, core.NewBufferReader(payload))
 	if err != nil {
 		return err
 	}

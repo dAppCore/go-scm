@@ -6,9 +6,7 @@ import (
 	"crypto/ed25519"
 	"encoding/base64"
 	"io"
-	`os`
-	`path/filepath`
-	`strings`
+	"os"
 	"testing"
 
 	core "dappco.re/go"
@@ -27,7 +25,7 @@ func TestRegisterHelp(t *testing.T) {
 		}
 	})
 
-	if !strings.Contains(output, "usage: scm verify") {
+	if !core.Contains(output, "usage: scm verify") {
 		t.Fatalf("expected verify usage, got %q", output)
 	}
 }
@@ -52,8 +50,8 @@ func TestVerifySignedCoreJSON(t *testing.T) {
 	if err != nil {
 		t.Fatalf("marshal manifest: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(root, "core.json"), raw, 0o600); err != nil {
-		t.Fatalf("write core.json: %v", err)
+	if r := core.WriteFile(core.PathJoin(root, "core.json"), raw, 0o600); !r.OK {
+		t.Fatalf("write core.json: %v", r.Error())
 	}
 
 	app := core.New(core.WithOption("name", "scm"))
@@ -66,33 +64,34 @@ func TestVerifySignedCoreJSON(t *testing.T) {
 		}
 	})
 
-	if !strings.Contains(output, "verified") {
+	if !core.Contains(output, "verified") {
 		t.Fatalf("expected verification output, got %q", output)
 	}
 }
 
+// captureStdout redirects the process stdout for the duration of fn and
+// returns what was written. The verify command emits via core.Print(nil,
+// ...), which targets core.Stdout() (os.Stdout) directly, so the capture
+// has to swap the OS-level stream rather than a cli writer.
 func captureStdout(t *testing.T, fn func()) string {
 	t.Helper()
-
-	old := os.Stdout
 	r, w, err := os.Pipe()
 	if err != nil {
-		t.Fatalf("pipe stdout: %v", err)
+		t.Fatalf("pipe: %v", err)
 	}
+	saved := os.Stdout
 	os.Stdout = w
-	defer func() {
-		os.Stdout = old
-	}()
+	defer func() { os.Stdout = saved }()
 
 	fn()
-	if err := w.Close(); err != nil {
-		t.Fatalf("close stdout pipe: %v", err)
-	}
-	out, err := io.ReadAll(r)
+
+	_ = w.Close()
+	os.Stdout = saved
+	data, err := io.ReadAll(r)
 	if err != nil {
-		t.Fatalf("read stdout: %v", err)
+		t.Fatalf("read captured stdout: %v", err)
 	}
-	return string(out)
+	return string(data)
 }
 
 func TestCmdVerify_Register_Good(t *core.T) {

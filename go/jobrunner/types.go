@@ -4,8 +4,9 @@ package jobrunner
 
 import (
 	"context"
-	`encoding/json`
 	"time"
+
+	core "dappco.re/go"
 )
 
 // ActionResult carries the outcome of a handler execution.
@@ -40,7 +41,7 @@ func (a ActionResult) MarshalJSON() ([]byte, error)  /* v090-result-boundary */ 
 		Cycle       int       `json:"cycle"`
 	}
 
-	return json.Marshal(alias{
+	r := core.JSONMarshal(alias{
 		Action:      a.Action,
 		RepoOwner:   a.RepoOwner,
 		RepoName:    a.RepoName,
@@ -53,6 +54,12 @@ func (a ActionResult) MarshalJSON() ([]byte, error)  /* v090-result-boundary */ 
 		DurationMs:  a.Duration.Milliseconds(),
 		Cycle:       a.Cycle,
 	})
+	if !r.OK {
+		err, _ := r.Value.(error)
+		return nil, err
+	}
+	data, _ := r.Value.([]byte)
+	return data, nil
 }
 
 // UnmarshalJSON decodes Duration from milliseconds in the JSON form.
@@ -72,7 +79,8 @@ func (a *ActionResult) UnmarshalJSON(data []byte) error  /* v090-result-boundary
 	}
 
 	var out alias
-	if err := json.Unmarshal(data, &out); err != nil {
+	if r := core.JSONUnmarshal(data, &out); !r.OK {
+		err, _ := r.Value.(error)
 		return err
 	}
 

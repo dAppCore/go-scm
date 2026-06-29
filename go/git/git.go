@@ -5,11 +5,10 @@ package git
 import (
 	"context"
 	"iter"
-	// Note: AX-6 — Git operations intentionally spawn the system git binary.
-	`os/exec`
 	"strconv"
 
 	core "dappco.re/go"
+	process "dappco.re/go/process"
 )
 
 type GitError struct {
@@ -86,15 +85,15 @@ func runGit(ctx context.Context, path string, args ...string) ([]byte, []byte, e
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	cmd := exec.CommandContext(ctx, "git", append([]string{"-C", path}, args...)...)
-	stdout, stderr := core.NewBuilder(), core.NewBuilder()
-	cmd.Stdout = stdout
-	cmd.Stderr = stderr
-	err := cmd.Run()
-	if err != nil {
-		return []byte(stdout.String()), []byte(stderr.String()), &GitError{Err: err, Stderr: stderr.String()}
+	r := process.RunWithOptions(ctx, process.RunOptions{
+		Command: "git",
+		Args:    append([]string{"-C", path}, args...),
+	})
+	output, _ := r.Value.(string)
+	if !r.OK {
+		return []byte(output), []byte(output), &GitError{Err: r.Value.(error), Stderr: output}
 	}
-	return []byte(stdout.String()), []byte(stderr.String()), nil
+	return []byte(output), nil, nil
 }
 
 func Pull(ctx context.Context, path string) error  /* v090-result-boundary */ {

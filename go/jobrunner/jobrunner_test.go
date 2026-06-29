@@ -4,10 +4,6 @@ package jobrunner
 
 import (
 	"context"
-	`encoding/json`
-	`errors`
-	`os`
-	`path/filepath`
 	"time"
 
 	core "dappco.re/go"
@@ -168,8 +164,10 @@ func TestJobrunner_Journal_Append_Good(t *core.T) {
 	result := &ActionResult{Action: "dispatch", RepoOwner: "core", RepoName: sonarJobrunnerTestGoScm, Timestamp: time.Date(2026, 4, 15, 8, 0, 0, 0, time.UTC), Success: true}
 	err = journal.Append(&PipelineSignal{RepoOwner: "core", RepoName: sonarJobrunnerTestGoScm}, result)
 	core.AssertNoError(t, err)
-	_, statErr := os.Stat(filepath.Join(journal.baseDir, "2026", "04", "15.jsonl"))
-	core.AssertNoError(t, statErr)
+	statResult := core.Stat(core.PathJoin(journal.baseDir, "2026", "04", "15.jsonl"))
+	if !statResult.OK {
+		core.AssertNoError(t, statResult.Value.(error))
+	}
 }
 
 func TestJobrunner_Journal_Append_Bad(t *core.T) {
@@ -310,7 +308,7 @@ func TestJobrunner_Poller_RunOnce_Good(t *core.T) {
 }
 
 func TestJobrunner_Poller_RunOnce_Bad(t *core.T) {
-	sourceErr := errors.New("poll failed")
+	sourceErr := core.E("test", "poll failed", nil)
 	source := &ax7Source{name: "source", pollErr: sourceErr}
 	poller := NewPoller(PollerConfig{Sources: []JobSource{source}})
 	err := poller.RunOnce(context.Background())
@@ -353,6 +351,8 @@ func TestJobrunner_ActionResult_JSONRoundTrip_Good(t *core.T) {
 	raw, err := original.MarshalJSON()
 	core.RequireNoError(t, err)
 	var decoded map[string]any
-	core.RequireNoError(t, json.Unmarshal(raw, &decoded))
+	if r := core.JSONUnmarshal(raw, &decoded); !r.OK {
+		core.RequireNoError(t, r.Value.(error))
+	}
 	core.AssertEqual(t, float64(2000), decoded["duration_ms"])
 }

@@ -4,16 +4,23 @@ package collect
 
 import (
 	"context"
-	`errors`
 	"math"
 	"net/http"
-	`os`
-	`path/filepath`
 	"time"
 
 	core "dappco.re/go"
 	coreio "dappco.re/go/io"
 )
+
+// requireR fails the test when a core.Result reports failure.
+//
+//	requireR(t, core.WriteFile(p, data, 0o700))
+func requireR(t *core.T, r core.Result) {
+	t.Helper()
+	if !r.OK {
+		t.Fatal(r.Error())
+	}
+}
 
 const (
 	sonarCollectTestStateJson = "state.json"
@@ -43,9 +50,9 @@ func testCollectConfig() *Config {
 
 func testFakeGH(t *core.T, body string) {
 	dir := t.TempDir()
-	path := filepath.Join(dir, "gh")
+	path := core.PathJoin(dir, "gh")
 	script := "#!/bin/sh\nprintf '%s\\n' '" + body + "'\n"
-	core.RequireNoError(t, os.WriteFile(path, []byte(script), 0o700))
+	requireR(t, core.WriteFile(path, []byte(script), 0o700))
 	t.Setenv("PATH", dir)
 }
 
@@ -249,7 +256,7 @@ func TestCollect_Dispatcher_EmitError_Good(t *core.T) {
 	dispatcher := NewDispatcher()
 	var got Event
 	dispatcher.On(EventError, func(event Event) { got = event })
-	dispatcher.EmitError("github", "error", errors.New("boom"))
+	dispatcher.EmitError("github", "error", core.E("collect.test", "boom", nil))
 	core.AssertEqual(t, EventError, got.Type)
 	core.AssertNotNil(t, got.Data)
 }
@@ -804,7 +811,7 @@ func TestCollect_BitcoinTalkCollectorWithFetcher_Collect_Ugly(t *core.T) {
 	collector := &BitcoinTalkCollectorWithFetcher{
 		BitcoinTalkCollector: BitcoinTalkCollector{TopicID: "1", Pages: 1},
 		Fetcher: func(context.Context, string) ([]btPost, error) {
-			return nil, errors.New("fetch failed")
+			return nil, core.E("collect.test", "fetch failed", nil)
 		},
 	}
 	result, err := collector.Collect(context.Background(), testCollectConfig())

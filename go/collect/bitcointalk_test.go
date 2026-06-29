@@ -3,10 +3,10 @@
 package collect
 
 import (
-	// Note: strings.Contains is retained for assertions over parsed Markdown/text output.
-	`strings`
 	// Note: testing is the standard Go test harness.
 	"testing"
+
+	core "dappco.re/go"
 )
 
 func TestParsePostsFromHTMLParsesNestedPostBlocks(t *testing.T) {
@@ -39,7 +39,7 @@ func TestParsePostsFromHTMLParsesNestedPostBlocks(t *testing.T) {
 	if posts[0].Number != 1 || posts[0].Author != "satoshi" || posts[0].Date != "2009-01-03" {
 		t.Fatalf("unexpected first post: %#v", posts[0])
 	}
-	if !strings.Contains(posts[0].Content, "Hello") || !strings.Contains(posts[0].Content, "Bitcoin") || !strings.Contains(posts[0].Content, "link") {
+	if !core.Contains(posts[0].Content, "Hello") || !core.Contains(posts[0].Content, "Bitcoin") || !core.Contains(posts[0].Content, "link") {
 		t.Fatalf("unexpected first post content: %q", posts[0].Content)
 	}
 	if posts[1].Number != 2 || posts[1].Author != "hal" || posts[1].Date != "2009-01-12" {

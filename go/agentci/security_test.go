@@ -643,3 +643,36 @@ func TestSecurity_MaskToken_Ugly(t *testing.T) {
 		t.Fatal(target)
 	}
 }
+
+func TestSecurity_SecureSSHArgs_Good(t *testing.T) {
+	subject := SecureSSHArgs
+	if subject == nil {
+		t.FailNow()
+	}
+	args := SecureSSHArgs("user@host", "echo hi")
+	if len(args) < 6 {
+		t.Fatalf("expected ssh args, got %v", args)
+	}
+}
+
+func TestSecurity_SecureSSHArgs_Bad(t *testing.T) {
+	subject := SecureSSHArgs
+	if subject == nil {
+		t.FailNow()
+	}
+	args := SecureSSHArgs("", "")
+	if len(args) == 0 {
+		t.FailNow()
+	}
+}
+
+func TestSecurity_SecureSSHArgs_Ugly(t *testing.T) {
+	subject := SecureSSHArgs
+	if subject == nil {
+		t.FailNow()
+	}
+	args := SecureSSHArgs("host-with-special!@#", "cmd; with; special")
+	if len(args) < 6 {
+		t.FailNow()
+	}
+}

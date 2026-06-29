@@ -3,8 +3,6 @@
 package collect
 
 import (
-	// Note: bytes.Buffer is retained for text rendering and Markdown assembly.
-	`bytes`
 	// Note: context.Context is retained as the collector and fetcher cancellation contract.
 	"context"
 	// Note: io.ReadAll is retained for reading HTTP response bodies.
@@ -391,7 +389,7 @@ func renderTextFragment(node *html.Node) string {
 	if node == nil {
 		return ""
 	}
-	var buf bytes.Buffer
+	var buf core.Buffer
 	for child := node.FirstChild; child != nil; child = child.NextSibling {
 		if err := html.Render(&buf, child); err != nil {
 			return textContent(node)

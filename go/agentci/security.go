@@ -190,13 +190,23 @@ func SecureSSHCommandContext(ctx context.Context, host string, remoteCmd string)
 		ctx = context.Background()
 	}
 
-	return exec.CommandContext(ctx, "ssh",
+	return exec.CommandContext(ctx, "ssh", SecureSSHArgs(host, remoteCmd)...)
+}
+
+// SecureSSHArgs returns the ssh command-line args (without the leading
+// "ssh") for the strict-host / batch / connect-timeout shape. Use with
+// process.RunWithOptions to spawn the SSH transfer without a direct
+// os/exec dependency.
+//
+// Usage: process.RunWithOptions(ctx, process.RunOptions{Command: "ssh", Args: agentci.SecureSSHArgs(host, cmd)})
+func SecureSSHArgs(host string, remoteCmd string) []string {
+	return []string{
 		"-o", "StrictHostKeyChecking=yes",
 		"-o", "BatchMode=yes",
 		"-o", "ConnectTimeout=10",
 		host,
 		remoteCmd,
-	)
+	}
 }
 
 // MaskToken returns a masked version of a token for safe logging.

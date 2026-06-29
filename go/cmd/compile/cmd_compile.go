@@ -8,6 +8,8 @@ import (
 	"dappco.re/go/scm/manifest"
 )
 
+const cmdCompileReadFile = "cmd.compile.readFile"
+
 const usage = "usage: scm compile [--root=DIR] [--manifest=FILE] [--out=FILE] [--commit=SHA] [--tag=TAG] [--built-by=NAME] [--targets=GOOS/GOARCH,...] [--checksums=FILE] [--sha256=HEX]"
 
 // Register attaches the compile command to the parent Core command tree.
@@ -99,15 +101,15 @@ func failed(err error) core.Result {
 
 func readFile(app *core.Core, path string) ([]byte, error)  /* v090-result-boundary */ {
 	if app == nil {
-		return nil, core.E("cmd.compile.readFile", "core app is required", nil)
+		return nil, core.E(cmdCompileReadFile, "core app is required", nil)
 	}
 	r := app.Fs().Read(path)
 	if !r.OK {
-		return nil, resultError("cmd.compile.readFile", "read file", r)
+		return nil, resultError(cmdCompileReadFile, "read file", r)
 	}
 	raw, ok := r.Value.(string)
 	if !ok {
-		return nil, core.E("cmd.compile.readFile", "read returned invalid payload", nil)
+		return nil, core.E(cmdCompileReadFile, "read returned invalid payload", nil)
 	}
 	return []byte(raw), nil
 }

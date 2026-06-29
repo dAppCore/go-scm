@@ -18,3 +18,11 @@
 	path = external/log
 	url = https://github.com/dappcore/go-log.git
 	branch = dev
+[submodule "external/cli"]
+	path = external/cli
+	url = https://github.com/dappcore/cli.git
+	branch = dev
+[submodule "external/process"]
+	path = external/process
+	url = https://github.com/dappcore/go-process.git
+	branch = dev

@@ -3,18 +3,17 @@
 package repos
 
 import (
-	`os`
-	`path/filepath`
 	"testing"
 
+	core "dappco.re/go"
 	coreio "dappco.re/go/io"
 )
 
 func TestFindRegistryHonorsCORE_REPOS(t *testing.T) {
 	dir := t.TempDir()
-	path := filepath.Join(dir, "custom-repos.yaml")
-	if err := os.WriteFile(path, []byte("version: 1\nrepos: {}\n"), 0o600); err != nil {
-		t.Fatalf("write registry: %v", err)
+	path := core.PathJoin(dir, "custom-repos.yaml")
+	if r := core.WriteFile(path, []byte("version: 1\nrepos: {}\n"), 0o600); !r.OK {
+		t.Fatalf("write registry: %v", r.Value)
 	}
 	t.Setenv("CORE_REPOS", path)
 
@@ -29,7 +28,7 @@ func TestFindRegistryHonorsCORE_REPOS(t *testing.T) {
 
 func TestLoadRegistryPreservesMediumForSave(t *testing.T) {
 	medium := coreio.NewMockMedium()
-	path := filepath.Join(t.TempDir(), "repos.yaml")
+	path := core.PathJoin(t.TempDir(), "repos.yaml")
 	if err := medium.Write(path, "version: 1\nrepos:\n  demo:\n    path: demo\n"); err != nil {
 		t.Fatalf("seed registry: %v", err)
 	}

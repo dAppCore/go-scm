@@ -3,13 +3,7 @@
 package gitea
 
 import (
-	// Note: errors.New is retained for stable config validation errors.
-	`errors`
-	// Note: os is retained for environment and home-directory config discovery before a Core runtime exists.
-	`os`
-	// Note: filepath is retained for OS-specific config file paths.
-	`path/filepath`
-
+	core "dappco.re/go"
 	"gopkg.in/yaml.v3"
 )
 
@@ -22,10 +16,10 @@ const (
 func ResolveConfig(flagURL, flagToken string) (url, token string, err error)  /* v090-result-boundary */ {
 	url, token = loadGiteaConfigValues()
 
-	if v := os.Getenv("GITEA_URL"); v != "" {
+	if v := core.Getenv("GITEA_URL"); v != "" {
 		url = v
 	}
-	if v := os.Getenv("GITEA_TOKEN"); v != "" {
+	if v := core.Getenv("GITEA_TOKEN"); v != "" {
 		token = v
 	}
 	if flagURL != "" {
@@ -41,16 +35,16 @@ func ResolveConfig(flagURL, flagToken string) (url, token string, err error)  /*
 }
 
 func loadGiteaConfigValues() (string, string) {
-	home, err := os.UserHomeDir()
-	if err != nil {
+	homeR := core.UserHomeDir()
+	if !homeR.OK {
 		return "", ""
 	}
-	raw, err := os.ReadFile(filepath.Join(home, ".core", "config.yaml"))
-	if err != nil {
+	rawR := core.ReadFile(core.PathJoin(homeR.Value.(string), ".core", "config.yaml"))
+	if !rawR.OK {
 		return "", ""
 	}
 	var data map[string]any
-	if err := yaml.Unmarshal(raw, &data); err != nil {
+	if err := yaml.Unmarshal(rawR.Value.([]byte), &data); err != nil {
 		return "", ""
 	}
 	giteaCfg, _ := data["gitea"].(map[string]any)
@@ -65,20 +59,20 @@ func NewFromConfig(flagURL, flagToken string) (*Client, error)  /* v090-result-b
 		return nil, err
 	}
 	if token == "" {
-		return nil, errors.New("gitea.NewFromConfig: no API token configured")
+		return nil, core.E("gitea.NewFromConfig", "no API token configured", nil)
 	}
 	return New(url, token)
 }
 
 func SaveConfig(url, token string) error  /* v090-result-boundary */ {
 	if url == "" && token == "" {
-		return errors.New("gitea.SaveConfig: url or token required")
+		return core.E("gitea.SaveConfig", "url or token required", nil)
 	}
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return err
+	homeR := core.UserHomeDir()
+	if !homeR.OK {
+		return homeR.Value.(error)
 	}
-	path := filepath.Join(home, ".core", "config.yaml")
+	path := core.PathJoin(homeR.Value.(string), ".core", "config.yaml")
 	payload := map[string]any{"gitea": map[string]any{}}
 	if url != "" {
 		payload["gitea"].(map[string]any)["url"] = url
@@ -90,8 +84,11 @@ func SaveConfig(url, token string) error  /* v090-result-boundary */ {
 	if err != nil {
 		return err
 	}
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		return err
+	if r := core.MkdirAll(core.PathDir(path), 0o755); !r.OK {
+		return r.Value.(error)
 	}
-	return os.WriteFile(path, raw, 0o600)
+	if r := core.WriteFile(path, raw, 0o600); !r.OK {
+		return r.Value.(error)
+	}
+	return nil
 }

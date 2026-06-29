@@ -1,0 +1,11 @@
+# .core/go.yaml — Go subtree marker for the Lethean canon.
+version: 1
+
+project:
+  name: go-scm
+  type: go
+
+go:
+  module: dappco.re/go/scm
+  subtree: go
+  go_version: "1.26.2"

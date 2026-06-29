@@ -4,9 +4,7 @@ package pkg
 
 import (
 	"io"
-	`os`
-	`path/filepath`
-	`strings`
+	"os"
 	"testing"
 
 	core "dappco.re/go"
@@ -25,22 +23,22 @@ func TestRegisterHelp(t *testing.T) {
 		}
 	})
 
-	if !strings.Contains(output, "usage: scm pkg") {
+	if !core.Contains(output, "usage: scm pkg") {
 		t.Fatalf("expected pkg usage, got %q", output)
 	}
 }
 
 func TestPkgWritesMarketplaceIndex(t *testing.T) {
 	root := t.TempDir()
-	if err := os.MkdirAll(filepath.Join(root, ".core"), 0o755); err != nil {
-		t.Fatalf("mkdir manifest dir: %v", err)
+	if r := core.MkdirAll(core.PathJoin(root, ".core"), 0o755); !r.OK {
+		t.Fatalf("mkdir manifest dir: %v", r.Error())
 	}
-	if err := os.WriteFile(filepath.Join(root, ".core", "manifest.yaml"), []byte(`code: demo
+	if r := core.WriteFile(core.PathJoin(root, ".core", "manifest.yaml"), []byte(`code: demo
 name: Demo
 version: 1.0.0
 modules: [provider]
-`), 0o600); err != nil {
-		t.Fatalf("write manifest: %v", err)
+`), 0o600); !r.OK {
+		t.Fatalf("write manifest: %v", r.Error())
 	}
 
 	app := core.New(core.WithOption("name", "scm"))
@@ -51,10 +49,11 @@ modules: [provider]
 		t.Fatalf("pkg failed: %v", result.Value)
 	}
 
-	raw, err := os.ReadFile(filepath.Join(root, "marketplace", "index.json"))
-	if err != nil {
-		t.Fatalf("read index: %v", err)
+	rawR := core.ReadFile(core.PathJoin(root, "marketplace", "index.json"))
+	if !rawR.OK {
+		t.Fatalf("read index: %v", rawR.Error())
 	}
+	raw := rawR.Value.([]byte)
 	idx, err := marketplace.ParseIndex(raw)
 	if err != nil {
 		t.Fatalf("parse index: %v", err)
@@ -67,28 +66,29 @@ modules: [provider]
 	}
 }
 
+// captureStdout redirects the process stdout for the duration of fn and
+// returns what was written. The pkg command emits via core.Print(nil,
+// ...), which targets core.Stdout() (os.Stdout) directly, so the capture
+// has to swap the OS-level stream rather than a cli writer.
 func captureStdout(t *testing.T, fn func()) string {
 	t.Helper()
-
-	old := os.Stdout
 	r, w, err := os.Pipe()
 	if err != nil {
-		t.Fatalf("pipe stdout: %v", err)
+		t.Fatalf("pipe: %v", err)
 	}
+	saved := os.Stdout
 	os.Stdout = w
-	defer func() {
-		os.Stdout = old
-	}()
+	defer func() { os.Stdout = saved }()
 
 	fn()
-	if err := w.Close(); err != nil {
-		t.Fatalf("close stdout pipe: %v", err)
-	}
-	out, err := io.ReadAll(r)
+
+	_ = w.Close()
+	os.Stdout = saved
+	data, err := io.ReadAll(r)
 	if err != nil {
-		t.Fatalf("read stdout: %v", err)
+		t.Fatalf("read captured stdout: %v", err)
 	}
-	return string(out)
+	return string(data)
 }
 
 func TestCmdPkg_Register_Good(t *core.T) {

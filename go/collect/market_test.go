@@ -5,11 +5,10 @@ package collect
 import (
 	// Note: context.Context is retained in tests to exercise collector public APIs.
 	"context"
-	// Note: strings.Contains is retained for assertions over generated Markdown.
-	`strings`
 	// Note: testing is the standard Go test harness.
 	"testing"
 
+	core "dappco.re/go"
 	coreio "dappco.re/go/io"
 )
 
@@ -33,10 +32,10 @@ func TestMarketCollectorIncludesHistoricalDetails(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected market output to be written")
 	}
-	if !strings.Contains(raw, "- Historical: true") {
+	if !core.Contains(raw, "- Historical: true") {
 		t.Fatalf("historical flag not written: %q", raw)
 	}
-	if !strings.Contains(raw, "- From date: 2024-01-01") {
+	if !core.Contains(raw, "- From date: 2024-01-01") {
 		t.Fatalf("from date not written: %q", raw)
 	}
 }

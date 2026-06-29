@@ -11,6 +11,9 @@ import (
 	"dappco.re/go/scm/marketplace"
 )
 
+const cmdPkgWriteIndex = "cmd.pkg.writeIndex"
+const cmdPkgReadFile = "cmd.pkg.readFile"
+
 const usage = "usage: scm pkg [--root=DIR] [--dir=DIR] [--dirs=DIR,DIR] [--out=marketplace/index.json] [--base-url=URL] [--org=ORG]"
 
 // Register attaches the pkg command to the parent Core command tree.
@@ -182,33 +185,33 @@ func failed(err error) core.Result {
 
 func writeIndex(app *core.Core, path string, idx *marketplace.Index) error  /* v090-result-boundary */ {
 	if idx == nil {
-		return core.E("cmd.pkg.writeIndex", "index is required", nil)
+		return core.E(cmdPkgWriteIndex, "index is required", nil)
 	}
 	r := core.JSONMarshalIndent(idx, "", "  ")
 	if !r.OK {
-		return resultError("cmd.pkg.writeIndex", "marshal index", r)
+		return resultError(cmdPkgWriteIndex, "marshal index", r)
 	}
 	raw, ok := r.Value.([]byte)
 	if !ok {
-		return core.E("cmd.pkg.writeIndex", "marshal returned invalid payload", nil)
+		return core.E(cmdPkgWriteIndex, "marshal returned invalid payload", nil)
 	}
 	if writeResult := app.Fs().WriteMode(path, string(raw), 0o600); !writeResult.OK {
-		return resultError("cmd.pkg.writeIndex", "write index", writeResult)
+		return resultError(cmdPkgWriteIndex, "write index", writeResult)
 	}
 	return nil
 }
 
 func readFile(app *core.Core, path string) ([]byte, error)  /* v090-result-boundary */ {
 	if app == nil {
-		return nil, core.E("cmd.pkg.readFile", "core app is required", nil)
+		return nil, core.E(cmdPkgReadFile, "core app is required", nil)
 	}
 	r := app.Fs().Read(path)
 	if !r.OK {
-		return nil, resultError("cmd.pkg.readFile", "read file", r)
+		return nil, resultError(cmdPkgReadFile, "read file", r)
 	}
 	raw, ok := r.Value.(string)
 	if !ok {
-		return nil, core.E("cmd.pkg.readFile", "read returned invalid payload", nil)
+		return nil, core.E(cmdPkgReadFile, "read returned invalid payload", nil)
 	}
 	return []byte(raw), nil
 }

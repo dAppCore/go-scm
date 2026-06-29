@@ -4,7 +4,6 @@ package agentci
 
 import (
 	"context"
-	`path/filepath`
 
 	core "dappco.re/go"
 	"dappco.re/go/config"
@@ -21,7 +20,7 @@ const (
 )
 
 func testAgentConfig(t *core.T) *config.Config {
-	r := config.New(config.WithPath(filepath.Join(t.TempDir(), "config.yaml")))
+	r := config.New(config.WithPath(core.PathJoin(t.TempDir(), "config.yaml")))
 	core.RequireNoError(t, configResultError(r))
 	return core.MustCast[*config.Config](r)
 }
@@ -345,7 +344,7 @@ func TestAgentci_ResolvePathWithinRoot_Good(t *core.T) {
 	name, path, err := ResolvePathWithinRoot(root, sonarAgentciTestAgentYaml)
 	core.AssertNoError(t, err)
 	core.AssertEqual(t, sonarAgentciTestAgentYaml, name)
-	core.AssertEqual(t, filepath.Join(root, sonarAgentciTestAgentYaml), path)
+	core.AssertEqual(t, core.PathJoin(root, sonarAgentciTestAgentYaml), path)
 }
 
 func TestAgentci_ResolvePathWithinRoot_Bad(t *core.T) {
@@ -423,13 +422,13 @@ func TestAgentci_EscapeShellArg_Ugly(t *core.T) {
 
 func TestAgentci_SecureSSHCommand_Good(t *core.T) {
 	cmd := SecureSSHCommand(sonarAgentciTestAgentLocal, sonarAgentciTestEchoReady)
-	core.AssertEqual(t, "ssh", filepath.Base(cmd.Path))
+	core.AssertEqual(t, "ssh", core.PathBase(cmd.Path))
 	core.AssertContains(t, cmd.Args, sonarAgentciTestAgentLocal)
 }
 
 func TestAgentci_SecureSSHCommand_Bad(t *core.T) {
 	cmd := SecureSSHCommand("", "")
-	core.AssertEqual(t, "ssh", filepath.Base(cmd.Path))
+	core.AssertEqual(t, "ssh", core.PathBase(cmd.Path))
 	core.AssertContains(t, cmd.Args, "")
 }
 
@@ -442,7 +441,7 @@ func TestAgentci_SecureSSHCommand_Ugly(t *core.T) {
 
 func TestAgentci_SecureSSHCommandContext_Good(t *core.T) {
 	cmd := SecureSSHCommandContext(context.Background(), sonarAgentciTestAgentLocal, sonarAgentciTestEchoReady)
-	core.AssertEqual(t, "ssh", filepath.Base(cmd.Path))
+	core.AssertEqual(t, "ssh", core.PathBase(cmd.Path))
 	core.AssertContains(t, cmd.Args, sonarAgentciTestEchoReady)
 }
 

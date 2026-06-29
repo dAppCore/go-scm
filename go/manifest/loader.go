@@ -5,7 +5,6 @@ package manifest
 import (
 	"crypto/ed25519" // intrinsic
 	"encoding/base64"
-	`errors`
 
 	core "dappco.re/go"
 	coreio "dappco.re/go/io"
@@ -14,7 +13,7 @@ import (
 
 func Load(medium coreio.Medium, root string) (*Manifest, error)  /* v090-result-boundary */ {
 	if medium == nil {
-		return nil, errors.New("manifest.Load: medium is required")
+		return nil, core.E("manifest.Load", "medium is required", nil)
 	}
 	raw, err := medium.Read(core.PathJoin(root, ".core", "manifest.yaml"))
 	if err != nil {
@@ -46,7 +45,7 @@ func LoadVerified(medium coreio.Medium, root string, pub ed25519.PublicKey) (*Ma
 
 func MarshalYAML(m *Manifest) ([]byte, error)  /* v090-result-boundary */ {
 	if m == nil {
-		return nil, errors.New("manifest.MarshalYAML: manifest is required")
+		return nil, core.E("manifest.MarshalYAML", "manifest is required", nil)
 	}
 	return yaml.Marshal(m)
 }

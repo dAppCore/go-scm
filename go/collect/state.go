@@ -3,8 +3,6 @@
 package collect
 
 import (
-	// Note: encoding/json is retained for persisted state compatibility; core.JSON helpers do not expose MarshalIndent or streaming behavior.
-	`encoding/json`
 	// Note: io/fs is retained for fs.ErrNotExist from the configured coreio medium.
 	"io/fs"
 	// Note: sync.Mutex protects the persisted state map and has no core equivalent.
@@ -99,7 +97,8 @@ func (s *State) Load() error  /* v090-result-boundary */ {
 		return core.E(sonarStateCollectStateLoad, "read", err)
 	}
 	var data map[string]*StateEntry
-	if err := json.Unmarshal([]byte(raw), &data); err != nil {
+	if r := core.JSONUnmarshal([]byte(raw), &data); !r.OK {
+		err, _ := r.Value.(error)
 		return core.E(sonarStateCollectStateLoad, "unmarshal", err)
 	}
 	s.mu.Lock()
@@ -121,10 +120,12 @@ func (s *State) Save() error  /* v090-result-boundary */ {
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	raw, err := json.MarshalIndent(s.entries, "", "  ")
-	if err != nil {
+	r := core.JSONMarshalIndent(s.entries, "", "  ")
+	if !r.OK {
+		err, _ := r.Value.(error)
 		return core.E(sonarStateCollectStateSave, "marshal", err)
 	}
+	raw, _ := r.Value.([]byte)
 	dir := core.PathDir(s.path)
 	if dir != "." {
 		if err := s.medium.EnsureDir(dir); err != nil {

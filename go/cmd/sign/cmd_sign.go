@@ -11,6 +11,9 @@ import (
 	"dappco.re/go/scm/manifest"
 )
 
+const cmdSignCanonicalManifestBytes = "cmd.sign.canonicalManifestBytes"
+const cmdSignReadFile = "cmd.sign.readFile"
+
 const usage = "usage: scm sign [--root=DIR] [--in=core.json] [--out=core.json] [--manifest=FILE] [--key=BASE64_OR_FILE] [--key-file=FILE]"
 
 // Register attaches the sign command to the parent Core command tree.
@@ -132,18 +135,18 @@ func privateKey(app *core.Core, opts core.Options) (ed25519.PrivateKey, error)  
 
 func canonicalManifestBytes(m *manifest.Manifest) ([]byte, error)  /* v090-result-boundary */ {
 	if m == nil {
-		return nil, core.E("cmd.sign.canonicalManifestBytes", "manifest is required", nil)
+		return nil, core.E(cmdSignCanonicalManifestBytes, "manifest is required", nil)
 	}
 	cp := *m
 	cp.Sign = ""
 	cp.SignKey = ""
 	r := core.JSONMarshal(cp)
 	if !r.OK {
-		return nil, resultError("cmd.sign.canonicalManifestBytes", "marshal manifest", r)
+		return nil, resultError(cmdSignCanonicalManifestBytes, "marshal manifest", r)
 	}
 	raw, ok := r.Value.([]byte)
 	if !ok {
-		return nil, core.E("cmd.sign.canonicalManifestBytes", "marshal returned invalid payload", nil)
+		return nil, core.E(cmdSignCanonicalManifestBytes, "marshal returned invalid payload", nil)
 	}
 	return raw, nil
 }
@@ -165,15 +168,15 @@ func failed(err error) core.Result {
 
 func readFile(app *core.Core, path string) ([]byte, error)  /* v090-result-boundary */ {
 	if app == nil {
-		return nil, core.E("cmd.sign.readFile", "core app is required", nil)
+		return nil, core.E(cmdSignReadFile, "core app is required", nil)
 	}
 	r := app.Fs().Read(path)
 	if !r.OK {
-		return nil, resultError("cmd.sign.readFile", "read file", r)
+		return nil, resultError(cmdSignReadFile, "read file", r)
 	}
 	raw, ok := r.Value.(string)
 	if !ok {
-		return nil, core.E("cmd.sign.readFile", "read returned invalid payload", nil)
+		return nil, core.E(cmdSignReadFile, "read returned invalid payload", nil)
 	}
 	return []byte(raw), nil
 }

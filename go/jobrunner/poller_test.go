@@ -4,10 +4,10 @@ package jobrunner
 
 import (
 	"context"
-	`os`
-	`path/filepath`
 	"testing"
 	"time"
+
+	core "dappco.re/go"
 )
 
 type stubSource struct {
@@ -100,9 +100,9 @@ func TestPollerRunOnceDispatchesAndReports(t *testing.T) {
 		t.Fatalf("expected source to report once, got %d", len(source.reports))
 	}
 
-	path := filepath.Join(journal.baseDir, "2026", "04", "15.jsonl")
-	if _, err := os.Stat(path); err != nil {
-		t.Fatalf("expected journal entry: %v", err)
+	path := core.PathJoin(journal.baseDir, "2026", "04", "15.jsonl")
+	if r := core.Stat(path); !r.OK {
+		t.Fatalf("expected journal entry: %v", r.Value)
 	}
 }
 
