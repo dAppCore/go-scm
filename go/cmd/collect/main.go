@@ -20,7 +20,7 @@ func main() {
 }
 
 func newApp() core.Result {
-	app := core.New(core.WithOption("name", "collect"))
+	app := core.New(core.WithOption("name", "collect"), core.WithCli())
 	app.App().Version = "dev"
 
 	if r := app.Command("github", core.Command{Action: github}); !r.OK {

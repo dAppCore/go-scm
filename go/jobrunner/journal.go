@@ -117,7 +117,7 @@ func (j *Journal) Append(signal *PipelineSignal, result *ActionResult) error  /*
 	if r := fs.EnsureDir(core.PathDir(filePath)); !r.OK {
 		return core.E(sonarJournalJobrunnerJournalAppend, "create directories", resultCause(r))
 	}
-	if !fs.Exists(filePath) {
+	if !fs.Exists(filePath).OK {
 		if r := fs.WriteMode(filePath, "", 0o600); !r.OK {
 			return core.E(sonarJournalJobrunnerJournalAppend, "create journal", resultCause(r))
 		}

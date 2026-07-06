@@ -5,19 +5,18 @@ go 1.26.2
 require (
 	code.gitea.io/sdk/gitea v0.24.1
 	codeberg.org/forgejo/go-sdk v0.0.0
-	dappco.re/go v0.10.4
+	dappco.re/go v0.11.0
 	dappco.re/go/config v0.3.0
-	dappco.re/go/io v0.9.0
-	dappco.re/go/ws v0.5.0
+	dappco.re/go/io v0.13.1
+	dappco.re/go/process v0.16.1
+	dappco.re/go/ws v0.7.1
 	github.com/gin-gonic/gin v1.12.0
 	golang.org/x/net v0.53.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
-	dappco.re/go/cli v0.10.0 // indirect
-	dappco.re/go/log v0.9.0 // indirect
-	dappco.re/go/process v0.14.0 // indirect
+	dappco.re/go/log v0.13.1 // indirect
 	github.com/42wim/httpsig v1.2.4 // indirect
 	github.com/bytedance/gopkg v0.1.3 // indirect
 	github.com/bytedance/sonic v1.15.0 // indirect
