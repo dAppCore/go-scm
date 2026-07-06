@@ -14,7 +14,7 @@ import (
 )
 
 func TestRegisterHelp(t *testing.T) {
-	app := core.New(core.WithOption("name", "scm"))
+	app := core.New(core.WithOption("name", "scm"), core.WithCli())
 	if result := Register(app); !result.OK {
 		t.Fatalf("register sign: %v", result.Value)
 	}
@@ -53,7 +53,7 @@ func TestSignWritesSignature(t *testing.T) {
 		t.Fatalf("write core.json: %v", r.Error())
 	}
 
-	app := core.New(core.WithOption("name", "scm"))
+	app := core.New(core.WithOption("name", "scm"), core.WithCli())
 	if result := Register(app); !result.OK {
 		t.Fatalf("register sign: %v", result.Value)
 	}

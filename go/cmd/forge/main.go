@@ -18,7 +18,7 @@ func main() {
 }
 
 func newApp() core.Result {
-	app := core.New(core.WithOption("name", "forge"))
+	app := core.New(core.WithOption("name", "forge"), core.WithCli())
 	app.App().Version = "dev"
 
 	if r := app.Command("auth", core.Command{Action: auth}); !r.OK {

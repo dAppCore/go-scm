@@ -12,7 +12,7 @@ import (
 )
 
 func TestRegisterHelp(t *testing.T) {
-	app := core.New(core.WithOption("name", "scm"))
+	app := core.New(core.WithOption("name", "scm"), core.WithCli())
 	if result := Register(app); !result.OK {
 		t.Fatalf("register pkg: %v", result.Value)
 	}
@@ -41,7 +41,7 @@ modules: [provider]
 		t.Fatalf("write manifest: %v", r.Error())
 	}
 
-	app := core.New(core.WithOption("name", "scm"))
+	app := core.New(core.WithOption("name", "scm"), core.WithCli())
 	if result := Register(app); !result.OK {
 		t.Fatalf("register pkg: %v", result.Value)
 	}
