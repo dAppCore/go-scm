@@ -8,7 +8,7 @@ import (
 
 	core "dappco.re/go"
 
-	"codeberg.org/forgejo/go-sdk/forgejo"
+	"dappco.re/go/scm/third_party/forgejo/forgejo"
 )
 
 func (c *Client) CreateRepoLabel(owner, repo string, opts forgejo.CreateLabelOption) (*forgejo.Label, error)  /* v090-result-boundary */ {

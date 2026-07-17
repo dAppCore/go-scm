@@ -8,10 +8,10 @@ import (
 
 	core "dappco.re/go"
 	process "dappco.re/go/process"
-	forgejo "codeberg.org/forgejo/go-sdk/forgejo"
 	"dappco.re/go/scm/agentci"
 	coreforge "dappco.re/go/scm/forge"
 	"dappco.re/go/scm/jobrunner"
+	forgejo "dappco.re/go/scm/third_party/forgejo/forgejo"
 )
 
 type CompletionHandler struct{ forge *coreforge.Client }

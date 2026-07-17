@@ -6,7 +6,7 @@ import (
 	// Note: iter.Seq2 is retained because the forge client exposes lazy paginated iterators directly.
 	"iter"
 
-	"codeberg.org/forgejo/go-sdk/forgejo"
+	"dappco.re/go/scm/third_party/forgejo/forgejo"
 )
 
 type ListIssuesOpts struct {

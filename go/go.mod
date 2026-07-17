@@ -4,7 +4,6 @@ go 1.26.2
 
 require (
 	code.gitea.io/sdk/gitea v0.24.1
-	codeberg.org/forgejo/go-sdk v0.0.0
 	dappco.re/go v0.11.0
 	dappco.re/go/config v0.18.0
 	dappco.re/go/io v0.15.1
@@ -67,5 +66,3 @@ require (
 	golang.org/x/text v0.36.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 )
-
-replace codeberg.org/forgejo/go-sdk => ./third_party/forgejo

@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	forgejo "codeberg.org/forgejo/go-sdk/forgejo"
 	core "dappco.re/go"
+	forgejo "dappco.re/go/scm/third_party/forgejo/forgejo"
 )
 
 const (

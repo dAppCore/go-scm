@@ -7,8 +7,8 @@ import (
 	"time"
 
 	gitea "code.gitea.io/sdk/gitea"
-	forgejo "codeberg.org/forgejo/go-sdk/forgejo"
 	core "dappco.re/go"
+	forgejo "dappco.re/go/scm/third_party/forgejo/forgejo"
 )
 
 func TestForgejo_splitRepoRef_Good(t *core.T) {

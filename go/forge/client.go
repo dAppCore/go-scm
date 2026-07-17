@@ -3,7 +3,7 @@
 package forge
 
 import (
-	"codeberg.org/forgejo/go-sdk/forgejo"
+	"dappco.re/go/scm/third_party/forgejo/forgejo"
 
 	core "dappco.re/go"
 )

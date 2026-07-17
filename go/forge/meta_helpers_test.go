@@ -3,8 +3,8 @@
 package forge
 
 import (
-	forgejo "codeberg.org/forgejo/go-sdk/forgejo"
 	core "dappco.re/go"
+	forgejo "dappco.re/go/scm/third_party/forgejo/forgejo"
 )
 
 func TestForge_hasNextForgePage_Good(t *core.T) {

@@ -8,10 +8,10 @@ import (
 	"strconv"
 	"time"
 
-	forgejo "codeberg.org/forgejo/go-sdk/forgejo"
 	core "dappco.re/go"
 	coreforge "dappco.re/go/scm/forge"
 	"dappco.re/go/scm/jobrunner"
+	forgejo "dappco.re/go/scm/third_party/forgejo/forgejo"
 )
 
 type Config struct {

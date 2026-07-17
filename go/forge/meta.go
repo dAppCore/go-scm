@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"code.gitea.io/sdk/gitea"
-	"codeberg.org/forgejo/go-sdk/forgejo"
+	"dappco.re/go/scm/third_party/forgejo/forgejo"
 )
 
 type Comment struct {
