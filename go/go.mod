@@ -6,8 +6,8 @@ require (
 	code.gitea.io/sdk/gitea v0.24.1
 	codeberg.org/forgejo/go-sdk v0.0.0
 	dappco.re/go v0.11.0
-	dappco.re/go/config v0.3.0
-	dappco.re/go/io v0.13.1
+	dappco.re/go/config v0.18.0
+	dappco.re/go/io v0.15.1
 	dappco.re/go/process v0.16.1
 	dappco.re/go/ws v0.7.1
 	github.com/gin-gonic/gin v1.12.0
@@ -65,7 +65,7 @@ require (
 	golang.org/x/crypto v0.50.0 // indirect
 	golang.org/x/sys v0.43.0 // indirect
 	golang.org/x/text v0.36.0 // indirect
-	google.golang.org/protobuf v1.36.10 // indirect
+	google.golang.org/protobuf v1.36.11 // indirect
 )
 
 replace codeberg.org/forgejo/go-sdk => ./third_party/forgejo
