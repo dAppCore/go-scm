@@ -116,12 +116,12 @@ func LoadClothoConfig(cfg *config.Config) (ClothoConfig, error)  /* v090-result-
 
 func validateClothoStrategy(strategy string) error  /* v090-result-boundary */ {
 	lower := core.Lower(strategy)
-	switch {
-	case lower == "":
+	switch lower {
+	case "":
 		return nil
-	case lower == "direct":
+	case "direct":
 		return nil
-	case lower == "clotho-verified":
+	case "clotho-verified":
 		return nil
 	default:
 		return core.E(
