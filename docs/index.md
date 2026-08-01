@@ -5,5 +5,5 @@
 ## Layout
 
 - `go/` contains the Go module.
-- `external/` contains local submodule dependencies used by `go.work`.
+- Dependencies are pinned `dappco.re/*` module tags in `go/go.mod` (no `go.work`, no vendored `external/` checkouts).
 - `docs/` contains architecture and development notes.
