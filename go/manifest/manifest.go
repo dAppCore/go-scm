@@ -54,13 +54,13 @@ type Manifest struct {
 	Args        []string              `yaml:"args,omitempty" json:"args,omitempty"`
 	Element     *ElementSpec          `yaml:"element,omitempty" json:"element,omitempty"`
 	Spec        string                `yaml:"spec,omitempty" json:"spec,omitempty"`
-	Permissions Permissions           `yaml:"permissions,omitempty" json:"permissions,omitempty"`
+	Permissions Permissions           `yaml:"permissions,omitempty" json:"permissions"`
 	Modules     []string              `yaml:"modules,omitempty" json:"modules,omitempty"`
 	Daemons     map[string]DaemonSpec `yaml:"daemons,omitempty" json:"daemons,omitempty"`
-	Build       BuildInfo             `yaml:"build,omitempty" json:"build,omitempty"`
+	Build       BuildInfo             `yaml:"build,omitempty" json:"build"`
 }
 
-func Parse(data []byte) (*Manifest, error)  /* v090-result-boundary */ {
+func Parse(data []byte) (*Manifest, error) /* v090-result-boundary */ {
 	var m Manifest
 	if err := yaml.Unmarshal(data, &m); err != nil {
 		return nil, err
@@ -125,7 +125,7 @@ func (m *Manifest) DefaultDaemon() (string, DaemonSpec, bool) {
 	return "", DaemonSpec{}, false
 }
 
-func validateManifest(m *Manifest) error  /* v090-result-boundary */ {
+func validateManifest(m *Manifest) error /* v090-result-boundary */ {
 	if m == nil {
 		return core.E("", "manifest is required", nil)
 	}

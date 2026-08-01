@@ -57,7 +57,7 @@ func (b *BitcoinTalkCollector) Name() string { return "bitcointalk" }
 func (b *BitcoinTalkCollectorWithFetcher) Name() string { return b.BitcoinTalkCollector.Name() }
 
 // Collect gathers posts from a BitcoinTalk topic.
-func (b *BitcoinTalkCollector) Collect(ctx context.Context, cfg *Config) (*Result, error)  /* v090-result-boundary */ {
+func (b *BitcoinTalkCollector) Collect(ctx context.Context, cfg *Config) (*Result, error) /* v090-result-boundary */ {
 	if cfg == nil {
 		return nil, core.E("collect.BitcoinTalkCollector.Collect", "config is required", nil)
 	}
@@ -98,7 +98,7 @@ func (b *BitcoinTalkCollector) Collect(ctx context.Context, cfg *Config) (*Resul
 }
 
 // Collect gathers posts from a BitcoinTalk topic using the injected fetcher.
-func (b *BitcoinTalkCollectorWithFetcher) Collect(ctx context.Context, cfg *Config) (*Result, error)  /* v090-result-boundary */ {
+func (b *BitcoinTalkCollectorWithFetcher) Collect(ctx context.Context, cfg *Config) (*Result, error) /* v090-result-boundary */ {
 	if b.Fetcher == nil {
 		return b.BitcoinTalkCollector.Collect(ctx, cfg)
 	}
@@ -134,10 +134,7 @@ func (b *BitcoinTalkCollectorWithFetcher) Collect(ctx context.Context, cfg *Conf
 
 func (b *BitcoinTalkCollector) collectTopic(ctx context.Context, cfg *Config, topicID string, fetcher func(context.Context, string) ([]btPost, error)) *Result {
 	result := &Result{Source: b.Name()}
-	pages := b.Pages
-	if pages < 0 {
-		pages = 0
-	}
+	pages := max(b.Pages, 0)
 	page := 1
 	for {
 		if err := ctx.Err(); err != nil {
@@ -215,14 +212,14 @@ func (b *BitcoinTalkCollector) pageURL(topicID string, page int) string {
 	return base + "&page=" + strconv.Itoa(page)
 }
 
-func (b *BitcoinTalkCollector) fetchPage(ctx context.Context, url string) (string, error)  /* v090-result-boundary */ {
+func (b *BitcoinTalkCollector) fetchPage(ctx context.Context, url string) (string, error) /* v090-result-boundary */ {
 	if ctx == nil {
 		ctx = context.Background()
 	}
 	return fetchBitcoinTalkPage(ctx, url)
 }
 
-func fetchBitcoinTalkPage(ctx context.Context, url string) (string, error)  /* v090-result-boundary */ {
+func fetchBitcoinTalkPage(ctx context.Context, url string) (string, error) /* v090-result-boundary */ {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return "", err
@@ -252,7 +249,7 @@ func extractBitcoinTalkTopicID(url string) string {
 }
 
 // ParsePostsFromHTML parses BitcoinTalk posts from raw HTML content.
-func ParsePostsFromHTML(htmlContent string) ([]btPost, error)  /* v090-result-boundary */ {
+func ParsePostsFromHTML(htmlContent string) ([]btPost, error) /* v090-result-boundary */ {
 	if core.Trim(htmlContent) == "" {
 		return nil, nil
 	}

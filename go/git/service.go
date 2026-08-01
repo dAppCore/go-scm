@@ -262,7 +262,7 @@ func (s *Service) runPullMultiple(ctx context.Context, paths []string, names map
 	return core.Ok(results)
 }
 
-func (s *Service) validatePath(path string) error  /* v090-result-boundary */ {
+func (s *Service) validatePath(path string) error /* v090-result-boundary */ {
 	ds := core.Env("DS")
 	if core.PathIsAbs(path) {
 		return nil
@@ -287,7 +287,7 @@ func (s *Service) validatePath(path string) error  /* v090-result-boundary */ {
 	return nil
 }
 
-func (s *Service) validatePaths(paths []string) error  /* v090-result-boundary */ {
+func (s *Service) validatePaths(paths []string) error /* v090-result-boundary */ {
 	for _, path := range paths {
 		if err := s.validatePath(path); err != nil {
 			return err

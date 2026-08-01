@@ -38,7 +38,7 @@ func defaultClothoConfig() ClothoConfig {
 
 // LoadAgents reads agent targets from config and returns a map of AgentConfig.
 // Returns an empty map (not an error) if no agents are configured.
-func LoadAgents(cfg *config.Config) (map[string]AgentConfig, error)  /* v090-result-boundary */ {
+func LoadAgents(cfg *config.Config) (map[string]AgentConfig, error) /* v090-result-boundary */ {
 	agents := make(map[string]AgentConfig)
 	if cfg == nil {
 		return agents, nil
@@ -56,12 +56,12 @@ func LoadAgents(cfg *config.Config) (map[string]AgentConfig, error)  /* v090-res
 }
 
 // ListAgents returns all configured agents (active and inactive).
-func ListAgents(cfg *config.Config) (map[string]AgentConfig, error)  /* v090-result-boundary */ {
+func ListAgents(cfg *config.Config) (map[string]AgentConfig, error) /* v090-result-boundary */ {
 	return LoadAgents(cfg)
 }
 
 // LoadActiveAgents returns only active agents.
-func LoadActiveAgents(cfg *config.Config) (map[string]AgentConfig, error)  /* v090-result-boundary */ {
+func LoadActiveAgents(cfg *config.Config) (map[string]AgentConfig, error) /* v090-result-boundary */ {
 	agents, err := LoadAgents(cfg)
 	if err != nil {
 		return nil, err
@@ -77,7 +77,7 @@ func LoadActiveAgents(cfg *config.Config) (map[string]AgentConfig, error)  /* v0
 
 // LoadClothoConfig loads the Clotho orchestrator settings.
 // Returns sensible defaults if no config is present.
-func LoadClothoConfig(cfg *config.Config) (ClothoConfig, error)  /* v090-result-boundary */ {
+func LoadClothoConfig(cfg *config.Config) (ClothoConfig, error) /* v090-result-boundary */ {
 	clotho := defaultClothoConfig()
 	if cfg == nil {
 		return clotho, nil
@@ -114,7 +114,7 @@ func LoadClothoConfig(cfg *config.Config) (ClothoConfig, error)  /* v090-result-
 	return clotho, nil
 }
 
-func validateClothoStrategy(strategy string) error  /* v090-result-boundary */ {
+func validateClothoStrategy(strategy string) error /* v090-result-boundary */ {
 	lower := core.Lower(strategy)
 	switch lower {
 	case "":
@@ -133,7 +133,7 @@ func validateClothoStrategy(strategy string) error  /* v090-result-boundary */ {
 }
 
 // SaveAgent writes an agent config entry to the config file.
-func SaveAgent(cfg *config.Config, name string, ac AgentConfig) error  /* v090-result-boundary */ {
+func SaveAgent(cfg *config.Config, name string, ac AgentConfig) error /* v090-result-boundary */ {
 	if cfg == nil {
 		return core.E("agentci.SaveAgent", "config is required", nil)
 	}
@@ -159,7 +159,7 @@ func SaveAgent(cfg *config.Config, name string, ac AgentConfig) error  /* v090-r
 }
 
 // RemoveAgent removes an agent from the config file.
-func RemoveAgent(cfg *config.Config, name string) error  /* v090-result-boundary */ {
+func RemoveAgent(cfg *config.Config, name string) error /* v090-result-boundary */ {
 	if cfg == nil {
 		return core.E("agentci.RemoveAgent", "config is required", nil)
 	}
@@ -182,13 +182,13 @@ func RemoveAgent(cfg *config.Config, name string) error  /* v090-result-boundary
 }
 
 // MarshalYAML makes the config stable when written through generic YAML paths.
-func (a AgentConfig) MarshalYAML() (any, error)  /* v090-result-boundary */ {
+func (a AgentConfig) MarshalYAML() (any, error) /* v090-result-boundary */ {
 	type alias AgentConfig
 	return alias(a), nil
 }
 
 // UnmarshalYAML keeps the model permissive for YAML round-tripping.
-func (a *AgentConfig) UnmarshalYAML(value *yaml.Node) error  /* v090-result-boundary */ {
+func (a *AgentConfig) UnmarshalYAML(value *yaml.Node) error /* v090-result-boundary */ {
 	type alias AgentConfig
 	var out alias
 	if err := value.Decode(&out); err != nil {

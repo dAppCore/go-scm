@@ -5,6 +5,7 @@ package collect
 import (
 	// Note: context.Context is retained as the rate limiter cancellation contract.
 	"context"
+	"maps"
 	// Note: strconv.Atoi is retained for parsing gh rate-limit output.
 	"strconv"
 	// Note: sync.Mutex protects limiter state and has no core equivalent.
@@ -38,9 +39,7 @@ var defaultDelays = map[string]time.Duration{
 // NewRateLimiter creates a limiter with default delays.
 func NewRateLimiter() *RateLimiter {
 	delays := make(map[string]time.Duration, len(defaultDelays))
-	for k, v := range defaultDelays {
-		delays[k] = v
-	}
+	maps.Copy(delays, defaultDelays)
 	return &RateLimiter{
 		delays: delays,
 		last:   make(map[string]time.Time),
@@ -49,7 +48,7 @@ func NewRateLimiter() *RateLimiter {
 
 // Wait blocks until the rate limit allows the next request for the given source.
 // It respects context cancellation.
-func (r *RateLimiter) Wait(ctx context.Context, source string) error  /* v090-result-boundary */ {
+func (r *RateLimiter) Wait(ctx context.Context, source string) error /* v090-result-boundary */ {
 	if r == nil {
 		return nil
 	}
@@ -118,14 +117,14 @@ func (r *RateLimiter) GetDelay(source string) time.Duration {
 // the GitHub rate limit delay.
 //
 // Deprecated: Use CheckGitHubRateLimitCtx for context-aware cancellation.
-func (r *RateLimiter) CheckGitHubRateLimit() (used, limit int, err error)  /* v090-result-boundary */ {
+func (r *RateLimiter) CheckGitHubRateLimit() (used, limit int, err error) /* v090-result-boundary */ {
 	return r.CheckGitHubRateLimitCtx(context.Background())
 }
 
 // CheckGitHubRateLimitCtx checks GitHub API rate limit status via gh api with
 // context support. Returns used and limit counts. Auto-pauses at 75% usage by
 // increasing the GitHub rate limit delay.
-func (r *RateLimiter) CheckGitHubRateLimitCtx(ctx context.Context) (used, limit int, err error)  /* v090-result-boundary */ {
+func (r *RateLimiter) CheckGitHubRateLimitCtx(ctx context.Context) (used, limit int, err error) /* v090-result-boundary */ {
 	if r == nil {
 		return 0, 0, nil
 	}

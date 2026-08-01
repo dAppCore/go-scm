@@ -25,10 +25,10 @@ type CompiledManifest struct {
 	Tag      string    `json:"tag,omitempty" yaml:"tag,omitempty"`
 	BuiltAt  string    `json:"built_at,omitempty" yaml:"built_at,omitempty"`
 	BuiltBy  string    `json:"built_by,omitempty" yaml:"built_by,omitempty"`
-	Build    BuildInfo `json:"build,omitempty" yaml:"build,omitempty"`
+	Build    BuildInfo `json:"build" yaml:"build,omitempty"`
 }
 
-func Compile(m *Manifest, info BuildInfo) ([]byte, error)  /* v090-result-boundary */ {
+func Compile(m *Manifest, info BuildInfo) ([]byte, error) /* v090-result-boundary */ {
 	if err := validateManifest(m); err != nil {
 		return nil, err
 	}
@@ -37,7 +37,7 @@ func Compile(m *Manifest, info BuildInfo) ([]byte, error)  /* v090-result-bounda
 	return marshalJSON("manifest.Compile", &cp)
 }
 
-func ParseCoreJSON(data []byte) (*Manifest, error)  /* v090-result-boundary */ {
+func ParseCoreJSON(data []byte) (*Manifest, error) /* v090-result-boundary */ {
 	var m Manifest
 	if err := unmarshalJSON("manifest.ParseCoreJSON", data, &m); err != nil {
 		return nil, err
@@ -48,7 +48,7 @@ func ParseCoreJSON(data []byte) (*Manifest, error)  /* v090-result-boundary */ {
 	return &m, nil
 }
 
-func CompileWithOptions(m *Manifest, opts CompileOptions) (*CompiledManifest, error)  /* v090-result-boundary */ {
+func CompileWithOptions(m *Manifest, opts CompileOptions) (*CompiledManifest, error) /* v090-result-boundary */ {
 	if err := validateManifest(m); err != nil {
 		return nil, err
 	}
@@ -72,14 +72,14 @@ func CompileWithOptions(m *Manifest, opts CompileOptions) (*CompiledManifest, er
 	}, nil
 }
 
-func MarshalJSON(cm *CompiledManifest) ([]byte, error)  /* v090-result-boundary */ {
+func MarshalJSON(cm *CompiledManifest) ([]byte, error) /* v090-result-boundary */ {
 	if cm == nil {
 		return nil, core.E("manifest.MarshalJSON", "compiled manifest is required", nil)
 	}
 	return marshalJSON("manifest.MarshalJSON", cm)
 }
 
-func ParseCompiled(data []byte) (*CompiledManifest, error)  /* v090-result-boundary */ {
+func ParseCompiled(data []byte) (*CompiledManifest, error) /* v090-result-boundary */ {
 	var cm CompiledManifest
 	if err := unmarshalJSON("manifest.ParseCompiled", data, &cm); err != nil {
 		return nil, err
@@ -87,7 +87,7 @@ func ParseCompiled(data []byte) (*CompiledManifest, error)  /* v090-result-bound
 	return &cm, nil
 }
 
-func LoadCompiled(medium coreio.Medium, root string) (*CompiledManifest, error)  /* v090-result-boundary */ {
+func LoadCompiled(medium coreio.Medium, root string) (*CompiledManifest, error) /* v090-result-boundary */ {
 	if medium == nil {
 		return nil, core.E("manifest.LoadCompiled", "medium is required", nil)
 	}
@@ -98,7 +98,7 @@ func LoadCompiled(medium coreio.Medium, root string) (*CompiledManifest, error) 
 	return ParseCompiled([]byte(raw))
 }
 
-func WriteCompiled(medium coreio.Medium, root string, cm *CompiledManifest) error  /* v090-result-boundary */ {
+func WriteCompiled(medium coreio.Medium, root string, cm *CompiledManifest) error /* v090-result-boundary */ {
 	if medium == nil {
 		return core.E("manifest.WriteCompiled", "medium is required", nil)
 	}
@@ -119,7 +119,7 @@ func normalizeBuildInfo(build BuildInfo) BuildInfo {
 	return build
 }
 
-func marshalJSON(op string, v any) ([]byte, error)  /* v090-result-boundary */ {
+func marshalJSON(op string, v any) ([]byte, error) /* v090-result-boundary */ {
 	r := core.JSONMarshal(v)
 	if !r.OK {
 		return nil, resultError(op, "marshal JSON", r)
@@ -131,7 +131,7 @@ func marshalJSON(op string, v any) ([]byte, error)  /* v090-result-boundary */ {
 	return raw, nil
 }
 
-func unmarshalJSON(op string, data []byte, target any) error  /* v090-result-boundary */ {
+func unmarshalJSON(op string, data []byte, target any) error /* v090-result-boundary */ {
 	r := core.JSONUnmarshal(data, target)
 	if !r.OK {
 		return resultError(op, "unmarshal JSON", r)
@@ -139,7 +139,7 @@ func unmarshalJSON(op string, data []byte, target any) error  /* v090-result-bou
 	return nil
 }
 
-func resultError(op, msg string, r core.Result) error  /* v090-result-boundary */ {
+func resultError(op, msg string, r core.Result) error /* v090-result-boundary */ {
 	if err, ok := r.Value.(error); ok {
 		return core.E(op, msg, err)
 	}

@@ -46,7 +46,7 @@ func (kb *KBConfig) WikiLocalPath(root, repoName string) string {
 	return core.PathJoin(root, dir, repoName)
 }
 
-func LoadKBConfig(m coreio.Medium, root string) (*KBConfig, error)  /* v090-result-boundary */ {
+func LoadKBConfig(m coreio.Medium, root string) (*KBConfig, error) /* v090-result-boundary */ {
 	if m == nil {
 		return nil, core.E("repos.LoadKBConfig", "medium is required", nil)
 	}
@@ -64,7 +64,7 @@ func LoadKBConfig(m coreio.Medium, root string) (*KBConfig, error)  /* v090-resu
 	return &kb, nil
 }
 
-func SaveKBConfig(m coreio.Medium, root string, kb *KBConfig) error  /* v090-result-boundary */ {
+func SaveKBConfig(m coreio.Medium, root string, kb *KBConfig) error /* v090-result-boundary */ {
 	if m == nil {
 		return core.E("repos.SaveKBConfig", "medium is required", nil)
 	}

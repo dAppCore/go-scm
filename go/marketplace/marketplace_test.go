@@ -150,7 +150,7 @@ func TestMarketplace_BuildIndexFromManifests_Bad(t *core.T) {
 }
 
 func TestMarketplace_BuildIndexFromManifests_Ugly(t *core.T) {
-	idx := BuildIndexFromManifests([]*manifest.Manifest{nil, &manifest.Manifest{Code: "demo", Name: "Demo"}})
+	idx := BuildIndexFromManifests([]*manifest.Manifest{nil, {Code: "demo", Name: "Demo"}})
 	core.AssertEqual(
 		t, "latest", idx.Modules[0].Version,
 	)

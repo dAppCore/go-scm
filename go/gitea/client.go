@@ -13,7 +13,7 @@ type Client struct {
 	url string
 }
 
-func New(url, token string) (*Client, error)  /* v090-result-boundary */ {
+func New(url, token string) (*Client, error) /* v090-result-boundary */ {
 	if url == "" {
 		return nil, core.E("gitea.New", "url is required", nil)
 	}

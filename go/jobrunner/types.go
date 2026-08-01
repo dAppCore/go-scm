@@ -26,7 +26,7 @@ type ActionResult struct {
 
 // MarshalJSON encodes Duration in milliseconds so the JSON form matches the tag
 // and the journal snapshots.
-func (a ActionResult) MarshalJSON() ([]byte, error)  /* v090-result-boundary */ {
+func (a ActionResult) MarshalJSON() ([]byte, error) /* v090-result-boundary */ {
 	type alias struct {
 		Action      string    `json:"action"`
 		RepoOwner   string    `json:"repo_owner"`
@@ -63,7 +63,7 @@ func (a ActionResult) MarshalJSON() ([]byte, error)  /* v090-result-boundary */ 
 }
 
 // UnmarshalJSON decodes Duration from milliseconds in the JSON form.
-func (a *ActionResult) UnmarshalJSON(data []byte) error  /* v090-result-boundary */ {
+func (a *ActionResult) UnmarshalJSON(data []byte) error /* v090-result-boundary */ {
 	type alias struct {
 		Action      string    `json:"action"`
 		RepoOwner   string    `json:"repo_owner"`

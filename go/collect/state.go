@@ -79,7 +79,7 @@ func (s *State) Set(source string, entry *StateEntry) {
 }
 
 // Load reads state from disk.
-func (s *State) Load() error  /* v090-result-boundary */ {
+func (s *State) Load() error /* v090-result-boundary */ {
 	if s == nil {
 		return core.E(sonarStateCollectStateLoad, "state is required", nil)
 	}
@@ -111,7 +111,7 @@ func (s *State) Load() error  /* v090-result-boundary */ {
 }
 
 // Save writes state to disk.
-func (s *State) Save() error  /* v090-result-boundary */ {
+func (s *State) Save() error /* v090-result-boundary */ {
 	if s == nil {
 		return core.E(sonarStateCollectStateSave, "state is required", nil)
 	}

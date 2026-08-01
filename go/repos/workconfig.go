@@ -51,7 +51,7 @@ func (wc *WorkConfig) HasTrigger(name string) bool {
 	return false
 }
 
-func LoadWorkConfig(m coreio.Medium, root string) (*WorkConfig, error)  /* v090-result-boundary */ {
+func LoadWorkConfig(m coreio.Medium, root string) (*WorkConfig, error) /* v090-result-boundary */ {
 	if m == nil {
 		return nil, core.E("repos.LoadWorkConfig", "medium is required", nil)
 	}
@@ -69,7 +69,7 @@ func LoadWorkConfig(m coreio.Medium, root string) (*WorkConfig, error)  /* v090-
 	return &wc, nil
 }
 
-func SaveWorkConfig(m coreio.Medium, root string, wc *WorkConfig) error  /* v090-result-boundary */ {
+func SaveWorkConfig(m coreio.Medium, root string, wc *WorkConfig) error /* v090-result-boundary */ {
 	if m == nil {
 		return core.E("repos.SaveWorkConfig", "medium is required", nil)
 	}

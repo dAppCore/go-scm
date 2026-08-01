@@ -53,7 +53,7 @@ type ResultSnapshot struct {
 }
 
 // NewJournal creates a new Journal rooted at baseDir.
-func NewJournal(baseDir string) (*Journal, error)  /* v090-result-boundary */ {
+func NewJournal(baseDir string) (*Journal, error) /* v090-result-boundary */ {
 	if baseDir == "" {
 		return nil, core.E("jobrunner.NewJournal", "baseDir is required", nil)
 	}
@@ -61,7 +61,7 @@ func NewJournal(baseDir string) (*Journal, error)  /* v090-result-boundary */ {
 }
 
 // Append writes a journal entry for the given signal and result.
-func (j *Journal) Append(signal *PipelineSignal, result *ActionResult) error  /* v090-result-boundary */ {
+func (j *Journal) Append(signal *PipelineSignal, result *ActionResult) error /* v090-result-boundary */ {
 	if j == nil {
 		return core.E(sonarJournalJobrunnerJournalAppend, "journal is required", nil)
 	}
@@ -146,7 +146,7 @@ func absoluteJournalPath(path string) string {
 	return core.Path(core.Env("DIR_CWD"), path)
 }
 
-func resultCause(r core.Result) error  /* v090-result-boundary */ {
+func resultCause(r core.Result) error /* v090-result-boundary */ {
 	if err, ok := r.Value.(error); ok {
 		return err
 	}

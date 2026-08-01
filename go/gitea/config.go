@@ -13,7 +13,7 @@ const (
 	DefaultURL     = "https://gitea.snider.dev"
 )
 
-func ResolveConfig(flagURL, flagToken string) (url, token string, err error)  /* v090-result-boundary */ {
+func ResolveConfig(flagURL, flagToken string) (url, token string, err error) /* v090-result-boundary */ {
 	url, token = loadGiteaConfigValues()
 
 	if v := core.Getenv("GITEA_URL"); v != "" {
@@ -53,7 +53,7 @@ func loadGiteaConfigValues() (string, string) {
 	return url, token
 }
 
-func NewFromConfig(flagURL, flagToken string) (*Client, error)  /* v090-result-boundary */ {
+func NewFromConfig(flagURL, flagToken string) (*Client, error) /* v090-result-boundary */ {
 	url, token, err := ResolveConfig(flagURL, flagToken)
 	if err != nil {
 		return nil, err
@@ -64,7 +64,7 @@ func NewFromConfig(flagURL, flagToken string) (*Client, error)  /* v090-result-b
 	return New(url, token)
 }
 
-func SaveConfig(url, token string) error  /* v090-result-boundary */ {
+func SaveConfig(url, token string) error /* v090-result-boundary */ {
 	if url == "" && token == "" {
 		return core.E("gitea.SaveConfig", "url or token required", nil)
 	}

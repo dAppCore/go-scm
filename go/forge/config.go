@@ -7,7 +7,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func ResolveConfig(flagURL, flagToken string) (url, token string, err error)  /* v090-result-boundary */ {
+func ResolveConfig(flagURL, flagToken string) (url, token string, err error) /* v090-result-boundary */ {
 	url, token = loadForgeConfigValues()
 	if v := core.Getenv("FORGE_URL"); v != "" {
 		url = v
@@ -46,7 +46,7 @@ func loadForgeConfigValues() (string, string) {
 	return url, token
 }
 
-func NewFromConfig(flagURL, flagToken string) (*Client, error)  /* v090-result-boundary */ {
+func NewFromConfig(flagURL, flagToken string) (*Client, error) /* v090-result-boundary */ {
 	url, token, err := ResolveConfig(flagURL, flagToken)
 	if err != nil {
 		return nil, err
@@ -54,7 +54,7 @@ func NewFromConfig(flagURL, flagToken string) (*Client, error)  /* v090-result-b
 	return New(url, token)
 }
 
-func SaveConfig(url, token string) error  /* v090-result-boundary */ {
+func SaveConfig(url, token string) error /* v090-result-boundary */ {
 	if url == "" && token == "" {
 		return core.E("forge.SaveConfig", "url or token required", nil)
 	}

@@ -11,7 +11,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func Load(medium coreio.Medium, root string) (*Manifest, error)  /* v090-result-boundary */ {
+func Load(medium coreio.Medium, root string) (*Manifest, error) /* v090-result-boundary */ {
 	if medium == nil {
 		return nil, core.E("manifest.Load", "medium is required", nil)
 	}
@@ -22,7 +22,7 @@ func Load(medium coreio.Medium, root string) (*Manifest, error)  /* v090-result-
 	return Parse([]byte(raw))
 }
 
-func LoadVerified(medium coreio.Medium, root string, pub ed25519.PublicKey) (*Manifest, error)  /* v090-result-boundary */ {
+func LoadVerified(medium coreio.Medium, root string, pub ed25519.PublicKey) (*Manifest, error) /* v090-result-boundary */ {
 	m, err := Load(medium, root)
 	if err != nil {
 		return nil, err
@@ -43,7 +43,7 @@ func LoadVerified(medium coreio.Medium, root string, pub ed25519.PublicKey) (*Ma
 	return m, nil
 }
 
-func MarshalYAML(m *Manifest) ([]byte, error)  /* v090-result-boundary */ {
+func MarshalYAML(m *Manifest) ([]byte, error) /* v090-result-boundary */ {
 	if m == nil {
 		return nil, core.E("manifest.MarshalYAML", "manifest is required", nil)
 	}

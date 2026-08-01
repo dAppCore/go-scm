@@ -25,7 +25,7 @@ type Processor struct {
 func (p *Processor) Name() string { return "process" }
 
 // Process reads files from the source directory, converts HTML or JSON to clean markdown, and writes the results.
-func (p *Processor) Process(ctx context.Context, cfg *Config) (*Result, error)  /* v090-result-boundary */ {
+func (p *Processor) Process(ctx context.Context, cfg *Config) (*Result, error) /* v090-result-boundary */ {
 	if cfg == nil {
 		return nil, core.E("collect.Processor.Process", "config is required", nil)
 	}
@@ -105,7 +105,7 @@ func (p *Processor) recordProcessError(cfg *Config, result *Result, message stri
 	}
 }
 
-func markdownForFile(name, raw string) (string, error)  /* v090-result-boundary */ {
+func markdownForFile(name, raw string) (string, error) /* v090-result-boundary */ {
 	switch core.Lower(core.PathExt(name)) {
 	case ".html", ".htm":
 		return HTMLToMarkdown(raw)
@@ -117,7 +117,7 @@ func markdownForFile(name, raw string) (string, error)  /* v090-result-boundary 
 }
 
 // HTMLToMarkdown is exported for testing.
-func HTMLToMarkdown(content string) (string, error)  /* v090-result-boundary */ {
+func HTMLToMarkdown(content string) (string, error) /* v090-result-boundary */ {
 	if core.Trim(content) == "" {
 		return "", nil
 	}
@@ -163,7 +163,7 @@ func HTMLToMarkdown(content string) (string, error)  /* v090-result-boundary */ 
 }
 
 // JSONToMarkdown is exported for testing.
-func JSONToMarkdown(content string) (string, error)  /* v090-result-boundary */ {
+func JSONToMarkdown(content string) (string, error) /* v090-result-boundary */ {
 	if core.Trim(content) == "" {
 		return "", nil
 	}
@@ -185,7 +185,7 @@ func JSONToMarkdown(content string) (string, error)  /* v090-result-boundary */ 
 	return core.Trim(buf.String()), nil
 }
 
-func encodeJSONValue(buf *core.Buffer, value any) error  /* v090-result-boundary */ {
+func encodeJSONValue(buf *core.Buffer, value any) error /* v090-result-boundary */ {
 	r := core.JSONMarshalIndent(value, "", "  ")
 	if !r.OK {
 		return r.Value.(error)
@@ -195,7 +195,7 @@ func encodeJSONValue(buf *core.Buffer, value any) error  /* v090-result-boundary
 	return nil
 }
 
-func encodeJSONLines(buf *core.Buffer, content string) (bool, error)  /* v090-result-boundary */ {
+func encodeJSONLines(buf *core.Buffer, content string) (bool, error) /* v090-result-boundary */ {
 	encoded := false
 	for _, line := range core.Split(content, "\n") {
 		line = core.Trim(line)
@@ -213,7 +213,7 @@ func encodeJSONLines(buf *core.Buffer, content string) (bool, error)  /* v090-re
 	return encoded, nil
 }
 
-func encodeJSONLine(buf *core.Buffer, line string) error  /* v090-result-boundary */ {
+func encodeJSONLine(buf *core.Buffer, line string) error /* v090-result-boundary */ {
 	var lineValue any
 	if r := core.JSONUnmarshal([]byte(line), &lineValue); !r.OK {
 		return r.Value.(error)

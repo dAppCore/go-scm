@@ -21,7 +21,7 @@ func NewInstaller(m coreio.Medium, registry *Registry) *Installer {
 	return &Installer{medium: m, registry: registry}
 }
 
-func ParseSource(source string) (org, repo, version string, err error)  /* v090-result-boundary */ {
+func ParseSource(source string) (org, repo, version string, err error) /* v090-result-boundary */ {
 	if source == "" {
 		return "", "", "", core.E("plugin.ParseSource", "source is required", nil)
 	}
@@ -47,7 +47,7 @@ func lastIndexAt(s string) int {
 	return -1
 }
 
-func (i *Installer) Install(ctx context.Context, source string) error  /* v090-result-boundary */ {
+func (i *Installer) Install(ctx context.Context, source string) error /* v090-result-boundary */ {
 	if i == nil {
 		return core.E("plugin.Installer.Install", "installer is required", nil)
 	}
@@ -77,7 +77,7 @@ func (i *Installer) Install(ctx context.Context, source string) error  /* v090-r
 	return nil
 }
 
-func (i *Installer) Remove(name string) error  /* v090-result-boundary */ {
+func (i *Installer) Remove(name string) error /* v090-result-boundary */ {
 	if i == nil {
 		return core.E("plugin.Installer.Remove", "installer is required", nil)
 	}
@@ -90,7 +90,7 @@ func (i *Installer) Remove(name string) error  /* v090-result-boundary */ {
 	return nil
 }
 
-func (i *Installer) Update(ctx context.Context, name string) error  /* v090-result-boundary */ {
+func (i *Installer) Update(ctx context.Context, name string) error /* v090-result-boundary */ {
 	if i == nil {
 		return core.E("plugin.Installer.Update", "installer is required", nil)
 	}

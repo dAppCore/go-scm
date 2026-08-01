@@ -29,7 +29,7 @@ func (e *GitError) Error() string {
 	return "git error"
 }
 
-func (e *GitError) Unwrap() error  /* v090-result-boundary */ {
+func (e *GitError) Unwrap() error /* v090-result-boundary */ {
 	if e == nil {
 		return nil
 	}
@@ -81,7 +81,7 @@ func IsNonFastForward(err error) bool {
 	return core.Contains(msg, "non-fast-forward") || core.Contains(msg, "fetch first") || core.Contains(msg, "rejected")
 }
 
-func runGit(ctx context.Context, path string, args ...string) ([]byte, []byte, error)  /* v090-result-boundary */ {
+func runGit(ctx context.Context, path string, args ...string) ([]byte, []byte, error) /* v090-result-boundary */ {
 	if ctx == nil {
 		ctx = context.Background()
 	}
@@ -96,7 +96,7 @@ func runGit(ctx context.Context, path string, args ...string) ([]byte, []byte, e
 	return []byte(output), nil, nil
 }
 
-func Pull(ctx context.Context, path string) error  /* v090-result-boundary */ {
+func Pull(ctx context.Context, path string) error /* v090-result-boundary */ {
 	if err := ensurePath(path); err != nil {
 		return err
 	}
@@ -104,7 +104,7 @@ func Pull(ctx context.Context, path string) error  /* v090-result-boundary */ {
 	return err
 }
 
-func Push(ctx context.Context, path string) error  /* v090-result-boundary */ {
+func Push(ctx context.Context, path string) error /* v090-result-boundary */ {
 	if err := ensurePath(path); err != nil {
 		return err
 	}
@@ -114,13 +114,13 @@ func Push(ctx context.Context, path string) error  /* v090-result-boundary */ {
 
 // Sync fetches the default Forge remote and hard-resets the working tree to
 // match the requested branch.
-func Sync(ctx context.Context, path string) error  /* v090-result-boundary */ {
+func Sync(ctx context.Context, path string) error /* v090-result-boundary */ {
 	return SyncWithRemote(ctx, path, "origin", "dev")
 }
 
 // SyncWithRemote fetches a branch from the given remote and resets the local
 // working tree to match it.
-func SyncWithRemote(ctx context.Context, path, remote, branch string) error  /* v090-result-boundary */ {
+func SyncWithRemote(ctx context.Context, path, remote, branch string) error /* v090-result-boundary */ {
 	if err := ensurePath(path); err != nil {
 		return err
 	}
@@ -318,7 +318,7 @@ func parseBranchLine(line string, st *RepoStatus) {
 	}
 }
 
-func ensurePath(path string) error  /* v090-result-boundary */ {
+func ensurePath(path string) error /* v090-result-boundary */ {
 	if core.Trim(path) == "" {
 		return core.E("", "git path is required", nil)
 	}

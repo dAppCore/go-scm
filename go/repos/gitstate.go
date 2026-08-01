@@ -3,6 +3,7 @@
 package repos
 
 import (
+	"slices"
 	"time"
 
 	core "dappco.re/go"
@@ -101,11 +102,8 @@ func (gs *GitState) ActiveAgentsFor(repoName string, staleAfter time.Duration) [
 		if agent == nil || agent.LastSeen.Before(cutoff) {
 			continue
 		}
-		for _, active := range agent.Active {
-			if active == repoName {
-				out = append(out, name)
-				break
-			}
+		if slices.Contains(agent.Active, repoName) {
+			out = append(out, name)
 		}
 	}
 	return out
@@ -122,7 +120,7 @@ func (gs *GitState) NeedsPull(name string, maxAge time.Duration) bool {
 	return time.Since(st.LastPull) > maxAge
 }
 
-func LoadGitState(m coreio.Medium, root string) (*GitState, error)  /* v090-result-boundary */ {
+func LoadGitState(m coreio.Medium, root string) (*GitState, error) /* v090-result-boundary */ {
 	if m == nil {
 		return nil, core.E("repos.LoadGitState", "medium is required", nil)
 	}
@@ -138,7 +136,7 @@ func LoadGitState(m coreio.Medium, root string) (*GitState, error)  /* v090-resu
 	return &gs, nil
 }
 
-func SaveGitState(m coreio.Medium, root string, gs *GitState) error  /* v090-result-boundary */ {
+func SaveGitState(m coreio.Medium, root string, gs *GitState) error /* v090-result-boundary */ {
 	if m == nil {
 		return core.E("repos.SaveGitState", "medium is required", nil)
 	}

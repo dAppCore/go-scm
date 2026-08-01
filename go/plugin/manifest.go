@@ -17,7 +17,7 @@ type Manifest struct {
 	MinVersion   string   `json:"min_version,omitempty"`
 }
 
-func (m *Manifest) Validate() error  /* v090-result-boundary */ {
+func (m *Manifest) Validate() error /* v090-result-boundary */ {
 	if m == nil {
 		return core.E("plugin.Manifest.Validate", "manifest is required", nil)
 	}
@@ -27,7 +27,7 @@ func (m *Manifest) Validate() error  /* v090-result-boundary */ {
 	return nil
 }
 
-func LoadManifest(m coreio.Medium, path string) (*Manifest, error)  /* v090-result-boundary */ {
+func LoadManifest(m coreio.Medium, path string) (*Manifest, error) /* v090-result-boundary */ {
 	if m == nil {
 		return nil, core.E("plugin.LoadManifest", "medium is required", nil)
 	}

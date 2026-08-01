@@ -29,7 +29,7 @@ func New(cfg Config, client *coreforge.Client) *ForgejoSource {
 
 func (s *ForgejoSource) Name() string { return "forgejo" }
 
-func (s *ForgejoSource) Poll(ctx context.Context) ([]*jobrunner.PipelineSignal, error)  /* v090-result-boundary */ {
+func (s *ForgejoSource) Poll(ctx context.Context) ([]*jobrunner.PipelineSignal, error) /* v090-result-boundary */ {
 	if ctx != nil {
 		if err := ctx.Err(); err != nil {
 			return nil, err
@@ -50,7 +50,7 @@ func (s *ForgejoSource) Poll(ctx context.Context) ([]*jobrunner.PipelineSignal, 
 	return signals, nil
 }
 
-func (s *ForgejoSource) pollRepo(ctx context.Context, repoRef string) ([]*jobrunner.PipelineSignal, error)  /* v090-result-boundary */ {
+func (s *ForgejoSource) pollRepo(ctx context.Context, repoRef string) ([]*jobrunner.PipelineSignal, error) /* v090-result-boundary */ {
 	owner, repo, err := splitRepoRef(repoRef)
 	if err != nil {
 		return nil, err
@@ -82,7 +82,7 @@ func (s *ForgejoSource) signalsForEpic(ctx context.Context, owner, repo string, 
 	return signals
 }
 
-func (s *ForgejoSource) Report(ctx context.Context, result *jobrunner.ActionResult) error  /* v090-result-boundary */ {
+func (s *ForgejoSource) Report(ctx context.Context, result *jobrunner.ActionResult) error /* v090-result-boundary */ {
 	if ctx != nil {
 		if err := ctx.Err(); err != nil {
 			return err
@@ -102,7 +102,7 @@ func (s *ForgejoSource) Report(ctx context.Context, result *jobrunner.ActionResu
 	return s.forge.CreateIssueComment(result.RepoOwner, result.RepoName, int64(result.EpicNumber), body)
 }
 
-func (s *ForgejoSource) signalForChild(ctx context.Context, owner, repo string, epicNumber, childNumber int64) (*jobrunner.PipelineSignal, error)  /* v090-result-boundary */ {
+func (s *ForgejoSource) signalForChild(ctx context.Context, owner, repo string, epicNumber, childNumber int64) (*jobrunner.PipelineSignal, error) /* v090-result-boundary */ {
 	pr, err := s.forge.GetPullRequest(owner, repo, childNumber)
 	if err != nil {
 		return nil, err
@@ -164,7 +164,7 @@ func (s *ForgejoSource) signalForChild(ctx context.Context, owner, repo string, 
 	return signal, nil
 }
 
-func splitRepoRef(ref string) (owner, repo string, err error)  /* v090-result-boundary */ {
+func splitRepoRef(ref string) (owner, repo string, err error) /* v090-result-boundary */ {
 	parts := core.Split(ref, "/")
 	if len(parts) != 2 {
 		return "", "", core.E("jobrunner.forgejo", core.Sprintf("invalid repo reference %q", ref), nil)

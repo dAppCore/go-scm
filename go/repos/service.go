@@ -123,7 +123,7 @@ func (s *Service) syncWorkspace(ctx context.Context, pushed WorkspacePushed) cor
 	return s.handleRepoSyncAll(ctx, opts)
 }
 
-func (s *Service) syncRepo(ctx context.Context, opts core.Options) (*git.SyncResult, error)  /* v090-result-boundary */ {
+func (s *Service) syncRepo(ctx context.Context, opts core.Options) (*git.SyncResult, error) /* v090-result-boundary */ {
 	if s == nil {
 		return nil, core.E(sonarServiceReposServiceSyncrepo, sonarServiceServiceIsRequired, nil)
 	}
@@ -154,7 +154,7 @@ func (s *Service) syncNamedRepo(
 	workspaceOK bool,
 	remote string,
 	branch string,
-) (*git.SyncResult, error)  /* v090-result-boundary */ {
+) (*git.SyncResult, error) /* v090-result-boundary */ {
 	reg, err := s.registryForPath(opts.String("root"))
 	if err != nil && !core.Is(err, fs.ErrNotExist) {
 		return nil, err
@@ -171,7 +171,7 @@ func (s *Service) syncNamedRepo(
 	return nil, core.E(sonarServiceReposServiceSyncrepo, core.Sprintf("repo %q not found in registry", repoName), nil)
 }
 
-func syncRegistryRepo(ctx context.Context, reg *Registry, repoName, remote, branch string) (*git.SyncResult, bool, error)  /* v090-result-boundary */ {
+func syncRegistryRepo(ctx context.Context, reg *Registry, repoName, remote, branch string) (*git.SyncResult, bool, error) /* v090-result-boundary */ {
 	if reg == nil {
 		return nil, false, nil
 	}
@@ -183,7 +183,7 @@ func syncRegistryRepo(ctx context.Context, reg *Registry, repoName, remote, bran
 	return result, true, err
 }
 
-func syncPath(ctx context.Context, path, name, remote, branch string) (*git.SyncResult, error)  /* v090-result-boundary */ {
+func syncPath(ctx context.Context, path, name, remote, branch string) (*git.SyncResult, error) /* v090-result-boundary */ {
 	result := &git.SyncResult{Name: name, Path: path, Success: true}
 	if err := git.SyncWithRemote(ctx, path, remote, branch); err != nil {
 		result.Success = false
@@ -193,7 +193,7 @@ func syncPath(ctx context.Context, path, name, remote, branch string) (*git.Sync
 	return result, nil
 }
 
-func (s *Service) syncAll(ctx context.Context, opts core.Options) ([]SyncResult, error)  /* v090-result-boundary */ {
+func (s *Service) syncAll(ctx context.Context, opts core.Options) ([]SyncResult, error) /* v090-result-boundary */ {
 	if s == nil {
 		return nil, core.E("repos.Service.syncAll", sonarServiceServiceIsRequired, nil)
 	}
@@ -214,7 +214,7 @@ func (s *Service) syncAll(ctx context.Context, opts core.Options) ([]SyncResult,
 	return reg.SyncAll(ctx, remote, branch), nil
 }
 
-func (s *Service) registryForPath(root string) (*Registry, error)  /* v090-result-boundary */ {
+func (s *Service) registryForPath(root string) (*Registry, error) /* v090-result-boundary */ {
 	if s == nil {
 		return nil, core.E("repos.Service.registryForPath", sonarServiceServiceIsRequired, nil)
 	}
@@ -229,11 +229,11 @@ func (s *Service) registryForPath(root string) (*Registry, error)  /* v090-resul
 	return reg, nil
 }
 
-func (s *Service) loadRegistry() (*Registry, error)  /* v090-result-boundary */ {
+func (s *Service) loadRegistry() (*Registry, error) /* v090-result-boundary */ {
 	return s.loadRegistryAt("")
 }
 
-func (s *Service) loadRegistryAt(root string) (*Registry, error)  /* v090-result-boundary */ {
+func (s *Service) loadRegistryAt(root string) (*Registry, error) /* v090-result-boundary */ {
 	paths, err := s.registryPaths(root)
 	if err != nil {
 		return nil, err
@@ -276,7 +276,7 @@ func mergeRegistry(merged, reg *Registry) {
 	}
 }
 
-func (s *Service) registryPaths(root string) ([]string, error)  /* v090-result-boundary */ {
+func (s *Service) registryPaths(root string) ([]string, error) /* v090-result-boundary */ {
 	if s == nil {
 		return nil, core.E("repos.Service.registryPaths", sonarServiceServiceIsRequired, nil)
 	}
@@ -335,7 +335,7 @@ func cleanExistingCandidates(candidates []string) []string {
 	return paths
 }
 
-func loadRegistryFile(path string) (*Registry, error)  /* v090-result-boundary */ {
+func loadRegistryFile(path string) (*Registry, error) /* v090-result-boundary */ {
 	readResult := core.ReadFile(path)
 	if !readResult.OK {
 		return nil, core.E("repos.loadRegistryFile", "read registry", nil)

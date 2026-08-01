@@ -14,7 +14,7 @@ type Client struct {
 	token string
 }
 
-func New(url, token string) (*Client, error)  /* v090-result-boundary */ {
+func New(url, token string) (*Client, error) /* v090-result-boundary */ {
 	if url == "" {
 		return nil, core.E("forge.New", "url is required", nil)
 	}
@@ -46,17 +46,17 @@ func (c *Client) Token() string {
 	return c.token
 }
 
-func (c *Client) GetCurrentUser() (*forgejo.User, error)  /* v090-result-boundary */ {
+func (c *Client) GetCurrentUser() (*forgejo.User, error) /* v090-result-boundary */ {
 	user, _, err := c.api.GetMyUserInfo()
 	return user, err
 }
 
-func (c *Client) CreatePullRequest(owner, repo string, opts forgejo.CreatePullRequestOption) (*forgejo.PullRequest, error)  /* v090-result-boundary */ {
+func (c *Client) CreatePullRequest(owner, repo string, opts forgejo.CreatePullRequestOption) (*forgejo.PullRequest, error) /* v090-result-boundary */ {
 	pr, _, err := c.api.CreatePullRequest(owner, repo, opts)
 	return pr, err
 }
 
-func (c *Client) ForkRepo(owner, repo string, org string) (*forgejo.Repository, error)  /* v090-result-boundary */ {
+func (c *Client) ForkRepo(owner, repo string, org string) (*forgejo.Repository, error) /* v090-result-boundary */ {
 	opts := forgejo.CreateForkOption{}
 	if org != "" {
 		opts.Organization = &org

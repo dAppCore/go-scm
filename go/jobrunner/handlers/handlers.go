@@ -6,9 +6,9 @@ import (
 	"context"
 	"time"
 
+	forgejo "codeberg.org/forgejo/go-sdk/forgejo"
 	core "dappco.re/go"
 	process "dappco.re/go/process"
-	forgejo "codeberg.org/forgejo/go-sdk/forgejo"
 	"dappco.re/go/scm/agentci"
 	coreforge "dappco.re/go/scm/forge"
 	"dappco.re/go/scm/jobrunner"
@@ -103,7 +103,7 @@ func result(name string, signal *jobrunner.PipelineSignal, success bool, msg str
 	}
 }
 
-func (h *CompletionHandler) Execute(ctx context.Context, signal *jobrunner.PipelineSignal) (*jobrunner.ActionResult, error)  /* v090-result-boundary */ {
+func (h *CompletionHandler) Execute(ctx context.Context, signal *jobrunner.PipelineSignal) (*jobrunner.ActionResult, error) /* v090-result-boundary */ {
 	if ctx != nil {
 		if err := ctx.Err(); err != nil {
 			return result(h.Name(), signal, false, err.Error()), err
@@ -119,7 +119,7 @@ func (h *CompletionHandler) Execute(ctx context.Context, signal *jobrunner.Pipel
 	}
 	return result(h.Name(), signal, true, "completion noted"), nil
 }
-func (h *DismissReviewsHandler) Execute(ctx context.Context, signal *jobrunner.PipelineSignal) (*jobrunner.ActionResult, error)  /* v090-result-boundary */ {
+func (h *DismissReviewsHandler) Execute(ctx context.Context, signal *jobrunner.PipelineSignal) (*jobrunner.ActionResult, error) /* v090-result-boundary */ {
 	if ctx != nil {
 		if err := ctx.Err(); err != nil {
 			return result(h.Name(), signal, false, err.Error()), err
@@ -148,7 +148,7 @@ func (h *DismissReviewsHandler) Execute(ctx context.Context, signal *jobrunner.P
 	}
 	return result(h.Name(), signal, true, core.Sprintf("dismissed %d reviews", dismissed)), nil
 }
-func (h *DispatchHandler) Execute(ctx context.Context, signal *jobrunner.PipelineSignal) (*jobrunner.ActionResult, error)  /* v090-result-boundary */ {
+func (h *DispatchHandler) Execute(ctx context.Context, signal *jobrunner.PipelineSignal) (*jobrunner.ActionResult, error) /* v090-result-boundary */ {
 	if ctx != nil {
 		if err := ctx.Err(); err != nil {
 			return result(h.Name(), signal, false, err.Error()), err
@@ -193,7 +193,7 @@ func (h *DispatchHandler) Execute(ctx context.Context, signal *jobrunner.Pipelin
 	}
 	return result(h.Name(), signal, true, core.Sprintf("dispatched to %s", agentName)), nil
 }
-func (h *EnableAutoMergeHandler) Execute(ctx context.Context, signal *jobrunner.PipelineSignal) (*jobrunner.ActionResult, error)  /* v090-result-boundary */ {
+func (h *EnableAutoMergeHandler) Execute(ctx context.Context, signal *jobrunner.PipelineSignal) (*jobrunner.ActionResult, error) /* v090-result-boundary */ {
 	if ctx != nil {
 		if err := ctx.Err(); err != nil {
 			return result(h.Name(), signal, false, err.Error()), err
@@ -208,7 +208,7 @@ func (h *EnableAutoMergeHandler) Execute(ctx context.Context, signal *jobrunner.
 	}
 	return result(h.Name(), signal, true, "pull request merged"), nil
 }
-func (h *PublishDraftHandler) Execute(ctx context.Context, signal *jobrunner.PipelineSignal) (*jobrunner.ActionResult, error)  /* v090-result-boundary */ {
+func (h *PublishDraftHandler) Execute(ctx context.Context, signal *jobrunner.PipelineSignal) (*jobrunner.ActionResult, error) /* v090-result-boundary */ {
 	if ctx != nil {
 		if err := ctx.Err(); err != nil {
 			return result(h.Name(), signal, false, err.Error()), err
@@ -223,7 +223,7 @@ func (h *PublishDraftHandler) Execute(ctx context.Context, signal *jobrunner.Pip
 	}
 	return result(h.Name(), signal, true, "pull request published"), nil
 }
-func (h *SendFixCommandHandler) Execute(ctx context.Context, signal *jobrunner.PipelineSignal) (*jobrunner.ActionResult, error)  /* v090-result-boundary */ {
+func (h *SendFixCommandHandler) Execute(ctx context.Context, signal *jobrunner.PipelineSignal) (*jobrunner.ActionResult, error) /* v090-result-boundary */ {
 	if ctx != nil {
 		if err := ctx.Err(); err != nil {
 			return result(h.Name(), signal, false, err.Error()), err
@@ -239,7 +239,7 @@ func (h *SendFixCommandHandler) Execute(ctx context.Context, signal *jobrunner.P
 	}
 	return result(h.Name(), signal, true, "fix command posted"), nil
 }
-func (h *TickParentHandler) Execute(ctx context.Context, signal *jobrunner.PipelineSignal) (*jobrunner.ActionResult, error)  /* v090-result-boundary */ {
+func (h *TickParentHandler) Execute(ctx context.Context, signal *jobrunner.PipelineSignal) (*jobrunner.ActionResult, error) /* v090-result-boundary */ {
 	if ctx != nil {
 		if err := ctx.Err(); err != nil {
 			return result(h.Name(), signal, false, err.Error()), err
@@ -281,7 +281,7 @@ func (h *DispatchHandler) resolveAgent(name string) (string, agentci.AgentConfig
 	return "", agentci.AgentConfig{}, false
 }
 
-func buildDispatchTicket(forgeURL, agentName string, agent agentci.AgentConfig, signal *jobrunner.PipelineSignal) ([]byte, error)  /* v090-result-boundary */ {
+func buildDispatchTicket(forgeURL, agentName string, agent agentci.AgentConfig, signal *jobrunner.PipelineSignal) ([]byte, error) /* v090-result-boundary */ {
 	ticket := DispatchTicket{
 		ID:           core.Sprintf("%s-%d-%d", signal.RepoName, signal.EpicNumber, signal.ChildNumber),
 		RepoOwner:    signal.RepoOwner,
@@ -315,7 +315,7 @@ func buildDispatchTicket(forgeURL, agentName string, agent agentci.AgentConfig, 
 // buildDispatchSSHCommand returns (host, shellCommand, error) for the
 // dispatch SSH transfer. The caller runs it via process.RunWithOptions
 // using agentci.SecureSSHArgs to get the SSH command-line.
-func buildDispatchSSHCommand(_ context.Context, agent agentci.AgentConfig, token string, payload []byte) (string, string, error)  /* v090-result-boundary */ {
+func buildDispatchSSHCommand(_ context.Context, agent agentci.AgentConfig, token string, payload []byte) (string, string, error) /* v090-result-boundary */ {
 	queueDir, err := agentci.ValidateRemoteDir(agent.QueueDir)
 	if err != nil {
 		return "", "", err

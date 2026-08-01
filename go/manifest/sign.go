@@ -13,7 +13,7 @@ const (
 	sonarSignManifestVerify = "manifest.Verify"
 )
 
-func canonicalManifestBytes(m *Manifest) ([]byte, error)  /* v090-result-boundary */ {
+func canonicalManifestBytes(m *Manifest) ([]byte, error) /* v090-result-boundary */ {
 	if err := validateManifest(m); err != nil {
 		return nil, err
 	}
@@ -29,7 +29,7 @@ func canonicalManifestBytes(m *Manifest) ([]byte, error)  /* v090-result-boundar
 	return data, nil
 }
 
-func Sign(m *Manifest, payload []byte, priv ed25519.PrivateKey) error  /* v090-result-boundary */ {
+func Sign(m *Manifest, payload []byte, priv ed25519.PrivateKey) error /* v090-result-boundary */ {
 	if m == nil {
 		return core.E("manifest.Sign", "manifest is required", nil)
 	}
@@ -41,7 +41,7 @@ func Sign(m *Manifest, payload []byte, priv ed25519.PrivateKey) error  /* v090-r
 	return nil
 }
 
-func Verify(m *Manifest, payload []byte) error  /* v090-result-boundary */ {
+func Verify(m *Manifest, payload []byte) error /* v090-result-boundary */ {
 	if m == nil {
 		return core.E(sonarSignManifestVerify, "manifest is required", nil)
 	}

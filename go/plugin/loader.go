@@ -16,7 +16,7 @@ func NewLoader(m coreio.Medium, baseDir string) *Loader {
 	return &Loader{medium: m, baseDir: baseDir}
 }
 
-func (l *Loader) Discover() ([]*Manifest, error)  /* v090-result-boundary */ {
+func (l *Loader) Discover() ([]*Manifest, error) /* v090-result-boundary */ {
 	if l == nil || l.medium == nil {
 		return nil, nil
 	}
@@ -38,7 +38,7 @@ func (l *Loader) Discover() ([]*Manifest, error)  /* v090-result-boundary */ {
 	return out, nil
 }
 
-func (l *Loader) LoadPlugin(name string) (*Manifest, error)  /* v090-result-boundary */ {
+func (l *Loader) LoadPlugin(name string) (*Manifest, error) /* v090-result-boundary */ {
 	if l == nil || l.medium == nil {
 		return nil, core.E("plugin.Loader.LoadPlugin", "loader is required", nil)
 	}
