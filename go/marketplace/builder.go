@@ -5,8 +5,8 @@ package marketplace
 import (
 	"io/fs"
 
-	core "dappco.re/go"
-	"dappco.re/go/scm/manifest"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/go-scm/go/manifest"
 )
 
 type Builder struct {

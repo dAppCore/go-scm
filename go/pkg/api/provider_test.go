@@ -10,11 +10,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	core "dappco.re/go"
-	coreio "dappco.re/go/io"
-	"dappco.re/go/scm/manifest"
-	"dappco.re/go/scm/marketplace"
-	"dappco.re/go/scm/repos"
+	core "github.com/dappcore/go"
+	coreio "github.com/dappcore/go-io/go"
+	"github.com/dappcore/go-scm/go/manifest"
+	"github.com/dappcore/go-scm/go/marketplace"
+	"github.com/dappcore/go-scm/go/repos"
 	"github.com/gin-gonic/gin"
 )
 

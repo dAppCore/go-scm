@@ -5,7 +5,7 @@ package marketplace
 import (
 	"testing"
 
-	core "dappco.re/go"
+	core "github.com/dappcore/go"
 )
 
 func TestDiscoverProvidersReturnsAbsoluteDirs(t *testing.T) {

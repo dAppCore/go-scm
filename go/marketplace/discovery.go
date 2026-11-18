@@ -5,8 +5,8 @@ package marketplace
 import (
 	"sort"
 
-	core "dappco.re/go"
-	"dappco.re/go/scm/manifest"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/go-scm/go/manifest"
 	"gopkg.in/yaml.v3"
 )
 

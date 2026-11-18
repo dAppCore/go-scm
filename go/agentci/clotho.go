@@ -6,8 +6,8 @@ import (
 	// Note: context.Context is retained as the public cancellation contract for Spinner.Weave.
 	"context"
 
-	"dappco.re/go"
-	"dappco.re/go/scm/jobrunner"
+	"github.com/dappcore/go"
+	"github.com/dappcore/go-scm/go/jobrunner"
 )
 
 // RunMode determines the execution strategy for a dispatched task.

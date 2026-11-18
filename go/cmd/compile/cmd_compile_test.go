@@ -7,8 +7,8 @@ import (
 	"os"
 	"testing"
 
-	core "dappco.re/go"
-	"dappco.re/go/scm/manifest"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/go-scm/go/manifest"
 )
 
 func TestRegisterHelp(t *testing.T) {

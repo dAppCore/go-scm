@@ -6,8 +6,8 @@ import (
 	// Note: AX-6 — Marketplace modules and categories must be ordered deterministically (no core sort primitive).
 	"sort"
 
-	core "dappco.re/go"
-	"dappco.re/go/scm/manifest"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/go-scm/go/manifest"
 )
 
 type Module struct {

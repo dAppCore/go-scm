@@ -21,7 +21,7 @@
 package scm
 
 import (
-	core "dappco.re/go"
+	core "github.com/dappcore/go"
 )
 
 // NewService returns a factory that wires the SCM sub-services (repos,

@@ -8,7 +8,7 @@ import (
 	// Note: regexp is retained for HTML conversion patterns; no core equivalent covers compiled regexes.
 	"regexp"
 
-	core "dappco.re/go"
+	core "github.com/dappcore/go"
 )
 
 var (

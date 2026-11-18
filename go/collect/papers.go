@@ -6,7 +6,7 @@ import (
 	// Note: context.Context is retained as the collector API cancellation contract.
 	"context"
 
-	core "dappco.re/go"
+	core "github.com/dappcore/go"
 )
 
 const (

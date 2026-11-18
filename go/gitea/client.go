@@ -5,7 +5,7 @@ package gitea
 import (
 	"code.gitea.io/sdk/gitea"
 
-	core "dappco.re/go"
+	core "github.com/dappcore/go"
 )
 
 type Client struct {

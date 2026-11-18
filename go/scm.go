@@ -7,10 +7,10 @@ import (
 	// Note: AX-6 — Core lifecycle hooks use context.Context directly.
 	"context"
 
-	core "dappco.re/go"
-	coreio "dappco.re/go/io"
-	"dappco.re/go/scm/git"
-	"dappco.re/go/scm/repos"
+	core "github.com/dappcore/go"
+	coreio "github.com/dappcore/go-io/go"
+	"github.com/dappcore/go-scm/go/git"
+	"github.com/dappcore/go-scm/go/repos"
 )
 
 // Options configures the top-level SCM service.

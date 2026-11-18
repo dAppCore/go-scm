@@ -4,7 +4,7 @@ This file provides guidance for agents working in this repository.
 
 ## Project Overview
 
-This repository contains the Go module for `dappco.re/go/scm`.
+This repository contains the Go module for `github.com/dappcore/go-scm/go`.
 
 ## Repo Layout
 

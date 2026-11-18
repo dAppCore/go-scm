@@ -7,8 +7,8 @@ import (
 	"crypto/ed25519"
 	"encoding/base64"
 
-	core "dappco.re/go"
-	"dappco.re/go/scm/manifest"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/go-scm/go/manifest"
 )
 
 const cmdSignCanonicalManifestBytes = "cmd.sign.canonicalManifestBytes"

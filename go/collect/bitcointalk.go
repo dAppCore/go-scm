@@ -16,7 +16,7 @@ import (
 	// Note: time is retained for the package-level HTTP client timeout.
 	"time"
 
-	core "dappco.re/go"
+	core "github.com/dappcore/go"
 	"golang.org/x/net/html"
 )
 

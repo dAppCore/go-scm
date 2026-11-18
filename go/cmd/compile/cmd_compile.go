@@ -4,8 +4,8 @@
 package compile
 
 import (
-	core "dappco.re/go"
-	"dappco.re/go/scm/manifest"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/go-scm/go/manifest"
 )
 
 const cmdCompileReadFile = "cmd.compile.readFile"

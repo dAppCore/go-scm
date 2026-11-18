@@ -8,7 +8,7 @@ import (
 	// Note: time.Now is retained behind nowUTC for collection state timestamps.
 	"time"
 
-	core "dappco.re/go"
+	core "github.com/dappcore/go"
 )
 
 // Excavator runs multiple collectors as a coordinated operation.

@@ -9,7 +9,7 @@ import (
 	// Note: regexp is retained for path-element allowlist validation; no core equivalent covers compiled regexes.
 	"regexp"
 
-	core "dappco.re/go"
+	core "github.com/dappcore/go"
 )
 
 const (

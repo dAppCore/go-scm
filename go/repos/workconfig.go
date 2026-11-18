@@ -6,8 +6,8 @@ import (
 	// Note: AX-6 — Work config exposes duration fields and defaults.
 	"time"
 
-	core "dappco.re/go"
-	coreio "dappco.re/go/io"
+	core "github.com/dappcore/go"
+	coreio "github.com/dappcore/go-io/go"
 	"gopkg.in/yaml.v3"
 )
 

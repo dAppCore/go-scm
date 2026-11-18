@@ -5,7 +5,7 @@ package git
 import (
 	"context"
 
-	core "dappco.re/go"
+	core "github.com/dappcore/go"
 )
 
 func TestGit_parseCount_Good(t *core.T) {

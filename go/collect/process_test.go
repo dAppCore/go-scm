@@ -8,7 +8,7 @@ import (
 	// Note: testing is the standard Go test harness.
 	"testing"
 
-	core "dappco.re/go"
+	core "github.com/dappcore/go"
 )
 
 func TestProcessorDryRunDoesNotRequireOutputMedium(t *testing.T) {

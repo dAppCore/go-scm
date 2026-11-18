@@ -6,7 +6,7 @@ import (
 	"crypto/ed25519" // intrinsic
 	"encoding/base64"
 
-	core "dappco.re/go"
+	core "github.com/dappcore/go"
 )
 
 const (
