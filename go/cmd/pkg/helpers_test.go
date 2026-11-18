@@ -3,8 +3,8 @@
 package pkg
 
 import (
-	core "dappco.re/go"
-	"dappco.re/go/scm/marketplace"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/go-scm/go/marketplace"
 )
 
 func TestCmdPkg_uniqueCategories_Good(t *core.T) {

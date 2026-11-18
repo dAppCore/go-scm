@@ -13,8 +13,8 @@ import (
 	// Note: time is retained for limiter delay calculations and timers.
 	"time"
 
-	core "dappco.re/go"
-	process "dappco.re/go/process"
+	core "github.com/dappcore/go"
+	process "github.com/dappcore/go-process/go"
 )
 
 const (

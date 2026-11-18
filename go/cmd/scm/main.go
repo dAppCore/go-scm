@@ -3,12 +3,12 @@
 package main
 
 import (
-	core "dappco.re/go"
-	scm "dappco.re/go/scm"
-	compilecmd "dappco.re/go/scm/cmd/compile"
-	pkgcmd "dappco.re/go/scm/cmd/pkg"
-	signcmd "dappco.re/go/scm/cmd/sign"
-	verifycmd "dappco.re/go/scm/cmd/verify"
+	core "github.com/dappcore/go"
+	scm "github.com/dappcore/go-scm/go"
+	compilecmd "github.com/dappcore/go-scm/go/cmd/compile"
+	pkgcmd "github.com/dappcore/go-scm/go/cmd/pkg"
+	signcmd "github.com/dappcore/go-scm/go/cmd/sign"
+	verifycmd "github.com/dappcore/go-scm/go/cmd/verify"
 )
 
 func main() {

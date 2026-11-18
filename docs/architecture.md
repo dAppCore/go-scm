@@ -6,4 +6,4 @@
 - `manifest`, `marketplace`, and `plugin` manage package metadata and installation.
 - `collect` and `jobrunner` support automation and agent CI workflows.
 
-Packages should depend on `dappco.re/go` for filesystem, JSON, string, path, error, and process primitives.
+Packages should depend on `github.com/dappcore/go` for filesystem, JSON, string, path, error, and process primitives.

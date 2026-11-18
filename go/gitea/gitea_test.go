@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 
 	sdk "code.gitea.io/sdk/gitea"
-	core "dappco.re/go"
+	core "github.com/dappcore/go"
 )
 
 const (

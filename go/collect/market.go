@@ -12,7 +12,7 @@ import (
 	// Note: time.Parse is retained for historical date validation.
 	"time"
 
-	core "dappco.re/go"
+	core "github.com/dappcore/go"
 )
 
 // MarketCollector collects market data from CoinGecko.

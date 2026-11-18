@@ -8,8 +8,8 @@ import (
 	// Note: testing is the standard Go test harness.
 	"testing"
 
-	core "dappco.re/go"
-	coreio "dappco.re/go/io"
+	core "github.com/dappcore/go"
+	coreio "github.com/dappcore/go-io/go"
 )
 
 func TestMarketCollectorIncludesHistoricalDetails(t *testing.T) {

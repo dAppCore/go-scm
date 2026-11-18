@@ -8,7 +8,7 @@ import (
 	// Note: testing is the standard Go test harness.
 	"testing"
 
-	"dappco.re/go/scm/jobrunner"
+	"github.com/dappcore/go-scm/go/jobrunner"
 )
 
 const (

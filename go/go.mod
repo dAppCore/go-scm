@@ -1,27 +1,27 @@
-module dappco.re/go/scm
+module github.com/dappcore/go-scm/go
 
 go 1.26.2
 
 require (
 	code.gitea.io/sdk/gitea v0.25.1
-	dappco.re/go v0.12.0
-	dappco.re/go/config v0.18.0
-	dappco.re/go/io v0.15.3
-	dappco.re/go/process v0.16.1
-	dappco.re/go/ws v0.7.1
+	github.com/dappcore/config/go v0.19.0
+	github.com/dappcore/go v0.14.0
+	github.com/dappcore/go-io/go v0.16.0
+	github.com/dappcore/go-process/go v0.17.0
+	github.com/dappcore/go-ws/go v0.8.0
 	github.com/gin-gonic/gin v1.12.0
 	golang.org/x/net v0.57.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
-	dappco.re/go/log v0.13.1 // indirect
 	github.com/42wim/httpsig v1.2.4 // indirect
 	github.com/bytedance/gopkg v0.1.4 // indirect
 	github.com/bytedance/sonic v1.15.2 // indirect
 	github.com/bytedance/sonic/loader v0.5.2 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cloudwego/base64x v0.1.7 // indirect
+	github.com/dappcore/go-log/go v0.14.0 // indirect
 	github.com/davidmz/go-pageant v1.0.2 // indirect
 	github.com/fsnotify/fsnotify v1.10.1 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.15 // indirect

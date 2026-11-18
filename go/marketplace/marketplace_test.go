@@ -8,9 +8,9 @@ import (
 	"encoding/base64"
 	"testing"
 
-	core "dappco.re/go"
-	coreio "dappco.re/go/io"
-	"dappco.re/go/scm/manifest"
+	core "github.com/dappcore/go"
+	coreio "github.com/dappcore/go-io/go"
+	"github.com/dappcore/go-scm/go/manifest"
 )
 
 // requireR fails the test when a core.Result reports failure.

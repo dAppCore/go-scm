@@ -5,8 +5,8 @@ package main
 import (
 	"strconv"
 
-	core "dappco.re/go"
-	"dappco.re/go/scm/gitea"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/go-scm/go/gitea"
 )
 
 func main() {

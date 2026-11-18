@@ -6,10 +6,10 @@ import (
 	// Note: AX-6 — Provider routes expose HTTP status codes at the Gin boundary.
 	"net/http"
 
-	core "dappco.re/go"
-	"dappco.re/go/scm/marketplace"
-	"dappco.re/go/scm/repos"
-	"dappco.re/go/ws"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/go-scm/go/marketplace"
+	"github.com/dappcore/go-scm/go/repos"
+	"github.com/dappcore/go-ws/go"
 	"github.com/gin-gonic/gin"
 )
 

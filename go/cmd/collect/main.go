@@ -5,8 +5,8 @@ package main
 import (
 	"context"
 
-	core "dappco.re/go"
-	"dappco.re/go/scm/collect"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/go-scm/go/collect"
 )
 
 func main() {

@@ -5,9 +5,9 @@ package agentci
 import (
 	"context"
 
-	core "dappco.re/go"
-	"dappco.re/go/config"
-	"dappco.re/go/scm/jobrunner"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/config/go"
+	"github.com/dappcore/go-scm/go/jobrunner"
 	"gopkg.in/yaml.v3"
 )
 

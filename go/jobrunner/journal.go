@@ -9,7 +9,7 @@ import (
 	"time"
 
 	// Note: AX-6 — Core provides JSON, path, filesystem, and structured error primitives.
-	core "dappco.re/go"
+	core "github.com/dappcore/go"
 )
 
 const (

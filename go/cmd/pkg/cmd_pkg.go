@@ -6,9 +6,9 @@ package pkg
 import (
 	"sort"
 
-	core "dappco.re/go"
-	"dappco.re/go/scm/manifest"
-	"dappco.re/go/scm/marketplace"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/go-scm/go/manifest"
+	"github.com/dappcore/go-scm/go/marketplace"
 )
 
 const cmdPkgWriteIndex = "cmd.pkg.writeIndex"

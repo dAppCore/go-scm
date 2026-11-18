@@ -6,8 +6,8 @@ import (
 	// Note: testing is the standard Go test harness.
 	"testing"
 
-	core "dappco.re/go"
-	"dappco.re/go/config"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/config/go"
 )
 
 const (

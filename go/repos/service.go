@@ -8,8 +8,8 @@ import (
 	// Note: AX-6 — Registry discovery uses fs.ErrNotExist as the filesystem sentinel.
 	"io/fs"
 
-	core "dappco.re/go"
-	"dappco.re/go/scm/git"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/go-scm/go/git"
 	"gopkg.in/yaml.v3"
 )
 

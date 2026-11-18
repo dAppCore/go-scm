@@ -7,8 +7,8 @@ import (
 	// Note: AX-6 — Build metadata records wall-clock compilation time.
 	"time"
 
-	core "dappco.re/go"
-	coreio "dappco.re/go/io"
+	core "github.com/dappcore/go"
+	coreio "github.com/dappcore/go-io/go"
 )
 
 type CompileOptions struct {

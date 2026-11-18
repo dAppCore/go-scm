@@ -3,8 +3,8 @@
 package agentci
 
 import (
-	core "dappco.re/go"
-	"dappco.re/go/config"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/config/go"
 	"gopkg.in/yaml.v3"
 )
 

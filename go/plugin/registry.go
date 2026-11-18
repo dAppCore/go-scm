@@ -6,8 +6,8 @@ import (
 	// Note: AX-6 — Registry listing must be deterministic across map iteration (no core sort primitive).
 	"sort"
 
-	core "dappco.re/go"
-	coreio "dappco.re/go/io"
+	core "github.com/dappcore/go"
+	coreio "github.com/dappcore/go-io/go"
 )
 
 type Registry struct {
