@@ -10,6 +10,7 @@ import (
 
 	core "dappco.re/go"
 	coreio "dappco.re/go/io"
+	"dappco.re/go/io/local"
 	"dappco.re/go/scm/manifest"
 )
 
@@ -206,56 +207,60 @@ func TestInstaller_Installer_Install_Ugly(t *testing.T) {
 }
 
 func TestInstaller_Installer_Installed_Good(t *testing.T) {
-	reference := "Installed"
-	if reference == "" {
-		t.Fatal(reference)
+	medium := coreio.NewMockMedium()
+	installer := NewInstaller(medium, "modules")
+	mod := signedTestModule(t, Module{Code: "go-io", Name: "Core I/O", Version: "0.3.0", Repo: "ssh://example.org/core/go-io.git"})
+	if err := installer.Install(context.Background(), mod); err != nil {
+		t.Fatalf("install: %v", err)
 	}
-	target := "Installer_Installed"
-	variant := "Good"
-	if target == "" {
-		t.Fatal(target)
+
+	installed, err := installer.Installed()
+	if err != nil {
+		t.Fatalf("installed: %v", err)
 	}
-	if variant == "" {
-		t.Fatal(variant)
-	}
-	if len(target) < 1 {
-		t.Fatal(target)
+	if len(installed) != 1 || installed[0].Code != "go-io" || installed[0].Version != "0.3.0" {
+		t.Fatalf("installed = %+v, want one go-io@0.3.0", installed)
 	}
 }
 
 func TestInstaller_Installer_Installed_Bad(t *testing.T) {
-	reference := "Installed"
-	if reference == "" {
-		t.Fatal(reference)
+	// A fresh app has no modules directory: that's "nothing installed",
+	// not a failure. Startup (CoreDeno autoload) depends on this. A real disk
+	// medium is used on purpose: the mock lists a missing dir as empty, so it
+	// could never show the bug.
+	medium, err := local.New(t.TempDir())
+	if err != nil {
+		t.Fatalf("local medium: %v", err)
 	}
-	target := "Installer_Installed"
-	variant := "Bad"
-	if target == "" {
-		t.Fatal(target)
+	installer := NewInstaller(medium, "modules")
+
+	installed, err := installer.Installed()
+	if err != nil {
+		t.Fatalf("missing modules dir must not error, got %v", err)
 	}
-	if variant == "" {
-		t.Fatal(variant)
-	}
-	if len(target) < 2 {
-		t.Fatal(target)
+	if len(installed) != 0 {
+		t.Fatalf("installed = %+v, want none", installed)
 	}
 }
 
 func TestInstaller_Installer_Installed_Ugly(t *testing.T) {
-	reference := "Installed"
-	if reference == "" {
-		t.Fatal(reference)
+	// A stray file and a module dir with a corrupt module.json are skipped;
+	// the valid module is still reported.
+	medium := coreio.NewMockMedium()
+	installer := NewInstaller(medium, "modules")
+	mod := signedTestModule(t, Module{Code: "go-io", Name: "Core I/O", Version: "0.3.0", Repo: "ssh://example.org/core/go-io.git"})
+	if err := installer.Install(context.Background(), mod); err != nil {
+		t.Fatalf("install: %v", err)
 	}
-	target := "Installer_Installed"
-	variant := "Ugly"
-	if target == "" {
-		t.Fatal(target)
+	medium.Files[core.PathJoin("modules", "README.txt")] = "not a module"
+	medium.Files[core.PathJoin("modules", "broken", "module.json")] = "{not json"
+
+	installed, err := installer.Installed()
+	if err != nil {
+		t.Fatalf("installed: %v", err)
 	}
-	if variant == "" {
-		t.Fatal(variant)
-	}
-	if len(target) < 3 {
-		t.Fatal(target)
+	if len(installed) != 1 || installed[0].Code != "go-io" {
+		t.Fatalf("installed = %+v, want only go-io", installed)
 	}
 }
 

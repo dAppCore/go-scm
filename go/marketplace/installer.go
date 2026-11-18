@@ -99,6 +99,13 @@ func (i *Installer) Installed() ([]InstalledModule, error) /* v090-result-bounda
 	}
 	entries, err := i.medium.List(i.modulesDir)
 	if err != nil {
+		// No modules directory yet means nothing is installed. A fresh app must
+		// boot, so this isn't an error. Checked only after List fails: media
+		// with implicit directories (mock, object stores) can list a dir that
+		// Exists() doesn't report.
+		if !i.medium.Exists(i.modulesDir) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	var out []InstalledModule
